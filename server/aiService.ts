@@ -285,6 +285,257 @@ interface AIQuestionGenerationParams {
   testbankId: string;
 }
 
+// Enhanced AI functions for contextual question generation
+export async function generateSimilarQuestionWithContext(
+  originalQuestion: any,
+  answerOptions: any[],
+  testbankQuestions: any[],
+  originalPrompt?: string
+): Promise<any> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Build context about existing questions
+    const existingQuestionsContext = testbankQuestions
+      .filter(q => q.id !== originalQuestion.id)
+      .slice(0, 5) // Limit to 5 questions for context
+      .map(q => `- ${q.questionText} (Type: ${q.questionType}, Difficulty: ${q.difficultyScore})`)
+      .join('\n');
+
+    const answerOptionsText = answerOptions
+      .map(opt => `${opt.isCorrect ? '[CORRECT]' : '[INCORRECT]'} ${opt.answerText}`)
+      .join('\n');
+
+    const prompt = `You are an expert educational assessment specialist. I need you to create a SIMILAR question to the one provided, while ensuring it's distinct enough to test the same concept differently.
+
+ORIGINAL QUESTION DETAILS:
+Question: ${originalQuestion.questionText}
+Type: ${originalQuestion.questionType}
+Difficulty: ${originalQuestion.difficultyScore}/10
+Bloom's Level: ${originalQuestion.bloomsLevel}
+Answer Options:
+${answerOptionsText}
+
+CONTEXT - OTHER QUESTIONS IN THIS TESTBANK:
+${existingQuestionsContext || 'No other questions in testbank yet.'}
+
+${originalPrompt ? `ORIGINAL GENERATION INSTRUCTIONS: ${originalPrompt}` : ''}
+
+REQUIREMENTS:
+1. Create a question that tests the SAME learning objective but with different wording/scenario
+2. Maintain the same difficulty level (${originalQuestion.difficultyScore}/10)
+3. Use the same question type (${originalQuestion.questionType})
+4. Ensure the question is DISTINCT from all existing questions shown above
+5. Follow educational assessment best practices
+6. Provide plausible distractors for multiple choice questions
+
+Please respond with a JSON object containing the new question data in this format:
+{
+  "questionText": "Your new question here",
+  "questionType": "${originalQuestion.questionType}",
+  "points": "1",
+  "difficultyScore": "${originalQuestion.difficultyScore}",
+  "bloomsLevel": "${originalQuestion.bloomsLevel}",
+  "tags": ["relevant", "tags"],
+  "correctFeedback": "Feedback for correct answer",
+  "incorrectFeedback": "Feedback for incorrect answer", 
+  "generalFeedback": "General feedback about the question",
+  "partialCredit": false,
+  "imageUrl": "",
+  "audioUrl": "",
+  "videoUrl": "",
+  "aiValidationStatus": "pending",
+  "aiConfidenceScore": "0.85",
+  "answerOptions": [
+    {"answerText": "Option 1", "isCorrect": true, "displayOrder": 0},
+    {"answerText": "Option 2", "isCorrect": false, "displayOrder": 1}
+  ]
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        { role: "system", content: "You are an expert educational assessment specialist with PhD-level expertise in psychometrics and item response theory." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return result;
+
+  } catch (error) {
+    console.error("Error generating similar question:", error);
+    throw error;
+  }
+}
+
+export async function generateQuestionVariationWithContext(
+  originalQuestion: any,
+  answerOptions: any[],
+  testbankQuestions: any[],
+  originalPrompt?: string
+): Promise<any> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Build context about existing questions
+    const existingQuestionsContext = testbankQuestions
+      .filter(q => q.id !== originalQuestion.id)
+      .slice(0, 5) // Limit to 5 questions for context
+      .map(q => `- ${q.questionText} (Type: ${q.questionType}, Difficulty: ${q.difficultyScore})`)
+      .join('\n');
+
+    const answerOptionsText = answerOptions
+      .map(opt => `${opt.isCorrect ? '[CORRECT]' : '[INCORRECT]'} ${opt.answerText}`)
+      .join('\n');
+
+    const prompt = `You are an expert educational assessment specialist. I need you to create a REFRESHED VERSION of this question - improve its quality while maintaining the core learning objective.
+
+CURRENT QUESTION DETAILS:
+Question: ${originalQuestion.questionText}
+Type: ${originalQuestion.questionType}
+Difficulty: ${originalQuestion.difficultyScore}/10
+Bloom's Level: ${originalQuestion.bloomsLevel}
+Current Answer Options:
+${answerOptionsText}
+
+CONTEXT - OTHER QUESTIONS IN THIS TESTBANK:
+${existingQuestionsContext || 'No other questions in testbank yet.'}
+
+${originalPrompt ? `ORIGINAL GENERATION INSTRUCTIONS: ${originalPrompt}` : ''}
+
+REQUIREMENTS:
+1. Improve the question's clarity, precision, and educational value
+2. Enhance answer options with more plausible distractors
+3. Maintain the same learning objective and difficulty level
+4. Ensure the improved question is distinct from other questions in the testbank
+5. Follow evidence-based assessment practices
+6. Fix any potential bias or accessibility issues
+
+Please respond with a JSON object containing the improved question data in this format:
+{
+  "questionText": "Your improved question here",
+  "questionType": "${originalQuestion.questionType}",
+  "points": "1",
+  "difficultyScore": "${originalQuestion.difficultyScore}",
+  "bloomsLevel": "${originalQuestion.bloomsLevel}",
+  "tags": ["relevant", "tags"],
+  "correctFeedback": "Enhanced feedback for correct answer",
+  "incorrectFeedback": "Enhanced feedback for incorrect answer", 
+  "generalFeedback": "Enhanced general feedback about the question",
+  "partialCredit": false,
+  "imageUrl": "",
+  "audioUrl": "",
+  "videoUrl": "",
+  "aiValidationStatus": "pending",
+  "aiConfidenceScore": "0.85",
+  "answerOptions": [
+    {"answerText": "Improved option 1", "isCorrect": true, "displayOrder": 0},
+    {"answerText": "Improved option 2", "isCorrect": false, "displayOrder": 1}
+  ]
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        { role: "system", content: "You are an expert educational assessment specialist with PhD-level expertise in psychometrics and item response theory." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return result;
+
+  } catch (error) {
+    console.error("Error generating question variation:", error);
+    throw error;
+  }
+}
+
+export async function generateNewAnswerOptionsWithContext(
+  originalQuestion: any,
+  currentAnswerOptions: any[],
+  testbankQuestions: any[]
+): Promise<any[]> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Build context about existing questions
+    const existingQuestionsContext = testbankQuestions
+      .filter(q => q.id !== originalQuestion.id)
+      .slice(0, 3) // Limit to 3 questions for context
+      .map(q => `- ${q.questionText}`)
+      .join('\n');
+
+    const currentOptionsText = currentAnswerOptions
+      .map(opt => `${opt.isCorrect ? '[CORRECT]' : '[INCORRECT]'} ${opt.answerText}`)
+      .join('\n');
+
+    const prompt = `You are an expert educational assessment specialist. I need you to create NEW answer options for this question that are more effective than the current ones.
+
+QUESTION: ${originalQuestion.questionText}
+Question Type: ${originalQuestion.questionType}
+Difficulty: ${originalQuestion.difficultyScore}/10
+Bloom's Level: ${originalQuestion.bloomsLevel}
+
+CURRENT ANSWER OPTIONS:
+${currentOptionsText}
+
+CONTEXT - OTHER QUESTIONS IN TESTBANK:
+${existingQuestionsContext || 'No other questions in testbank yet.'}
+
+REQUIREMENTS:
+1. Create new answer options that are more plausible and pedagogically effective
+2. Ensure distractors are credible but clearly incorrect
+3. Avoid answer options similar to those used in other testbank questions
+4. Follow best practices for option writing (parallel structure, appropriate length)
+5. For multiple choice: exactly 4 options (1 correct, 3 incorrect)
+6. For true/false: exactly 2 options
+7. Make sure options test the intended learning objective
+
+Please respond with a JSON array of answer options in this format:
+[
+  {"answerText": "Correct answer", "isCorrect": true, "displayOrder": 0},
+  {"answerText": "Plausible distractor 1", "isCorrect": false, "displayOrder": 1},
+  {"answerText": "Plausible distractor 2", "isCorrect": false, "displayOrder": 2},
+  {"answerText": "Plausible distractor 3", "isCorrect": false, "displayOrder": 3}
+]`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        { role: "system", content: "You are an expert educational assessment specialist with PhD-level expertise in psychometrics and item response theory." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return result.answerOptions || result;
+
+  } catch (error) {
+    console.error("Error generating new answer options:", error);
+    throw error;
+  }
+}
+
 export async function generateQuestionsWithAI(params: AIQuestionGenerationParams): Promise<any[]> {
   try {
     const {
@@ -515,7 +766,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
 
       // Ensure at least one correct answer for multiple choice
       if (question.questionType === 'multiple_choice' && validatedAnswerOptions.length > 0) {
-        const hasCorrectAnswer = validatedAnswerOptions.some(opt => opt.isCorrect);
+        const hasCorrectAnswer = validatedAnswerOptions.some((opt: any) => opt.isCorrect);
         if (!hasCorrectAnswer) {
           validatedAnswerOptions[0].isCorrect = true; // Default first option as correct
         }
@@ -574,3 +825,5 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     ];
   }
 }
+
+

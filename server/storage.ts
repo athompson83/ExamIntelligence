@@ -200,6 +200,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteQuestion(id: string): Promise<void> {
+    // Delete associated answer options first
+    await db.delete(answerOptions).where(eq(answerOptions.questionId, id));
+    // Then delete the question
     await db.delete(questions).where(eq(questions.id, id));
   }
 

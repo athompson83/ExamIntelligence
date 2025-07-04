@@ -18,7 +18,15 @@ import {
   insertReferenceBankSchema,
   insertReferenceSchema,
 } from "@shared/schema";
-import { validateQuestion, generateStudyGuide, generateImprovementPlan, generateQuestionsWithAI } from "./aiService";
+import { 
+  validateQuestion, 
+  generateStudyGuide, 
+  generateImprovementPlan, 
+  generateQuestionsWithAI, 
+  generateSimilarQuestionWithContext,
+  generateQuestionVariationWithContext,
+  generateNewAnswerOptionsWithContext
+} from "./aiService";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -347,30 +355,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Question not found" });
       }
 
-      // Generate a new version of the question using AI
-      const newQuestions = await generateQuestionsWithAI({
-        topic: question.questionText.substring(0, 50) + "...", // Use start of question as topic
-        questionCount: 1,
-        questionTypes: [question.questionType],
-        difficultyRange: [question.difficultyScore, question.difficultyScore],
-        bloomsLevels: [question.bloomsLevel],
-        includeReferences: false,
-        referenceLinks: [],
-        learningObjectives: [],
-        questionStyle: "formal",
-        includeImages: false,
-        includeMultimedia: false,
-        testbankId: question.testbankId
-      });
+      const answerOptions = await storage.getAnswerOptionsByQuestion(req.params.id);
+      const testbankQuestions = await storage.getQuestionsByTestbank(question.testbankId || '');
+      
+      // Use the enhanced AI function with context
+      const newQuestion = await generateQuestionVariationWithContext(
+        question,
+        answerOptions,
+        testbankQuestions,
+        req.body.originalPrompt || '' // Pass original prompt if available
+      );
 
-      if (newQuestions && newQuestions.length > 0) {
-        const newQuestion = newQuestions[0];
-        
+      if (newQuestion) {
         // Update the existing question with new content
         await storage.updateQuestion(req.params.id, {
           questionText: newQuestion.questionText,
           aiValidationStatus: 'pending',
-          aiFeedback: 'Refreshed version of question'
+          aiFeedback: 'Refreshed version with enhanced quality and context'
         });
 
         // Update answer options if they exist
@@ -407,31 +408,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Question not found" });
       }
 
-      // Generate a similar question using AI
-      const newQuestions = await generateQuestionsWithAI({
-        topic: question.questionText.substring(0, 50) + "... (create similar)",
-        questionCount: 1,
-        questionTypes: [question.questionType],
-        difficultyRange: [question.difficultyScore, question.difficultyScore],
-        bloomsLevels: [question.bloomsLevel],
-        includeReferences: false,
-        referenceLinks: [],
-        learningObjectives: [],
-        questionStyle: "formal",
-        includeImages: false,
-        includeMultimedia: false,
-        testbankId: question.testbankId
-      });
+      const answerOptions = await storage.getAnswerOptionsByQuestion(req.params.id);
+      const testbankQuestions = await storage.getQuestionsByTestbank(question.testbankId || '');
+      
+      // Use the enhanced AI function with context
+      const newQuestion = await generateSimilarQuestionWithContext(
+        question,
+        answerOptions,
+        testbankQuestions,
+        req.body.originalPrompt || '' // Pass original prompt if available
+      );
 
-      if (newQuestions && newQuestions.length > 0) {
-        const newQuestion = newQuestions[0];
-        
+      if (newQuestion) {
         // Create new question
         const createdQuestion = await storage.createQuestion({
           ...newQuestion,
           testbankId: question.testbankId,
+          creatorId: req.user.id,
           aiValidationStatus: 'pending',
-          aiFeedback: 'Similar question generated from existing question'
+          aiFeedback: 'Similar question generated with enhanced context and quality standards'
         });
 
         // Create answer options if they exist
@@ -461,23 +456,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Question not found" });
       }
 
-      // Generate new answer options using AI
-      const newQuestions = await generateQuestionsWithAI({
-        topic: question.questionText + " (generate new answer options)",
-        questionCount: 1,
-        questionTypes: [question.questionType],
-        difficultyRange: [question.difficultyScore, question.difficultyScore],
-        bloomsLevels: [question.bloomsLevel],
-        includeReferences: false,
-        referenceLinks: [],
-        learningObjectives: [],
-        questionStyle: "formal",
-        includeImages: false,
-        includeMultimedia: false,
-        testbankId: question.testbankId
-      });
+      const currentAnswerOptions = await storage.getAnswerOptionsByQuestion(req.params.id);
+      const testbankQuestions = await storage.getQuestionsByTestbank(question.testbankId || '');
+      
+      // Use the enhanced AI function with context
+      const newAnswerOptions = await generateNewAnswerOptionsWithContext(
+        question,
+        currentAnswerOptions,
+        testbankQuestions
+      );
 
-      if (newQuestions && newQuestions.length > 0 && newQuestions[0].answerOptions) {
+      if (newAnswerOptions && newAnswerOptions.length > 0) {
         // Delete old options
         const oldOptions = await storage.getAnswerOptionsByQuestion(req.params.id);
         for (const option of oldOptions) {
@@ -485,7 +474,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Create new options
-        for (const [index, option] of newQuestions[0].answerOptions.entries()) {
+        for (let index = 0; index < newAnswerOptions.length; index++) {
+          const option = newAnswerOptions[index];
           await storage.createAnswerOption({
             questionId: req.params.id,
             answerText: option.answerText,
@@ -497,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update question status
         await storage.updateQuestion(req.params.id, {
           aiValidationStatus: 'pending',
-          aiFeedback: 'Answer options regenerated'
+          aiFeedback: 'Answer options regenerated with enhanced quality and context awareness'
         });
       }
 
@@ -906,7 +896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reference Bank routes
   app.post("/api/reference-banks", isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
       if (!userId) {
         return res.status(401).json({ message: "User authentication required" });
       }
@@ -942,7 +932,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/reference-banks", isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
       if (!userId) {
         return res.status(401).json({ message: "User authentication required" });
       }
