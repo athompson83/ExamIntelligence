@@ -9,11 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit, Plus, FolderOpen, FileText, Link as LinkIcon, MoreVertical } from "lucide-react";
+import { Trash2, Edit, Plus, FolderOpen, FileText, Link as LinkIcon, MoreVertical, Home, ChevronRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { ReferenceBank, Reference } from "@shared/schema";
+import { Link } from "wouter";
 
 interface ReferenceBankWithReferences extends ReferenceBank {
   references?: Reference[];
@@ -207,6 +208,15 @@ export default function ReferenceBanks() {
 
   return (
     <div className="container mx-auto p-6">
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
+        <Link to="/" className="flex items-center hover:text-foreground">
+          <Home className="h-4 w-4" />
+        </Link>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground font-medium">Reference Banks</span>
+      </nav>
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Reference Banks</h1>
