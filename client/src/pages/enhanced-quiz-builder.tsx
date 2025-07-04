@@ -624,6 +624,37 @@ export default function EnhancedQuizBuilder() {
                           onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, adaptiveTesting: checked }))}
                         />
                       </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="allowCalculator">On-Screen Calculator</Label>
+                          <p className="text-sm text-muted-foreground">Provide a calculator during the exam</p>
+                        </div>
+                        <Switch
+                          id="allowCalculator"
+                          checked={quiz.allowCalculator || false}
+                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, allowCalculator: checked }))}
+                        />
+                      </div>
+
+                      {quiz.allowCalculator && (
+                        <div className="ml-6 border-l-2 border-muted pl-4">
+                          <Label htmlFor="calculatorType">Calculator Type</Label>
+                          <Select 
+                            value={quiz.calculatorType || "basic"} 
+                            onValueChange={(value) => setQuiz(prev => ({ ...prev, calculatorType: value }))}
+                          >
+                            <SelectTrigger className="mt-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="basic">Basic Calculator</SelectItem>
+                              <SelectItem value="scientific">Scientific Calculator</SelectItem>
+                              <SelectItem value="graphing">Graphing Calculator</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-4">

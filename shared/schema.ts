@@ -234,6 +234,12 @@ export const quizzes = pgTable("quizzes", {
   adaptiveTesting: boolean("adaptive_testing").default(false),
   anonymousSubmissions: boolean("anonymous_submissions").default(false),
   
+  // Test-taking tools and aids
+  allowCalculator: boolean("allow_calculator").default(false),
+  calculatorType: varchar("calculator_type", {
+    enum: ["basic", "scientific", "graphing"]
+  }).default("basic"),
+  
   // Publishing and status
   published: boolean("published").default(false),
   workflow_state: varchar("workflow_state", {

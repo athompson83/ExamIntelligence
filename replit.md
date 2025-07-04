@@ -391,8 +391,30 @@ Currently, ProficiencyAI is built as a responsive web application that works wel
 ### Production Ready Status
 The platform is now feature-complete and ready for production deployment with comprehensive enterprise-grade capabilities.
 
+## Recent Enhancements
+
+### On-Screen Calculator Implementation (July 04, 2025)
+- **Database Schema Enhancement**: Added `allowCalculator` and `calculatorType` fields to quiz schema supporting basic, scientific, and graphing calculator types
+- **Web Quiz Builder Integration**: Added calculator settings to enhanced quiz builder with toggle switch and type selection dropdown
+- **Mobile Calculator Component**: Created comprehensive React Native calculator with full arithmetic operations, scientific functions (sin, cos, tan, log, ln, sqrt, power), and responsive Material Design 3 interface
+- **Mobile Exam Interface**: Integrated calculator as floating action button in exam interface, accessible during test-taking when enabled by instructor
+- **Calculator Features**: 
+  - Basic calculator: Standard arithmetic operations, percentage, decimal, sign toggle
+  - Scientific calculator: Trigonometric functions, logarithms, square root, power operations
+  - Full calculation history and error handling
+  - Modal presentation with dismissible interface
+  - Responsive grid layout optimized for mobile devices
+
+### Technical Implementation Details:
+- **Schema Integration**: Calculator settings stored in quiz configuration and passed to mobile exam interface
+- **React Native Components**: Material Design Paper components with custom styling and gesture handling
+- **State Management**: Local state for calculator operations with proper calculation chain handling
+- **User Experience**: Floating action button for easy access during exams, maintains exam flow without interruption
+- **Cross-Platform**: Calculator component designed for both iOS and Android with consistent behavior
+
 ## Changelog
 
+- July 04, 2025. **ON-SCREEN CALCULATOR**: Implemented comprehensive calculator feature for mobile exam interface with basic, scientific, and graphing calculator support
 - July 04, 2025. **MOBILE APP DEVELOPMENT**: Established React Native foundation with Redux state management, authentication system, and comprehensive mobile architecture
 - July 04, 2025. **MULTI-LANGUAGE SUPPORT**: Added comprehensive internationalization with 8 language translations and dynamic language switching
 - July 04, 2025. **PROJECT COMPLETION**: Reached 98% implementation with all core features operational
