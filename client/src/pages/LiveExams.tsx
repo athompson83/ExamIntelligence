@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useWebSocket } from "@/hooks/useWebSocket";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Layout from "@/components/Layout";
-import LiveProctoringMonitor from "@/components/LiveProctoringMonitor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Eye, 
   Play, 
@@ -22,14 +22,129 @@ import {
   Shield,
   Camera,
   Monitor,
-  Activity
+  Activity,
+  Video,
+  Mic,
+  MousePointer,
+  Keyboard,
+  Maximize,
+  Navigation
 } from "lucide-react";
+
+interface StudentSession {
+  id: string;
+  studentName: string;
+  email: string;
+  attemptId: string;
+  startTime: string;
+  currentQuestion: number;
+  totalQuestions: number;
+  progress: number;
+  timeSpent: number;
+  status: 'active' | 'paused' | 'flagged' | 'completed';
+  alerts: ProctoringAlert[];
+  lastActivity: string;
+}
+
+interface ProctoringAlert {
+  id: string;
+  type: 'tab_switch' | 'window_blur' | 'copy_paste' | 'suspicious_activity' | 'network_disconnect';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: string;
+  description: string;
+  resolved: boolean;
+}
+
+interface LiveExamSession {
+  id: string;
+  quizId: string;
+  title: string;
+  startTime: string;
+  duration: number;
+  totalStudents: number;
+  activeStudents: number;
+  flaggedStudents: number;
+  completedStudents: number;
+  students: StudentSession[];
+  proctoringSettings: {
+    requireCamera: boolean;
+    requireMicrophone: boolean;
+    lockdownBrowser: boolean;
+    preventTabSwitching: boolean;
+    recordSession: boolean;
+    flagSuspiciousActivity: boolean;
+  };
+}
 
 export default function LiveExams() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [selectedExam, setSelectedExam] = useState<string | null>(null);
-  const [proctoringAlerts, setProctoringAlerts] = useState<any[]>([]);
+  const [proctoringAlerts, setProctoringAlerts] = useState<ProctoringAlert[]>([]);
+  const [liveData, setLiveData] = useState<{ [key: string]: any }>({});
+  const [ws, setWs] = useState<WebSocket | null>(null);
+
+  // Mock live exam sessions data
+  const [liveSessions] = useState<LiveExamSession[]>([
+    {
+      id: '1',
+      quizId: 'quiz-1',
+      title: 'Advanced Mathematics Final Exam',
+      startTime: new Date().toISOString(),
+      duration: 120,
+      totalStudents: 25,
+      activeStudents: 22,
+      flaggedStudents: 2,
+      completedStudents: 1,
+      students: [
+        {
+          id: 'student-1',
+          studentName: 'Alice Johnson',
+          email: 'alice@example.com',
+          attemptId: 'attempt-1',
+          startTime: new Date().toISOString(),
+          currentQuestion: 8,
+          totalQuestions: 25,
+          progress: 32,
+          timeSpent: 38,
+          status: 'active',
+          alerts: [],
+          lastActivity: new Date().toISOString(),
+        },
+        {
+          id: 'student-2',
+          studentName: 'Bob Smith',
+          email: 'bob@example.com',
+          attemptId: 'attempt-2',
+          startTime: new Date().toISOString(),
+          currentQuestion: 12,
+          totalQuestions: 25,
+          progress: 48,
+          timeSpent: 42,
+          status: 'flagged',
+          alerts: [
+            {
+              id: 'alert-1',
+              type: 'tab_switch',
+              severity: 'high',
+              timestamp: new Date().toISOString(),
+              description: 'Student switched tabs 3 times in 2 minutes',
+              resolved: false,
+            },
+          ],
+          lastActivity: new Date().toISOString(),
+        },
+      ],
+      proctoringSettings: {
+        requireCamera: true,
+        requireMicrophone: true,
+        lockdownBrowser: true,
+        preventTabSwitching: true,
+        recordSession: true,
+        flagSuspiciousActivity: true,
+      },
+    },
+  ]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -45,41 +160,91 @@ export default function LiveExams() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  const { data: activeQuizzes, isLoading } = useQuery({
+  // Setup WebSocket connection for real-time updates
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const socket = new WebSocket(wsUrl);
+
+    socket.onopen = () => {
+      console.log('WebSocket connected');
+      socket.send(JSON.stringify({
+        type: 'authenticate',
+        data: { role: 'teacher' }
+      }));
+    };
+
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      handleWebSocketMessage(message);
+    };
+
+    socket.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    setWs(socket);
+
+    return () => {
+      socket.close();
+    };
+  }, [isAuthenticated]);
+
+  const handleWebSocketMessage = (message: any) => {
+    switch (message.type) {
+      case 'proctoring_alert':
+        setProctoringAlerts(prev => [message.data, ...prev]);
+        toast({
+          title: "Proctoring Alert",
+          description: `${message.data.eventType} detected`,
+          variant: "destructive",
+        });
+        break;
+      case 'exam_progress':
+        setLiveData(prev => ({
+          ...prev,
+          [message.data.userId]: message.data
+        }));
+        break;
+      case 'student_joined':
+        toast({
+          title: "Student Joined",
+          description: "A student has joined the exam",
+        });
+        break;
+      case 'student_left':
+        toast({
+          title: "Student Left",
+          description: "A student has left the exam",
+          variant: "destructive",
+        });
+        break;
+    }
+  };
+
+  const { data: activeQuizzes = [], isLoading } = useQuery({
     queryKey: ["/api/quizzes", "active"],
     enabled: isAuthenticated,
     retry: false,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  const { data: upcomingQuizzes } = useQuery({
+  const { data: upcomingQuizzes = [] } = useQuery({
     queryKey: ["/api/quizzes", "upcoming"],
     enabled: isAuthenticated,
     retry: false,
-  });
-
-  const { lastMessage, isConnected } = useWebSocket({
-    onMessage: (message) => {
-      if (message.type === 'proctoring_alert') {
-        setProctoringAlerts(prev => [message.data, ...prev.slice(0, 19)]); // Keep last 20 alerts
-        
-        if (message.data.event?.severity === 'high') {
-          toast({
-            title: "High Priority Alert",
-            description: `Suspicious activity detected: ${message.data.event.type}`,
-            variant: "destructive",
-          });
-        }
-      }
-    },
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
         return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Active</Badge>;
-      case 'scheduled':
-        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">Scheduled</Badge>;
+      case 'flagged':
+        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">Flagged</Badge>;
+      case 'paused':
+        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">Paused</Badge>;
       case 'completed':
         return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">Completed</Badge>;
       default:
@@ -89,8 +254,10 @@ export default function LiveExams() {
 
   const getAlertSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'high':
+      case 'critical':
         return 'text-red-600 dark:text-red-400';
+      case 'high':
+        return 'text-orange-600 dark:text-orange-400';
       case 'medium':
         return 'text-yellow-600 dark:text-yellow-400';
       default:
@@ -98,7 +265,341 @@ export default function LiveExams() {
     }
   };
 
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
+
+  const resolveAlert = async (alertId: string) => {
+    setProctoringAlerts(prev => 
+      prev.map(alert => 
+        alert.id === alertId ? { ...alert, resolved: true } : alert
+      )
+    );
+    toast({
+      title: "Alert Resolved",
+      description: "Proctoring alert has been marked as resolved",
+    });
+  };
+
   if (authLoading || !isAuthenticated) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+    </div>;
+  }
+
+  return (
+    <Layout>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Live Exam Monitoring</h1>
+            <p className="text-gray-600 dark:text-gray-300">Real-time proctoring and exam oversight</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`h-3 w-3 rounded-full ${ws ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              {ws ? 'Connected' : 'Disconnected'}
+            </span>
+          </div>
+        </div>
+
+        {/* Live Sessions Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Active Students</p>
+                  <p className="text-2xl font-bold">{liveSessions[0]?.activeStudents || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Flagged Students</p>
+                  <p className="text-2xl font-bold text-red-600">{liveSessions[0]?.flaggedStudents || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <Activity className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                  <p className="text-2xl font-bold text-green-600">{liveSessions[0]?.completedStudents || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                  <Shield className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Active Alerts</p>
+                  <p className="text-2xl font-bold text-orange-600">{proctoringAlerts.filter(a => !a.resolved).length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="live-sessions" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="live-sessions">Live Sessions</TabsTrigger>
+            <TabsTrigger value="student-monitoring">Student Monitoring</TabsTrigger>
+            <TabsTrigger value="alerts">Proctoring Alerts</TabsTrigger>
+          </TabsList>
+
+          {/* Live Sessions Tab */}
+          <TabsContent value="live-sessions" className="space-y-6">
+            <div className="grid gap-6">
+              {liveSessions.map((session) => (
+                <Card key={session.id} className="border-l-4 border-l-blue-500">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-xl">{session.title}</CardTitle>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          Duration: {formatTime(session.duration)} | Students: {session.totalStudents}
+                        </p>
+                      </div>
+                      <Button
+                        variant={selectedExam === session.id ? "secondary" : "outline"}
+                        onClick={() => setSelectedExam(selectedExam === session.id ? null : session.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        {selectedExam === session.id ? 'Hide Details' : 'Monitor'}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">{session.activeStudents}</div>
+                        <div className="text-sm text-green-600">Active</div>
+                      </div>
+                      <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                        <div className="text-2xl font-bold text-red-600">{session.flaggedStudents}</div>
+                        <div className="text-sm text-red-600">Flagged</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
+                        <div className="text-2xl font-bold text-gray-600">{session.completedStudents}</div>
+                        <div className="text-sm text-gray-600">Completed</div>
+                      </div>
+                      <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">{session.totalStudents}</div>
+                        <div className="text-sm text-blue-600">Total</div>
+                      </div>
+                    </div>
+
+                    {/* Proctoring Settings Display */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {session.proctoringSettings.requireCamera && (
+                        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20">
+                          <Camera className="h-3 w-3 mr-1" />
+                          Camera Required
+                        </Badge>
+                      )}
+                      {session.proctoringSettings.requireMicrophone && (
+                        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20">
+                          <Mic className="h-3 w-3 mr-1" />
+                          Microphone Required
+                        </Badge>
+                      )}
+                      {session.proctoringSettings.lockdownBrowser && (
+                        <Badge variant="outline" className="bg-orange-50 dark:bg-orange-900/20">
+                          <Shield className="h-3 w-3 mr-1" />
+                          Lockdown Browser
+                        </Badge>
+                      )}
+                      {session.proctoringSettings.preventTabSwitching && (
+                        <Badge variant="outline" className="bg-red-50 dark:bg-red-900/20">
+                          <Monitor className="h-3 w-3 mr-1" />
+                          Tab Switching Blocked
+                        </Badge>
+                      )}
+                    </div>
+
+                    {selectedExam === session.id && (
+                      <div className="border-t pt-4">
+                        <h4 className="font-semibold mb-3">Student Sessions</h4>
+                        <div className="space-y-3">
+                          {session.students.map((student) => (
+                            <div key={student.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div>
+                                  <p className="font-medium">{student.studentName}</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{student.email}</p>
+                                </div>
+                                {getStatusBadge(student.status)}
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                  Question {student.currentQuestion} of {student.totalQuestions}
+                                </div>
+                                <Progress value={student.progress} className="w-24 h-2 mt-1" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Student Monitoring Tab */}
+          <TabsContent value="student-monitoring" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Real-time Student Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {liveSessions[0]?.students.map((student) => (
+                    <div key={student.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h4 className="font-semibold">{student.studentName}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{student.email}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(student.status)}
+                          <span className="text-sm text-gray-500">
+                            Last activity: {new Date(student.lastActivity).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Progress</p>
+                          <Progress value={student.progress} className="mt-1" />
+                          <p className="text-xs text-gray-500 mt-1">
+                            {student.currentQuestion} of {student.totalQuestions} questions
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Time Spent</p>
+                          <p className="text-lg font-semibold">{formatTime(student.timeSpent)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Alerts</p>
+                          <p className="text-lg font-semibold text-red-600">
+                            {student.alerts.filter(a => !a.resolved).length}
+                          </p>
+                        </div>
+                      </div>
+
+                      {student.alerts.length > 0 && (
+                        <div className="mt-3 pt-3 border-t">
+                          <p className="text-sm font-medium mb-2">Recent Alerts:</p>
+                          <div className="space-y-1">
+                            {student.alerts.slice(0, 3).map((alert) => (
+                              <div key={alert.id} className="flex items-center justify-between text-sm">
+                                <span className={getAlertSeverityColor(alert.severity)}>
+                                  {alert.description}
+                                </span>
+                                <span className="text-gray-500">
+                                  {new Date(alert.timestamp).toLocaleTimeString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Proctoring Alerts Tab */}
+          <TabsContent value="alerts" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Proctoring Alerts</CardTitle>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Monitor and respond to proctoring violations and suspicious activities
+                </p>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-96">
+                  <div className="space-y-3">
+                    {proctoringAlerts.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Shield className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                        <p>No proctoring alerts</p>
+                        <p className="text-sm">All students are following exam protocols</p>
+                      </div>
+                    ) : (
+                      proctoringAlerts.map((alert) => (
+                        <div key={alert.id} className={`border-l-4 p-4 rounded-lg ${
+                          alert.severity === 'critical' ? 'border-l-red-500 bg-red-50 dark:bg-red-900/20' :
+                          alert.severity === 'high' ? 'border-l-orange-500 bg-orange-50 dark:bg-orange-900/20' :
+                          alert.severity === 'medium' ? 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' :
+                          'border-l-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        }`}>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{alert.description}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className={getAlertSeverityColor(alert.severity)}>
+                                  {alert.severity.toUpperCase()}
+                                </Badge>
+                                <span className="text-sm text-gray-500">
+                                  {new Date(alert.timestamp).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                            {!alert.resolved && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => resolveAlert(alert.id)}
+                              >
+                                Resolve
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </Layout>
+  );
+}
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="loading-spinner" />

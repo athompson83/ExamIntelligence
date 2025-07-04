@@ -49,8 +49,21 @@ export function setupWebSocket(server: Server) {
               ws.send(JSON.stringify({ type: 'pong' }));
             }
             break;
+          case 'live_monitoring':
+            handleLiveMonitoring(ws, data);
+            break;
+          case 'quiz_update':
+            handleQuizUpdate(ws, data);
+            break;
+          case 'notification':
+            handleNotification(ws, data);
+            break;
+          case 'analytics_update':
+            handleAnalyticsUpdate(ws, data);
+            break;
           default:
-            console.warn('Unknown message type:', data.type);
+            console.log('Unknown message type:', data.type);
+            break;
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
@@ -217,6 +230,80 @@ export function broadcastToAllUsers(message: any) {
   for (const [userId, client] of connectedClients.entries()) {
     if (client.ws.readyState === WebSocket.OPEN) {
       client.ws.send(JSON.stringify(message));
+    }
+  }
+}
+
+function handleLiveMonitoring(ws: WebSocket, data: WebSocketMessage) {
+  const { userId, role } = data.data;
+  
+  // Verify user has monitoring permissions
+  if (role === 'teacher' || role === 'admin' || role === 'super_admin') {
+    // Send current live session data
+    const liveData = {
+      type: 'live_monitoring_data',
+      data: {
+        connectedStudents: Array.from(connectedClients.entries())
+          .filter(([_, client]) => client.role === 'student')
+          .map(([userId, client]) => ({
+            userId,
+            attemptId: client.attemptId,
+            connected: true,
+          })),
+        timestamp: new Date().toISOString(),
+      },
+    };
+    
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(liveData));
+    }
+  }
+}
+
+function handleQuizUpdate(ws: WebSocket, data: WebSocketMessage) {
+  const { quizId, updateType, updateData } = data.data;
+  
+  // Broadcast quiz updates to all relevant users
+  broadcastToExamMonitors(quizId, {
+    type: 'quiz_update',
+    data: {
+      updateType,
+      updateData,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
+function handleNotification(ws: WebSocket, data: WebSocketMessage) {
+  const { targetUserId, notification } = data.data;
+  
+  if (targetUserId) {
+    // Send to specific user
+    broadcastNotification(targetUserId, notification);
+  } else {
+    // Broadcast to all users
+    broadcastToAllUsers({
+      type: 'notification',
+      data: notification,
+    });
+  }
+}
+
+function handleAnalyticsUpdate(ws: WebSocket, data: WebSocketMessage) {
+  const { analyticsType, analyticsData } = data.data;
+  
+  // Broadcast analytics updates to administrators
+  for (const [userId, client] of connectedClients.entries()) {
+    if ((client.role === 'admin' || client.role === 'super_admin') && 
+        client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(JSON.stringify({
+        type: 'analytics_update',
+        data: {
+          analyticsType,
+          analyticsData,
+          timestamp: new Date().toISOString(),
+        },
+      }));
     }
   }
 }

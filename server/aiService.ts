@@ -20,7 +20,7 @@ export async function validateQuestion(question: Question, answerOptions: Answer
     const prompt = `
       COMPREHENSIVE EDUCATIONAL QUESTION VALIDATION
       
-      Using evidence-based assessment standards from CRESST, Kansas Curriculum Center, UC Riverside School of Medicine, and Assessment Systems research, analyze this question:
+      As a PhD-level educational assessment specialist, analyze this question using evidence-based standards from CRESST, Kansas Curriculum Center, UC Riverside School of Medicine, and Assessment Systems research:
 
       **QUESTION DETAILS:**
       Text: "${question.questionText}"
@@ -34,20 +34,47 @@ export async function validateQuestion(question: Question, answerOptions: Answer
         `${String.fromCharCode(65 + index)}. ${option.answerText} ${option.isCorrect ? '✓ CORRECT' : ''}`
       ).join('\n')}
 
-      **VALIDATION CRITERIA (Research-Based):**
+      **COMPREHENSIVE VALIDATION CRITERIA:**
 
-      **Question Stem Quality:**
-      - Clear, unambiguous language (one-reading comprehension)
-      - Direct questions vs. incomplete statements
-      - Absence of unnecessary negative phrasing (NOT, EXCEPT)
-      - Elimination of cultural/gender/socioeconomic bias
-      - Focus on learning objectives, not trivial facts
-      - Appropriate vocabulary for target audience
+      **1. Question Stem Quality (Research-Based Standards):**
+      - Clarity: One-reading comprehension without ambiguity
+      - Language: Direct questions preferred over incomplete statements
+      - Negatives: Avoid unnecessary NOT, EXCEPT constructions
+      - Bias: Cultural, gender, socioeconomic neutrality
+      - Relevance: Focus on learning objectives, not trivial details
+      - Vocabulary: Age and education-level appropriate
+      - Cognitive Load: Balanced complexity for target difficulty
 
-      **Multiple Choice Standards:**
-      - 3-5 plausible distractors representing common misconceptions
-      - Mutually exclusive and grammatically parallel options
-      - Correct answer is fully correct, distractors fully incorrect
+      **2. Multiple Choice Excellence:**
+      - Distractors: 3-5 plausible options representing common misconceptions
+      - Parallelism: Grammatically consistent and similar length options
+      - Exclusivity: Mutually exclusive choices, one clearly correct answer
+      - Realism: Distractors based on actual student errors
+      - Homogeneity: Options of similar complexity and abstraction level
+
+      **3. Cognitive Alignment:**
+      - Bloom's Level Accuracy: Does cognitive demand match stated level?
+      - Difficulty Calibration: Is 1-10 rating appropriate for complexity?
+      - Skill Assessment: Does question measure intended learning outcome?
+      - Depth vs. Breadth: Appropriate focus for assessment goals
+
+      **4. Psychometric Quality:**
+      - Discrimination: Can question differentiate between ability levels?
+      - Item Response Theory: Optimal difficulty for target population
+      - Construct Validity: Measures what it claims to measure
+      - Face Validity: Appears relevant to domain experts
+
+      **5. Accessibility & Fairness:**
+      - Universal Design: Accessible to diverse learning needs
+      - Language Barriers: Clear for English language learners
+      - Cultural Sensitivity: Avoids cultural assumptions
+      - Format Clarity: Visual layout supports comprehension
+
+      **6. Educational Value:**
+      - Learning Promotion: Encourages deep understanding
+      - Feedback Potential: Errors provide diagnostic information
+      - Curriculum Alignment: Matches educational standards
+      - Transfer Potential: Knowledge applicable beyond test context
       - Similar length and complexity across options
       - Avoidance of "all/none of the above"
       - Realistic, educationally meaningful distractors

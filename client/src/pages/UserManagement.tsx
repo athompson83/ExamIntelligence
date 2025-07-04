@@ -31,12 +31,58 @@ import {
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
+interface UserAccount {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'super_admin' | 'admin' | 'teacher' | 'student';
+  accountId: string;
+  profileImageUrl?: string;
+  isActive: boolean;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+  metadata?: {
+    department?: string;
+    studentId?: string;
+    grade?: string;
+    permissions?: string[];
+  };
+}
+
+interface Account {
+  id: string;
+  name: string;
+  type: 'school' | 'university' | 'corporate' | 'individual';
+  isActive: boolean;
+  userCount: number;
+  createdAt: string;
+}
+
 export default function UserManagement() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [accountFilter, setAccountFilter] = useState("all");
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState(false);
+  const [isCreateAccountDialogOpen, setIsCreateAccountDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const form = useForm({
+    defaultValues: {
+      email: "",
+      firstName: "",
+      lastName: "",
+      role: "student",
+      accountId: "",
+      department: "",
+      studentId: "",
+      grade: "",
+    },
+  });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
