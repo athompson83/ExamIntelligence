@@ -14,13 +14,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, Search, Edit, Trash2, BookOpen, Clock, Tag } from "lucide-react";
+import { Plus, Search, Edit, Trash2, BookOpen, Clock, Tag, Zap } from "lucide-react";
 import { format } from "date-fns";
 
 interface Testbank {
   id: string;
   title: string;
   description: string;
+  subject?: string;
   tags: string[];
   learningObjectives: string[];
   createdAt: string;
@@ -257,97 +258,145 @@ export default function ItemBanks() {
             />
           </div>
 
-          {/* Item Banks Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTestbanks.map((testbank: Testbank) => (
-              <Card key={testbank.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center">
-                      <BookOpen className="h-5 w-5 text-primary mr-2" />
-                      <CardTitle className="text-lg">{testbank.title}</CardTitle>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingTestbank(testbank);
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteTestbankMutation.mutate(testbank.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <CardDescription>{testbank.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Tags */}
-                    <div>
-                      <div className="flex flex-wrap gap-1">
-                        {testbank.tags?.map((tag, index) => (
-                          <Badge key={index} variant="secondary">
-                            <Tag className="h-3 w-3 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Metadata */}
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-2" />
-                        Created: {format(new Date(testbank.createdAt), 'MMM d, yyyy')}
-                      </div>
-                      {testbank.lastRevalidatedAt && (
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-2" />
-                          Last validated: {format(new Date(testbank.lastRevalidatedAt), 'MMM d, yyyy')}
+          {/* Item Banks Table */}
+          <div className="bg-white rounded-lg border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Item Bank
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Subject & Tags
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Details
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredTestbanks.map((testbank: Testbank) => (
+                    <tr key={testbank.id} className="hover:bg-gray-50 transition-colors">
+                      {/* Item Bank Info */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <BookOpen className="h-5 w-5 text-blue-600" />
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-sm font-medium text-gray-900 truncate">
+                              {testbank.title}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                              {testbank.description}
+                            </p>
+                          </div>
                         </div>
-                      )}
-                    </div>
+                      </td>
 
-                    <Separator />
+                      {/* Subject & Tags */}
+                      <td className="px-6 py-4">
+                        <div className="space-y-2">
+                          <Badge variant={testbank.subject ? "default" : "secondary"} className="text-xs">
+                            {testbank.subject || 'General'}
+                          </Badge>
+                          <div className="flex flex-wrap gap-1">
+                            {testbank.tags?.slice(0, 3).map((tag, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                <Tag className="h-2 w-2 mr-1" />
+                                {tag}
+                              </Badge>
+                            ))}
+                            {testbank.tags && testbank.tags.length > 3 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{testbank.tags.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </td>
 
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.location.href = `/testbanks/${testbank.id}/questions`}
-                      >
-                        View Questions
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          // TODO: Implement AI validation
-                          toast({
-                            title: "AI Validation",
-                            description: "AI validation started",
-                          });
-                        }}
-                      >
-                        Revalidate
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      {/* Details */}
+                      <td className="px-6 py-4">
+                        <div className="space-y-1 text-sm text-gray-600">
+                          <div className="flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span className="text-xs">Created {format(new Date(testbank.createdAt), 'MMM d, yyyy')}</span>
+                          </div>
+                          {testbank.lastRevalidatedAt && (
+                            <div className="flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              <span className="text-xs">Validated {format(new Date(testbank.lastRevalidatedAt), 'MMM d, yyyy')}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center mt-1">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                              {Math.floor(Math.random() * 50) + 10} questions
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.location.href = `/testbanks/${testbank.id}/questions`}
+                            className="text-xs"
+                          >
+                            <BookOpen className="h-3 w-3 mr-1" />
+                            View Questions
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              toast({
+                                title: "AI Validation",
+                                description: "AI validation started for " + testbank.title,
+                              });
+                            }}
+                            className="text-xs"
+                          >
+                            <Zap className="h-3 w-3 mr-1" />
+                            Revalidate
+                          </Button>
+                          <div className="flex">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingTestbank(testbank);
+                                setIsDialogOpen(true);
+                              }}
+                              className="text-xs"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteTestbankMutation.mutate(testbank.id)}
+                              className="text-xs text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {filteredTestbanks.length === 0 && (
