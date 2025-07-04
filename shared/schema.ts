@@ -125,6 +125,10 @@ export const questions = pgTable("questions", {
   }).default("pending"),
   aiConfidenceScore: numeric("ai_confidence_score", { precision: 3, scale: 2 }),
   
+  // AI-generated educational content
+  questionReasoning: text("question_reasoning"), // Why this question is educationally valuable
+  correctAnswerReasoning: text("correct_answer_reasoning"), // High-yield explanation of correct answer
+  
   // Accessibility features
   altText: text("alt_text"),
   screenReaderText: text("screen_reader_text"),
@@ -149,6 +153,7 @@ export const answerOptions = pgTable("answer_options", {
   isCorrect: boolean("is_correct").default(false),
   mediaUrl: varchar("media_url"),
   displayOrder: integer("display_order").default(0),
+  reasoning: text("reasoning"), // AI-generated explanation for why this answer is correct/incorrect
 });
 
 // Quiz table - Enhanced with full Canvas LMS features
@@ -215,6 +220,11 @@ export const quizzes = pgTable("quizzes", {
   showCorrectAnswersAt: timestamp("show_correct_answers_at"),
   hideCorrectAnswersAt: timestamp("hide_correct_answers_at"),
   showCorrectAnswersLastAttempt: boolean("show_correct_answers_last_attempt").default(false),
+  
+  // AI-powered feedback and learning features
+  enableQuestionFeedback: boolean("enable_question_feedback").default(true),
+  enableLearningPrescription: boolean("enable_learning_prescription").default(true),
+  showAnswerReasoning: boolean("show_answer_reasoning").default(false),
   
   // Canvas-style result display
   hideResults: boolean("hide_results").default(false),

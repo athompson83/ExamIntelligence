@@ -62,6 +62,9 @@ interface Quiz {
   passingGrade: number;
   gradeToShow: string;
   status: string;
+  enableQuestionFeedback: boolean;
+  enableLearningPrescription: boolean;
+  showAnswerReasoning: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -125,6 +128,9 @@ export default function EnhancedQuizBuilder() {
     passingGrade: 70,
     gradeToShow: "percentage",
     status: "draft",
+    enableQuestionFeedback: true,
+    enableLearningPrescription: true,
+    showAnswerReasoning: false,
   });
 
   const [activeTab, setActiveTab] = useState("details");
@@ -957,6 +963,59 @@ export default function EnhancedQuizBuilder() {
                               <SelectItem value="manual">Manual Release</SelectItem>
                             </SelectContent>
                           </Select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <h4 className="font-medium mb-4">AI-Powered Learning Features</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="enableQuestionFeedback">Question Feedback</Label>
+                          <p className="text-sm text-muted-foreground">AI-generated explanations for each question</p>
+                        </div>
+                        <Switch
+                          id="enableQuestionFeedback"
+                          checked={quiz.enableQuestionFeedback || false}
+                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableQuestionFeedback: checked }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="enableLearningPrescription">Learning Prescriptions</Label>
+                          <p className="text-sm text-muted-foreground">Personalized study recommendations after quiz completion</p>
+                        </div>
+                        <Switch
+                          id="enableLearningPrescription"
+                          checked={quiz.enableLearningPrescription || false}
+                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableLearningPrescription: checked }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="showAnswerReasoning">Answer Reasoning</Label>
+                          <p className="text-sm text-muted-foreground">Show explanations for why each answer option is correct/incorrect</p>
+                        </div>
+                        <Switch
+                          id="showAnswerReasoning"
+                          checked={quiz.showAnswerReasoning || false}
+                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, showAnswerReasoning: checked }))}
+                        />
+                      </div>
+
+                      {quiz.enableLearningPrescription && (
+                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <Brain className="h-4 w-4 inline mr-1" />
+                            Learning prescriptions will analyze student performance and provide detailed study recommendations based on their quiz results.
+                            The level of detail depends on whether correct answers are shown to students.
+                          </p>
                         </div>
                       )}
                     </div>

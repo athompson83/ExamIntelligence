@@ -170,6 +170,112 @@ export async function generateStudyGuide(topic: string, sourceType: string, sour
   }
 }
 
+export async function generateLearningPrescription(
+  attempt: QuizAttempt, 
+  responses: QuizResponse[], 
+  questions: Question[], 
+  showCorrectAnswers: boolean = false
+): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    return "Learning prescription service is currently unavailable. Please contact your instructor for personalized feedback.";
+  }
+
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    const incorrectResponses = responses.filter(r => !r.isCorrect);
+    const totalQuestions = responses.length;
+    const correctAnswers = responses.filter(r => r.isCorrect).length;
+    const score = (correctAnswers / totalQuestions) * 100;
+
+    // Group questions by concepts/topics
+    const conceptAnalysis = responses.map(response => {
+      const question = questions.find(q => q.id === response.questionId);
+      return {
+        question: question?.questionText || 'Question not found',
+        isCorrect: response.isCorrect,
+        selectedAnswer: response.response, // Use response field instead of selectedAnswer
+        tags: question?.tags || [],
+        bloomsLevel: question?.bloomsLevel || 'unknown',
+        difficultyScore: question?.difficultyScore || 0,
+        correctFeedback: question?.correctFeedback || '',
+        generalFeedback: question?.generalFeedback || '',
+        questionReasoning: question?.questionReasoning || '',
+        correctAnswerReasoning: question?.correctAnswerReasoning || ''
+      };
+    });
+
+    const prompt = `You are an expert educational specialist creating a personalized learning prescription for a student who just completed a quiz.
+
+QUIZ PERFORMANCE ANALYSIS:
+- Overall Score: ${score.toFixed(1)}% (${correctAnswers}/${totalQuestions} correct)
+- Questions Missed: ${incorrectResponses.length}
+- Show Correct Answers: ${showCorrectAnswers ? 'YES' : 'NO'}
+
+DETAILED QUESTION ANALYSIS:
+${conceptAnalysis.map((item, index) => `
+Question ${index + 1}: ${item.question}
+- Result: ${item.isCorrect ? 'CORRECT' : 'INCORRECT'}
+- Student Answer: ${item.selectedAnswer}
+- Bloom's Level: ${item.bloomsLevel}
+- Difficulty: ${item.difficultyScore}/10
+- Topics/Tags: ${item.tags.join(', ')}
+${item.questionReasoning ? `- Educational Purpose: ${item.questionReasoning}` : ''}
+${item.correctAnswerReasoning ? `- Key Concepts: ${item.correctAnswerReasoning}` : ''}
+`).join('\n')}
+
+PRESCRIPTION REQUIREMENTS:
+
+${showCorrectAnswers ? `
+**FULL PRESCRIPTION MODE** (Correct answers are shown to student):
+1. Provide detailed explanations of incorrect answers
+2. Connect concepts across questions to show learning patterns
+3. Include specific study strategies and resources
+4. Offer practice recommendations for weak areas
+5. Explain the reasoning behind correct answers for reinforcement
+` : `
+**CONCEPT-FOCUSED MODE** (Correct answers are hidden):
+1. Focus on underlying concepts and knowledge gaps without revealing specific answers
+2. Provide detailed explanations of key concepts the student needs to master
+3. Offer study strategies and resources for concept mastery
+4. Guide toward understanding principles rather than memorizing answers
+5. Include high-yield learning tips for the subject area
+`}
+
+LEARNING PRESCRIPTION STRUCTURE:
+1. **Performance Summary**: Brief overview of strengths and areas for improvement
+2. **Key Concepts to Master**: Detailed explanations of fundamental concepts that need work
+3. **Study Strategy**: Specific, actionable study recommendations
+4. **Practice Recommendations**: Types of questions/activities to focus on
+5. **Resources**: Suggested materials or methods for concept mastery
+6. **Next Steps**: Clear action plan for improvement
+
+Generate a comprehensive, encouraging, and actionable learning prescription that helps the student understand not just what they got wrong, but why these concepts matter and how to master them. Focus on deep learning rather than superficial memorization.
+
+Format the response in clear, student-friendly markdown with headers and bullet points for easy reading.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert educational specialist and learning coach with deep expertise in personalized learning, cognitive science, and effective study strategies. Create actionable, encouraging learning prescriptions that promote deep understanding and long-term retention.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+    });
+
+    return response.choices[0].message.content || "Unable to generate learning prescription. Please review your quiz results with your instructor.";
+  } catch (error) {
+    console.error("Error generating learning prescription:", error);
+    return "Learning prescription service encountered an error. Please contact your instructor for personalized feedback on your quiz performance.";
+  }
+}
+
 export async function generateImprovementPlan(attempt: QuizAttempt, responses: QuizResponse[]): Promise<string> {
   try {
     const incorrectResponses = responses.filter(r => !r.isCorrect);
@@ -665,15 +771,24 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
             "difficultyScore": 5,
             "bloomsLevel": "understand|apply|analyze|evaluate|create|remember",
             "tags": ["tag1", "tag2"],
-            "correctFeedback": "Feedback for correct answer",
-            "incorrectFeedback": "Feedback for incorrect answer",
-            "generalFeedback": "General explanation",
+            "questionReasoning": "Detailed explanation of why this question is educationally valuable and what learning objectives it assesses",
+            "correctAnswerReasoning": "High-yield explanation of the correct answer and underlying concepts students need to understand",
+            "correctFeedback": "Positive reinforcement feedback shown when student answers correctly, explaining why their choice demonstrates understanding",
+            "incorrectFeedback": "Constructive feedback shown when student answers incorrectly, guiding them toward correct understanding without giving away the answer",
+            "generalFeedback": "Learning-focused explanation of key concepts this question tests, useful for study and review",
             "partialCredit": false,
             "answerOptions": [
               {
                 "answerText": "Option text",
                 "isCorrect": true,
-                "displayOrder": 0
+                "displayOrder": 0,
+                "reasoning": "Detailed explanation of why this answer is correct and what key concepts it demonstrates that students should understand"
+              },
+              {
+                "answerText": "Distractor option",
+                "isCorrect": false,
+                "displayOrder": 1,
+                "reasoning": "Explanation of why this answer is incorrect and what common misconception or error it represents"
               }
             ],
             "imageUrl": "",
