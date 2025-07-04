@@ -51,7 +51,7 @@ export function Sidebar() {
           <div className="bg-white rounded-lg p-2 mr-2">
             <GraduationCap className="h-5 w-5 text-primary" />
           </div>
-          <h1 className="text-white text-xl font-bold">ExamGen Pro</h1>
+          <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
         </div>
       </div>
       

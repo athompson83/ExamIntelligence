@@ -21,7 +21,7 @@ export default function Landing() {
             <div className="bg-primary rounded-lg p-3 mr-4">
               <GraduationCap className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900">ExamGen Pro</h1>
+            <h1 className="text-4xl font-bold text-gray-900">ProficiencyAI</h1>
           </div>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             Advanced educational assessment platform with AI-powered question validation, 

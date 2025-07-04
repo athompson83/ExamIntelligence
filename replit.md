@@ -1,8 +1,8 @@
-# ExamGen Pro - Replit.md
+# ProficiencyAI - Replit.md
 
 ## Overview
 
-ExamGen Pro is a comprehensive educational assessment platform designed to compete with Canvas LMS testing capabilities. The application features AI-powered question validation, live proctoring, advanced analytics, and comprehensive testbank management. Built with modern web technologies, it provides a robust solution for educational institutions requiring advanced assessment tools.
+ProficiencyAI is a comprehensive educational assessment platform designed to compete with Canvas LMS testing capabilities. The application features AI-powered question validation, live proctoring, advanced analytics, and comprehensive testbank management. Built with modern web technologies, it provides a robust solution for educational institutions requiring advanced assessment tools.
 
 ## System Architecture
 
