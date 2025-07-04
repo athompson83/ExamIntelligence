@@ -81,8 +81,30 @@ interface QuestionManagerProps {
 
 export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
+
+  // Redirect if not authenticated
+  if (!isLoading && !isAuthenticated) {
+    toast({
+      title: "Unauthorized",
+      description: "You are logged out. Logging in again...",
+      variant: "destructive",
+    });
+    setTimeout(() => {
+      window.location.href = "/api/login";
+    }, 500);
+    return null;
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
@@ -134,7 +156,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   });
 
   // Fetch questions
-  const { data: questions, isLoading: questionsLoading } = useQuery({
+  const { data: questions, isLoading: questionsLoading, error: questionsError } = useQuery({
     queryKey: ['/api/testbanks', testbankId, 'questions'],
     enabled: isAuthenticated && !!testbankId,
   });
@@ -378,8 +400,12 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   };
 
   const filteredQuestions = questions?.filter((question: Question) => {
-    const matchesSearch = question.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         question.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (!question) return false;
+    
+    const matchesSearch = !searchTerm || 
+                         (question.questionText && question.questionText.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (question.tags && question.tags.some(tag => tag && tag.toLowerCase().includes(searchTerm.toLowerCase())));
+    
     const matchesType = filterType === "all" || question.questionType === filterType;
     const matchesDifficulty = filterDifficulty === "all" || 
                              (filterDifficulty === "easy" && question.difficultyScore <= 3) ||
@@ -978,7 +1004,33 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
 
           {/* Questions List */}
           <div className="space-y-4">
-            {filteredQuestions.length > 0 ? (
+            {questionsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                <p className="text-gray-600">Loading questions...</p>
+              </div>
+            ) : questionsError ? (
+              <div className="text-center py-8">
+                <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to Load Questions</h3>
+                <p className="text-gray-600 mb-4">
+                  {questionsError instanceof Error && questionsError.message.includes('401') 
+                    ? 'Please log in again to access your questions.'
+                    : 'There was an error loading your questions. Please try again.'}
+                </p>
+                <Button 
+                  onClick={() => {
+                    if (questionsError instanceof Error && questionsError.message.includes('401')) {
+                      window.location.href = "/api/login";
+                    } else {
+                      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', testbankId, 'questions'] });
+                    }
+                  }}
+                >
+                  {questionsError instanceof Error && questionsError.message.includes('401') ? 'Log In' : 'Try Again'}
+                </Button>
+              </div>
+            ) : filteredQuestions && filteredQuestions.length > 0 ? (
               filteredQuestions.map((question: Question) => (
                 <Card key={question.id} className="hover:shadow-md transition-shadow">
                   <CardHeader>
