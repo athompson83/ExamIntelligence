@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "ProficiencyAI",
+    "slug": "proficiencyai-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.proficiencyai.mobile",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera for exam proctoring to ensure academic integrity.",
+        "NSMicrophoneUsageDescription": "This app uses the microphone for exam proctoring to ensure academic integrity.",
+        "NSFaceIDUsageDescription": "This app uses Face ID for secure authentication during exams."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.proficiencyai.mobile",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-av",
+      "expo-notifications",
+      "expo-secure-store",
+      "expo-local-authentication",
+      "expo-sqlite"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "proficiencyai-mobile"
+      }
+    }
+  }
+}
