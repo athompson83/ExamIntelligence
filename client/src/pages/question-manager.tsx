@@ -1055,19 +1055,19 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-base mb-2">{question.questionText}</CardTitle>
+                        <CardTitle className="text-base mb-2">{question.questionText || 'No question text'}</CardTitle>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline">{question.questionType.replace('_', ' ')}</Badge>
-                          <Badge variant="secondary">{question.bloomsLevel}</Badge>
+                          <Badge variant="outline">{question.questionType ? question.questionType.replace('_', ' ') : 'Unknown'}</Badge>
+                          <Badge variant="secondary">{question.bloomsLevel || 'N/A'}</Badge>
                           <Badge 
                             variant={
-                              question.difficultyScore <= 3 ? "default" :
-                              question.difficultyScore <= 7 ? "secondary" : "destructive"
+                              (question.difficultyScore || 0) <= 3 ? "default" :
+                              (question.difficultyScore || 0) <= 7 ? "secondary" : "destructive"
                             }
                           >
-                            Difficulty: {question.difficultyScore}/10
+                            Difficulty: {question.difficultyScore || 0}/10
                           </Badge>
-                          <Badge variant="outline">{question.points} pts</Badge>
+                          <Badge variant="outline">{question.points || 0} pts</Badge>
                           {question.aiValidationStatus && (
                             <Badge 
                               variant={
