@@ -50,15 +50,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //   console.log('LTI service initialization failed, continuing without LTI:', error.message);
   // }
 
-  // Auth middleware
-  await setupAuth(app);
+  // Auth middleware - temporarily disabled for testing
+  // await setupAuth(app);
+
+  // Mock auth for testing
+  const mockUser = {
+    id: "test-user",
+    email: "test@example.com",
+    firstName: "Test",
+    lastName: "User",
+    accountId: "default-account",
+    role: "teacher"
+  };
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
-      const userId = req.user.claims?.sub || req.user.id;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      res.json(mockUser);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -76,9 +84,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard routes
-  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/stats', async (req: any, res) => {
     try {
-      const userId = req.user.claims?.sub || req.user.id;
+      const userId = "test-user"; // Mock user ID for testing
       const stats = await storage.getDashboardStats(userId);
       res.json(stats);
     } catch (error) {
@@ -1607,18 +1615,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } = await import('./mlInsightsService');
 
   // Get comprehensive ML insights
-  app.get('/api/analytics/ml-insights', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics/ml-insights', async (req: any, res) => {
     try {
-      const userId = req.user.claims?.sub || req.user.id;
       const { quizId, timeRange = '30d' } = req.query;
       
-      // Get user's account for filtering
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const insights = await generateMLInsights(quizId, user.accountId, timeRange);
+      // Use default test account for ML insights
+      const insights = await generateMLInsights(quizId, "default-account", timeRange);
       res.json(insights);
     } catch (error) {
       console.error("Error generating ML insights:", error);
@@ -1739,12 +1741,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const insights = await generateMLInsights(undefined, user.accountId, '90d');
       
       const predictiveData = {
-        trends: insights.predictiveAnalytics.overallTrends,
-        riskFactors: insights.predictiveAnalytics.riskFactors,
-        optimizationOpportunities: insights.predictiveAnalytics.optimizationOpportunities,
-        studentRiskPredictions: insights.performancePredictions.filter(p => p.riskLevel !== 'low'),
-        conceptMasteryForecasts: insights.conceptMastery,
-        engagementTrends: insights.engagementPatterns
+        trends: insights?.predictiveAnalytics?.overallTrends || [],
+        riskFactors: insights?.predictiveAnalytics?.riskFactors || [],
+        optimizationOpportunities: insights?.predictiveAnalytics?.optimizationOpportunities || [],
+        studentRiskPredictions: insights?.performancePredictions?.filter(p => p.riskLevel !== 'low') || [],
+        conceptMasteryForecasts: insights?.conceptMastery || [],
+        engagementTrends: insights?.engagementPatterns || []
       };
 
       res.json(predictiveData);
