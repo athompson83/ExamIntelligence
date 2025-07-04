@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -134,7 +134,7 @@ export default function ReferenceBanks() {
     const tags = tagsString ? tagsString.split(",").map(tag => tag.trim()) : [];
     
     createBankMutation.mutate({
-      title: formData.get("title") as string,
+      name: formData.get("title") as string,
       description: formData.get("description") as string,
       tags,
     });
@@ -151,7 +151,7 @@ export default function ReferenceBanks() {
     updateBankMutation.mutate({
       id: editingBank.id,
       data: {
-        title: formData.get("title") as string,
+        name: formData.get("title") as string,
         description: formData.get("description") as string,
         tags,
       },
@@ -222,6 +222,9 @@ export default function ReferenceBanks() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create Reference Bank</DialogTitle>
+              <DialogDescription>
+                Create a new reference bank to organize your educational materials.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateBank} className="space-y-4">
               <div>
@@ -332,6 +335,9 @@ export default function ReferenceBanks() {
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>Add Reference</DialogTitle>
+                        <DialogDescription>
+                          Add a new reference material to this bank.
+                        </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleCreateReference} className="space-y-4">
                         <div>
@@ -472,6 +478,9 @@ export default function ReferenceBanks() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Reference Bank</DialogTitle>
+              <DialogDescription>
+                Update the reference bank details.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEditBank} className="space-y-4">
               <div>
@@ -505,6 +514,9 @@ export default function ReferenceBanks() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Edit Reference</DialogTitle>
+              <DialogDescription>
+                Update the reference material details.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEditReference} className="space-y-4">
               <div>
