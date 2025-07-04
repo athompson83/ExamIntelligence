@@ -44,7 +44,7 @@ export function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <nav className="bg-sidebar-background border-r border-sidebar-border w-64 fixed inset-y-0 left-0 z-50 shadow-sm">
+    <nav className="border-r border-sidebar-border w-64 fixed inset-y-0 left-0 z-50 shadow-sm bg-[#ffffff]">
       {/* Header */}
       <div className="flex items-center justify-center h-16 bg-primary">
         <div className="flex items-center">
@@ -54,7 +54,6 @@ export function Sidebar() {
           <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
         </div>
       </div>
-      
       {/* Navigation */}
       <div className="flex flex-col mt-8">
         {navigationItems.map((section) => (
