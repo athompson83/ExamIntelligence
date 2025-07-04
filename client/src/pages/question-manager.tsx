@@ -175,7 +175,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
 
   // Fetch questions
   const { data: questions, isLoading: questionsLoading, error: questionsError } = useQuery({
-    queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'],
+    queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`],
     enabled: isAuthenticated && !!effectiveTestbankId,
   });
 
@@ -191,7 +191,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       await apiRequest("POST", `/api/testbanks/${effectiveTestbankId}/questions`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
       setIsCreateDialogOpen(false);
       resetQuestionForm();
       toast({
@@ -272,7 +272,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
       setIsAiDialogOpen(false);
       
       // Reset form for next use
@@ -302,7 +302,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       await apiRequest("PUT", `/api/questions/${id}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
       setEditingQuestion(null);
       setIsCreateDialogOpen(false);
       resetQuestionForm();
@@ -326,7 +326,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       await apiRequest("DELETE", `/api/questions/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
       toast({
         title: "Success",
         description: "Question deleted successfully",
@@ -441,7 +441,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       await apiRequest("PUT", `/api/questions/${questionId}`, {
         aiValidationStatus: "approved"
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
       toast({
         title: "Success",
         description: "Question approved successfully",
@@ -460,7 +460,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       await apiRequest("PUT", `/api/questions/${questionId}`, {
         aiValidationStatus: "rejected"
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
       toast({
         title: "Success",
         description: "Question rejected successfully",
@@ -477,7 +477,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const handleRefreshQuestion = async (question: Question) => {
     try {
       const response = await apiRequest("POST", `/api/questions/${question.id}/refresh`);
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
       toast({
         title: "Success",
         description: "Question refreshed successfully",
@@ -494,7 +494,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const handleCreateSimilar = async (question: Question) => {
     try {
       const response = await apiRequest("POST", `/api/questions/${question.id}/similar`);
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
       toast({
         title: "Success",
         description: "Similar question created successfully",
@@ -511,7 +511,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const handleChangeOptions = async (question: Question) => {
     try {
       const response = await apiRequest("POST", `/api/questions/${question.id}/change-options`);
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
       toast({
         title: "Success",
         description: "Answer options changed successfully",
@@ -1331,7 +1331,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     if (questionsError instanceof Error && questionsError.message.includes('401')) {
                       window.location.href = "/api/login";
                     } else {
-                      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+                      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
                     }
                   }}
                 >
