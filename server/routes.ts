@@ -1595,6 +1595,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   */
 
+  // ========== ML ANALYTICS ENDPOINTS ==========
+  
+  // Import ML Insights Service
+  const { 
+    generateMLInsights, 
+    predictStudentPerformance, 
+    detectAnomalies, 
+    generateLearningPath, 
+    analyzeQuestionClusters 
+  } = await import('./mlInsightsService');
+
+  // Get comprehensive ML insights
+  app.get('/api/analytics/ml-insights', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const { quizId, timeRange = '30d' } = req.query;
+      
+      // Get user's account for filtering
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const insights = await generateMLInsights(quizId, user.accountId, timeRange);
+      res.json(insights);
+    } catch (error) {
+      console.error("Error generating ML insights:", error);
+      res.status(500).json({ message: "Failed to generate ML insights" });
+    }
+  });
+
+  // Predict student performance
+  app.get('/api/analytics/predict-performance/:studentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { studentId } = req.params;
+      const { quizId } = req.query;
+      
+      const prediction = await predictStudentPerformance(studentId, quizId);
+      res.json(prediction);
+    } catch (error) {
+      console.error("Error predicting performance:", error);
+      res.status(500).json({ message: "Failed to predict performance" });
+    }
+  });
+
+  // Detect anomalies in quiz data
+  app.get('/api/analytics/anomalies/:quizId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      
+      const anomalies = await detectAnomalies(quizId);
+      res.json(anomalies);
+    } catch (error) {
+      console.error("Error detecting anomalies:", error);
+      res.status(500).json({ message: "Failed to detect anomalies" });
+    }
+  });
+
+  // Generate personalized learning path
+  app.get('/api/analytics/learning-path/:studentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { studentId } = req.params;
+      
+      const learningPath = await generateLearningPath(studentId);
+      res.json(learningPath);
+    } catch (error) {
+      console.error("Error generating learning path:", error);
+      res.status(500).json({ message: "Failed to generate learning path" });
+    }
+  });
+
+  // Analyze question clusters for testbank
+  app.get('/api/analytics/question-clusters/:testbankId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { testbankId } = req.params;
+      
+      const clusters = await analyzeQuestionClusters(testbankId);
+      res.json(clusters);
+    } catch (error) {
+      console.error("Error analyzing question clusters:", error);
+      res.status(500).json({ message: "Failed to analyze question clusters" });
+    }
+  });
+
+  // Advanced quiz analytics with ML insights
+  app.get('/api/analytics/quiz/:quizId/advanced', isAuthenticated, async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const userId = req.user.claims?.sub || req.user.id;
+      
+      // Get comprehensive quiz data
+      const [quiz, attempts, questions] = await Promise.all([
+        storage.getQuiz(quizId),
+        storage.getActiveQuizAttempts(quizId),
+        storage.getQuestionsByQuiz(quizId)
+      ]);
+
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      // Generate ML insights specific to this quiz
+      const mlInsights = await generateMLInsights(quizId);
+      
+      // Get anomalies for this quiz
+      const anomalies = await detectAnomalies(quizId);
+
+      // Combine traditional analytics with ML insights
+      const basicAnalytics = await storage.getQuizAnalytics(quizId);
+      
+      const advancedAnalytics = {
+        basic: basicAnalytics,
+        quiz: quiz,
+        attempts: attempts,
+        questions: questions,
+        mlInsights: mlInsights,
+        anomalies: anomalies,
+        performanceTrends: mlInsights.performancePredictions,
+        conceptMastery: mlInsights.conceptMastery,
+        adaptiveRecommendations: mlInsights.adaptiveDifficulty,
+        engagementPatterns: mlInsights.engagementPatterns
+      };
+
+      res.json(advancedAnalytics);
+    } catch (error) {
+      console.error("Error generating advanced quiz analytics:", error);
+      res.status(500).json({ message: "Failed to generate advanced analytics" });
+    }
+  });
+
+  // Predictive analytics dashboard
+  app.get('/api/analytics/predictive', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Generate comprehensive predictive insights
+      const insights = await generateMLInsights(undefined, user.accountId, '90d');
+      
+      const predictiveData = {
+        trends: insights.predictiveAnalytics.overallTrends,
+        riskFactors: insights.predictiveAnalytics.riskFactors,
+        optimizationOpportunities: insights.predictiveAnalytics.optimizationOpportunities,
+        studentRiskPredictions: insights.performancePredictions.filter(p => p.riskLevel !== 'low'),
+        conceptMasteryForecasts: insights.conceptMastery,
+        engagementTrends: insights.engagementPatterns
+      };
+
+      res.json(predictiveData);
+    } catch (error) {
+      console.error("Error generating predictive analytics:", error);
+      res.status(500).json({ message: "Failed to generate predictive analytics" });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // Setup WebSocket

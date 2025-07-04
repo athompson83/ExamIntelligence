@@ -27,6 +27,7 @@ const navigationItems = [
       { name: "Study Aids", icon: Brain, href: "/study-aids" },
       { name: "Live Exams", icon: Play, href: "/live-exams" },
       { name: "Analytics", icon: BarChart3, href: "/analytics" },
+      { name: "ML Analytics", icon: Brain, href: "/ml-analytics" },
       { name: "AI Resources", icon: Bot, href: "/ai-resources" },
     ]
   },

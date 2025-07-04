@@ -19,6 +19,7 @@ import AdminSettings from "@/pages/admin-settings";
 import ReferenceBanks from "@/pages/reference-banks";
 import EnhancedQuizBuilder from "@/pages/enhanced-quiz-builder";
 import StudyAids from "@/pages/study-aids";
+import MLAnalytics from "@/pages/MLAnalytics";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -51,6 +52,7 @@ function Router() {
           <Route path="/live-exams" component={LiveExams} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/analytics-dashboard" component={AnalyticsDashboard} />
+          <Route path="/ml-analytics" component={MLAnalytics} />
           <Route path="/speed-grader">
             {() => <SpeedGrader />}
           </Route>
