@@ -22,6 +22,7 @@ import StudyAids from "@/pages/study-aids";
 import MLAnalytics from "@/pages/MLAnalytics";
 import ComprehensiveAnalytics from "@/pages/ComprehensiveAnalytics";
 import NotFound from "@/pages/not-found";
+import ProjectStatus from "@/pages/project-status";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -65,6 +66,7 @@ function Router() {
           <Route path="/admin-settings" component={AdminSettings} />
           <Route path="/reference-banks" component={ReferenceBanks} />
           <Route path="/study-aids" component={StudyAids} />
+          <Route path="/project-status" component={ProjectStatus} />
           <Route path="/exam/:id">
             {(params) => <ExamInterface examId={params.id} />}
           </Route>
