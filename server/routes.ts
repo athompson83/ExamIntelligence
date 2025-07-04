@@ -725,6 +725,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/reference-banks", isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
       const parsedData = insertReferenceBankSchema.parse({
         ...req.body,
         creatorId: userId
@@ -732,20 +736,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const referenceBank = await storage.createReferenceBank(parsedData);
       res.json(referenceBank);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating reference bank:", error);
-      res.status(500).json({ message: "Failed to create reference bank" });
+      
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: "Invalid data provided", 
+          details: error.errors 
+        });
+      }
+      
+      if (error.code === '42P01') {
+        return res.status(500).json({ 
+          message: "Database configuration error. Please contact administrator." 
+        });
+      }
+      
+      res.status(500).json({ 
+        message: "Failed to create reference bank. Please try again." 
+      });
     }
   });
 
   app.get("/api/reference-banks", isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
       const referenceBanks = await storage.getReferenceBanksByUser(userId);
       res.json(referenceBanks);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching reference banks:", error);
-      res.status(500).json({ message: "Failed to fetch reference banks" });
+      
+      if (error.code === '42P01') {
+        return res.status(500).json({ 
+          message: "Database configuration error. Please contact administrator." 
+        });
+      }
+      
+      res.status(500).json({ 
+        message: "Failed to fetch reference banks. Please try again." 
+      });
     }
   });
 
