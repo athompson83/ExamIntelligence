@@ -27,6 +27,18 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// Account/Organization table
+export const accounts = pgTable("accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  subscriptionPlan: varchar("subscription_plan", { enum: ["free", "basic", "premium", "enterprise"] }).notNull().default("free"),
+  maxUsers: integer("max_users").default(10),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // User storage table (mandatory for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
@@ -34,7 +46,10 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role", { enum: ["teacher", "student", "admin"] }).notNull().default("student"),
+  role: varchar("role", { enum: ["super_admin", "admin", "teacher", "student"] }).notNull().default("student"),
+  accountId: uuid("account_id").references(() => accounts.id),
+  isActive: boolean("is_active").notNull().default(true),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -45,6 +60,8 @@ export const testbanks = pgTable("testbanks", {
   title: varchar("title").notNull(),
   description: text("description"),
   creatorId: varchar("creator_id").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  isShared: boolean("is_shared").notNull().default(true), // Shared within account
   tags: jsonb("tags").$type<string[]>().default([]),
   learningObjectives: jsonb("learning_objectives").$type<string[]>().default([]),
   lastRevalidatedAt: timestamp("last_revalidated_at"),
@@ -141,6 +158,7 @@ export const quizzes = pgTable("quizzes", {
   description: text("description"),
   instructions: text("instructions"), // Student instructions
   creatorId: varchar("creator_id").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
   
   // Canvas quiz types: graded_quiz, practice_quiz, graded_survey, ungraded_survey
   quizType: varchar("quiz_type", {
@@ -347,18 +365,132 @@ export const references = pgTable("references", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Scheduled Assignments table - for teacher assignments to students
+export const scheduledAssignments = pgTable("scheduled_assignments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
+  assignerId: varchar("assigner_id").references(() => users.id).notNull(), // Teacher who assigned
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  
+  // Assignment details
+  title: varchar("title").notNull(),
+  description: text("description"),
+  instructions: text("instructions"),
+  
+  // Scheduling
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  dueDate: timestamp("due_date").notNull(),
+  availableFrom: timestamp("available_from").notNull(),
+  availableUntil: timestamp("available_until").notNull(),
+  
+  // Assignment settings
+  allowLateSubmissions: boolean("allow_late_submissions").default(false),
+  showResultsImmediately: boolean("show_results_immediately").default(false),
+  requireProctoring: boolean("require_proctoring").default(false),
+  maxAttempts: integer("max_attempts").default(1),
+  
+  // Student targeting
+  targetStudents: jsonb("target_students").$type<string[]>().default([]), // specific student IDs
+  targetAll: boolean("target_all").default(false), // all students in account
+  
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Assignment Submissions table - tracks student submissions
+export const assignmentSubmissions = pgTable("assignment_submissions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  assignmentId: uuid("assignment_id").references(() => scheduledAssignments.id).notNull(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  attemptId: uuid("attempt_id").references(() => quizAttempts.id).notNull(),
+  
+  // Submission details
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  isLate: boolean("is_late").default(false),
+  status: varchar("status", { enum: ["submitted", "graded", "returned"] }).default("submitted"),
+  
+  // Grading
+  gradedAt: timestamp("graded_at"),
+  gradedBy: varchar("graded_by").references(() => users.id),
+  teacherComments: text("teacher_comments"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Study Aids table - AI-generated study materials for students
+export const studyAids = pgTable("study_aids", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
+  
+  // Study aid details
+  title: varchar("title").notNull(),
+  content: text("content").notNull(), // AI-generated content
+  studyType: varchar("study_type", { 
+    enum: ["summary", "flashcards", "practice_questions", "concept_map", "study_guide"] 
+  }).notNull(),
+  
+  // Generation parameters
+  generationPrompt: text("generation_prompt"),
+  aiModel: varchar("ai_model").default("gpt-4o"),
+  
+  // Usage tracking
+  accessCount: integer("access_count").default(0),
+  lastAccessedAt: timestamp("last_accessed_at"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Mobile Device Management table - for native app access
+export const mobileDevices = pgTable("mobile_devices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Device information
+  deviceName: varchar("device_name").notNull(),
+  deviceType: varchar("device_type", { enum: ["ios", "android", "tablet"] }).notNull(),
+  deviceId: varchar("device_id").notNull(), // unique device identifier
+  osVersion: varchar("os_version"),
+  appVersion: varchar("app_version"),
+  
+  // Registration and security
+  registeredAt: timestamp("registered_at").defaultNow(),
+  lastActiveAt: timestamp("last_active_at"),
+  isActive: boolean("is_active").default(true),
+  pushToken: varchar("push_token"), // for notifications
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const accountsRelations = relations(accounts, ({ many }) => ({
+  users: many(users),
+  testbanks: many(testbanks),
+  quizzes: many(quizzes),
+  scheduledAssignments: many(scheduledAssignments),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  account: one(accounts, { fields: [users.accountId], references: [accounts.id] }),
   testbanks: many(testbanks),
   quizzes: many(quizzes),
   attempts: many(quizAttempts),
   notifications: many(notifications),
   aiResources: many(aiResources),
   referenceBanks: many(referenceBanks),
+  scheduledAssignments: many(scheduledAssignments),
+  assignmentSubmissions: many(assignmentSubmissions),
+  studyAids: many(studyAids),
+  mobileDevices: many(mobileDevices),
 }));
 
 export const testbanksRelations = relations(testbanks, ({ one, many }) => ({
   creator: one(users, { fields: [testbanks.creatorId], references: [users.id] }),
+  account: one(accounts, { fields: [testbanks.accountId], references: [accounts.id] }),
   questions: many(questions),
 }));
 
@@ -375,8 +507,11 @@ export const answerOptionsRelations = relations(answerOptions, ({ one }) => ({
 
 export const quizzesRelations = relations(quizzes, ({ one, many }) => ({
   creator: one(users, { fields: [quizzes.creatorId], references: [users.id] }),
+  account: one(accounts, { fields: [quizzes.accountId], references: [accounts.id] }),
   quizQuestions: many(quizQuestions),
   attempts: many(quizAttempts),
+  scheduledAssignments: many(scheduledAssignments),
+  studyAids: many(studyAids),
 }));
 
 export const quizQuestionsRelations = relations(quizQuestions, ({ one }) => ({
@@ -422,6 +557,29 @@ export const referencesRelations = relations(references, ({ one }) => ({
   bank: one(referenceBanks, { fields: [references.bankId], references: [referenceBanks.id] }),
 }));
 
+export const scheduledAssignmentsRelations = relations(scheduledAssignments, ({ one, many }) => ({
+  quiz: one(quizzes, { fields: [scheduledAssignments.quizId], references: [quizzes.id] }),
+  assigner: one(users, { fields: [scheduledAssignments.assignerId], references: [users.id] }),
+  account: one(accounts, { fields: [scheduledAssignments.accountId], references: [accounts.id] }),
+  submissions: many(assignmentSubmissions),
+}));
+
+export const assignmentSubmissionsRelations = relations(assignmentSubmissions, ({ one }) => ({
+  assignment: one(scheduledAssignments, { fields: [assignmentSubmissions.assignmentId], references: [scheduledAssignments.id] }),
+  student: one(users, { fields: [assignmentSubmissions.studentId], references: [users.id] }),
+  attempt: one(quizAttempts, { fields: [assignmentSubmissions.attemptId], references: [quizAttempts.id] }),
+  grader: one(users, { fields: [assignmentSubmissions.gradedBy], references: [users.id] }),
+}));
+
+export const studyAidsRelations = relations(studyAids, ({ one }) => ({
+  student: one(users, { fields: [studyAids.studentId], references: [users.id] }),
+  quiz: one(quizzes, { fields: [studyAids.quizId], references: [quizzes.id] }),
+}));
+
+export const mobileDevicesRelations = relations(mobileDevices, ({ one }) => ({
+  user: one(users, { fields: [mobileDevices.userId], references: [users.id] }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTestbankSchema = createInsertSchema(testbanks).omit({ id: true, createdAt: true, updatedAt: true });
@@ -437,6 +595,11 @@ export const insertAiResourceSchema = createInsertSchema(aiResources).omit({ id:
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 export const insertReferenceBankSchema = createInsertSchema(referenceBanks).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertReferenceSchema = createInsertSchema(references).omit({ id: true, createdAt: true });
+export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertScheduledAssignmentSchema = createInsertSchema(scheduledAssignments).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAssignmentSubmissionSchema = createInsertSchema(assignmentSubmissions).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertStudyAidSchema = createInsertSchema(studyAids).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertMobileDeviceSchema = createInsertSchema(mobileDevices).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -467,3 +630,13 @@ export type InsertReferenceBank = z.infer<typeof insertReferenceBankSchema>;
 export type ReferenceBank = typeof referenceBanks.$inferSelect;
 export type InsertReference = z.infer<typeof insertReferenceSchema>;
 export type Reference = typeof references.$inferSelect;
+export type InsertAccount = z.infer<typeof insertAccountSchema>;
+export type Account = typeof accounts.$inferSelect;
+export type InsertScheduledAssignment = z.infer<typeof insertScheduledAssignmentSchema>;
+export type ScheduledAssignment = typeof scheduledAssignments.$inferSelect;
+export type InsertAssignmentSubmission = z.infer<typeof insertAssignmentSubmissionSchema>;
+export type AssignmentSubmission = typeof assignmentSubmissions.$inferSelect;
+export type InsertStudyAid = z.infer<typeof insertStudyAidSchema>;
+export type StudyAid = typeof studyAids.$inferSelect;
+export type InsertMobileDevice = z.infer<typeof insertMobileDeviceSchema>;
+export type MobileDevice = typeof mobileDevices.$inferSelect;

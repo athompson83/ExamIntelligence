@@ -129,6 +129,58 @@ ProficiencyAI is a comprehensive educational assessment platform designed to com
 
 ## Recent Enhancements
 
+### Role-Based Architecture Implementation (July 04, 2025)
+- **Complete Four-Tier Role System**:
+  - Super Admin: Manages all accounts and system-wide settings
+  - Admin: Manages single account users and content 
+  - Manager/Teacher: Creates content, assigns exams, manages students within account
+  - Learner/Student: Takes exams, creates study aids, submits assignments
+
+- **Account-Based Multi-Tenancy**:
+  - Database schema updated with comprehensive account isolation
+  - Content sharing within accounts (testbanks, quizzes, reference materials)
+  - Account-specific user management and role assignments
+  - Default account created for existing users migration
+
+- **Scheduled Assignment System**:
+  - Teachers can create and schedule quiz assignments for students
+  - Assignment submission tracking with late submission handling
+  - Due dates, availability windows, and attempt limits
+  - Grading workflow with teacher comments and feedback
+
+- **AI-Powered Study Aids**:
+  - Students can generate personalized study materials from quiz content
+  - Multiple study aid types: summaries, flashcards, practice questions, concept maps
+  - AI-powered content generation based on quiz materials
+  - Access tracking and usage analytics
+
+- **Mobile Device Management**:
+  - Device registration system for native mobile app support
+  - Push notification token management
+  - Device activity tracking and management
+  - Preparation for React Native mobile app development
+
+- **Enhanced Database Architecture**:
+  - New tables: accounts, scheduled_assignments, assignment_submissions, study_aids, mobile_devices
+  - Updated existing tables with account_id foreign keys
+  - Comprehensive relations and data integrity constraints
+  - Role-based data access controls in storage layer
+
+- **Role-Based API Endpoints**:
+  - Account management routes for super admins
+  - Assignment creation and management for teachers
+  - Student-specific study aids and submission tracking
+  - Shared content access within accounts
+  - User role management with proper permissions
+
+- **Security and Permissions**:
+  - Role-based access control throughout API layer
+  - Account isolation preventing cross-account data access
+  - Permission validation for all sensitive operations
+  - Secure user role management and assignment
+
+## Recent Enhancements
+
 ### AI Question Generation System Overhaul (July 04, 2025)
 - **Research Integration**: Enhanced AI question generation with evidence-based best practices from:
   - CRESST (Center for Research on Evaluation, Standards, and Student Testing) quality criteria

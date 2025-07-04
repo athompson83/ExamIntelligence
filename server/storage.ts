@@ -1,5 +1,6 @@
 import {
   users,
+  accounts,
   testbanks,
   questions,
   answerOptions,
@@ -13,8 +14,14 @@ import {
   notifications,
   referenceBanks,
   references,
+  scheduledAssignments,
+  assignmentSubmissions,
+  studyAids,
+  mobileDevices,
   type User,
   type UpsertUser,
+  type Account,
+  type InsertAccount,
   type Testbank,
   type InsertTestbank,
   type Question,
@@ -39,6 +46,14 @@ import {
   type InsertReferenceBank,
   type Reference,
   type InsertReference,
+  type ScheduledAssignment,
+  type InsertScheduledAssignment,
+  type AssignmentSubmission,
+  type InsertAssignmentSubmission,
+  type StudyAid,
+  type InsertStudyAid,
+  type MobileDevice,
+  type InsertMobileDevice,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, count, avg, like, inArray } from "drizzle-orm";
@@ -123,6 +138,50 @@ export interface IStorage {
   getReferencesByBank(bankId: string): Promise<Reference[]>;
   updateReference(id: string, data: Partial<InsertReference>): Promise<Reference>;
   deleteReference(id: string): Promise<void>;
+
+  // Account operations
+  createAccount(account: InsertAccount): Promise<Account>;
+  getAccount(id: string): Promise<Account | undefined>;
+  getAccountsByUser(userId: string): Promise<Account[]>;
+  updateAccount(id: string, data: Partial<InsertAccount>): Promise<Account>;
+  deleteAccount(id: string): Promise<void>;
+
+  // Scheduled Assignment operations
+  createScheduledAssignment(assignment: InsertScheduledAssignment): Promise<ScheduledAssignment>;
+  getScheduledAssignment(id: string): Promise<ScheduledAssignment | undefined>;
+  getScheduledAssignmentsByAccount(accountId: string): Promise<ScheduledAssignment[]>;
+  getScheduledAssignmentsByStudent(studentId: string): Promise<ScheduledAssignment[]>;
+  updateScheduledAssignment(id: string, data: Partial<InsertScheduledAssignment>): Promise<ScheduledAssignment>;
+  deleteScheduledAssignment(id: string): Promise<void>;
+
+  // Assignment Submission operations
+  createAssignmentSubmission(submission: InsertAssignmentSubmission): Promise<AssignmentSubmission>;
+  getAssignmentSubmission(id: string): Promise<AssignmentSubmission | undefined>;
+  getAssignmentSubmissionsByAssignment(assignmentId: string): Promise<AssignmentSubmission[]>;
+  getAssignmentSubmissionsByStudent(studentId: string): Promise<AssignmentSubmission[]>;
+  updateAssignmentSubmission(id: string, data: Partial<InsertAssignmentSubmission>): Promise<AssignmentSubmission>;
+
+  // Study Aid operations
+  createStudyAid(aid: InsertStudyAid): Promise<StudyAid>;
+  getStudyAid(id: string): Promise<StudyAid | undefined>;
+  getStudyAidsByStudent(studentId: string): Promise<StudyAid[]>;
+  getStudyAidsByQuiz(quizId: string): Promise<StudyAid[]>;
+  updateStudyAid(id: string, data: Partial<InsertStudyAid>): Promise<StudyAid>;
+  deleteStudyAid(id: string): Promise<void>;
+
+  // Mobile Device operations
+  createMobileDevice(device: InsertMobileDevice): Promise<MobileDevice>;
+  getMobileDevice(id: string): Promise<MobileDevice | undefined>;
+  getMobileDevicesByUser(userId: string): Promise<MobileDevice[]>;
+  updateMobileDevice(id: string, data: Partial<InsertMobileDevice>): Promise<MobileDevice>;
+  deleteMobileDevice(id: string): Promise<void>;
+
+  // Role-based access operations
+  getUsersByAccount(accountId: string): Promise<User[]>;
+  getUsersByRole(accountId: string, role: string): Promise<User[]>;
+  updateUserRole(userId: string, role: string): Promise<User>;
+  getSharedTestbanksByAccount(accountId: string): Promise<Testbank[]>;
+  getSharedQuizzesByAccount(accountId: string): Promise<Quiz[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -149,7 +208,11 @@ export class DatabaseStorage implements IStorage {
 
   // Testbank operations
   async createTestbank(testbank: InsertTestbank): Promise<Testbank> {
-    const [result] = await db.insert(testbanks).values(testbank).returning();
+    const [result] = await db.insert(testbanks).values({
+      ...testbank,
+      accountId: testbank.accountId || '00000000-0000-0000-0000-000000000001',
+      isShared: testbank.isShared || false
+    }).returning();
     return result;
   }
 
@@ -482,6 +545,218 @@ export class DatabaseStorage implements IStorage {
 
   async deleteReference(id: string): Promise<void> {
     await db.delete(references).where(eq(references.id, id));
+  }
+
+  // Account operations
+  async createAccount(account: InsertAccount): Promise<Account> {
+    const [newAccount] = await db.insert(accounts).values(account).returning();
+    return newAccount;
+  }
+
+  async getAccount(id: string): Promise<Account | undefined> {
+    const [account] = await db.select().from(accounts).where(eq(accounts.id, id));
+    return account;
+  }
+
+  async getAccountsByUser(userId: string): Promise<Account[]> {
+    // Get accounts where user is admin or super admin
+    const user = await this.getUser(userId);
+    if (!user) return [];
+    
+    if (user.role === 'super_admin') {
+      return await db.select().from(accounts).orderBy(asc(accounts.name));
+    }
+    
+    return await db.select().from(accounts).where(eq(accounts.id, user.accountId)).orderBy(asc(accounts.name));
+  }
+
+  async updateAccount(id: string, data: Partial<InsertAccount>): Promise<Account> {
+    const [updatedAccount] = await db
+      .update(accounts)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(accounts.id, id))
+      .returning();
+    return updatedAccount;
+  }
+
+  async deleteAccount(id: string): Promise<void> {
+    await db.delete(accounts).where(eq(accounts.id, id));
+  }
+
+  // Scheduled Assignment operations
+  async createScheduledAssignment(assignment: InsertScheduledAssignment): Promise<ScheduledAssignment> {
+    const [newAssignment] = await db.insert(scheduledAssignments).values(assignment).returning();
+    return newAssignment;
+  }
+
+  async getScheduledAssignment(id: string): Promise<ScheduledAssignment | undefined> {
+    const [assignment] = await db.select().from(scheduledAssignments).where(eq(scheduledAssignments.id, id));
+    return assignment;
+  }
+
+  async getScheduledAssignmentsByAccount(accountId: string): Promise<ScheduledAssignment[]> {
+    return await db.select().from(scheduledAssignments)
+      .where(eq(scheduledAssignments.accountId, accountId))
+      .orderBy(desc(scheduledAssignments.createdAt));
+  }
+
+  async getScheduledAssignmentsByStudent(studentId: string): Promise<ScheduledAssignment[]> {
+    const user = await this.getUser(studentId);
+    if (!user) return [];
+    
+    return await db.select().from(scheduledAssignments)
+      .where(
+        and(
+          eq(scheduledAssignments.accountId, user.accountId),
+          eq(scheduledAssignments.isActive, true)
+        )
+      )
+      .orderBy(asc(scheduledAssignments.dueDate));
+  }
+
+  async updateScheduledAssignment(id: string, data: Partial<InsertScheduledAssignment>): Promise<ScheduledAssignment> {
+    const [updatedAssignment] = await db
+      .update(scheduledAssignments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(scheduledAssignments.id, id))
+      .returning();
+    return updatedAssignment;
+  }
+
+  async deleteScheduledAssignment(id: string): Promise<void> {
+    await db.delete(scheduledAssignments).where(eq(scheduledAssignments.id, id));
+  }
+
+  // Assignment Submission operations
+  async createAssignmentSubmission(submission: InsertAssignmentSubmission): Promise<AssignmentSubmission> {
+    const [newSubmission] = await db.insert(assignmentSubmissions).values(submission).returning();
+    return newSubmission;
+  }
+
+  async getAssignmentSubmission(id: string): Promise<AssignmentSubmission | undefined> {
+    const [submission] = await db.select().from(assignmentSubmissions).where(eq(assignmentSubmissions.id, id));
+    return submission;
+  }
+
+  async getAssignmentSubmissionsByAssignment(assignmentId: string): Promise<AssignmentSubmission[]> {
+    return await db.select().from(assignmentSubmissions)
+      .where(eq(assignmentSubmissions.assignmentId, assignmentId))
+      .orderBy(desc(assignmentSubmissions.createdAt));
+  }
+
+  async getAssignmentSubmissionsByStudent(studentId: string): Promise<AssignmentSubmission[]> {
+    return await db.select().from(assignmentSubmissions)
+      .where(eq(assignmentSubmissions.studentId, studentId))
+      .orderBy(desc(assignmentSubmissions.createdAt));
+  }
+
+  async updateAssignmentSubmission(id: string, data: Partial<InsertAssignmentSubmission>): Promise<AssignmentSubmission> {
+    const [updatedSubmission] = await db
+      .update(assignmentSubmissions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(assignmentSubmissions.id, id))
+      .returning();
+    return updatedSubmission;
+  }
+
+  // Study Aid operations
+  async createStudyAid(aid: InsertStudyAid): Promise<StudyAid> {
+    const [newAid] = await db.insert(studyAids).values(aid).returning();
+    return newAid;
+  }
+
+  async getStudyAid(id: string): Promise<StudyAid | undefined> {
+    const [aid] = await db.select().from(studyAids).where(eq(studyAids.id, id));
+    return aid;
+  }
+
+  async getStudyAidsByStudent(studentId: string): Promise<StudyAid[]> {
+    return await db.select().from(studyAids)
+      .where(eq(studyAids.studentId, studentId))
+      .orderBy(desc(studyAids.createdAt));
+  }
+
+  async getStudyAidsByQuiz(quizId: string): Promise<StudyAid[]> {
+    return await db.select().from(studyAids)
+      .where(eq(studyAids.quizId, quizId))
+      .orderBy(desc(studyAids.createdAt));
+  }
+
+  async updateStudyAid(id: string, data: Partial<InsertStudyAid>): Promise<StudyAid> {
+    const [updatedAid] = await db
+      .update(studyAids)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(studyAids.id, id))
+      .returning();
+    return updatedAid;
+  }
+
+  async deleteStudyAid(id: string): Promise<void> {
+    await db.delete(studyAids).where(eq(studyAids.id, id));
+  }
+
+  // Mobile Device operations
+  async createMobileDevice(device: InsertMobileDevice): Promise<MobileDevice> {
+    const [newDevice] = await db.insert(mobileDevices).values(device).returning();
+    return newDevice;
+  }
+
+  async getMobileDevice(id: string): Promise<MobileDevice | undefined> {
+    const [device] = await db.select().from(mobileDevices).where(eq(mobileDevices.id, id));
+    return device;
+  }
+
+  async getMobileDevicesByUser(userId: string): Promise<MobileDevice[]> {
+    return await db.select().from(mobileDevices)
+      .where(eq(mobileDevices.userId, userId))
+      .orderBy(desc(mobileDevices.createdAt));
+  }
+
+  async updateMobileDevice(id: string, data: Partial<InsertMobileDevice>): Promise<MobileDevice> {
+    const [updatedDevice] = await db
+      .update(mobileDevices)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(mobileDevices.id, id))
+      .returning();
+    return updatedDevice;
+  }
+
+  async deleteMobileDevice(id: string): Promise<void> {
+    await db.delete(mobileDevices).where(eq(mobileDevices.id, id));
+  }
+
+  // Role-based access operations
+  async getUsersByAccount(accountId: string): Promise<User[]> {
+    return await db.select().from(users)
+      .where(eq(users.accountId, accountId))
+      .orderBy(asc(users.firstName));
+  }
+
+  async getUsersByRole(accountId: string, role: string): Promise<User[]> {
+    return await db.select().from(users)
+      .where(and(eq(users.accountId, accountId), eq(users.role, role)))
+      .orderBy(asc(users.firstName));
+  }
+
+  async updateUserRole(userId: string, role: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser;
+  }
+
+  async getSharedTestbanksByAccount(accountId: string): Promise<Testbank[]> {
+    return await db.select().from(testbanks)
+      .where(and(eq(testbanks.accountId, accountId), eq(testbanks.isShared, true)))
+      .orderBy(desc(testbanks.createdAt));
+  }
+
+  async getSharedQuizzesByAccount(accountId: string): Promise<Quiz[]> {
+    return await db.select().from(quizzes)
+      .where(eq(quizzes.accountId, accountId))
+      .orderBy(desc(quizzes.createdAt));
   }
 }
 

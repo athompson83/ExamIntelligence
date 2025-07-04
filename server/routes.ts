@@ -17,6 +17,11 @@ import {
   insertNotificationSchema,
   insertReferenceBankSchema,
   insertReferenceSchema,
+  insertAccountSchema,
+  insertScheduledAssignmentSchema,
+  insertAssignmentSubmissionSchema,
+  insertStudyAidSchema,
+  insertMobileDeviceSchema,
 } from "@shared/schema";
 import { 
   validateQuestion, 
@@ -1043,6 +1048,256 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting reference:", error);
       res.status(500).json({ message: "Failed to delete reference" });
+    }
+  });
+
+  // ========== NEW ROLE-BASED ENDPOINTS ==========
+
+  // Account Management Routes
+  app.get('/api/accounts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const accounts = await storage.getAccountsByUser(userId);
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      res.status(500).json({ message: "Failed to fetch accounts" });
+    }
+  });
+
+  app.post('/api/accounts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const user = await storage.getUser(userId);
+      
+      // Only super admins can create accounts
+      if (user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Only super admins can create accounts" });
+      }
+
+      const accountData = insertAccountSchema.parse(req.body);
+      const account = await storage.createAccount(accountData);
+      res.json(account);
+    } catch (error) {
+      console.error("Error creating account:", error);
+      res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
+  // Scheduled Assignment Routes
+  app.get('/api/scheduled-assignments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.accountId) {
+        return res.status(404).json({ message: "User account not found" });
+      }
+
+      let assignments;
+      if (user.role === 'student') {
+        assignments = await storage.getScheduledAssignmentsByStudent(userId);
+      } else {
+        assignments = await storage.getScheduledAssignmentsByAccount(user.accountId);
+      }
+      
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching scheduled assignments:", error);
+      res.status(500).json({ message: "Failed to fetch scheduled assignments" });
+    }
+  });
+
+  app.post('/api/scheduled-assignments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const user = await storage.getUser(userId);
+      
+      // Only teachers can create assignments
+      if (user?.role !== 'teacher' && user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only managers and admins can create assignments" });
+      }
+
+      const assignmentData = insertScheduledAssignmentSchema.parse({
+        ...req.body,
+        assignerId: userId,
+        accountId: user.accountId,
+      });
+      
+      const assignment = await storage.createScheduledAssignment(assignmentData);
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error creating scheduled assignment:", error);
+      res.status(500).json({ message: "Failed to create scheduled assignment" });
+    }
+  });
+
+  // Study Aid Routes  
+  app.get('/api/study-aids', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const studyAids = await storage.getStudyAidsByStudent(userId);
+      res.json(studyAids);
+    } catch (error) {
+      console.error("Error fetching study aids:", error);
+      res.status(500).json({ message: "Failed to fetch study aids" });
+    }
+  });
+
+  app.post('/api/study-aids', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const studyAidData = insertStudyAidSchema.parse({
+        ...req.body,
+        studentId: userId,
+      });
+      
+      const studyAid = await storage.createStudyAid(studyAidData);
+      res.json(studyAid);
+    } catch (error) {
+      console.error("Error creating study aid:", error);
+      res.status(500).json({ message: "Failed to create study aid" });
+    }
+  });
+
+  // Assignment Submission Routes
+  app.get('/api/assignment-submissions/:assignmentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const { assignmentId } = req.params;
+      const user = await storage.getUser(userId);
+      
+      let submissions;
+      if (user?.role === 'student') {
+        submissions = await storage.getAssignmentSubmissionsByStudent(userId);
+        submissions = submissions.filter(s => s.assignmentId === assignmentId);
+      } else {
+        submissions = await storage.getAssignmentSubmissionsByAssignment(assignmentId);
+      }
+      
+      res.json(submissions);
+    } catch (error) {
+      console.error("Error fetching assignment submissions:", error);
+      res.status(500).json({ message: "Failed to fetch assignment submissions" });
+    }
+  });
+
+  app.post('/api/assignment-submissions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const submissionData = insertAssignmentSubmissionSchema.parse({
+        ...req.body,
+        studentId: userId,
+      });
+      
+      const submission = await storage.createAssignmentSubmission(submissionData);
+      res.json(submission);
+    } catch (error) {
+      console.error("Error creating assignment submission:", error);
+      res.status(500).json({ message: "Failed to create assignment submission" });
+    }
+  });
+
+  // Mobile Device Registration Routes
+  app.get('/api/mobile-devices', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const devices = await storage.getMobileDevicesByUser(userId);
+      res.json(devices);
+    } catch (error) {
+      console.error("Error fetching mobile devices:", error);
+      res.status(500).json({ message: "Failed to fetch mobile devices" });
+    }
+  });
+
+  app.post('/api/mobile-devices', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const deviceData = insertMobileDeviceSchema.parse({
+        ...req.body,
+        userId: userId,
+      });
+      
+      const device = await storage.createMobileDevice(deviceData);
+      res.json(device);
+    } catch (error) {
+      console.error("Error registering mobile device:", error);
+      res.status(500).json({ message: "Failed to register mobile device" });
+    }
+  });
+
+  // User Management Routes
+  app.get('/api/users/:accountId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const { accountId } = req.params;
+      const user = await storage.getUser(userId);
+      
+      // Only admins and super admins can view all users
+      if (user?.role !== 'admin' && user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      const users = await storage.getUsersByAccount(accountId);
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.put('/api/users/:userId/role', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims?.sub || req.user.id;
+      const { userId } = req.params;
+      const { role } = req.body;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      // Only admins and super admins can change roles
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      const updatedUser = await storage.updateUserRole(userId, role);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  // Shared Content Routes
+  app.get('/api/shared/testbanks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.accountId) {
+        return res.status(404).json({ message: "User account not found" });
+      }
+
+      const testbanks = await storage.getSharedTestbanksByAccount(user.accountId);
+      res.json(testbanks);
+    } catch (error) {
+      console.error("Error fetching shared testbanks:", error);
+      res.status(500).json({ message: "Failed to fetch shared testbanks" });
+    }
+  });
+
+  app.get('/api/shared/quizzes', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.accountId) {
+        return res.status(404).json({ message: "User account not found" });
+      }
+
+      const quizzes = await storage.getSharedQuizzesByAccount(user.accountId);
+      res.json(quizzes);
+    } catch (error) {
+      console.error("Error fetching shared quizzes:", error);
+      res.status(500).json({ message: "Failed to fetch shared quizzes" });
     }
   });
 
