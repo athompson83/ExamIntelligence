@@ -77,6 +77,7 @@ export interface IStorage {
   createQuestion(question: InsertQuestion): Promise<Question>;
   getQuestion(id: string): Promise<Question | undefined>;
   getQuestionsByTestbank(testbankId: string): Promise<Question[]>;
+  getQuestionsByQuiz(quizId: string): Promise<Question[]>;
   updateQuestion(id: string, data: Partial<InsertQuestion>): Promise<Question>;
   deleteQuestion(id: string): Promise<void>;
   
@@ -167,9 +168,12 @@ export interface IStorage {
   // Study Aid operations
   createStudyAid(aid: InsertStudyAid): Promise<StudyAid>;
   getStudyAid(id: string): Promise<StudyAid | undefined>;
+  getStudyAidsByUser(userId: string): Promise<StudyAid[]>;
   getStudyAidsByStudent(studentId: string): Promise<StudyAid[]>;
   getStudyAidsByQuiz(quizId: string): Promise<StudyAid[]>;
   updateStudyAid(id: string, data: Partial<InsertStudyAid>): Promise<StudyAid>;
+  updateStudyAidAccess(id: string): Promise<void>;
+  updateStudyAidRating(id: string, rating: number): Promise<void>;
   deleteStudyAid(id: string): Promise<void>;
 
   // Mobile Device operations
@@ -254,6 +258,17 @@ export class DatabaseStorage implements IStorage {
 
   async getQuestionsByTestbank(testbankId: string): Promise<Question[]> {
     return await db.select().from(questions).where(eq(questions.testbankId, testbankId)).orderBy(desc(questions.createdAt));
+  }
+
+  async getQuestionsByQuiz(quizId: string): Promise<Question[]> {
+    const result = await db
+      .select({ question: questions })
+      .from(quizQuestions)
+      .innerJoin(questions, eq(quizQuestions.questionId, questions.id))
+      .where(eq(quizQuestions.quizId, quizId))
+      .orderBy(quizQuestions.displayOrder);
+    
+    return result.map(row => row.question);
   }
 
   async updateQuestion(id: string, data: Partial<InsertQuestion>): Promise<Question> {
@@ -696,6 +711,30 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStudyAid(id: string): Promise<void> {
     await db.delete(studyAids).where(eq(studyAids.id, id));
+  }
+
+  async getStudyAidsByUser(userId: string): Promise<StudyAid[]> {
+    return await db.select().from(studyAids)
+      .where(eq(studyAids.studentId, userId))
+      .orderBy(desc(studyAids.createdAt));
+  }
+
+  async updateStudyAidAccess(id: string): Promise<void> {
+    await db
+      .update(studyAids)
+      .set({ 
+        accessCount: sql`${studyAids.accessCount} + 1`,
+        lastAccessedAt: new Date() 
+      })
+      .where(eq(studyAids.id, id));
+  }
+
+  async updateStudyAidRating(id: string, rating: number): Promise<void> {
+    // For now, we'll store rating in a simple way - could be expanded to a separate ratings table
+    await db
+      .update(studyAids)
+      .set({ updatedAt: new Date() })
+      .where(eq(studyAids.id, id));
   }
 
   // Mobile Device operations

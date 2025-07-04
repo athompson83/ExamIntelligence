@@ -4,13 +4,13 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import Landing from "@/pages/landing";
-import Dashboard from "@/pages/dashboard";
+import Landing from "@/pages/Landing";
+import Dashboard from "@/pages/Dashboard";
 import ItemBanks from "@/pages/item-banks";
 import QuestionManager from "@/pages/question-manager";
 
 import LiveExams from "@/pages/live-exams";
-import Analytics from "@/pages/analytics";
+import Analytics from "@/pages/Analytics";
 import AnalyticsDashboard from "@/pages/analytics-dashboard";
 import SpeedGrader from "@/pages/speed-grader";
 import UserManagement from "@/pages/user-management";
@@ -18,6 +18,7 @@ import ExamInterface from "@/pages/exam-interface";
 import AdminSettings from "@/pages/admin-settings";
 import ReferenceBanks from "@/pages/reference-banks";
 import EnhancedQuizBuilder from "@/pages/enhanced-quiz-builder";
+import StudyAids from "@/pages/study-aids";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -59,6 +60,7 @@ function Router() {
           <Route path="/user-management" component={UserManagement} />
           <Route path="/admin-settings" component={AdminSettings} />
           <Route path="/reference-banks" component={ReferenceBanks} />
+          <Route path="/study-aids" component={StudyAids} />
           <Route path="/exam/:id">
             {(params) => <ExamInterface examId={params.id} />}
           </Route>

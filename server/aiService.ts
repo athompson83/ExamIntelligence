@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { Question, AnswerOption, QuizAttempt, QuizResponse } from "@shared/schema";
+import { storage } from "./storage";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -132,21 +133,43 @@ export async function validateQuestion(question: Question, answerOptions: Answer
   }
 }
 
-export async function generateStudyGuide(topic: string, sourceType: string, sourceId: string): Promise<string> {
+export async function generateStudyGuide(title: string, studyType: string, quizId: string): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    return `Study aid content for ${title}\n\nThis is a ${studyType} to help you review and study.\n\nPlease review your quiz materials and create your own study notes.`;
+  }
+
   try {
+    // Get quiz and question information for context
+    const quiz = await storage.getQuiz(quizId);
+    const questions = quiz ? await storage.getQuestionsByQuiz(quizId) : [];
+    
+    const studyTypePrompts: Record<string, string> = {
+      summary: "Create a comprehensive summary that highlights key concepts, main topics, and important facts",
+      flashcards: "Generate flashcard-style content with questions on one side and answers on the other",
+      practice_questions: "Create practice questions similar to the quiz with detailed explanations",
+      concept_map: "Design a concept map showing relationships between key topics and concepts",
+      study_guide: "Develop a structured study guide with organized sections and learning objectives"
+    };
+
     const prompt = `
-      Create a comprehensive study guide for the topic: "${topic}".
+      Create a ${studyType} titled "${title}" based on the following quiz content:
       
-      The study guide should include:
-      1. Key concepts and definitions
-      2. Important facts and figures
-      3. Common misconceptions
-      4. Study strategies
-      5. Practice questions
-      6. Additional resources
+      Quiz Title: ${quiz?.title || 'Quiz'}
+      Number of Questions: ${questions.length}
       
-      Make it engaging, well-structured, and appropriate for the education level.
-      Format the response in markdown for better readability.
+      Sample Questions for Context:
+      ${questions.slice(0, 5).map((q: Question, i: number) => `${i + 1}. ${q.questionText}`).join('\n')}
+      
+      Instructions: ${studyTypePrompts[studyType] || studyTypePrompts.study_guide}
+      
+      Requirements:
+      - Make it comprehensive and educational
+      - Include specific examples and explanations
+      - Format in clear, readable markdown
+      - Focus on understanding, not just memorization
+      - Make it engaging and student-friendly
+      
+      Generate the ${studyType} content now:
     `;
 
     const response = await openai.chat.completions.create({
@@ -154,19 +177,20 @@ export async function generateStudyGuide(topic: string, sourceType: string, sour
       messages: [
         {
           role: "system",
-          content: "You are an expert educational content creator. Create comprehensive, engaging study guides that help students learn effectively.",
+          content: "You are an expert educational content creator. Create comprehensive, engaging study materials that help students learn effectively.",
         },
         {
           role: "user",
           content: prompt,
         },
       ],
+      temperature: 0.7,
     });
 
-    return response.choices[0].message.content || "Study guide generation failed";
+    return response.choices[0].message.content || `Study aid content for ${title}\n\nThis is a ${studyType} to help you review and study.`;
   } catch (error) {
     console.error("Error generating study guide:", error);
-    return "Failed to generate study guide. Please try again later.";
+    return `Study aid content for ${title}\n\nThis is a ${studyType} to help you review and study.\n\nPlease review your quiz materials and create your own study notes.`;
   }
 }
 

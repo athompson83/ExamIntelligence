@@ -23,6 +23,7 @@ const navigationItems = [
       { name: "Item Banks", icon: BookOpen, href: "/item-banks" },
       { name: "Quiz Builder", icon: Puzzle, href: "/enhanced-quiz-builder" },
       { name: "Reference Banks", icon: FolderOpen, href: "/reference-banks" },
+      { name: "Study Aids", icon: Brain, href: "/study-aids" },
       { name: "Live Exams", icon: Play, href: "/live-exams" },
       { name: "Analytics", icon: BarChart3, href: "/analytics" },
       { name: "AI Resources", icon: Bot, href: "/ai-resources" },

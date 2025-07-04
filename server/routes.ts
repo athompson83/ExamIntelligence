@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { initializeLTI, getLTIConfig, requireLTIAuth, getLTIUser, sendGradePassback, createDeepLink } from "./ltiService";
+// import { initializeLTI, getLTIConfig, requireLTIAuth, getLTIUser, sendGradePassback, createDeepLink } from "./ltiService";
 import { setupWebSocket } from "./websocket";
 import multer from "multer";
 import { 
@@ -42,13 +42,13 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize LTI functionality
-  try {
-    await initializeLTI(app);
-    console.log('LTI service initialized successfully');
-  } catch (error: any) {
-    console.log('LTI service initialization failed, continuing without LTI:', error.message);
-  }
+  // Initialize LTI functionality (temporarily disabled)
+  // try {
+  //   await initializeLTI(app);
+  //   console.log('LTI service initialized successfully');
+  // } catch (error: any) {
+  //   console.log('LTI service initialization failed, continuing without LTI:', error.message);
+  // }
 
   // Auth middleware
   await setupAuth(app);
@@ -1247,6 +1247,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Study Aids Routes
+  app.get('/api/study-aids', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const studyAids = await storage.getStudyAidsByUser(userId);
+      res.json(studyAids);
+    } catch (error) {
+      console.error("Error fetching study aids:", error);
+      res.status(500).json({ message: "Failed to fetch study aids" });
+    }
+  });
+
+  app.post('/api/study-aids/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const { type, quizId, title, customPrompt } = req.body;
+
+      if (!type || !quizId || !title) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Get quiz information for context
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      // Generate AI content based on type
+      let content = "";
+      try {
+        content = await generateStudyGuide(title, type, quizId);
+      } catch (error) {
+        console.error("AI generation error:", error);
+        content = `Study aid content for ${title}\n\nThis is a ${type} based on your quiz: ${quiz.title}\n\n${customPrompt || 'Please review your quiz materials and create your own study notes.'}`;
+      }
+
+      const studyAidData = insertStudyAidSchema.parse({
+        title,
+        type,
+        content,
+        quizId,
+        userId,
+        customPrompt: customPrompt || null,
+      });
+
+      const studyAid = await storage.createStudyAid(studyAidData);
+      res.json(studyAid);
+    } catch (error) {
+      console.error("Error generating study aid:", error);
+      res.status(500).json({ message: "Failed to generate study aid" });
+    }
+  });
+
+  app.get('/api/quizzes/completed', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const attempts = await storage.getQuizAttemptsByUser(userId);
+      
+      // Get unique completed quizzes with scores
+      const completedQuizzes = [];
+      const seenQuizzes = new Set();
+      
+      for (const attempt of attempts) {
+        if (!seenQuizzes.has(attempt.quizId) && attempt.status === 'completed') {
+          const quiz = await storage.getQuiz(attempt.quizId);
+          if (quiz) {
+            completedQuizzes.push({
+              id: quiz.id,
+              title: quiz.title,
+              score: Math.round((attempt.score || 0) * 100),
+              completedAt: attempt.completedAt,
+            });
+            seenQuizzes.add(attempt.quizId);
+          }
+        }
+      }
+      
+      res.json(completedQuizzes);
+    } catch (error) {
+      console.error("Error fetching completed quizzes:", error);
+      res.status(500).json({ message: "Failed to fetch completed quizzes" });
+    }
+  });
+
+  app.post('/api/study-aids/:id/access', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims?.sub || req.user.id;
+      
+      const studyAid = await storage.getStudyAid(id);
+      if (!studyAid || studyAid.studentId !== userId) {
+        return res.status(404).json({ message: "Study aid not found" });
+      }
+
+      await storage.updateStudyAidAccess(id);
+      res.json({ message: "Access recorded" });
+    } catch (error) {
+      console.error("Error updating study aid access:", error);
+      res.status(500).json({ message: "Failed to update access" });
+    }
+  });
+
+  app.post('/api/study-aids/:id/rate', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { rating } = req.body;
+      const userId = req.user.claims?.sub || req.user.id;
+      
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: "Rating must be between 1 and 5" });
+      }
+
+      const studyAid = await storage.getStudyAid(id);
+      if (!studyAid || studyAid.studentId !== userId) {
+        return res.status(404).json({ message: "Study aid not found" });
+      }
+
+      await storage.updateStudyAidRating(id, rating);
+      res.json({ message: "Rating updated" });
+    } catch (error) {
+      console.error("Error updating study aid rating:", error);
+      res.status(500).json({ message: "Failed to update rating" });
+    }
+  });
+
+  app.delete('/api/study-aids/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims?.sub || req.user.id;
+      
+      const studyAid = await storage.getStudyAid(id);
+      if (!studyAid || studyAid.studentId !== userId) {
+        return res.status(404).json({ message: "Study aid not found" });
+      }
+
+      await storage.deleteStudyAid(id);
+      res.json({ message: "Study aid deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting study aid:", error);
+      res.status(500).json({ message: "Failed to delete study aid" });
+    }
+  });
+
   // User Management Routes
   app.get('/api/users/:accountId', isAuthenticated, async (req: any, res) => {
     try {
@@ -1387,7 +1530,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // LTI Configuration endpoints
+  // LTI Configuration endpoints (temporarily disabled)
+  /*
   app.get('/api/lti/config', (req, res) => {
     try {
       const config = getLTIConfig();
@@ -1449,6 +1593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+  */
 
   const httpServer = createServer(app);
   

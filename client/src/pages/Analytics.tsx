@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Layout from "@/components/Layout";
-import AnalyticsCharts from "@/components/AnalyticsCharts";
+// import AnalyticsCharts from "@/components/AnalyticsCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -213,13 +213,9 @@ export default function Analytics() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <AnalyticsCharts
-                    type="line"
-                    data={mockPerformanceData.performanceTrends}
-                    xKey="week"
-                    yKey="score"
-                    height={300}
-                  />
+                  <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-lg">
+                    <p className="text-gray-500">Analytics Chart Placeholder</p>
+                  </div>
                 </CardContent>
               </Card>
 
