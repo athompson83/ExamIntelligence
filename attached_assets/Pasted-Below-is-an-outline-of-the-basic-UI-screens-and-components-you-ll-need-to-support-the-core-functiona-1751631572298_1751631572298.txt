@@ -1,0 +1,277 @@
+Below is an outline of the basic UI screens and components you’ll need to support the core functionalities of the Exam Generator App. The design focuses on providing an advanced, feature-rich experience for teachers (primarily on PCs) while offering a streamlined, responsive interface for test takers—whether on a PC or as a native mobile app.
+
+1. Teacher-Facing (PC) UI
+A. Login / Landing Page
+Components:
+
+Login Form: Email, password, “Forgot Password” link.
+
+Sign-Up Option: For new educator registrations.
+
+Branding Banner: Logo and tagline.
+
+Responsive Layout: Optimized for desktop browsers.
+
+B. Teacher Dashboard
+Navigation:
+
+Persistent Sidebar or Top Menu:
+
+Sections include: Testbanks, Quiz Builder, Exam Hosting, Analytics, Resources, and Settings.
+
+Notifications Icon: Real-time alerts for exam events or validation issues.
+
+Main Dashboard Widgets:
+
+Overview Cards: Display metrics such as upcoming exams, recently updated testbanks, and flagged questions.
+
+Recent Activity Feed: Show recent changes, revisions, or AI validation alerts.
+
+Quick Actions: Buttons to “Create New Testbank,” “Launch a New Quiz,” or “Revalidate Questions.”
+
+C. Testbank Management
+Testbank List Page:
+
+Search and Filter Bar: Filter by tags, Bloom’s taxonomy, learning objectives, or creation date.
+
+Testbank Cards/Rows: Each showing title, description, number of questions, and last revalidated timestamp.
+
+Action Buttons: Edit, delete, and “Revalidate” for each testbank.
+
+Testbank Detail / Editor Page:
+
+Header: Testbank title, creation info, and revalidation controls.
+
+Question List Panel: A dynamic list (with pagination or infinite scroll) showing all questions in that bank.
+
+Add/Edit Question Button: Opens the Question Editor.
+
+Sidebar (Optional): Quick access to AI feedback summaries and revision histories.
+
+D. Question Editor and Detail Screen
+Editor Layout:
+
+Rich Text Area: For entering the question prompt.
+
+Dropdown Selector: For choosing the question type (MC, MR, CR, etc.).
+
+Dynamic Sections:
+
+Answer Options: A repeatable group for adding options, each with text, image (if needed), and a “Correct” toggle.
+
+Tagging & Metadata: Fields to assign Bloom’s taxonomy tags, learning objectives, and custom categories.
+
+AI Validation Panel:
+
+Displays AI feedback, suggested difficulty scores, and validation issues (e.g., grammatical errors or ambiguous wording).
+
+“Revalidate” button to trigger a new validation check.
+
+Revision & Peer Review Tabs:
+
+A history log of modifications and a section to collect peer review comments.
+
+E. Quiz Builder / Creation Screen
+Quiz Setup Section:
+
+Form Fields: For quiz title, description, time limits, and adaptive testing options.
+
+Security Options: Toggle controls for password protection, IP locking, and exam scheduling.
+
+Question Selection:
+
+Dual-Pane Interface:
+
+Left pane: A list of available questions (selectable from one or more testbanks).
+
+Right pane: The current quiz assembly (with drag-and-drop ordering or an “Add” button).
+
+Preview & Randomization Options:
+
+Controls for shuffling questions/answers and grouping items for adaptive selection.
+
+Adaptive Testing Settings:
+
+Rules Panel: Define conditions (e.g., “if correct, then display a harder question”) with simple toggles or parameter fields.
+
+F. Exam Hosting & Monitoring Dashboard
+Exam Scheduler:
+
+Calendar/Timeline View: To set exam start/end times.
+
+Security Controls: Configure exam access options (password, IP restrictions, etc.).
+
+Live Monitoring Panel:
+
+List of Active Exams: With real-time status indicators.
+
+Proctoring Alerts: A feed of alerts such as unusual activity or multiple tab switches.
+
+Detailed View: Clicking on an exam opens a session detail page with student statuses and proctoring logs.
+
+G. Analytics and Reporting
+Analytics Dashboard:
+
+Data Visualizations: Charts and graphs showing performance metrics at the question, quiz, and overall exam levels.
+
+Filters: By testbank, quiz, date range, and question type.
+
+Drill-Down Capability: Clickable elements to view detailed breakdowns (e.g., average time per question, common error trends).
+
+H. Resource Management & Settings
+Resources Page:
+
+AI-Generated Content List: Study guides, lecture notes, and improvement plans.
+
+Resource Editor: For teachers to review and adjust AI-generated content if needed.
+
+Settings Page:
+
+Profile Management: Update personal details and security settings.
+
+App Preferences: Choose default languages, notification settings, and integration configurations.
+
+2. Test Taker-Facing UI
+A. Login / Onboarding Screen
+Components:
+
+Clean Login Form: Email/username, password.
+
+Onboarding Tips: Brief tutorial or instructions if it’s the user’s first login.
+
+Responsive Design: Optimized for both PC and mobile use.
+
+B. Student Dashboard
+Overview Panel:
+
+Assigned Exams: List view with upcoming exam dates and statuses.
+
+Performance Summary: A quick glance at recent scores and progress.
+
+Notifications: Alerts for exam start times, feedback updates, or improvements.
+
+Navigation:
+
+For PC: Sidebar or top navigation.
+
+For mobile/native app: A bottom tab bar with sections like Home, Exams, Resources, and Profile.
+
+C. Exam Taking Interface
+Exam Screen (Full-Screen Mode):
+
+Question Display: A clear, distraction-free layout with the current question prominently displayed.
+
+Timer: A visible countdown timer.
+
+Navigation Controls: “Previous,” “Next,” and “Flag for Review” buttons.
+
+Adaptive Indicators: If adaptive testing is enabled, show a subtle indicator or difficulty badge.
+
+Responsive Behavior:
+
+For PC: Utilizes the full screen with side panels for question progress.
+
+For Mobile: A simplified layout with large touch targets, and navigation buttons positioned for easy access.
+
+D. Quiz/Exam Review & Results Screen
+Post-Exam Summary:
+
+Score Breakdown: Overall score, time taken, and individual question feedback.
+
+Detailed Review: Expandable sections to view the correct answers, explanations, and AI-generated feedback.
+
+Next Steps: Links to additional study resources or improvement plans.
+
+3. General UI Considerations
+Responsive & Adaptive Layouts:
+
+Use Bubble’s responsive design features to adjust layouts for different screen sizes and device types.
+
+Design separate layouts if necessary—one optimized for desktop teacher administration and another simplified for test takers on mobile.
+
+Consistent Visual Language:
+
+Maintain a cohesive branding style across all pages using consistent color schemes, typography, and iconography.
+
+Utilize visual cues (badges, alerts, tooltips) to help users identify key actions and statuses (e.g., flagged questions or live exam alerts).
+
+Usability & Accessibility:
+
+Ensure all interactive elements are clearly labeled and accessible.
+
+Provide contextual help or tooltips for complex features (such as adaptive testing rules or AI feedback panels).
+
+Integration of AI Feedback:
+
+Clearly display AI insights in the question editor and analytics pages using cards or panels that highlight recommended changes or flagged issues.
+
+Allow users to drill down into details with modals or overlay panels.
+
+Navigation & User Flow:
+
+For teachers, design a multi-pane layout with a fixed navigation sidebar for quick access to testbanks, quizzes, and analytics.
+
+For test takers, focus on a single-column layout that minimizes distractions and facilitates smooth exam navigation.
+
+4. Wireframe Concepts (High-Level Sketch)
+Teacher Dashboard Wireframe:
+Header:
+
+Logo, user profile dropdown, notifications icon.
+
+Sidebar:
+
+Menu items for Testbanks, Quizzes, Analytics, Resources, Settings.
+
+Main Content:
+
+Overview cards (e.g., “Upcoming Exams,” “Recent Activity”).
+
+A dynamic feed showing recent changes or alerts.
+
+Footer:
+
+Copyright info and support links.
+
+Testbank Management Wireframe:
+Top Bar:
+
+Search/filter options.
+
+Content Area:
+
+Grid or list view of testbank cards, each with a “Revalidate” button and quick stats.
+
+Action Button:
+
+“Create New Testbank” prominently displayed.
+
+Question Editor Wireframe:
+Main Area:
+
+Rich text editor for the question prompt.
+
+Dynamic area for answer options (if applicable).
+
+Side Panel:
+
+AI validation feedback, revision history, and peer review comments.
+
+Bottom Bar:
+
+Save, preview, and publish buttons.
+
+Exam Taking Interface Wireframe (Test Taker):
+Header:
+
+Timer and exam progress.
+
+Main Area:
+
+The current question in focus with navigation buttons (“Previous,” “Next,” “Flag”).
+
+Footer (Mobile):
+
+Simplified navigation with large buttons for answer selection and progress indication.
+
+This basic UI plan ensures that the Exam Generator App meets the needs of both teachers and test takers. Educators on the PC enjoy a feature-rich, multi-pane interface that facilitates efficient testbank management, quiz creation, and live exam monitoring, while test takers receive a streamlined, distraction-free exam environment—optimized for both desktop and mobile experiences.

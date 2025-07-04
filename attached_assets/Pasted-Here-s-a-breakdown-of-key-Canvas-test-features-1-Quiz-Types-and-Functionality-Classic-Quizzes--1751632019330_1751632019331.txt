@@ -1,0 +1,45 @@
+Here's a breakdown of key Canvas test features:
+1. Quiz Types and Functionality:
+Classic Quizzes:
+Allows for various question types like multiple choice, true/false, fill-in-the-blank, essay, and more. 
+New Quizzes:
+Offers more advanced question types like categorization, hot spot, and formula questions, along with enhanced security and reporting features. 
+Graded vs. Practice Quizzes:
+Canvas distinguishes between graded quizzes that provide points and practice quizzes for self-assessment and learning. 
+Surveys:
+Canvas quizzes can also be used to collect feedback from students through surveys. 
+2. Secure Testing Environments:
+LockDown Browser:
+Integrates with Canvas to create a secure testing environment by limiting student access to other applications and websites during the quiz.
+Student Activity Monitoring:
+Instructors can monitor student activity during a test, including tab changes and time spent, to ensure academic integrity.
+Session Logs:
+Provide detailed records of student actions during the quiz, including start and end times and interactions with the quiz environment. 
+3. Grading and Feedback:
+SpeedGrader:
+Facilitates efficient grading and feedback for assignments and quizzes.
+Rubrics and Outcomes:
+Allows instructors to assess student work based on pre-defined criteria and link assessments to learning outcomes.
+Gradebook:
+Provides a centralized location for managing grades and tracking student progress.
+Peer Review and Self-Assessment:
+Canvas offers options for peer and self-assessment, promoting student engagement and reflection. 
+4. Analyzing Student Performance:
+Quiz Statistics:
+Canvas provides detailed statistics on student performance, including average scores, item analysis, and identification of common mistakes.
+Downloadable Reports:
+Instructors can download reports to analyze student performance at the individual and question level. 
+5. Test Environment:
+Test Environment:
+.
+Allows instructors and administrators to test real data and features without affecting the live course environment. 
+Beta Environment:
+.
+Provides a separate environment for exploring new features before they are released in the production environment. 
+6. Other Features:
+Mastery Paths:
+Allows for personalized learning experiences by providing differentiated content and assessments based on student performance. 
+Comment Library:
+Offers a library of pre-written comments to save time when providing feedback. 
+LTI Tool Integration:
+Canvas allows for integration with external tools through the LTI protocol, expanding its functionality. 
