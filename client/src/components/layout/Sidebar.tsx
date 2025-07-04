@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { 
   BarChart3, 
   BookOpen, 
@@ -20,20 +21,23 @@ interface SidebarProps {
   className?: string;
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Item Banks", href: "/item-banks", icon: FolderOpen },
-  { name: "Quiz Builder", href: "/quiz-builder", icon: Puzzle },
-  { name: "Live Exams", href: "/live-exams", icon: Play },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+const getNavigation = (t: any) => [
+  { name: t('navigation.dashboard'), href: "/", icon: LayoutDashboard },
+  { name: t('navigation.itemBanks'), href: "/item-banks", icon: FolderOpen },
+  { name: t('navigation.quizBuilder'), href: "/quiz-builder", icon: Puzzle },
+  { name: t('navigation.liveExams'), href: "/live-exams", icon: Play },
+  { name: t('navigation.analytics'), href: "/analytics", icon: BarChart3 },
   { name: "AI Resources", href: "/ai-resources", icon: Brain },
-  { name: "User Management", href: "/user-management", icon: Users },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: t('navigation.userManagement'), href: "/user-management", icon: Users },
+  { name: t('navigation.settings'), href: "/settings", icon: Settings },
 ];
 
 export function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { t } = useTranslation();
+  
+  const navigation = getNavigation(t);
 
   const toggleSidebar = () => {
     const newState = !isCollapsed;

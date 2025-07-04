@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -7,10 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { Bell, LogOut, User } from "lucide-react";
 
 export function TopBar() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
 
   if (!isAuthenticated) {
     return null;
@@ -27,6 +30,9 @@ export function TopBar() {
       </div>
       
       <div className="flex items-center space-x-4">
+        {/* Language Switcher */}
+        <LanguageSwitcher variant="compact" />
+        
         {/* Notifications */}
         <Button variant="ghost" size="sm">
           <Bell className="h-4 w-4" />
@@ -47,11 +53,11 @@ export function TopBar() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>{t('navigation.profile')}</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+              <span>{t('navigation.logout')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,0 +1,259 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "view": "View",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "refresh": "Refresh",
+    "actions": "Actions",
+    "status": "Status",
+    "name": "Name",
+    "title": "Title",
+    "description": "Description",
+    "date": "Date",
+    "time": "Time",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "quizBuilder": "Quiz Builder",
+    "itemBanks": "Item Banks",
+    "questionManager": "Question Manager",
+    "analytics": "Analytics",
+    "liveExams": "Live Exams",
+    "speedGrader": "Speed Grader",
+    "userManagement": "User Management",
+    "settings": "Settings",
+    "logout": "Logout",
+    "profile": "Profile",
+    "help": "Help",
+    "support": "Support"
+  },
+  "auth": {
+    "login": "Login",
+    "loginWith": "Login with {{provider}}",
+    "logout": "Logout",
+    "welcome": "Welcome to ProficiencyAI",
+    "loginDescription": "Sign in to access your educational assessment platform",
+    "unauthorized": "Unauthorized",
+    "loginRequired": "You need to log in to access this feature",
+    "sessionExpired": "Your session has expired. Please log in again."
+  },
+  "dashboard": {
+    "welcome": "Welcome back!",
+    "overview": "Dashboard Overview",
+    "quickStats": "Quick Statistics",
+    "activeExams": "Active Exams",
+    "totalStudents": "Total Students",
+    "recentActivity": "Recent Activity",
+    "upcomingExams": "Upcoming Exams",
+    "pendingGrading": "Pending Grading",
+    "systemAlerts": "System Alerts"
+  },
+  "quiz": {
+    "create": "Create Quiz",
+    "edit": "Edit Quiz",
+    "title": "Quiz Title",
+    "description": "Quiz Description",
+    "instructions": "Instructions",
+    "timeLimit": "Time Limit",
+    "attempts": "Attempts Allowed",
+    "passingScore": "Passing Score",
+    "questions": "Questions",
+    "addQuestion": "Add Question",
+    "removeQuestion": "Remove Question",
+    "questionType": "Question Type",
+    "multipleChoice": "Multiple Choice",
+    "trueFalse": "True/False",
+    "essay": "Essay",
+    "fillInBlank": "Fill in the Blank",
+    "matching": "Matching",
+    "published": "Published",
+    "draft": "Draft",
+    "preview": "Preview",
+    "settings": "Quiz Settings"
+  },
+  "question": {
+    "text": "Question Text",
+    "points": "Points",
+    "difficulty": "Difficulty",
+    "tags": "Tags",
+    "feedback": "Feedback",
+    "correctAnswer": "Correct Answer",
+    "answers": "Answer Options",
+    "addAnswer": "Add Answer Option",
+    "removeAnswer": "Remove Answer Option",
+    "validation": "AI Validation",
+    "generate": "Generate with AI",
+    "similar": "Create Similar",
+    "variations": "Generate Variations"
+  },
+  "testbank": {
+    "create": "Create Test Bank",
+    "edit": "Edit Test Bank",
+    "name": "Test Bank Name",
+    "subject": "Subject",
+    "learningObjectives": "Learning Objectives",
+    "questions": "Questions",
+    "import": "Import Questions",
+    "export": "Export Test Bank",
+    "share": "Share Test Bank"
+  },
+  "analytics": {
+    "overview": "Analytics Overview",
+    "performance": "Performance Analytics",
+    "insights": "AI Insights",
+    "reports": "Reports",
+    "studentProgress": "Student Progress",
+    "questionAnalysis": "Question Analysis",
+    "difficultyAnalysis": "Difficulty Analysis",
+    "timeAnalysis": "Time Analysis",
+    "export": "Export Analytics"
+  },
+  "proctoring": {
+    "liveMonitoring": "Live Monitoring",
+    "examSecurity": "Exam Security",
+    "violations": "Violations",
+    "flags": "Security Flags",
+    "recording": "Recording",
+    "webcam": "Webcam",
+    "microphone": "Microphone",
+    "screenShare": "Screen Share",
+    "lockdown": "Lockdown Browser"
+  },
+  "grading": {
+    "speedGrader": "Speed Grader",
+    "grade": "Grade",
+    "feedback": "Feedback",
+    "rubric": "Rubric",
+    "comments": "Comments",
+    "autoGrade": "Auto Grade",
+    "manualGrade": "Manual Grade",
+    "release": "Release Grades",
+    "pending": "Pending",
+    "completed": "Completed"
+  },
+  "users": {
+    "management": "User Management",
+    "roles": "User Roles",
+    "permissions": "Permissions",
+    "admin": "Administrator",
+    "teacher": "Teacher",
+    "student": "Student",
+    "addUser": "Add User",
+    "editUser": "Edit User",
+    "removeUser": "Remove User",
+    "active": "Active",
+    "inactive": "Inactive",
+    "suspended": "Suspended"
+  },
+  "settings": {
+    "general": "General Settings",
+    "account": "Account Settings",
+    "preferences": "Preferences",
+    "notifications": "Notifications",
+    "security": "Security",
+    "integrations": "Integrations",
+    "language": "Language",
+    "timezone": "Timezone",
+    "theme": "Theme",
+    "dark": "Dark Mode",
+    "light": "Light Mode"
+  },
+  "ai": {
+    "generating": "Generating with AI...",
+    "validating": "Validating with AI...",
+    "analysis": "AI Analysis",
+    "recommendations": "AI Recommendations",
+    "insights": "AI Insights",
+    "confidence": "Confidence Score",
+    "suggestions": "Suggestions",
+    "enhance": "AI Enhancement"
+  },
+  "messages": {
+    "saveSuccess": "Saved successfully",
+    "deleteSuccess": "Deleted successfully",
+    "createSuccess": "Created successfully",
+    "updateSuccess": "Updated successfully",
+    "errorOccurred": "An error occurred",
+    "noDataFound": "No data found",
+    "loadingData": "Loading data...",
+    "confirmDelete": "Are you sure you want to delete this item?",
+    "unsavedChanges": "You have unsaved changes. Do you want to continue?",
+    "actionComplete": "Action completed successfully"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "minLength": "Minimum length is {{min}} characters",
+    "maxLength": "Maximum length is {{max}} characters",
+    "numeric": "Please enter a valid number",
+    "positive": "Please enter a positive number",
+    "url": "Please enter a valid URL"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "de": "Deutsch",
+    "ja": "日本語",
+    "zh": "中文",
+    "ar": "العربية",
+    "pt": "Português"
+  },
+  "landing": {
+    "hero": {
+      "title": "Advanced Educational Assessment Platform",
+      "subtitle": "AI-powered question validation, live proctoring, and comprehensive analytics for modern education"
+    },
+    "features": {
+      "questionBank": {
+        "title": "Smart Question Banks",
+        "description": "Organize and manage thousands of questions with AI-powered validation and automatic difficulty assessment"
+      },
+      "analytics": {
+        "title": "Advanced Analytics",
+        "description": "Get deep insights into student performance, question effectiveness, and learning patterns with machine learning"
+      },
+      "security": {
+        "title": "Exam Security",
+        "description": "Comprehensive proctoring with real-time monitoring, fraud detection, and secure exam environments"
+      },
+      "collaboration": {
+        "title": "Team Collaboration",
+        "description": "Share resources, collaborate on question creation, and manage multi-instructor courses effortlessly"
+      },
+      "aiPowered": {
+        "title": "AI-Powered Generation",
+        "description": "Generate high-quality questions, personalized feedback, and adaptive learning paths using advanced AI"
+      },
+      "compliance": {
+        "title": "Standards Compliance",
+        "description": "Meet educational standards with accessibility features, audit trails, and comprehensive reporting"
+      }
+    },
+    "languageSupport": {
+      "title": "Multi-Language Support",
+      "description": "ProficiencyAI supports multiple languages for global educational institutions",
+      "currentLanguage": "Current Language"
+    }
+  }
+}

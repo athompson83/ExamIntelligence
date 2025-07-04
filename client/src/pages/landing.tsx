@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { useTranslation } from "react-i18next";
 import { 
   GraduationCap, 
   BookOpen, 
@@ -12,8 +14,15 @@ import {
 } from "lucide-react";
 
 export default function Landing() {
+  const { t } = useTranslation();
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header with Language Switcher */}
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSwitcher />
+      </div>
+      
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
@@ -24,8 +33,7 @@ export default function Landing() {
             <h1 className="text-4xl font-bold text-gray-900">ProficiencyAI</h1>
           </div>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Advanced educational assessment platform with AI-powered question validation, 
-            live proctoring, and comprehensive analytics
+            {t('auth.loginDescription')}
           </p>
           <Button 
             size="lg" 

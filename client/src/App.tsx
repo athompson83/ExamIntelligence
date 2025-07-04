@@ -23,6 +23,7 @@ import MLAnalytics from "@/pages/MLAnalytics";
 import ComprehensiveAnalytics from "@/pages/ComprehensiveAnalytics";
 import NotFound from "@/pages/not-found";
 import ProjectStatus from "@/pages/project-status";
+import LanguageTest from "@/pages/language-test";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -38,7 +39,10 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/language-test" component={LanguageTest} />
+        </>
       ) : (
         <>
           <Route path="/" component={Dashboard} />
