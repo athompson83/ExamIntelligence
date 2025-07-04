@@ -17,6 +17,7 @@ import UserManagement from "@/pages/user-management";
 import ExamInterface from "@/pages/exam-interface";
 import AdminSettings from "@/pages/admin-settings";
 import ReferenceBanks from "@/pages/reference-banks";
+import EnhancedQuizBuilder from "@/pages/enhanced-quiz-builder";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -45,6 +46,7 @@ function Router() {
             {(params) => <QuestionManager testbankId={params.id} />}
           </Route>
           <Route path="/quiz-builder" component={QuizBuilder} />
+          <Route path="/enhanced-quiz-builder" component={EnhancedQuizBuilder} />
           <Route path="/live-exams" component={LiveExams} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/analytics-dashboard" component={AnalyticsDashboard} />

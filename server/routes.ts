@@ -507,9 +507,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/quizzes', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.accountId) {
+        return res.status(400).json({ message: "User account not found" });
+      }
+
       const quizData = insertQuizSchema.parse({
         ...req.body,
         creatorId: userId,
+        accountId: user.accountId,
+        // Handle date fields properly
+        availableFrom: req.body.availableFrom ? new Date(req.body.availableFrom) : null,
+        availableUntil: req.body.availableUntil ? new Date(req.body.availableUntil) : null,
+        lockAt: req.body.lockAt ? new Date(req.body.lockAt) : null,
+        unlockAt: req.body.unlockAt ? new Date(req.body.unlockAt) : null,
       });
       
       const quiz = await storage.createQuiz(quizData);
@@ -1298,6 +1310,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching shared quizzes:", error);
       res.status(500).json({ message: "Failed to fetch shared quizzes" });
+    }
+  });
+
+  // Question Group Routes
+  app.get('/api/quizzes/:quizId/question-groups', isAuthenticated, async (req: any, res) => {
+    try {
+      const questionGroups = await storage.getQuestionGroupsByQuiz(req.params.quizId);
+      res.json(questionGroups);
+    } catch (error) {
+      console.error("Error fetching question groups:", error);
+      res.status(500).json({ message: "Failed to fetch question groups" });
+    }
+  });
+
+  app.post('/api/quizzes/:quizId/question-groups', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims?.sub || req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.accountId) {
+        return res.status(404).json({ message: "User account not found" });
+      }
+
+      const groupData = {
+        ...req.body,
+        quizId: req.params.quizId,
+        accountId: user.accountId
+      };
+
+      const questionGroup = await storage.createQuestionGroup(groupData);
+      res.json(questionGroup);
+    } catch (error) {
+      console.error("Error creating question group:", error);
+      res.status(500).json({ message: "Failed to create question group" });
+    }
+  });
+
+  app.put('/api/question-groups/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const updatedGroup = await storage.updateQuestionGroup(req.params.id, req.body);
+      res.json(updatedGroup);
+    } catch (error) {
+      console.error("Error updating question group:", error);
+      res.status(500).json({ message: "Failed to update question group" });
+    }
+  });
+
+  app.delete('/api/question-groups/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteQuestionGroup(req.params.id);
+      res.json({ message: "Question group deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting question group:", error);
+      res.status(500).json({ message: "Failed to delete question group" });
+    }
+  });
+
+  app.put('/api/question-groups/:id/assign-questions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { questionIds } = req.body;
+      await storage.assignQuestionsToGroup(req.params.id, questionIds);
+      res.json({ message: "Questions assigned to group successfully" });
+    } catch (error) {
+      console.error("Error assigning questions to group:", error);
+      res.status(500).json({ message: "Failed to assign questions to group" });
     }
   });
 

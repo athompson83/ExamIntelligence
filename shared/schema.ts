@@ -247,13 +247,39 @@ export const quizzes = pgTable("quizzes", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Quiz questions (many-to-many relationship)
+// Question groups for quiz organization (Canvas-style)
+export const questionGroups = pgTable("question_groups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  pickCount: integer("pick_count").default(1), // Number of questions to randomly select
+  totalQuestions: integer("total_questions").default(0), // Total questions in this group
+  pointsPerQuestion: numeric("points_per_question", { precision: 5, scale: 2 }).default("1.00"),
+  displayOrder: integer("display_order").default(0),
+  
+  // CAT/Difficulty-based selection
+  useCAT: boolean("use_cat").default(false), // Computer Adaptive Testing
+  difficultyWeight: numeric("difficulty_weight", { precision: 3, scale: 2 }).default("1.00"),
+  bloomsWeight: numeric("blooms_weight", { precision: 3, scale: 2 }).default("1.00"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Quiz questions (many-to-many relationship) - Enhanced for groups
 export const quizQuestions = pgTable("quiz_questions", {
   id: uuid("id").primaryKey().defaultRandom(),
   quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
   questionId: uuid("question_id").references(() => questions.id).notNull(),
+  questionGroupId: uuid("question_group_id").references(() => questionGroups.id), // Optional group assignment
   displayOrder: integer("display_order").default(0),
   points: numeric("points", { precision: 5, scale: 2 }).default("1.00"),
+  
+  // Canvas-style question settings
+  isRequired: boolean("is_required").default(true),
+  showFeedback: boolean("show_feedback").default(false),
+  partialCredit: boolean("partial_credit").default(false),
 });
 
 // Quiz attempts/results
@@ -509,14 +535,21 @@ export const quizzesRelations = relations(quizzes, ({ one, many }) => ({
   creator: one(users, { fields: [quizzes.creatorId], references: [users.id] }),
   account: one(accounts, { fields: [quizzes.accountId], references: [accounts.id] }),
   quizQuestions: many(quizQuestions),
+  questionGroups: many(questionGroups),
   attempts: many(quizAttempts),
   scheduledAssignments: many(scheduledAssignments),
   studyAids: many(studyAids),
 }));
 
+export const questionGroupsRelations = relations(questionGroups, ({ one, many }) => ({
+  quiz: one(quizzes, { fields: [questionGroups.quizId], references: [quizzes.id] }),
+  questions: many(quizQuestions),
+}));
+
 export const quizQuestionsRelations = relations(quizQuestions, ({ one }) => ({
   quiz: one(quizzes, { fields: [quizQuestions.quizId], references: [quizzes.id] }),
   question: one(questions, { fields: [quizQuestions.questionId], references: [questions.id] }),
+  questionGroup: one(questionGroups, { fields: [quizQuestions.questionGroupId], references: [questionGroups.id] }),
 }));
 
 export const quizAttemptsRelations = relations(quizAttempts, ({ one, many }) => ({
@@ -586,6 +619,7 @@ export const insertTestbankSchema = createInsertSchema(testbanks).omit({ id: tru
 export const insertQuestionSchema = createInsertSchema(questions).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAnswerOptionSchema = createInsertSchema(answerOptions).omit({ id: true });
 export const insertQuizSchema = createInsertSchema(quizzes).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertQuestionGroupSchema = createInsertSchema(questionGroups).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertQuizQuestionSchema = createInsertSchema(quizQuestions).omit({ id: true });
 export const insertQuizAttemptSchema = createInsertSchema(quizAttempts).omit({ id: true });
 export const insertQuizResponseSchema = createInsertSchema(quizResponses).omit({ id: true, createdAt: true });
@@ -612,6 +646,8 @@ export type InsertAnswerOption = z.infer<typeof insertAnswerOptionSchema>;
 export type AnswerOption = typeof answerOptions.$inferSelect;
 export type InsertQuiz = z.infer<typeof insertQuizSchema>;
 export type Quiz = typeof quizzes.$inferSelect;
+export type InsertQuestionGroup = z.infer<typeof insertQuestionGroupSchema>;
+export type QuestionGroup = typeof questionGroups.$inferSelect;
 export type InsertQuizQuestion = z.infer<typeof insertQuizQuestionSchema>;
 export type QuizQuestion = typeof quizQuestions.$inferSelect;
 export type InsertQuizAttempt = z.infer<typeof insertQuizAttemptSchema>;

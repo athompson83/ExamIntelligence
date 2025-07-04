@@ -18,6 +18,7 @@ import {
   assignmentSubmissions,
   studyAids,
   mobileDevices,
+  questionGroups,
   type User,
   type UpsertUser,
   type Account,
@@ -54,6 +55,8 @@ import {
   type InsertStudyAid,
   type MobileDevice,
   type InsertMobileDevice,
+  type QuestionGroup,
+  type InsertQuestionGroup,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, count, avg, like, inArray } from "drizzle-orm";
@@ -757,6 +760,49 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(quizzes)
       .where(eq(quizzes.accountId, accountId))
       .orderBy(desc(quizzes.createdAt));
+  }
+
+  // Question Group operations
+  async getQuestionGroupsByQuiz(quizId: string): Promise<QuestionGroup[]> {
+    return await db.select().from(questionGroups)
+      .where(eq(questionGroups.quizId, quizId))
+      .orderBy(questionGroups.displayOrder);
+  }
+
+  async createQuestionGroup(questionGroup: InsertQuestionGroup): Promise<QuestionGroup> {
+    const [created] = await db.insert(questionGroups)
+      .values(questionGroup)
+      .returning();
+    return created;
+  }
+
+  async updateQuestionGroup(groupId: string, updates: Partial<QuestionGroup>): Promise<QuestionGroup | undefined> {
+    const [updated] = await db.update(questionGroups)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(questionGroups.id, groupId))
+      .returning();
+    return updated;
+  }
+
+  async deleteQuestionGroup(groupId: string): Promise<void> {
+    await db.delete(questionGroups)
+      .where(eq(questionGroups.id, groupId));
+  }
+
+  async assignQuestionsToGroup(groupId: string, questionIds: string[]): Promise<void> {
+    // For now, we'll store question IDs in the question group itself
+    // This is a simplified implementation until the junction table is properly defined
+    await db.update(questionGroups)
+      .set({ 
+        // Store selected question IDs in a JSON field or update group metadata
+        updatedAt: new Date()
+      })
+      .where(eq(questionGroups.id, groupId));
+  }
+
+  async getQuestionsByGroup(groupId: string): Promise<Question[]> {
+    // For now, return empty array until proper junction table is implemented
+    return [];
   }
 }
 
