@@ -17,32 +17,70 @@ interface ValidationResult {
 export async function validateQuestion(question: Question, answerOptions: AnswerOption[]): Promise<ValidationResult> {
   try {
     const prompt = `
-      Analyze the following educational question for quality, clarity, and educational value. 
-      Return a JSON response with the following structure:
-      {
-        "issues": ["array of specific issues found"],
-        "suggestions": ["array of improvement suggestions"],
-        "confidenceScore": 0.95,
-        "status": "approved|rejected|needs_review",
-        "comments": "detailed feedback about the question"
-      }
+      COMPREHENSIVE EDUCATIONAL QUESTION VALIDATION
+      
+      Using evidence-based assessment standards from CRESST, Kansas Curriculum Center, UC Riverside School of Medicine, and Assessment Systems research, analyze this question:
 
-      Question Text: ${question.questionText}
-      Question Type: ${question.questionType}
-      Difficulty Level: ${question.difficultyScore}
-      Bloom's Taxonomy Level: ${question.bloomsLevel}
-      
-      Answer Options:
-      ${answerOptions.map((option, index) => `${index + 1}. ${option.answerText} (${option.isCorrect ? 'Correct' : 'Incorrect'})`).join('\n')}
-      
-      Please check for:
-      - Grammar and spelling errors
-      - Clarity and ambiguity
-      - Educational appropriateness
-      - Answer option quality
-      - Correct answer accuracy
-      - Difficulty level appropriateness
-      - Bloom's taxonomy alignment
+      **QUESTION DETAILS:**
+      Text: "${question.questionText}"
+      Type: ${question.questionType}
+      Difficulty Level: ${question.difficultyScore}/10
+      Bloom's Taxonomy: ${question.bloomsLevel}
+      Points: ${question.points}
+
+      **ANSWER OPTIONS:**
+      ${answerOptions.map((option, index) => 
+        `${String.fromCharCode(65 + index)}. ${option.answerText} ${option.isCorrect ? '✓ CORRECT' : ''}`
+      ).join('\n')}
+
+      **VALIDATION CRITERIA (Research-Based):**
+
+      **Question Stem Quality:**
+      - Clear, unambiguous language (one-reading comprehension)
+      - Direct questions vs. incomplete statements
+      - Absence of unnecessary negative phrasing (NOT, EXCEPT)
+      - Elimination of cultural/gender/socioeconomic bias
+      - Focus on learning objectives, not trivial facts
+      - Appropriate vocabulary for target audience
+
+      **Multiple Choice Standards:**
+      - 3-5 plausible distractors representing common misconceptions
+      - Mutually exclusive and grammatically parallel options
+      - Correct answer is fully correct, distractors fully incorrect
+      - Similar length and complexity across options
+      - Avoidance of "all/none of the above"
+      - Realistic, educationally meaningful distractors
+
+      **Cognitive Assessment:**
+      - Difficulty alignment with stated 1-10 scale
+      - Proper Bloom's taxonomy cognitive level testing
+      - Testing knowledge/skills, not test-taking ability
+      - Appropriate cognitive load for target audience
+
+      **Educational Value:**
+      - Alignment with curriculum standards and learning objectives
+      - Promotion of meaningful learning assessment
+      - Support for formative/summative evaluation goals
+      - Connection to real-world application when appropriate
+
+      **Accessibility & Fairness:**
+      - Inclusive language and diverse examples
+      - Reading level appropriate for target audience
+      - Visual/auditory accessibility considerations
+      - Cultural neutrality and bias prevention
+
+      Return JSON with detailed analysis:
+      {
+        "technicalIssues": ["specific construction problems"],
+        "contentIssues": ["subject matter accuracy problems"],
+        "biasIssues": ["accessibility and fairness concerns"],
+        "cognitiveIssues": ["difficulty/Bloom's alignment problems"],
+        "suggestions": ["specific, actionable improvements"],
+        "confidenceScore": 0.95,
+        "status": "approved|needs_review|rejected",
+        "educationalValue": "assessment of learning effectiveness",
+        "researchAlignment": "alignment with assessment best practices"
+      }
     `;
 
     const response = await openai.chat.completions.create({
@@ -62,12 +100,25 @@ export async function validateQuestion(question: Question, answerOptions: Answer
 
     const validation = JSON.parse(response.choices[0].message.content || "{}");
     
+    // Combine all issue categories from research-based analysis
+    const allIssues = [
+      ...(validation.technicalIssues || []),
+      ...(validation.contentIssues || []),
+      ...(validation.biasIssues || []),
+      ...(validation.cognitiveIssues || []),
+      ...(validation.issues || [])
+    ];
+
     return {
-      issues: validation.issues || [],
+      issues: allIssues,
       suggestions: validation.suggestions || [],
       confidenceScore: Math.max(0, Math.min(1, validation.confidenceScore || 0.5)),
       status: validation.status || 'needs_review',
-      comments: validation.comments || 'AI validation completed',
+      comments: [
+        validation.educationalValue || '',
+        validation.researchAlignment || '',
+        validation.comments || 'Research-based validation completed'
+      ].filter(Boolean).join(' | '),
     };
   } catch (error) {
     console.error("Error validating question:", error);
@@ -286,24 +337,54 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       ${customInstructions}
       ` : ''}
       
-      REQUIREMENTS FOR EACH QUESTION:
-      1. Align with specified Bloom's taxonomy level
-      2. Match the difficulty range specified
-      3. Be educationally sound and pedagogically appropriate
-      4. Avoid ambiguous wording
-      5. Include proper answer options for multiple choice/response questions
-      6. Provide constructive feedback for both correct and incorrect answers
-      7. Include appropriate tags for categorization
-      8. ${includeImages ? 'Suggest relevant images or diagrams where helpful' : ''}
-      9. ${includeMultimedia ? 'Include multimedia suggestions where appropriate' : ''}
+      EVIDENCE-BASED QUALITY STANDARDS (Research Guidelines):
       
-      QUESTION TYPE SPECIFICATIONS:
-      - Multiple Choice: 4-5 answer options with exactly one correct answer
-      - Multiple Response: 4-6 options with 2-3 correct answers
-      - True/False: Clear statement with definitive true/false answer
-      - Fill in the Blank: Specific blanks with exact expected answers
-      - Essay: Open-ended with clear evaluation criteria
-      - Matching: Sets of items to match with clear relationships
+      **Question Stem Requirements:**
+      1. Write clear, unambiguous stems that can be understood in one reading
+      2. Use direct questions rather than incomplete statements
+      3. Avoid negative phrasing (NOT, EXCEPT) unless absolutely necessary
+      4. Include context/scenario for higher-order thinking when appropriate
+      5. Eliminate unnecessary verbiage and bias
+      6. Focus on learning objectives, not trivial facts
+      7. Test knowledge, not test-taking skills
+      
+      **Multiple Choice Standards:**
+      - Use 4-5 plausible distractors that represent common misconceptions
+      - Ensure all options are mutually exclusive and grammatically parallel
+      - Make the correct answer fully correct, distractors fully incorrect
+      - Avoid "all of the above" and "none of the above"
+      - Make options similar in length and complexity
+      - Use distractors that test understanding, not just guessing
+      
+      **Difficulty Calibration:**
+      - Level 1-3 (Easy): Knowledge/Comprehension - recall facts, definitions
+      - Level 4-6 (Medium): Application/Analysis - solve problems, analyze relationships
+      - Level 7-10 (Hard): Synthesis/Evaluation - create solutions, make judgments
+      
+      **Bloom's Taxonomy Alignment:**
+      - Remember: Recall specific information (Who, What, When, Where)
+      - Understand: Explain concepts in own words (Describe, Explain, Summarize)
+      - Apply: Use knowledge in new situations (Calculate, Solve, Demonstrate)
+      - Analyze: Break down into components (Compare, Contrast, Categorize)
+      - Evaluate: Make judgments based on criteria (Assess, Critique, Justify)
+      - Create: Combine elements into new patterns (Design, Construct, Formulate)
+      
+      **Question Type Best Practices:**
+      - Multiple Choice: Test comprehension and application, not just memorization
+      - True/False: Use only for absolute concepts, avoid complex nuances
+      - Essay: Test synthesis, analysis, and original thinking with clear rubrics
+      - Fill-in-blank: Use for key terms and specific facts, one correct answer
+      - Matching: Group related concepts with clear categories (5-10 items max)
+      
+      **Bias Prevention:**
+      - Use inclusive language and diverse examples
+      - Avoid cultural, gender, or socioeconomic bias
+      - Test knowledge content, not reading comprehension
+      - Ensure accessibility for different learning styles
+      - Use familiar contexts when possible
+      
+      8. ${includeImages ? 'Suggest relevant images or diagrams that enhance understanding' : ''}
+      9. ${includeMultimedia ? 'Include multimedia suggestions that support learning objectives' : ''}
       
       Return a JSON array with this exact structure:
       {
@@ -348,17 +429,34 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       messages: [
         {
           role: "system",
-          content: `You are an expert educational assessment designer with extensive experience in curriculum development, Bloom's taxonomy, and pedagogical best practices. You create high-quality, Canvas LMS-compatible questions that are educationally sound, properly aligned with learning objectives, and designed to effectively assess student understanding.
+          content: `You are a PhD-level educational assessment specialist with expertise in:
           
-          Your questions follow these principles:
-          - Clear, unambiguous language appropriate for the target audience
-          - Proper alignment with specified Bloom's taxonomy levels
-          - Realistic difficulty progression
-          - Educationally meaningful content
-          - Effective use of distractors in multiple choice questions
-          - Constructive feedback that promotes learning
+          - Psychometric principles and item response theory
+          - Bloom's taxonomy and cognitive complexity theory
+          - Educational measurement standards (AERA, APA, NCME)
+          - Question writing research from CRESST, ETS, and NCATE
+          - Bias prevention and accessibility in assessments
+          - Canvas LMS assessment best practices
           
-          Always return valid JSON with the exact structure requested.`,
+          RESEARCH FOUNDATIONS:
+          - Follow CRESST criteria: cognitive complexity, content quality, meaningfulness, language appropriateness, transfer/generalizability, fairness, and reliability
+          - Apply Kansas Curriculum Center guidelines for effective test construction
+          - Implement UC Riverside School of Medicine best practices for question writing
+          - Use Assessment Systems' evidence-based item authoring standards
+          
+          COGNITIVE LOAD THEORY:
+          - Structure questions to match working memory limitations
+          - Provide clear, unambiguous language
+          - Reduce extraneous cognitive load
+          - Support intrinsic cognitive load appropriate to difficulty level
+          
+          EDUCATIONAL MEASUREMENT PRINCIPLES:
+          - Ensure content validity through curriculum alignment
+          - Maintain construct validity by testing intended knowledge/skills
+          - Apply reliability standards through consistent question quality
+          - Prevent measurement bias across diverse student populations
+          
+          Generate questions that promote meaningful learning outcomes and accurate assessment of student knowledge. Always return valid JSON with the exact structure requested.`,
         },
         {
           role: "user",

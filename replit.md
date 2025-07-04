@@ -126,10 +126,41 @@ ProficiencyAI is a comprehensive educational assessment platform designed to com
 - `SESSION_SECRET`: Session encryption key
 - `REPLIT_DOMAINS`: Allowed domains for Replit Auth
 
+## Recent Enhancements
+
+### AI Question Generation Enhancement (July 04, 2025)
+- **Research Integration**: Enhanced AI question generation with evidence-based best practices from:
+  - CRESST (Center for Research on Evaluation, Standards, and Student Testing) quality criteria
+  - Kansas Curriculum Center guidelines for effective test construction
+  - UC Riverside School of Medicine question writing standards
+  - Assessment Systems item authoring best practices
+  - Educational research from GitHub repositories (QuestGen-AI, QuizPro)
+
+- **Quality Standards Implementation**:
+  - Question stem quality validation (clear, unambiguous language)
+  - Multiple choice standards (plausible distractors, parallel options)
+  - Cognitive alignment with Bloom's taxonomy levels
+  - Bias prevention and accessibility considerations
+  - Difficulty calibration (1-10 scale with research-based criteria)
+
+- **Enhanced Validation System**:
+  - Comprehensive question analysis across technical, content, bias, and cognitive dimensions
+  - Research-aligned confidence scoring
+  - Detailed feedback for educators on question quality
+  - Educational value assessment for learning outcomes
+
+- **AI Prompt Engineering**:
+  - PhD-level educational assessment specialist persona
+  - Psychometric principles and item response theory integration
+  - Canvas LMS compatibility and best practices
+  - Cognitive load theory application
+
 ## Changelog
 
+- July 04, 2025. Enhanced AI question generation with research-based best practices
 - July 04, 2025. Initial setup
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Research-based approach: Follow educational assessment standards and evidence-based practices for question generation.
