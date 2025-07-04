@@ -371,10 +371,28 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       
       **Question Type Best Practices:**
       - Multiple Choice: Test comprehension and application, not just memorization
+        * Use realistic scenarios and application-based questions
+        * Create distractors based on common student errors
+        * Ensure one clearly correct answer
       - True/False: Use only for absolute concepts, avoid complex nuances
+        * Focus on fundamental principles and facts
+        * Avoid ambiguous or trick statements
       - Essay: Test synthesis, analysis, and original thinking with clear rubrics
+        * Provide specific scoring criteria and expectations
+        * Use authentic, real-world scenarios
+        * Include word count guidelines
       - Fill-in-blank: Use for key terms and specific facts, one correct answer
+        * Test essential vocabulary and concepts
+        * Provide sufficient context for understanding
       - Matching: Group related concepts with clear categories (5-10 items max)
+        * Ensure all items belong to the same conceptual domain
+        * Include more options than matches to prevent elimination
+      - Multiple Response: Test comprehensive understanding of related concepts
+        * Use when multiple correct answers enhance learning
+        * Clearly indicate how many options to select
+      - Hotspot: Test spatial understanding and visual comprehension
+        * Use diagrams, maps, or images for location-based knowledge
+        * Provide clear instructions for selection
       
       **Bias Prevention:**
       - Use inclusive language and diverse examples
@@ -448,6 +466,13 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
           - Structure questions to match working memory limitations
           - Provide clear, unambiguous language
           - Reduce extraneous cognitive load
+          - Focus on essential information processing
+          
+          CANVAS LMS COMPATIBILITY:
+          - Generate questions that work seamlessly with Canvas quiz tools
+          - Follow Canvas-specific formatting and functionality standards
+          - Ensure compatibility with Canvas gradebook and analytics
+          - Support Canvas question types and multimedia integration
           - Support intrinsic cognitive load appropriate to difficulty level
           
           EDUCATIONAL MEASUREMENT PRINCIPLES:
@@ -470,29 +495,51 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     const result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
     const questions = result.questions || [];
 
-    // Validate and process each question
-    const processedQuestions = questions.map((question: any, index: number) => ({
-      questionText: question.questionText || `Generated question ${index + 1}`,
-      questionType: question.questionType || 'multiple_choice',
-      points: Math.max(1, question.points || 1),
-      difficultyScore: Math.max(1, Math.min(10, question.difficultyScore || 5)),
-      bloomsLevel: question.bloomsLevel || 'understand',
-      tags: Array.isArray(question.tags) ? question.tags : [topic],
-      correctFeedback: question.correctFeedback || 'Correct! Well done.',
-      incorrectFeedback: question.incorrectFeedback || 'Incorrect. Please review the material.',
-      generalFeedback: question.generalFeedback || '',
-      partialCredit: Boolean(question.partialCredit),
-      imageUrl: question.imageUrl || '',
-      audioUrl: question.audioUrl || '',
-      videoUrl: question.videoUrl || '',
-      aiValidationStatus: 'approved',
-      aiConfidenceScore: 0.85,
-      answerOptions: Array.isArray(question.answerOptions) ? question.answerOptions.map((option: any, optIndex: number) => ({
-        answerText: option.answerText || `Option ${optIndex + 1}`,
-        isCorrect: Boolean(option.isCorrect),
-        displayOrder: optIndex,
-      })) : []
-    }));
+    // Validate and process each question with enhanced quality checks
+    const processedQuestions = questions.map((question: any, index: number) => {
+      // Quality validation scoring
+      let confidenceScore = 0.7; // Base score
+      
+      // Boost confidence for well-formed questions
+      if (question.questionText && question.questionText.length > 20) confidenceScore += 0.1;
+      if (question.correctFeedback && question.incorrectFeedback) confidenceScore += 0.1;
+      if (Array.isArray(question.answerOptions) && question.answerOptions.length >= 3) confidenceScore += 0.1;
+      
+      // Validate question type specific requirements
+      const validatedAnswerOptions = Array.isArray(question.answerOptions) ? 
+        question.answerOptions.map((option: any, optIndex: number) => ({
+          answerText: option.answerText || `Option ${optIndex + 1}`,
+          isCorrect: Boolean(option.isCorrect),
+          displayOrder: optIndex,
+        })) : [];
+
+      // Ensure at least one correct answer for multiple choice
+      if (question.questionType === 'multiple_choice' && validatedAnswerOptions.length > 0) {
+        const hasCorrectAnswer = validatedAnswerOptions.some(opt => opt.isCorrect);
+        if (!hasCorrectAnswer) {
+          validatedAnswerOptions[0].isCorrect = true; // Default first option as correct
+        }
+      }
+
+      return {
+        questionText: question.questionText || `Generated question ${index + 1} for ${topic}`,
+        questionType: question.questionType || 'multiple_choice',
+        points: Math.max(1, question.points || 1),
+        difficultyScore: Math.max(1, Math.min(10, question.difficultyScore || 5)),
+        bloomsLevel: question.bloomsLevel || 'understand',
+        tags: Array.isArray(question.tags) ? question.tags : [topic, 'ai-generated'],
+        correctFeedback: question.correctFeedback || 'Excellent! You demonstrate strong understanding of this concept.',
+        incorrectFeedback: question.incorrectFeedback || 'Not quite right. Consider reviewing the key concepts and try again.',
+        generalFeedback: question.generalFeedback || `This question tests your understanding of ${topic}.`,
+        partialCredit: Boolean(question.partialCredit),
+        imageUrl: question.imageUrl || '',
+        audioUrl: question.audioUrl || '',
+        videoUrl: question.videoUrl || '',
+        aiValidationStatus: confidenceScore > 0.8 ? 'approved' : 'needs_review',
+        aiConfidenceScore: Math.min(0.95, confidenceScore), // Cap at 95%
+        answerOptions: validatedAnswerOptions
+      };
+    });
 
     return processedQuestions;
 

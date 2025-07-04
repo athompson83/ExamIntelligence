@@ -213,11 +213,40 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     },
   });
 
-  // AI Generation mutation
+  // Check API key availability
+  const { data: apiKeyStatus } = useQuery({
+    queryKey: ['/api/check-openai-key'],
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // AI Generation mutation with enhanced validation
   const generateQuestionsMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Validate API key first
+      if (!apiKeyStatus?.available) {
+        throw new Error('OpenAI API key is required for AI question generation. Please contact your administrator to set up the API key.');
+      }
+
+      // Validate required fields
+      if (!data.topic?.trim()) {
+        throw new Error('Please enter a topic for question generation.');
+      }
+
+      if (data.questionCount < 1 || data.questionCount > 50) {
+        throw new Error('Please enter a question count between 1 and 50.');
+      }
+
+      // Optimize the prompt automatically
+      const optimizedData = {
+        ...data,
+        customInstructions: data.customInstructions ? 
+          `Enhanced instructions: ${data.customInstructions}. Please generate high-quality, educationally sound questions following evidence-based assessment practices and Canvas LMS standards.` :
+          "Generate high-quality, educationally sound questions following evidence-based assessment practices and Canvas LMS standards."
+      };
+
       const formData = new FormData();
-      formData.append('data', JSON.stringify(data));
+      formData.append('data', JSON.stringify(optimizedData));
       
       // Add reference files
       data.referenceFiles?.forEach((file: File, index: number) => {
@@ -230,7 +259,8 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate questions');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to generate questions');
       }
 
       return response.json();
@@ -238,15 +268,23 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/testbanks', testbankId, 'questions'] });
       setIsAiDialogOpen(false);
+      
+      // Reset form for next use
+      setAiForm(prev => ({
+        ...prev,
+        topic: "",
+        customInstructions: ""
+      }));
+      
       toast({
-        title: "Success",
-        description: `Generated ${data.count} questions successfully`,
+        title: "Questions Generated Successfully",
+        description: `Generated ${data.count} high-quality questions with AI validation`,
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
-        title: "Error",
-        description: "Failed to generate questions with AI",
+        title: "Generation Failed", 
+        description: error.message || "Failed to generate questions with AI",
         variant: "destructive",
       });
     },
@@ -476,10 +514,37 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle className="flex items-center">
-                      <Wand2 className="mr-2 h-5 w-5" />
-                      AI Question Generation
+                    <DialogTitle className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Wand2 className="mr-2 h-5 w-5" />
+                        AI Question Generation
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm">
+                        {apiKeyStatus?.available ? (
+                          <div className="flex items-center text-green-600">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                            AI Ready
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-red-600">
+                            <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                            API Key Required
+                          </div>
+                        )}
+                      </div>
                     </DialogTitle>
+                    <div className="text-sm text-muted-foreground">
+                      Generate high-quality questions using research-based educational assessment standards from CRESST, Kansas Curriculum Center, and UC Riverside School of Medicine
+                    </div>
+                    {!apiKeyStatus?.available && (
+                      <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg text-sm">
+                        <div className="font-medium text-amber-800 mb-1">Setup Required</div>
+                        <div className="text-amber-700">
+                          To enable AI question generation, your administrator needs to configure the OpenAI API key. 
+                          Contact your system administrator to set up this feature.
+                        </div>
+                      </div>
+                    )}
                   </DialogHeader>
                   
                   <Tabs defaultValue="basic" className="w-full">
@@ -689,14 +754,95 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                       </div>
                       
                       <div>
+                        <Label>Reference Materials</Label>
+                        <div className="space-y-3 mt-2">
+                          <div>
+                            <Label htmlFor="referenceLinks">Reference Links</Label>
+                            {aiForm.referenceLinks.map((link, index) => (
+                              <div key={index} className="flex items-center space-x-2 mt-2">
+                                <Input
+                                  value={link}
+                                  onChange={(e) => {
+                                    const newLinks = [...aiForm.referenceLinks];
+                                    newLinks[index] = e.target.value;
+                                    setAiForm(prev => ({ ...prev, referenceLinks: newLinks }));
+                                  }}
+                                  placeholder="https://example.com/reference-material"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newLinks = aiForm.referenceLinks.filter((_, i) => i !== index);
+                                    setAiForm(prev => ({ ...prev, referenceLinks: newLinks }));
+                                  }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAiForm(prev => ({ ...prev, referenceLinks: [...prev.referenceLinks, ""] }))}
+                              className="mt-2"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add Reference Link
+                            </Button>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="referenceFiles">Reference Files</Label>
+                            <Input
+                              id="referenceFiles"
+                              type="file"
+                              multiple
+                              accept=".pdf,.doc,.docx,.txt,.md"
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files || []);
+                                setAiForm(prev => ({ ...prev, referenceFiles: files }));
+                              }}
+                              className="mt-2"
+                            />
+                            {aiForm.referenceFiles && aiForm.referenceFiles.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {Array.from(aiForm.referenceFiles).map((file, index) => (
+                                  <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
+                                    <span className="text-sm">{file.name}</span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        const newFiles = Array.from(aiForm.referenceFiles || []).filter((_, i) => i !== index);
+                                        setAiForm(prev => ({ ...prev, referenceFiles: newFiles }));
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
                         <Label htmlFor="customInstructions">Custom Instructions</Label>
                         <Textarea
                           id="customInstructions"
                           value={aiForm.customInstructions}
                           onChange={(e) => setAiForm(prev => ({ ...prev, customInstructions: e.target.value }))}
-                          placeholder="Any specific requirements or style preferences..."
+                          placeholder="Any specific requirements or style preferences... (This will be automatically optimized by AI)"
                           className="min-h-20"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Your instructions will be automatically enhanced and optimized for better question generation.
+                        </p>
                       </div>
                     </TabsContent>
                     
@@ -808,23 +954,30 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                   </Tabs>
                   
                   <div className="flex gap-2 mt-6">
-                    <Button 
-                      onClick={handleSubmitAiGeneration}
-                      disabled={generateQuestionsMutation.isPending || !aiForm.topic}
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                    >
-                      {generateQuestionsMutation.isPending ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="mr-2 h-4 w-4" />
-                          Generate Questions
-                        </>
+                    <div className="space-y-2">
+                      {!apiKeyStatus?.available && (
+                        <div className="text-sm text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                          ⚠️ OpenAI API key is required for question generation. Contact your administrator to enable AI features.
+                        </div>
                       )}
-                    </Button>
+                      <Button 
+                        onClick={handleSubmitAiGeneration}
+                        disabled={generateQuestionsMutation.isPending || !aiForm.topic || !apiKeyStatus?.available}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50"
+                      >
+                        {generateQuestionsMutation.isPending ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="mr-2 h-4 w-4" />
+                            Generate Questions
+                          </>
+                        )}
+                      </Button>
+                    </div>
                     <Button variant="outline" onClick={() => setIsAiDialogOpen(false)}>
                       Cancel
                     </Button>

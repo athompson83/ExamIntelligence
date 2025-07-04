@@ -34,6 +34,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API Key check route
+  app.get('/api/check-openai-key', async (req, res) => {
+    try {
+      const hasKey = !!process.env.OPENAI_API_KEY;
+      res.json({ available: hasKey });
+    } catch (error) {
+      res.status(500).json({ available: false });
+    }
+  });
+
   // Dashboard routes
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {
