@@ -281,8 +281,25 @@ Currently, ProficiencyAI is built as a responsive web application that works wel
 - Home icon links to dashboard, with hierarchical path display
 - Consistent navigation experience across all platform sections
 
+## Recent Enhancements
+
+### LTI Integration Implementation (July 04, 2025)
+- **Comprehensive LTI Functionality**: Implemented full Learning Tools Interoperability (LTI) support for seamless integration with Canvas LMS and other LMS platforms
+- **LTI Provider Service**: Created complete LTI provider using ltijs library with authentication, grade passback, and deep linking capabilities
+- **Grade Passback System**: Automatic grade synchronization back to LMS gradebook after quiz completion
+- **Deep Linking Support**: Content selection and linking from within the LMS interface
+- **Role-Based LTI Access**: Automatic role detection and appropriate interface routing based on LTI launch context
+- **LTI Configuration Endpoints**: API endpoints for LMS registration and configuration management
+
+### Navigation Unification (July 04, 2025)
+- **Unified Quiz Builder**: Removed separate Canvas Quiz Builder from navigation, routing all quiz building through the enhanced quiz builder
+- **Simplified User Experience**: Single, comprehensive quiz creation interface with all advanced features
+- **Route Consolidation**: Updated App.tsx to redirect /quiz-builder to enhanced quiz builder component
+
 ## Changelog
 
+- July 04, 2025. Implemented comprehensive LTI integration for LMS plugin functionality
+- July 04, 2025. Unified quiz builder navigation and removed duplicate Canvas Quiz Builder
 - July 04, 2025. Added breadcrumb navigation to Reference Banks page and enhanced error handling
 - July 04, 2025. Fixed database schema issues with Reference Banks (renamed title to name column)
 - July 04, 2025. Added comprehensive Reference Bank feature with API, frontend interface, and database integration

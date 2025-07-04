@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { initializeLTI, getLTIConfig, requireLTIAuth, getLTIUser, sendGradePassback, createDeepLink } from "./ltiService";
 import { setupWebSocket } from "./websocket";
 import multer from "multer";
 import { 
@@ -41,6 +42,14 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize LTI functionality
+  try {
+    await initializeLTI(app);
+    console.log('LTI service initialized successfully');
+  } catch (error: any) {
+    console.log('LTI service initialization failed, continuing without LTI:', error.message);
+  }
+
   // Auth middleware
   await setupAuth(app);
 
@@ -1375,6 +1384,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error assigning questions to group:", error);
       res.status(500).json({ message: "Failed to assign questions to group" });
+    }
+  });
+
+  // LTI Configuration endpoints
+  app.get('/api/lti/config', (req, res) => {
+    try {
+      const config = getLTIConfig();
+      res.json(config);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get LTI configuration' });
+    }
+  });
+
+  // LTI Grade Passback endpoint
+  app.post('/api/lti/grade-passback', requireLTIAuth, async (req, res) => {
+    try {
+      const { score, maxScore = 100 } = req.body;
+      
+      if (typeof score !== 'number' || score < 0 || score > maxScore) {
+        return res.status(400).json({ error: 'Invalid score provided' });
+      }
+
+      const success = await sendGradePassback(req, score, maxScore);
+      
+      if (success) {
+        res.json({ success: true, message: 'Grade sent successfully' });
+      } else {
+        res.status(500).json({ error: 'Failed to send grade' });
+      }
+    } catch (error) {
+      console.error('Grade passback error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // LTI Deep Linking endpoint
+  app.post('/api/lti/deep-link', requireLTIAuth, async (req, res) => {
+    try {
+      const { contentItems } = req.body;
+      
+      if (!Array.isArray(contentItems)) {
+        return res.status(400).json({ error: 'Invalid content items provided' });
+      }
+
+      await createDeepLink(req, res, contentItems);
+    } catch (error) {
+      console.error('Deep linking error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // LTI User info endpoint
+  app.get('/api/lti/user', requireLTIAuth, (req, res) => {
+    try {
+      const ltiUser = getLTIUser(req);
+      if (ltiUser) {
+        res.json(ltiUser);
+      } else {
+        res.status(404).json({ error: 'No LTI user found' });
+      }
+    } catch (error) {
+      console.error('LTI user error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 

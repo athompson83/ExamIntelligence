@@ -21,8 +21,7 @@ const navigationItems = [
     items: [
       { name: "Dashboard", icon: LayoutDashboard, href: "/" },
       { name: "Item Banks", icon: BookOpen, href: "/item-banks" },
-      { name: "Quiz Builder", icon: Puzzle, href: "/quiz-builder" },
-      { name: "Canvas Quiz Builder", icon: Target, href: "/enhanced-quiz-builder" },
+      { name: "Quiz Builder", icon: Puzzle, href: "/enhanced-quiz-builder" },
       { name: "Reference Banks", icon: FolderOpen, href: "/reference-banks" },
       { name: "Live Exams", icon: Play, href: "/live-exams" },
       { name: "Analytics", icon: BarChart3, href: "/analytics" },

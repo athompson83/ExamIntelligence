@@ -8,7 +8,7 @@ import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import ItemBanks from "@/pages/item-banks";
 import QuestionManager from "@/pages/question-manager";
-import QuizBuilder from "@/pages/quiz-builder";
+
 import LiveExams from "@/pages/live-exams";
 import Analytics from "@/pages/analytics";
 import AnalyticsDashboard from "@/pages/analytics-dashboard";
@@ -45,7 +45,7 @@ function Router() {
           <Route path="/testbanks/:id/questions">
             {(params) => <QuestionManager testbankId={params.id} />}
           </Route>
-          <Route path="/quiz-builder" component={QuizBuilder} />
+          <Route path="/quiz-builder" component={EnhancedQuizBuilder} />
           <Route path="/enhanced-quiz-builder" component={EnhancedQuizBuilder} />
           <Route path="/live-exams" component={LiveExams} />
           <Route path="/analytics" component={Analytics} />
