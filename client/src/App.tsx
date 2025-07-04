@@ -38,6 +38,9 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/item-banks" component={ItemBanks} />
+          <Route path="/question-manager">
+            {() => <QuestionManager />}
+          </Route>
           <Route path="/testbanks/:id/questions">
             {(params) => <QuestionManager testbankId={params.id} />}
           </Route>

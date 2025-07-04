@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ import {
   Brain, 
   Wand2, 
   Upload, 
-  Link, 
+  ExternalLink,
   Tag, 
   Clock, 
   Target,
@@ -45,7 +46,9 @@ import {
   AlertTriangle,
   Lightbulb,
   GraduationCap,
-  BarChart3
+  BarChart3,
+  Home,
+  ChevronRight
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -84,17 +87,11 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  // Check if testbankId is provided
-  if (!testbankId) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Invalid Test Bank</h2>
-          <p className="text-gray-600">Test bank ID is required to view questions.</p>
-        </div>
-      </div>
-    );
-  }
+  // State management
+  const [selectedTestbankId, setSelectedTestbankId] = useState<string>(testbankId || "");
+  
+  // If no testbankId provided, show testbank selection first
+  const effectiveTestbankId = testbankId || selectedTestbankId;
 
   // Redirect if not authenticated
   if (!isLoading && !isAuthenticated) {
@@ -167,25 +164,31 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     ]
   });
 
+  // Fetch available testbanks when no testbank is selected
+  const { data: testbanks, isLoading: testbanksLoading } = useQuery({
+    queryKey: ['/api/testbanks'],
+    enabled: isAuthenticated && !effectiveTestbankId,
+  });
+
   // Fetch questions
   const { data: questions, isLoading: questionsLoading, error: questionsError } = useQuery({
-    queryKey: ['/api/testbanks', testbankId, 'questions'],
-    enabled: isAuthenticated && !!testbankId,
+    queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'],
+    enabled: isAuthenticated && !!effectiveTestbankId,
   });
 
   // Fetch testbank details
   const { data: testbank } = useQuery({
-    queryKey: ['/api/testbanks', testbankId],
-    enabled: isAuthenticated && !!testbankId,
+    queryKey: ['/api/testbanks', effectiveTestbankId],
+    enabled: isAuthenticated && !!effectiveTestbankId,
   });
 
   // Create question mutation
   const createQuestionMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("POST", `/api/testbanks/${testbankId}/questions`, data);
+      await apiRequest("POST", `/api/testbanks/${effectiveTestbankId}/questions`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', testbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
       setIsCreateDialogOpen(false);
       resetQuestionForm();
       toast({
@@ -253,7 +256,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
         formData.append(`referenceFile_${index}`, file);
       });
 
-      const response = await fetch(`/api/testbanks/${testbankId}/generate-questions`, {
+      const response = await fetch(`/api/testbanks/${effectiveTestbankId}/generate-questions`, {
         method: 'POST',
         body: formData,
       });
@@ -266,7 +269,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', testbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
       setIsAiDialogOpen(false);
       
       // Reset form for next use
@@ -296,7 +299,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       await apiRequest("PUT", `/api/questions/${id}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', testbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
       setEditingQuestion(null);
       setIsCreateDialogOpen(false);
       resetQuestionForm();
@@ -320,7 +323,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       await apiRequest("DELETE", `/api/questions/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', testbankId, 'questions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
       toast({
         title: "Success",
         description: "Question deleted successfully",
@@ -501,7 +504,82 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     );
   }
 
-  if (questionsLoading) {
+  // Show testbank selection if no testbank is selected
+  if (!effectiveTestbankId && !testbanksLoading) {
+    return (
+      <div className="min-h-screen flex bg-background">
+        <Sidebar />
+        
+        <div className="flex-1 ml-64">
+          <TopBar />
+          
+          <main className="p-6">
+            {/* Breadcrumb Navigation */}
+            <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+              <Link href="/" className="flex items-center hover:text-gray-900">
+                <Home className="h-4 w-4" />
+              </Link>
+              <ChevronRight className="h-4 w-4" />
+              <span className="text-gray-900 font-medium">Question Manager</span>
+            </nav>
+            
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">Question Manager</h1>
+                <p className="text-gray-600">Select a test bank to manage questions</p>
+              </div>
+            </div>
+            
+            <div className="max-w-4xl mx-auto">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Select Test Bank</CardTitle>
+                  <CardDescription>
+                    Choose a test bank to view and manage questions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {testbanks && testbanks.length > 0 ? (
+                    <div className="grid gap-4">
+                      {testbanks.map((bank: any) => (
+                        <Card key={bank.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedTestbankId(bank.id)}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h3 className="font-semibold text-lg">{bank.title}</h3>
+                                <p className="text-gray-600 text-sm">{bank.description}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Created {format(new Date(bank.createdAt), 'MMM d, yyyy')}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm text-gray-600">{bank.questionCount || 0} questions</p>
+                                <Badge variant="outline">{bank.subject}</Badge>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">No test banks found</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Create a test bank first to start managing questions.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (questionsLoading || testbanksLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -517,6 +595,21 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
         <TopBar />
         
         <main className="p-6">
+          {/* Breadcrumb Navigation */}
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+            <Link href="/" className="flex items-center hover:text-gray-900">
+              <Home className="h-4 w-4" />
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-gray-900 font-medium">Question Manager</span>
+            {effectiveTestbankId && testbank && (
+              <>
+                <ChevronRight className="h-4 w-4" />
+                <span className="text-gray-500">{testbank.title}</span>
+              </>
+            )}
+          </nav>
+          
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Question Manager</h1>
@@ -882,7 +975,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                             <Label>Reference Links</Label>
                             {aiForm.referenceLinks.map((link, index) => (
                               <div key={index} className="flex items-center space-x-2 mt-2">
-                                <Link className="h-4 w-4 text-gray-400" />
+                                <ExternalLink className="h-4 w-4 text-gray-400" />
                                 <Input
                                   value={link}
                                   onChange={(e) => {
@@ -1215,7 +1308,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     if (questionsError instanceof Error && questionsError.message.includes('401')) {
                       window.location.href = "/api/login";
                     } else {
-                      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', testbankId, 'questions'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
                     }
                   }}
                 >
