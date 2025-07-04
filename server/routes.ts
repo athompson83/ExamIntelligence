@@ -237,6 +237,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...generatedQuestion,
           testbankId: req.params.id,
           creatorId: req.user.claims.sub,
+          // Convert numeric values to strings for validation
+          points: generatedQuestion.points?.toString() || "1.00",
+          difficultyScore: generatedQuestion.difficultyScore?.toString() || "5.0",
+          aiConfidenceScore: generatedQuestion.aiConfidenceScore?.toString() || "0.75",
         });
         
         const question = await storage.createQuestion(questionData);

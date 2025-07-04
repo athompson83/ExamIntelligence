@@ -524,8 +524,8 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       return {
         questionText: question.questionText || `Generated question ${index + 1} for ${topic}`,
         questionType: question.questionType || 'multiple_choice',
-        points: Math.max(1, question.points || 1),
-        difficultyScore: Math.max(1, Math.min(10, question.difficultyScore || 5)),
+        points: Math.max(1, question.points || 1).toString(),
+        difficultyScore: Math.max(1, Math.min(10, question.difficultyScore || 5)).toString(),
         bloomsLevel: question.bloomsLevel || 'understand',
         tags: Array.isArray(question.tags) ? question.tags : [topic, 'ai-generated'],
         correctFeedback: question.correctFeedback || 'Excellent! You demonstrate strong understanding of this concept.',
@@ -536,7 +536,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         audioUrl: question.audioUrl || '',
         videoUrl: question.videoUrl || '',
         aiValidationStatus: confidenceScore > 0.8 ? 'approved' : 'needs_review',
-        aiConfidenceScore: Math.min(0.95, confidenceScore), // Cap at 95%
+        aiConfidenceScore: Math.min(0.95, confidenceScore).toString(), // Cap at 95%
         answerOptions: validatedAnswerOptions
       };
     });
@@ -551,8 +551,8 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       {
         questionText: `What is the main concept of ${params.topic}?`,
         questionType: 'multiple_choice',
-        points: 1,
-        difficultyScore: 5,
+        points: "1",
+        difficultyScore: "5",
         bloomsLevel: 'understand',
         tags: [params.topic],
         correctFeedback: 'Correct! You understand the basic concept.',
@@ -563,7 +563,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         audioUrl: '',
         videoUrl: '',
         aiValidationStatus: 'needs_review',
-        aiConfidenceScore: 0.3,
+        aiConfidenceScore: "0.3",
         answerOptions: [
           { answerText: 'Option A', isCorrect: true, displayOrder: 0 },
           { answerText: 'Option B', isCorrect: false, displayOrder: 1 },
