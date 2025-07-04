@@ -48,7 +48,10 @@ import {
   GraduationCap,
   BarChart3,
   Home,
-  ChevronRight
+  ChevronRight,
+  RefreshCw,
+  Copy,
+  Shuffle
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -432,6 +435,96 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     generateQuestionsMutation.mutate(data);
   };
 
+  // Question Management Actions
+  const handleAcceptQuestion = async (questionId: string) => {
+    try {
+      await apiRequest("PUT", `/api/questions/${questionId}`, {
+        aiValidationStatus: "approved"
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      toast({
+        title: "Success",
+        description: "Question approved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to approve question",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRejectQuestion = async (questionId: string) => {
+    try {
+      await apiRequest("PUT", `/api/questions/${questionId}`, {
+        aiValidationStatus: "rejected"
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      toast({
+        title: "Success",
+        description: "Question rejected successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reject question",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRefreshQuestion = async (question: Question) => {
+    try {
+      const response = await apiRequest("POST", `/api/questions/${question.id}/refresh`);
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      toast({
+        title: "Success",
+        description: "Question refreshed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to refresh question",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCreateSimilar = async (question: Question) => {
+    try {
+      const response = await apiRequest("POST", `/api/questions/${question.id}/similar`);
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      toast({
+        title: "Success",
+        description: "Similar question created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create similar question",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleChangeOptions = async (question: Question) => {
+    try {
+      const response = await apiRequest("POST", `/api/questions/${question.id}/change-options`);
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks', effectiveTestbankId, 'questions'] });
+      toast({
+        title: "Success",
+        description: "Answer options changed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to change answer options",
+        variant: "destructive",
+      });
+    }
+  };
+
   const addAnswerOption = () => {
     setQuestionForm(prev => ({
       ...prev,
@@ -730,15 +823,22 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                         <div className="mt-2">
                           <Slider
                             value={aiForm.difficultyRange}
-                            onValueChange={(value) => setAiForm(prev => ({ ...prev, difficultyRange: value }))}
+                            onValueChange={(value) => {
+                              // Ensure we always have exactly 2 values for range
+                              const newRange = Array.isArray(value) && value.length >= 2 
+                                ? [value[0], value[1]] 
+                                : [value[0] || 1, value[1] || 10];
+                              setAiForm(prev => ({ ...prev, difficultyRange: newRange }));
+                            }}
                             max={10}
                             min={1}
                             step={1}
+                            minStepsBetweenThumbs={1}
                             className="w-full"
                           />
                           <div className="flex justify-between text-sm text-gray-500 mt-1">
-                            <span>Easy ({aiForm.difficultyRange[0]})</span>
-                            <span>Hard ({aiForm.difficultyRange[1]})</span>
+                            <span>Min: {aiForm.difficultyRange[0]}</span>
+                            <span>Max: {aiForm.difficultyRange[1]}</span>
                           </div>
                         </div>
                       </div>
@@ -1281,6 +1381,49 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                       </div>
                       
                       <div className="flex items-center space-x-2">
+                        {question.aiValidationStatus === 'pending' && (
+                          <>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleAcceptQuestion(question.id)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleRejectQuestion(question.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRefreshQuestion(question)}
+                          title="Generate new version"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCreateSimilar(question)}
+                          title="Create similar question"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleChangeOptions(question)}
+                          title="Change answer options"
+                        >
+                          <Shuffle className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

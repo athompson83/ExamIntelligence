@@ -154,7 +154,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/testbanks/:id/questions', isAuthenticated, async (req: any, res) => {
     try {
       const questions = await storage.getQuestionsByTestbank(req.params.id);
-      res.json(questions);
+      
+      // Fetch answer options for each question
+      const questionsWithOptions = await Promise.all(
+        questions.map(async (question) => {
+          const answerOptions = await storage.getAnswerOptionsByQuestion(question.id);
+          return { ...question, answerOptions };
+        })
+      );
+      
+      res.json(questionsWithOptions);
     } catch (error) {
       console.error("Error fetching questions:", error);
       res.status(500).json({ message: "Failed to fetch questions" });
@@ -327,6 +336,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error validating question:", error);
       res.status(500).json({ message: "Failed to validate question" });
+    }
+  });
+
+  // Question Management routes
+  app.post('/api/questions/:id/refresh', isAuthenticated, async (req: any, res) => {
+    try {
+      const question = await storage.getQuestion(req.params.id);
+      if (!question) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+
+      // Generate a new version of the question using AI
+      const newQuestions = await generateQuestionsWithAI({
+        topic: question.questionText.substring(0, 50) + "...", // Use start of question as topic
+        questionCount: 1,
+        questionTypes: [question.questionType],
+        difficultyRange: [question.difficultyScore, question.difficultyScore],
+        bloomsLevels: [question.bloomsLevel],
+        includeReferences: false,
+        referenceLinks: [],
+        learningObjectives: [],
+        questionStyle: "formal",
+        includeImages: false,
+        includeMultimedia: false,
+        testbankId: question.testbankId
+      });
+
+      if (newQuestions && newQuestions.length > 0) {
+        const newQuestion = newQuestions[0];
+        
+        // Update the existing question with new content
+        await storage.updateQuestion(req.params.id, {
+          questionText: newQuestion.questionText,
+          aiValidationStatus: 'pending',
+          aiFeedback: 'Refreshed version of question'
+        });
+
+        // Update answer options if they exist
+        if (newQuestion.answerOptions && newQuestion.answerOptions.length > 0) {
+          // Delete old options
+          const oldOptions = await storage.getAnswerOptionsByQuestion(req.params.id);
+          for (const option of oldOptions) {
+            await storage.deleteAnswerOption(option.id);
+          }
+          
+          // Create new options
+          for (const [index, option] of newQuestion.answerOptions.entries()) {
+            await storage.createAnswerOption({
+              questionId: req.params.id,
+              answerText: option.answerText,
+              isCorrect: option.isCorrect,
+              displayOrder: index
+            });
+          }
+        }
+      }
+
+      res.json({ message: "Question refreshed successfully" });
+    } catch (error) {
+      console.error("Error refreshing question:", error);
+      res.status(500).json({ message: "Failed to refresh question" });
+    }
+  });
+
+  app.post('/api/questions/:id/similar', isAuthenticated, async (req: any, res) => {
+    try {
+      const question = await storage.getQuestion(req.params.id);
+      if (!question) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+
+      // Generate a similar question using AI
+      const newQuestions = await generateQuestionsWithAI({
+        topic: question.questionText.substring(0, 50) + "... (create similar)",
+        questionCount: 1,
+        questionTypes: [question.questionType],
+        difficultyRange: [question.difficultyScore, question.difficultyScore],
+        bloomsLevels: [question.bloomsLevel],
+        includeReferences: false,
+        referenceLinks: [],
+        learningObjectives: [],
+        questionStyle: "formal",
+        includeImages: false,
+        includeMultimedia: false,
+        testbankId: question.testbankId
+      });
+
+      if (newQuestions && newQuestions.length > 0) {
+        const newQuestion = newQuestions[0];
+        
+        // Create new question
+        const createdQuestion = await storage.createQuestion({
+          ...newQuestion,
+          testbankId: question.testbankId,
+          aiValidationStatus: 'pending',
+          aiFeedback: 'Similar question generated from existing question'
+        });
+
+        // Create answer options if they exist
+        if (newQuestion.answerOptions && newQuestion.answerOptions.length > 0) {
+          for (const [index, option] of newQuestion.answerOptions.entries()) {
+            await storage.createAnswerOption({
+              questionId: createdQuestion.id,
+              answerText: option.answerText,
+              isCorrect: option.isCorrect,
+              displayOrder: index
+            });
+          }
+        }
+      }
+
+      res.json({ message: "Similar question created successfully" });
+    } catch (error) {
+      console.error("Error creating similar question:", error);
+      res.status(500).json({ message: "Failed to create similar question" });
+    }
+  });
+
+  app.post('/api/questions/:id/change-options', isAuthenticated, async (req: any, res) => {
+    try {
+      const question = await storage.getQuestion(req.params.id);
+      if (!question) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+
+      // Generate new answer options using AI
+      const newQuestions = await generateQuestionsWithAI({
+        topic: question.questionText + " (generate new answer options)",
+        questionCount: 1,
+        questionTypes: [question.questionType],
+        difficultyRange: [question.difficultyScore, question.difficultyScore],
+        bloomsLevels: [question.bloomsLevel],
+        includeReferences: false,
+        referenceLinks: [],
+        learningObjectives: [],
+        questionStyle: "formal",
+        includeImages: false,
+        includeMultimedia: false,
+        testbankId: question.testbankId
+      });
+
+      if (newQuestions && newQuestions.length > 0 && newQuestions[0].answerOptions) {
+        // Delete old options
+        const oldOptions = await storage.getAnswerOptionsByQuestion(req.params.id);
+        for (const option of oldOptions) {
+          await storage.deleteAnswerOption(option.id);
+        }
+        
+        // Create new options
+        for (const [index, option] of newQuestions[0].answerOptions.entries()) {
+          await storage.createAnswerOption({
+            questionId: req.params.id,
+            answerText: option.answerText,
+            isCorrect: option.isCorrect,
+            displayOrder: index
+          });
+        }
+
+        // Update question status
+        await storage.updateQuestion(req.params.id, {
+          aiValidationStatus: 'pending',
+          aiFeedback: 'Answer options regenerated'
+        });
+      }
+
+      res.json({ message: "Answer options changed successfully" });
+    } catch (error) {
+      console.error("Error changing answer options:", error);
+      res.status(500).json({ message: "Failed to change answer options" });
     }
   });
 
