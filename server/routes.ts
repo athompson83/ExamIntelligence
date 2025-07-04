@@ -4,6 +4,11 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 // import { initializeLTI, getLTIConfig, requireLTIAuth, getLTIUser, sendGradePassback, createDeepLink } from "./ltiService";
 import { setupWebSocket } from "./websocket";
+import { 
+  generateItemAnalysisReport, 
+  exportAnalyticsData, 
+  generateComprehensiveAnalyticsReport 
+} from "./comprehensiveAnalyticsService";
 import multer from "multer";
 import { 
   insertTestbankSchema, 
@@ -96,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Testbank routes
-  app.post('/api/testbanks', isAuthenticated, async (req: any, res) => {
+  app.post('/api/testbanks',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const testbankData = insertTestbankSchema.parse({
@@ -112,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/testbanks', isAuthenticated, async (req: any, res) => {
+  app.get('/api/testbanks',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const testbanks = await storage.getTestbanksByUser(userId);
@@ -123,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/testbanks/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/testbanks/:id',  async (req: any, res) => {
     try {
       const testbank = await storage.getTestbank(req.params.id);
       if (!testbank) {
@@ -136,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/testbanks/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/testbanks/:id',  async (req: any, res) => {
     try {
       const testbankData = insertTestbankSchema.partial().parse(req.body);
       const testbank = await storage.updateTestbank(req.params.id, testbankData);
@@ -147,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/testbanks/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/testbanks/:id',  async (req: any, res) => {
     try {
       await storage.deleteTestbank(req.params.id);
       res.json({ message: "Testbank deleted successfully" });
@@ -158,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Question routes
-  app.post('/api/questions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/questions',  async (req: any, res) => {
     try {
       const questionData = insertQuestionSchema.parse(req.body);
       const question = await storage.createQuestion(questionData);
@@ -181,7 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/testbanks/:id/questions', isAuthenticated, async (req: any, res) => {
+  app.get('/api/testbanks/:id/questions',  async (req: any, res) => {
     try {
       const questions = await storage.getQuestionsByTestbank(req.params.id);
       
@@ -200,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/questions/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/questions/:id',  async (req: any, res) => {
     try {
       const question = await storage.getQuestion(req.params.id);
       if (!question) {
@@ -215,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/questions/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/questions/:id',  async (req: any, res) => {
     try {
       const questionData = insertQuestionSchema.partial().parse(req.body);
       const question = await storage.updateQuestion(req.params.id, questionData);
@@ -226,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/questions/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/questions/:id',  async (req: any, res) => {
     try {
       await storage.deleteQuestion(req.params.id);
       res.json({ message: "Question deleted successfully" });
@@ -237,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Question Generation routes
-  app.post('/api/testbanks/:id/generate-questions', isAuthenticated, upload.any(), async (req: any, res) => {
+  app.post('/api/testbanks/:id/generate-questions',  upload.any(), async (req: any, res) => {
     try {
       // Parse the data from the multipart form
       const data = JSON.parse(req.body.data || '{}');
@@ -306,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced question creation route for testbanks
-  app.post('/api/testbanks/:id/questions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/testbanks/:id/questions',  async (req: any, res) => {
     try {
       const questionData = insertQuestionSchema.parse({
         ...req.body,
@@ -335,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Validation routes
-  app.post('/api/questions/:id/validate', isAuthenticated, async (req: any, res) => {
+  app.post('/api/questions/:id/validate',  async (req: any, res) => {
     try {
       const question = await storage.getQuestion(req.params.id);
       if (!question) {
@@ -370,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Question Management routes
-  app.post('/api/questions/:id/refresh', isAuthenticated, async (req: any, res) => {
+  app.post('/api/questions/:id/refresh',  async (req: any, res) => {
     try {
       const question = await storage.getQuestion(req.params.id);
       if (!question) {
@@ -423,7 +428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/questions/:id/similar', isAuthenticated, async (req: any, res) => {
+  app.post('/api/questions/:id/similar',  async (req: any, res) => {
     try {
       const question = await storage.getQuestion(req.params.id);
       if (!question) {
@@ -471,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/questions/:id/change-options', isAuthenticated, async (req: any, res) => {
+  app.post('/api/questions/:id/change-options',  async (req: any, res) => {
     try {
       const question = await storage.getQuestion(req.params.id);
       if (!question) {
@@ -521,7 +526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Quiz routes
-  app.post('/api/quizzes', isAuthenticated, async (req: any, res) => {
+  app.post('/api/quizzes',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -549,7 +554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/quizzes', isAuthenticated, async (req: any, res) => {
+  app.get('/api/quizzes',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const quizzes = await storage.getQuizzesByUser(userId);
@@ -560,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/quizzes/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/quizzes/:id',  async (req: any, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {
@@ -574,7 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Quiz attempt routes
-  app.post('/api/quizzes/:id/attempts', isAuthenticated, async (req: any, res) => {
+  app.post('/api/quizzes/:id/attempts',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const attemptData = insertQuizAttemptSchema.parse({
@@ -592,7 +597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/quizzes/:id/attempts', isAuthenticated, async (req: any, res) => {
+  app.get('/api/quizzes/:id/attempts',  async (req: any, res) => {
     try {
       const attempts = await storage.getActiveQuizAttempts(req.params.id);
       res.json(attempts);
@@ -602,7 +607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/attempts/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/attempts/:id',  async (req: any, res) => {
     try {
       const attemptData = insertQuizAttemptSchema.partial().parse(req.body);
       const attempt = await storage.updateQuizAttempt(req.params.id, attemptData);
@@ -614,7 +619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Quiz response routes
-  app.post('/api/attempts/:id/responses', isAuthenticated, async (req: any, res) => {
+  app.post('/api/attempts/:id/responses',  async (req: any, res) => {
     try {
       const responseData = insertQuizResponseSchema.parse({
         ...req.body,
@@ -630,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Proctoring routes
-  app.post('/api/proctoring/logs', isAuthenticated, async (req: any, res) => {
+  app.post('/api/proctoring/logs',  async (req: any, res) => {
     try {
       const logData = insertProctoringLogSchema.parse(req.body);
       const log = await storage.createProctoringLog(logData);
@@ -641,7 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/proctoring/logs/unresolved', isAuthenticated, async (req: any, res) => {
+  app.get('/api/proctoring/logs/unresolved',  async (req: any, res) => {
     try {
       const logs = await storage.getUnresolvedProctoringLogs();
       res.json(logs);
@@ -651,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/proctoring/logs/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/proctoring/logs/:id',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const logData = insertProctoringLogSchema.partial().parse({
@@ -669,7 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Resources routes
-  app.post('/api/ai/study-guide', isAuthenticated, async (req: any, res) => {
+  app.post('/api/ai/study-guide',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const { sourceType, sourceId, topic } = req.body;
@@ -692,7 +697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/ai/improvement-plan', isAuthenticated, async (req: any, res) => {
+  app.post('/api/ai/improvement-plan',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const { attemptId } = req.body;
@@ -721,7 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/ai/resources', isAuthenticated, async (req: any, res) => {
+  app.get('/api/ai/resources',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const resources = await storage.getAiResourcesByUser(userId);
@@ -733,7 +738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notification routes
-  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+  app.get('/api/notifications',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const notifications = await storage.getNotificationsByUser(userId);
@@ -744,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/notifications/:id/read', isAuthenticated, async (req: any, res) => {
+  app.put('/api/notifications/:id/read',  async (req: any, res) => {
     try {
       await storage.markNotificationAsRead(req.params.id);
       res.json({ message: "Notification marked as read" });
@@ -755,7 +760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics routes
-  app.get('/api/analytics/quiz/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics/quiz/:id',  async (req: any, res) => {
     try {
       const analytics = await storage.getQuizAnalytics(req.params.id);
       res.json(analytics);
@@ -765,7 +770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/analytics/testbank/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics/testbank/:id',  async (req: any, res) => {
     try {
       const analytics = await storage.getTestbankAnalytics(req.params.id);
       res.json(analytics);
@@ -776,7 +781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Settings Routes
-  app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/settings',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -811,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+  app.put('/api/admin/settings',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -845,7 +850,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/test-api-key', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/test-api-key',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -928,7 +933,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reference Bank routes
-  app.post("/api/reference-banks", isAuthenticated, async (req, res) => {
+  app.post("/api/reference-banks",  async (req, res) => {
     try {
       const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
       if (!userId) {
@@ -964,7 +969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/reference-banks", isAuthenticated, async (req, res) => {
+  app.get("/api/reference-banks",  async (req, res) => {
     try {
       const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
       if (!userId) {
@@ -988,7 +993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/reference-banks/:id", isAuthenticated, async (req, res) => {
+  app.get("/api/reference-banks/:id",  async (req, res) => {
     try {
       const { id } = req.params;
       const referenceBank = await storage.getReferenceBank(id);
@@ -1004,7 +1009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/reference-banks/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/reference-banks/:id",  async (req, res) => {
     try {
       const { id } = req.params;
       const parsedData = insertReferenceBankSchema.partial().parse(req.body);
@@ -1017,7 +1022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/reference-banks/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/reference-banks/:id",  async (req, res) => {
     try {
       const { id } = req.params;
       await storage.deleteReferenceBank(id);
@@ -1029,7 +1034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reference routes
-  app.post("/api/reference-banks/:bankId/references", isAuthenticated, async (req, res) => {
+  app.post("/api/reference-banks/:bankId/references",  async (req, res) => {
     try {
       const { bankId } = req.params;
       const parsedData = insertReferenceSchema.parse({
@@ -1045,7 +1050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/reference-banks/:bankId/references", isAuthenticated, async (req, res) => {
+  app.get("/api/reference-banks/:bankId/references",  async (req, res) => {
     try {
       const { bankId } = req.params;
       const references = await storage.getReferencesByBank(bankId);
@@ -1056,7 +1061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/references/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/references/:id",  async (req, res) => {
     try {
       const { id } = req.params;
       const parsedData = insertReferenceSchema.partial().parse(req.body);
@@ -1069,7 +1074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/references/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/references/:id",  async (req, res) => {
     try {
       const { id } = req.params;
       await storage.deleteReference(id);
@@ -1083,7 +1088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== NEW ROLE-BASED ENDPOINTS ==========
 
   // Account Management Routes
-  app.get('/api/accounts', isAuthenticated, async (req: any, res) => {
+  app.get('/api/accounts',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const accounts = await storage.getAccountsByUser(userId);
@@ -1094,7 +1099,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/accounts', isAuthenticated, async (req: any, res) => {
+  app.post('/api/accounts',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -1114,7 +1119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Scheduled Assignment Routes
-  app.get('/api/scheduled-assignments', isAuthenticated, async (req: any, res) => {
+  app.get('/api/scheduled-assignments',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -1137,7 +1142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/scheduled-assignments', isAuthenticated, async (req: any, res) => {
+  app.post('/api/scheduled-assignments',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -1162,7 +1167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Study Aid Routes  
-  app.get('/api/study-aids', isAuthenticated, async (req: any, res) => {
+  app.get('/api/study-aids',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const studyAids = await storage.getStudyAidsByStudent(userId);
@@ -1173,7 +1178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/study-aids', isAuthenticated, async (req: any, res) => {
+  app.post('/api/study-aids',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const studyAidData = insertStudyAidSchema.parse({
@@ -1190,7 +1195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Assignment Submission Routes
-  app.get('/api/assignment-submissions/:assignmentId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/assignment-submissions/:assignmentId',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const { assignmentId } = req.params;
@@ -1211,7 +1216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/assignment-submissions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/assignment-submissions',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const submissionData = insertAssignmentSubmissionSchema.parse({
@@ -1228,7 +1233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mobile Device Registration Routes
-  app.get('/api/mobile-devices', isAuthenticated, async (req: any, res) => {
+  app.get('/api/mobile-devices',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const devices = await storage.getMobileDevicesByUser(userId);
@@ -1239,7 +1244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/mobile-devices', isAuthenticated, async (req: any, res) => {
+  app.post('/api/mobile-devices',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const deviceData = insertMobileDeviceSchema.parse({
@@ -1256,7 +1261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Study Aids Routes
-  app.get('/api/study-aids', isAuthenticated, async (req: any, res) => {
+  app.get('/api/study-aids',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const studyAids = await storage.getStudyAidsByUser(userId);
@@ -1267,7 +1272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/study-aids/generate', isAuthenticated, async (req: any, res) => {
+  app.post('/api/study-aids/generate',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const { type, quizId, title, customPrompt } = req.body;
@@ -1308,7 +1313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/quizzes/completed', isAuthenticated, async (req: any, res) => {
+  app.get('/api/quizzes/completed',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const attempts = await storage.getQuizAttemptsByUser(userId);
@@ -1339,7 +1344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/study-aids/:id/access', isAuthenticated, async (req: any, res) => {
+  app.post('/api/study-aids/:id/access',  async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.claims?.sub || req.user.id;
@@ -1357,7 +1362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/study-aids/:id/rate', isAuthenticated, async (req: any, res) => {
+  app.post('/api/study-aids/:id/rate',  async (req: any, res) => {
     try {
       const { id } = req.params;
       const { rating } = req.body;
@@ -1380,7 +1385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/study-aids/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/study-aids/:id',  async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.claims?.sub || req.user.id;
@@ -1399,7 +1404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User Management Routes
-  app.get('/api/users/:accountId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/users/:accountId',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const { accountId } = req.params;
@@ -1418,7 +1423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/users/:userId/role', isAuthenticated, async (req: any, res) => {
+  app.put('/api/users/:userId/role',  async (req: any, res) => {
     try {
       const currentUserId = req.user.claims?.sub || req.user.id;
       const { userId } = req.params;
@@ -1439,7 +1444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shared Content Routes
-  app.get('/api/shared/testbanks', isAuthenticated, async (req: any, res) => {
+  app.get('/api/shared/testbanks',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -1456,7 +1461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/shared/quizzes', isAuthenticated, async (req: any, res) => {
+  app.get('/api/shared/quizzes',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -1474,7 +1479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Question Group Routes
-  app.get('/api/quizzes/:quizId/question-groups', isAuthenticated, async (req: any, res) => {
+  app.get('/api/quizzes/:quizId/question-groups',  async (req: any, res) => {
     try {
       const questionGroups = await storage.getQuestionGroupsByQuiz(req.params.quizId);
       res.json(questionGroups);
@@ -1484,7 +1489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/quizzes/:quizId/question-groups', isAuthenticated, async (req: any, res) => {
+  app.post('/api/quizzes/:quizId/question-groups',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -1507,7 +1512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/question-groups/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/question-groups/:id',  async (req: any, res) => {
     try {
       const updatedGroup = await storage.updateQuestionGroup(req.params.id, req.body);
       res.json(updatedGroup);
@@ -1517,7 +1522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/question-groups/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/question-groups/:id',  async (req: any, res) => {
     try {
       await storage.deleteQuestionGroup(req.params.id);
       res.json({ message: "Question group deleted successfully" });
@@ -1527,7 +1532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/question-groups/:id/assign-questions', isAuthenticated, async (req: any, res) => {
+  app.put('/api/question-groups/:id/assign-questions',  async (req: any, res) => {
     try {
       const { questionIds } = req.body;
       await storage.assignQuestionsToGroup(req.params.id, questionIds);
@@ -1603,9 +1608,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   */
 
-  // ========== ML ANALYTICS ENDPOINTS ==========
+  // ========== COMPREHENSIVE ANALYTICS ENDPOINTS ==========
   
-  // Import ML Insights Service
+  // Import Analytics Services
   const { 
     generateMLInsights, 
     predictStudentPerformance, 
@@ -1613,6 +1618,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     generateLearningPath, 
     analyzeQuestionClusters 
   } = await import('./mlInsightsService');
+
+  const {
+    generateItemAnalysisReport,
+    exportAnalyticsData,
+    generateComprehensiveAnalyticsReport
+  } = await import('./comprehensiveAnalyticsService');
 
   // Get comprehensive ML insights
   app.get('/api/analytics/ml-insights', async (req: any, res) => {
@@ -1629,7 +1640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Predict student performance
-  app.get('/api/analytics/predict-performance/:studentId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics/predict-performance/:studentId', async (req: any, res) => {
     try {
       const { studentId } = req.params;
       const { quizId } = req.query;
@@ -1643,7 +1654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Detect anomalies in quiz data
-  app.get('/api/analytics/anomalies/:quizId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics/anomalies/:quizId', async (req: any, res) => {
     try {
       const { quizId } = req.params;
       
@@ -1656,7 +1667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate personalized learning path
-  app.get('/api/analytics/learning-path/:studentId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics/learning-path/:studentId', async (req: any, res) => {
     try {
       const { studentId } = req.params;
       
@@ -1669,7 +1680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analyze question clusters for testbank
-  app.get('/api/analytics/question-clusters/:testbankId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics/question-clusters/:testbankId',  async (req: any, res) => {
     try {
       const { testbankId } = req.params;
       
@@ -1682,7 +1693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Advanced quiz analytics with ML insights
-  app.get('/api/analytics/quiz/:quizId/advanced', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics/quiz/:quizId/advanced',  async (req: any, res) => {
     try {
       const { quizId } = req.params;
       const userId = req.user.claims?.sub || req.user.id;
@@ -1728,7 +1739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Predictive analytics dashboard
-  app.get('/api/analytics/predictive', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics/predictive',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
@@ -1753,6 +1764,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating predictive analytics:", error);
       res.status(500).json({ message: "Failed to generate predictive analytics" });
+    }
+  });
+
+  // ========== COMPREHENSIVE ANALYTICS ENDPOINTS ==========
+
+  // 1. Item Analysis Reports
+  app.get('/api/analytics/item-analysis/:quizId', async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const { accountId } = req.query;
+      
+      const itemAnalysis = await generateItemAnalysisReport(quizId, accountId);
+      res.json(itemAnalysis);
+    } catch (error) {
+      console.error("Error generating item analysis report:", error);
+      res.status(500).json({ message: "Failed to generate item analysis report" });
+    }
+  });
+
+  // 2. Comprehensive Analytics Report
+  app.get('/api/analytics/comprehensive/:quizId', async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const { accountId, includeAll = true } = req.query;
+      
+      const comprehensiveReport = await generateComprehensiveAnalyticsReport(
+        quizId, 
+        accountId, 
+        includeAll === 'true'
+      );
+      res.json(comprehensiveReport);
+    } catch (error) {
+      console.error("Error generating comprehensive analytics report:", error);
+      res.status(500).json({ message: "Failed to generate comprehensive analytics report" });
+    }
+  });
+
+  // 3. Export Analytics Data
+  app.post('/api/analytics/export', async (req: any, res) => {
+    try {
+      const { reportType, reportData, options } = req.body;
+      
+      const exportResult = await exportAnalyticsData(reportType, reportData, options);
+      res.json(exportResult);
+    } catch (error) {
+      console.error("Error exporting analytics data:", error);
+      res.status(500).json({ message: "Failed to export analytics data" });
+    }
+  });
+
+  // 4. Generate All Analytics Types for Quiz
+  app.get('/api/analytics/complete/:quizId', async (req: any, res) => {
+    try {
+      const { quizId } = req.params;
+      const { format = 'json' } = req.query;
+      
+      // Generate all analytics reports
+      const [
+        itemAnalysis,
+        mlInsights,
+        comprehensiveReport
+      ] = await Promise.all([
+        generateItemAnalysisReport(quizId),
+        generateMLInsights(quizId),
+        generateComprehensiveAnalyticsReport(quizId)
+      ]);
+
+      const completeAnalytics = {
+        quizId,
+        generatedAt: new Date(),
+        reports: {
+          itemAnalysis,
+          mlInsights,
+          comprehensive: comprehensiveReport,
+          summary: {
+            totalQuestions: itemAnalysis.length,
+            averageDifficulty: itemAnalysis.reduce((sum, item) => sum + item.difficultyIndex, 0) / itemAnalysis.length,
+            flaggedQuestions: itemAnalysis.filter(item => item.flaggedForReview).length,
+            highPerformingStudents: mlInsights.performancePredictions?.filter(p => p.riskLevel === 'low').length || 0,
+            atRiskStudents: mlInsights.performancePredictions?.filter(p => p.riskLevel === 'high').length || 0,
+            anomaliesDetected: mlInsights.anomalyDetection?.length || 0
+          }
+        }
+      };
+
+      if (format === 'export') {
+        const exportOptions = {
+          format: 'json' as const,
+          includeVisualizations: true
+        };
+        const exportResult = await exportAnalyticsData('complete_analytics', completeAnalytics, exportOptions);
+        res.json(exportResult);
+      } else {
+        res.json(completeAnalytics);
+      }
+    } catch (error) {
+      console.error("Error generating complete analytics:", error);
+      res.status(500).json({ message: "Failed to generate complete analytics" });
     }
   });
 

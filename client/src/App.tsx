@@ -20,6 +20,7 @@ import ReferenceBanks from "@/pages/reference-banks";
 import EnhancedQuizBuilder from "@/pages/enhanced-quiz-builder";
 import StudyAids from "@/pages/study-aids";
 import MLAnalytics from "@/pages/MLAnalytics";
+import ComprehensiveAnalytics from "@/pages/ComprehensiveAnalytics";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -53,6 +54,7 @@ function Router() {
           <Route path="/analytics" component={Analytics} />
           <Route path="/analytics-dashboard" component={AnalyticsDashboard} />
           <Route path="/ml-analytics" component={MLAnalytics} />
+          <Route path="/comprehensive-analytics" component={ComprehensiveAnalytics} />
           <Route path="/speed-grader">
             {() => <SpeedGrader />}
           </Route>
