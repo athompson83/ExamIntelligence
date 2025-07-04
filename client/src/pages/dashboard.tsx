@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Sidebar } from "@/components/layout/sidebar";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { QuickStats } from "@/components/dashboard/quick-stats";
 import { LiveExamMonitoring } from "@/components/dashboard/live-exam-monitoring";

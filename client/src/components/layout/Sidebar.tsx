@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 import { 
   BarChart3, 
   BookOpen, 
@@ -9,7 +10,10 @@ import {
   Play, 
   Brain,
   FolderOpen,
-  LayoutDashboard
+  LayoutDashboard,
+  ChevronLeft,
+  ChevronRight,
+  GraduationCap
 } from "lucide-react";
 
 interface SidebarProps {
@@ -29,22 +33,49 @@ const navigation = [
 
 export function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    
+    // Dispatch custom event for layout to listen
+    window.dispatchEvent(new CustomEvent('sidebar-toggle', {
+      detail: { isCollapsed: newState }
+    }));
+  };
 
   return (
-    <nav className={cn("bg-sidebar border-r border-sidebar-border w-64 fixed inset-y-0 left-0 z-50 shadow-sm", className)}>
-      <div className="flex items-center justify-center h-16 bg-primary">
+    <nav className={cn(
+      "bg-white border-r border-gray-200 fixed inset-y-0 left-0 z-50 shadow-sm transition-all duration-300",
+      isCollapsed ? "w-16" : "w-64",
+      className
+    )}>
+      {/* Header */}
+      <div className="flex items-center justify-between h-16 bg-primary px-4">
         <div className="flex items-center">
           <div className="bg-white rounded-lg p-2 mr-2">
-            <BookOpen className="text-primary h-6 w-6" />
+            <GraduationCap className="text-primary h-6 w-6" />
           </div>
-          <h1 className="text-white text-xl font-bold">ExamGen Pro</h1>
+          {!isCollapsed && (
+            <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
+          )}
         </div>
+        <button
+          onClick={toggleSidebar}
+          className="text-white hover:text-gray-200 transition-colors duration-200"
+        >
+          {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        </button>
       </div>
       
+      {/* Navigation */}
       <div className="flex flex-col mt-8">
-        <div className="px-6 py-2 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-          Main Menu
-        </div>
+        {!isCollapsed && (
+          <div className="px-6 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Main Menu
+          </div>
+        )}
         
         <div className="space-y-1 px-3">
           {navigation.map((item) => {
@@ -54,14 +85,21 @@ export function Sidebar({ className }: SidebarProps) {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors duration-200",
+                  "flex items-center py-3 text-sm font-medium rounded-md transition-colors duration-200 group relative",
+                  isCollapsed ? "px-3 justify-center" : "px-3",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-primary border-r-2 border-sidebar-primary"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary"
+                    ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                 )}
+                title={isCollapsed ? item.name : undefined}
               >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.name}
+                <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                {!isCollapsed && item.name}
+                {isCollapsed && (
+                  <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
+                    {item.name}
+                  </span>
+                )}
               </Link>
             );
           })}
