@@ -11,6 +11,8 @@ import {
   validationLogs,
   aiResources,
   notifications,
+  referenceBanks,
+  references,
   type User,
   type UpsertUser,
   type Testbank,
@@ -33,6 +35,10 @@ import {
   type InsertAiResource,
   type Notification,
   type InsertNotification,
+  type ReferenceBank,
+  type InsertReferenceBank,
+  type Reference,
+  type InsertReference,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, count, avg, like, inArray } from "drizzle-orm";
@@ -103,6 +109,20 @@ export interface IStorage {
   getQuizAnalytics(quizId: string): Promise<any>;
   getTestbankAnalytics(testbankId: string): Promise<any>;
   getDashboardStats(userId: string): Promise<any>;
+  
+  // Reference Bank operations
+  createReferenceBank(bank: InsertReferenceBank): Promise<ReferenceBank>;
+  getReferenceBank(id: string): Promise<ReferenceBank | undefined>;
+  getReferenceBanksByUser(userId: string): Promise<ReferenceBank[]>;
+  updateReferenceBank(id: string, data: Partial<InsertReferenceBank>): Promise<ReferenceBank>;
+  deleteReferenceBank(id: string): Promise<void>;
+  
+  // Reference operations
+  createReference(reference: InsertReference): Promise<Reference>;
+  getReference(id: string): Promise<Reference | undefined>;
+  getReferencesByBank(bankId: string): Promise<Reference[]>;
+  updateReference(id: string, data: Partial<InsertReference>): Promise<Reference>;
+  deleteReference(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -394,6 +414,71 @@ export class DatabaseStorage implements IStorage {
       itemBanks: itemBanks?.count || 0,
       aiValidations: aiValidations?.count || 0,
     };
+  }
+
+  // Reference Bank operations
+  async createReferenceBank(bank: InsertReferenceBank): Promise<ReferenceBank> {
+    const [referenceBank] = await db
+      .insert(referenceBanks)
+      .values(bank)
+      .returning();
+    return referenceBank;
+  }
+
+  async getReferenceBank(id: string): Promise<ReferenceBank | undefined> {
+    const [bank] = await db.select().from(referenceBanks).where(eq(referenceBanks.id, id));
+    return bank;
+  }
+
+  async getReferenceBanksByUser(userId: string): Promise<ReferenceBank[]> {
+    return await db.select().from(referenceBanks).where(eq(referenceBanks.creatorId, userId));
+  }
+
+  async updateReferenceBank(id: string, data: Partial<InsertReferenceBank>): Promise<ReferenceBank> {
+    const [bank] = await db
+      .update(referenceBanks)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(referenceBanks.id, id))
+      .returning();
+    return bank;
+  }
+
+  async deleteReferenceBank(id: string): Promise<void> {
+    // First delete all references in this bank
+    await db.delete(references).where(eq(references.bankId, id));
+    // Then delete the bank
+    await db.delete(referenceBanks).where(eq(referenceBanks.id, id));
+  }
+
+  // Reference operations
+  async createReference(reference: InsertReference): Promise<Reference> {
+    const [ref] = await db
+      .insert(references)
+      .values(reference)
+      .returning();
+    return ref;
+  }
+
+  async getReference(id: string): Promise<Reference | undefined> {
+    const [ref] = await db.select().from(references).where(eq(references.id, id));
+    return ref;
+  }
+
+  async getReferencesByBank(bankId: string): Promise<Reference[]> {
+    return await db.select().from(references).where(eq(references.bankId, bankId));
+  }
+
+  async updateReference(id: string, data: Partial<InsertReference>): Promise<Reference> {
+    const [ref] = await db
+      .update(references)
+      .set(data)
+      .where(eq(references.id, id))
+      .returning();
+    return ref;
+  }
+
+  async deleteReference(id: string): Promise<void> {
+    await db.delete(references).where(eq(references.id, id));
   }
 }
 

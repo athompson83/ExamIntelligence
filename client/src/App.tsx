@@ -16,6 +16,7 @@ import SpeedGrader from "@/pages/speed-grader";
 import UserManagement from "@/pages/user-management";
 import ExamInterface from "@/pages/exam-interface";
 import AdminSettings from "@/pages/admin-settings";
+import ReferenceBanks from "@/pages/reference-banks";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -52,6 +53,7 @@ function Router() {
           </Route>
           <Route path="/user-management" component={UserManagement} />
           <Route path="/admin-settings" component={AdminSettings} />
+          <Route path="/reference-banks" component={ReferenceBanks} />
           <Route path="/exam/:id">
             {(params) => <ExamInterface examId={params.id} />}
           </Route>

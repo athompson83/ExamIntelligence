@@ -47,10 +47,11 @@ ProficiencyAI is a comprehensive educational assessment platform designed to com
 ### Core Modules
 1. **Testbank Management**: Question organization and categorization
 2. **Quiz Builder**: Dynamic quiz creation with multiple question types
-3. **Live Proctoring**: Real-time monitoring with WebSocket connections
-4. **AI Services**: Question validation and educational content generation
-5. **Analytics Dashboard**: Performance tracking and reporting
-6. **User Management**: Multi-role user system
+3. **Reference Banks**: Reference material organization and management system
+4. **Live Proctoring**: Real-time monitoring with WebSocket connections
+5. **AI Services**: Question validation and educational content generation
+6. **Analytics Dashboard**: Performance tracking and reporting
+7. **User Management**: Multi-role user system
 
 ## Data Flow
 
@@ -193,6 +194,7 @@ ProficiencyAI is a comprehensive educational assessment platform designed to com
 
 ## Changelog
 
+- July 04, 2025. Added comprehensive Reference Bank feature with API, frontend interface, and database integration
 - July 04, 2025. Enhanced AI question generation with research-based best practices
 - July 04, 2025. Initial setup
 

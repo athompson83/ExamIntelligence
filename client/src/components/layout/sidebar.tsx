@@ -10,7 +10,8 @@ import {
   Users, 
   Settings,
   GraduationCap,
-  Shield
+  Shield,
+  FolderOpen
 } from "lucide-react";
 
 const navigationItems = [
@@ -20,6 +21,7 @@ const navigationItems = [
       { name: "Dashboard", icon: LayoutDashboard, href: "/" },
       { name: "Item Banks", icon: BookOpen, href: "/item-banks" },
       { name: "Quiz Builder", icon: Puzzle, href: "/quiz-builder" },
+      { name: "Reference Banks", icon: FolderOpen, href: "/reference-banks" },
       { name: "Live Exams", icon: Play, href: "/live-exams" },
       { name: "Analytics", icon: BarChart3, href: "/analytics" },
       { name: "AI Resources", icon: Bot, href: "/ai-resources" },

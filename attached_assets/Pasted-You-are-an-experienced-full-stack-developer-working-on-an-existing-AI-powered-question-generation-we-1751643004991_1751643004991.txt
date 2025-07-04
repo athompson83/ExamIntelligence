@@ -1,0 +1,47 @@
+You are an experienced full‐stack developer working on an existing AI‐powered question‐generation web app. I need you to add a new “Reference Bank” feature end‐to‐end. 
+
+Requirements:
+
+1. **Data model**  
+   - Create a `ReferenceBank` entity (id, name, createdAt)  
+   - Create a `Reference` entity (id, type [“file”|“url”], url or filePath, bankId)  
+   - Enforce one‐to‐many: each bank can contain many references
+
+2. **Backend API** (Node.js + Express)  
+   - `GET /banks` → list all banks  
+   - `POST /banks` → create a new bank  
+   - `GET /banks/:id/references` → list references for bank  
+   - `POST /banks/:id/references` → add a URL or upload a file to a bank  
+   - `DELETE /banks/:bankId/references/:refId` → remove a reference  
+   - Extend the existing “generate questions” endpoint to accept optional `bankIds[]` and a boolean `useOnlySelectedReferences`.  
+     - If `useOnlySelectedReferences=true`, load the text/content of those references and pass them as context to the AI.  
+     - Otherwise, fall back to the global knowledge base (and optionally trigger a web‐search plugin if `allowWebSearch=true`).
+
+3. **Frontend UI** (React)  
+   - **Bank Manager** page/component  
+     - List all banks, with buttons: “Create Bank”, “Edit Name”, “Delete Bank”  
+     - Clicking a bank expands its references (list of URLs/files), with “Add Reference” (opens modal), and delete icons per reference
+   - **Add Reference Modal**  
+     - Radio: “URL” vs. “File Upload”  
+     - Input field / file selector  
+     - “Save” → POST to backend  
+   - **Question Generator Panel**  
+     - Above the existing “Generate” button add:  
+       - Multi‐select dropdown of banks (populated from `GET /banks`)  
+       - Checkbox “Use only selected references”  
+       - Checkbox “Allow AI to use full knowledge base & web search”  
+     - When user hits “Generate”, include those options in the API call
+
+4. **File storage**  
+   - Integrate file uploads via Multer (or your preferred middleware) and store on disk or S3  
+   - Return a public URL or secure download URL in `Reference.url`  
+
+5. **AI service integration**  
+   - Modify the AI payload builder so that when `useOnlySelectedReferences` is true, you load each reference’s content (download files or fetch URLs) and prepend it as system/context prompt  
+   - If `allowWebSearch=true`, call the web‐search plugin before invoking the LLM and merge results into the context
+
+6. **Tests**  
+   - Write unit tests for new models and APIs  
+   - Write integration tests for the full “reference bank + question generation” workflow
+
+Please generate all necessary code files (models, controllers, routes, React components), configuration updates, and sample tests. Use modern ES modules, async/await, and React Hooks.  

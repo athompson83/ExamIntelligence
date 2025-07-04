@@ -323,6 +323,30 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Reference Bank tables
+export const referenceBanks = pgTable("reference_banks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  creatorId: varchar("creator_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const references = pgTable("references", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bankId: uuid("bank_id").references(() => referenceBanks.id).notNull(),
+  type: varchar("type", { enum: ["file", "url"] }).notNull(),
+  url: text("url"), // For URLs and file download URLs
+  filePath: text("file_path"), // For file storage path
+  fileName: varchar("file_name"), // Original filename
+  fileSize: integer("file_size"), // File size in bytes
+  mimeType: varchar("mime_type"), // MIME type
+  title: varchar("title"), // Display title
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   testbanks: many(testbanks),
@@ -330,6 +354,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   attempts: many(quizAttempts),
   notifications: many(notifications),
   aiResources: many(aiResources),
+  referenceBanks: many(referenceBanks),
 }));
 
 export const testbanksRelations = relations(testbanks, ({ one, many }) => ({
@@ -388,6 +413,15 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, { fields: [notifications.userId], references: [users.id] }),
 }));
 
+export const referenceBanksRelations = relations(referenceBanks, ({ one, many }) => ({
+  creator: one(users, { fields: [referenceBanks.creatorId], references: [users.id] }),
+  references: many(references),
+}));
+
+export const referencesRelations = relations(references, ({ one }) => ({
+  bank: one(referenceBanks, { fields: [references.bankId], references: [referenceBanks.id] }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTestbankSchema = createInsertSchema(testbanks).omit({ id: true, createdAt: true, updatedAt: true });
@@ -401,6 +435,8 @@ export const insertProctoringLogSchema = createInsertSchema(proctoringLogs).omit
 export const insertValidationLogSchema = createInsertSchema(validationLogs).omit({ id: true, validatedAt: true });
 export const insertAiResourceSchema = createInsertSchema(aiResources).omit({ id: true, createdAt: true });
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
+export const insertReferenceBankSchema = createInsertSchema(referenceBanks).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertReferenceSchema = createInsertSchema(references).omit({ id: true, createdAt: true });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -427,3 +463,7 @@ export type InsertAiResource = z.infer<typeof insertAiResourceSchema>;
 export type AiResource = typeof aiResources.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
+export type InsertReferenceBank = z.infer<typeof insertReferenceBankSchema>;
+export type ReferenceBank = typeof referenceBanks.$inferSelect;
+export type InsertReference = z.infer<typeof insertReferenceSchema>;
+export type Reference = typeof references.$inferSelect;

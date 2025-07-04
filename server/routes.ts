@@ -15,6 +15,8 @@ import {
   insertValidationLogSchema,
   insertAiResourceSchema,
   insertNotificationSchema,
+  insertReferenceBankSchema,
+  insertReferenceSchema,
 } from "@shared/schema";
 import { validateQuestion, generateStudyGuide, generateImprovementPlan, generateQuestionsWithAI } from "./aiService";
 import { z } from "zod";
@@ -716,6 +718,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error testing API key:", error);
       res.status(500).json({ message: "Failed to test API key" });
+    }
+  });
+
+  // Reference Bank routes
+  app.post("/api/reference-banks", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const parsedData = insertReferenceBankSchema.parse({
+        ...req.body,
+        creatorId: userId
+      });
+      
+      const referenceBank = await storage.createReferenceBank(parsedData);
+      res.json(referenceBank);
+    } catch (error) {
+      console.error("Error creating reference bank:", error);
+      res.status(500).json({ message: "Failed to create reference bank" });
+    }
+  });
+
+  app.get("/api/reference-banks", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const referenceBanks = await storage.getReferenceBanksByUser(userId);
+      res.json(referenceBanks);
+    } catch (error) {
+      console.error("Error fetching reference banks:", error);
+      res.status(500).json({ message: "Failed to fetch reference banks" });
+    }
+  });
+
+  app.get("/api/reference-banks/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const referenceBank = await storage.getReferenceBank(id);
+      
+      if (!referenceBank) {
+        return res.status(404).json({ message: "Reference bank not found" });
+      }
+      
+      res.json(referenceBank);
+    } catch (error) {
+      console.error("Error fetching reference bank:", error);
+      res.status(500).json({ message: "Failed to fetch reference bank" });
+    }
+  });
+
+  app.patch("/api/reference-banks/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const parsedData = insertReferenceBankSchema.partial().parse(req.body);
+      
+      const referenceBank = await storage.updateReferenceBank(id, parsedData);
+      res.json(referenceBank);
+    } catch (error) {
+      console.error("Error updating reference bank:", error);
+      res.status(500).json({ message: "Failed to update reference bank" });
+    }
+  });
+
+  app.delete("/api/reference-banks/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteReferenceBank(id);
+      res.json({ message: "Reference bank deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting reference bank:", error);
+      res.status(500).json({ message: "Failed to delete reference bank" });
+    }
+  });
+
+  // Reference routes
+  app.post("/api/reference-banks/:bankId/references", isAuthenticated, async (req, res) => {
+    try {
+      const { bankId } = req.params;
+      const parsedData = insertReferenceSchema.parse({
+        ...req.body,
+        bankId
+      });
+      
+      const reference = await storage.createReference(parsedData);
+      res.json(reference);
+    } catch (error) {
+      console.error("Error creating reference:", error);
+      res.status(500).json({ message: "Failed to create reference" });
+    }
+  });
+
+  app.get("/api/reference-banks/:bankId/references", isAuthenticated, async (req, res) => {
+    try {
+      const { bankId } = req.params;
+      const references = await storage.getReferencesByBank(bankId);
+      res.json(references);
+    } catch (error) {
+      console.error("Error fetching references:", error);
+      res.status(500).json({ message: "Failed to fetch references" });
+    }
+  });
+
+  app.patch("/api/references/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const parsedData = insertReferenceSchema.partial().parse(req.body);
+      
+      const reference = await storage.updateReference(id, parsedData);
+      res.json(reference);
+    } catch (error) {
+      console.error("Error updating reference:", error);
+      res.status(500).json({ message: "Failed to update reference" });
+    }
+  });
+
+  app.delete("/api/references/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteReference(id);
+      res.json({ message: "Reference deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting reference:", error);
+      res.status(500).json({ message: "Failed to delete reference" });
     }
   });
 
