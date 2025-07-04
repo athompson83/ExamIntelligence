@@ -686,3 +686,22 @@ export type InsertStudyAid = z.infer<typeof insertStudyAidSchema>;
 export type StudyAid = typeof studyAids.$inferSelect;
 export type InsertMobileDevice = z.infer<typeof insertMobileDeviceSchema>;
 export type MobileDevice = typeof mobileDevices.$inferSelect;
+
+// Audit logs table for compliance and security tracking
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").notNull(),
+  action: varchar("action").notNull(),
+  resourceType: varchar("resource_type").notNull(),
+  resourceId: varchar("resource_id").notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  details: jsonb("details"),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  severity: varchar("severity", { enum: ["low", "medium", "high", "critical"] }).notNull().default("low"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs);
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
