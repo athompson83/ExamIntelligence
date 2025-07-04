@@ -70,14 +70,12 @@ export function Sidebar() {
               const isActive = location === item.href;
               
               return (
-                <Link key={item.name} href={item.href}>
-                  <a className={cn(
-                    "flex items-center px-6 py-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors duration-200",
-                    isActive && "bg-sidebar-accent text-sidebar-primary border-r-2 border-sidebar-primary"
-                  )}>
-                    <Icon className="mr-3 h-4 w-4" />
-                    {item.name}
-                  </a>
+                <Link key={item.name} href={item.href} className={cn(
+                  "flex items-center px-6 py-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors duration-200",
+                  isActive && "bg-sidebar-accent text-sidebar-primary border-r-2 border-sidebar-primary"
+                )}>
+                  <Icon className="mr-3 h-4 w-4" />
+                  {item.name}
                 </Link>
               );
             })}
