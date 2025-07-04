@@ -51,10 +51,10 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <nav className={cn(
-      "bg-white border-r border-gray-200 fixed inset-y-0 left-0 z-50 shadow-sm transition-all duration-300",
+      "bg-white dark:bg-white border-r border-gray-200 dark:border-gray-700 fixed inset-y-0 left-0 z-50 shadow-sm transition-all duration-300",
       isCollapsed ? "w-16" : "w-64",
       className
-    )}>
+    )} style={{ backgroundColor: 'white' }}>
       {/* Header */}
       <div className="flex items-center justify-between h-16 bg-primary px-4">
         <div className="flex items-center">
