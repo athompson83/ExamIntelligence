@@ -34,7 +34,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -56,7 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard routes
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const stats = await storage.getDashboardStats(userId);
       res.json(stats);
     } catch (error) {
@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Testbank routes
   app.post('/api/testbanks', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const testbankData = insertTestbankSchema.parse({
         ...req.body,
         creatorId: userId,
@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/testbanks', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const testbanks = await storage.getTestbanksByUser(userId);
       res.json(testbanks);
     } catch (error) {
@@ -236,7 +236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const questionData = insertQuestionSchema.parse({
           ...generatedQuestion,
           testbankId: req.params.id,
-          creatorId: req.user.claims.sub,
+          creatorId: req.user.claims?.sub || req.user.id,
           // Convert numeric values to strings for validation
           points: generatedQuestion.points?.toString() || "1.00",
           difficultyScore: generatedQuestion.difficultyScore?.toString() || "5.0",
@@ -272,7 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const questionData = insertQuestionSchema.parse({
         ...req.body,
         testbankId: req.params.id,
-        creatorId: req.user.claims.sub,
+        creatorId: req.user.claims?.sub || req.user.id,
       });
       
       const question = await storage.createQuestion(questionData);
@@ -333,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Quiz routes
   app.post('/api/quizzes', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const quizData = insertQuizSchema.parse({
         ...req.body,
         creatorId: userId,
@@ -349,7 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/quizzes', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const quizzes = await storage.getQuizzesByUser(userId);
       res.json(quizzes);
     } catch (error) {
@@ -374,7 +374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Quiz attempt routes
   app.post('/api/quizzes/:id/attempts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const attemptData = insertQuizAttemptSchema.parse({
         quizId: req.params.id,
         studentId: userId,
@@ -451,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/proctoring/logs/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const logData = insertProctoringLogSchema.partial().parse({
         ...req.body,
         resolvedBy: userId,
@@ -469,7 +469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Resources routes
   app.post('/api/ai/study-guide', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const { sourceType, sourceId, topic } = req.body;
       
       const studyGuide = await generateStudyGuide(topic, sourceType, sourceId);
@@ -492,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/ai/improvement-plan', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const { attemptId } = req.body;
       
       const attempt = await storage.getQuizAttempt(attemptId);
@@ -521,7 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/ai/resources', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const resources = await storage.getAiResourcesByUser(userId);
       res.json(resources);
     } catch (error) {
@@ -533,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notification routes
   app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const notifications = await storage.getNotificationsByUser(userId);
       res.json(notifications);
     } catch (error) {
@@ -576,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Settings Routes
   app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
       
       // Only allow admin user (you can modify this email check)
@@ -611,7 +611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/admin/settings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
       
       // Only allow admin user
@@ -645,7 +645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/test-api-key', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
       
       // Only allow admin user
