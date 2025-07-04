@@ -12,7 +12,8 @@ import {
   GraduationCap,
   Shield,
   FolderOpen,
-  Target
+  Target,
+  Brain
 } from "lucide-react";
 
 const navigationItems = [
