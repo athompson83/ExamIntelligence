@@ -399,6 +399,25 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   };
 
   const handleSubmitAiGeneration = () => {
+    // Frontend validation before sending to backend
+    if (!aiForm.topic || aiForm.topic.trim() === "") {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a topic for question generation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!aiForm.questionTypes || aiForm.questionTypes.length === 0) {
+      toast({
+        title: "Validation Error", 
+        description: "Please select at least one question type.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const data = {
       ...aiForm,
       testbankId,
@@ -406,6 +425,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       learningObjectives: aiForm.learningObjectives.filter(obj => obj.trim() !== ""),
     };
 
+    console.log("Sending AI generation data:", data); // Debug log
     generateQuestionsMutation.mutate(data);
   };
 

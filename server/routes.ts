@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { setupWebSocket } from "./websocket";
+import multer from "multer";
 import { 
   insertTestbankSchema, 
   insertQuestionSchema, 
@@ -17,6 +18,12 @@ import {
 } from "@shared/schema";
 import { validateQuestion, generateStudyGuide, generateImprovementPlan, generateQuestionsWithAI } from "./aiService";
 import { z } from "zod";
+
+// Configure multer for file uploads
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -189,13 +196,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Question Generation routes
-  app.post('/api/testbanks/:id/generate-questions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/testbanks/:id/generate-questions', isAuthenticated, upload.any(), async (req: any, res) => {
     try {
-      const formData = req.body;
-      const data = JSON.parse(formData.data || '{}');
+      // Parse the data from the multipart form
+      const data = JSON.parse(req.body.data || '{}');
+      
+      console.log("Received AI generation request:", JSON.stringify(data, null, 2)); // Debug log
+      console.log("Files received:", req.files?.length || 0); // Debug log
       
       // Validate required fields
       if (!data.topic || !data.questionTypes || data.questionTypes.length === 0) {
+        console.log("Validation failed - topic:", data.topic, "questionTypes:", data.questionTypes);
         return res.status(400).json({ message: "Topic and question types are required" });
       }
 
