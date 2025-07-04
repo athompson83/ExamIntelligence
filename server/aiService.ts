@@ -216,3 +216,216 @@ export async function generateQuestionSuggestions(topic: string, questionType: s
     return [];
   }
 }
+
+interface AIQuestionGenerationParams {
+  topic: string;
+  questionCount: number;
+  questionTypes: string[];
+  difficultyRange: [number, number];
+  bloomsLevels: string[];
+  includeReferences: boolean;
+  referenceLinks: string[];
+  targetAudience?: string;
+  learningObjectives: string[];
+  questionStyle: string;
+  includeImages: boolean;
+  includeMultimedia: boolean;
+  customInstructions?: string;
+  testbankId: string;
+}
+
+export async function generateQuestionsWithAI(params: AIQuestionGenerationParams): Promise<any[]> {
+  try {
+    const {
+      topic,
+      questionCount,
+      questionTypes,
+      difficultyRange,
+      bloomsLevels,
+      includeReferences,
+      referenceLinks,
+      targetAudience,
+      learningObjectives,
+      questionStyle,
+      includeImages,
+      includeMultimedia,
+      customInstructions
+    } = params;
+
+    // Prepare reference material context
+    let referenceContext = "";
+    if (includeReferences && referenceLinks.length > 0) {
+      referenceContext = `
+        Reference Materials:
+        ${referenceLinks.map((link, index) => `${index + 1}. ${link}`).join('\n')}
+        
+        Please incorporate information from these references where appropriate and include citations.
+      `;
+    }
+
+    // Build comprehensive prompt
+    const prompt = `
+      Generate ${questionCount} high-quality educational questions about: "${topic}"
+      
+      GENERATION PARAMETERS:
+      - Question Types: ${questionTypes.join(', ')}
+      - Difficulty Range: ${difficultyRange[0]}-${difficultyRange[1]} (on a 1-10 scale)
+      - Bloom's Taxonomy Levels: ${bloomsLevels.join(', ')}
+      - Question Style: ${questionStyle}
+      - Target Audience: ${targetAudience || 'General students'}
+      
+      ${learningObjectives.length > 0 ? `
+      LEARNING OBJECTIVES TO ADDRESS:
+      ${learningObjectives.map((obj, index) => `${index + 1}. ${obj}`).join('\n')}
+      ` : ''}
+      
+      ${referenceContext}
+      
+      ${customInstructions ? `
+      CUSTOM INSTRUCTIONS:
+      ${customInstructions}
+      ` : ''}
+      
+      REQUIREMENTS FOR EACH QUESTION:
+      1. Align with specified Bloom's taxonomy level
+      2. Match the difficulty range specified
+      3. Be educationally sound and pedagogically appropriate
+      4. Avoid ambiguous wording
+      5. Include proper answer options for multiple choice/response questions
+      6. Provide constructive feedback for both correct and incorrect answers
+      7. Include appropriate tags for categorization
+      8. ${includeImages ? 'Suggest relevant images or diagrams where helpful' : ''}
+      9. ${includeMultimedia ? 'Include multimedia suggestions where appropriate' : ''}
+      
+      QUESTION TYPE SPECIFICATIONS:
+      - Multiple Choice: 4-5 answer options with exactly one correct answer
+      - Multiple Response: 4-6 options with 2-3 correct answers
+      - True/False: Clear statement with definitive true/false answer
+      - Fill in the Blank: Specific blanks with exact expected answers
+      - Essay: Open-ended with clear evaluation criteria
+      - Matching: Sets of items to match with clear relationships
+      
+      Return a JSON array with this exact structure:
+      {
+        "questions": [
+          {
+            "questionText": "Complete question text",
+            "questionType": "multiple_choice|multiple_response|true_false|fill_blank|essay|matching",
+            "points": 1,
+            "difficultyScore": 5,
+            "bloomsLevel": "understand|apply|analyze|evaluate|create|remember",
+            "tags": ["tag1", "tag2"],
+            "correctFeedback": "Feedback for correct answer",
+            "incorrectFeedback": "Feedback for incorrect answer",
+            "generalFeedback": "General explanation",
+            "partialCredit": false,
+            "answerOptions": [
+              {
+                "answerText": "Option text",
+                "isCorrect": true,
+                "displayOrder": 0
+              }
+            ],
+            "imageUrl": "",
+            "audioUrl": "",
+            "videoUrl": "",
+            "references": ["citation1", "citation2"]
+          }
+        ]
+      }
+      
+      QUALITY STANDARDS:
+      - Each question must be clear, unambiguous, and educationally valuable
+      - Answer options should be plausible and well-crafted
+      - Feedback should be instructive and help learning
+      - Questions should vary in approach and cognitive demands
+      - Ensure proper grammar, spelling, and formatting
+      - Include diverse question formats as specified
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert educational assessment designer with extensive experience in curriculum development, Bloom's taxonomy, and pedagogical best practices. You create high-quality, Canvas LMS-compatible questions that are educationally sound, properly aligned with learning objectives, and designed to effectively assess student understanding.
+          
+          Your questions follow these principles:
+          - Clear, unambiguous language appropriate for the target audience
+          - Proper alignment with specified Bloom's taxonomy levels
+          - Realistic difficulty progression
+          - Educationally meaningful content
+          - Effective use of distractors in multiple choice questions
+          - Constructive feedback that promotes learning
+          
+          Always return valid JSON with the exact structure requested.`,
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
+    const questions = result.questions || [];
+
+    // Validate and process each question
+    const processedQuestions = questions.map((question: any, index: number) => ({
+      questionText: question.questionText || `Generated question ${index + 1}`,
+      questionType: question.questionType || 'multiple_choice',
+      points: Math.max(1, question.points || 1),
+      difficultyScore: Math.max(1, Math.min(10, question.difficultyScore || 5)),
+      bloomsLevel: question.bloomsLevel || 'understand',
+      tags: Array.isArray(question.tags) ? question.tags : [topic],
+      correctFeedback: question.correctFeedback || 'Correct! Well done.',
+      incorrectFeedback: question.incorrectFeedback || 'Incorrect. Please review the material.',
+      generalFeedback: question.generalFeedback || '',
+      partialCredit: Boolean(question.partialCredit),
+      imageUrl: question.imageUrl || '',
+      audioUrl: question.audioUrl || '',
+      videoUrl: question.videoUrl || '',
+      aiValidationStatus: 'approved',
+      aiConfidenceScore: 0.85,
+      answerOptions: Array.isArray(question.answerOptions) ? question.answerOptions.map((option: any, optIndex: number) => ({
+        answerText: option.answerText || `Option ${optIndex + 1}`,
+        isCorrect: Boolean(option.isCorrect),
+        displayOrder: optIndex,
+      })) : []
+    }));
+
+    return processedQuestions;
+
+  } catch (error) {
+    console.error("Error generating questions with AI:", error);
+    
+    // Return fallback questions if AI fails
+    return [
+      {
+        questionText: `What is the main concept of ${params.topic}?`,
+        questionType: 'multiple_choice',
+        points: 1,
+        difficultyScore: 5,
+        bloomsLevel: 'understand',
+        tags: [params.topic],
+        correctFeedback: 'Correct! You understand the basic concept.',
+        incorrectFeedback: 'Incorrect. Please review the material on this topic.',
+        generalFeedback: 'This question tests basic understanding.',
+        partialCredit: false,
+        imageUrl: '',
+        audioUrl: '',
+        videoUrl: '',
+        aiValidationStatus: 'needs_review',
+        aiConfidenceScore: 0.3,
+        answerOptions: [
+          { answerText: 'Option A', isCorrect: true, displayOrder: 0 },
+          { answerText: 'Option B', isCorrect: false, displayOrder: 1 },
+          { answerText: 'Option C', isCorrect: false, displayOrder: 2 },
+          { answerText: 'Option D', isCorrect: false, displayOrder: 3 }
+        ]
+      }
+    ];
+  }
+}

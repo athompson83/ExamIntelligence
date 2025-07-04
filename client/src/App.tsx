@@ -7,9 +7,12 @@ import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import ItemBanks from "@/pages/item-banks";
+import QuestionManager from "@/pages/question-manager";
 import QuizBuilder from "@/pages/quiz-builder";
 import LiveExams from "@/pages/live-exams";
 import Analytics from "@/pages/analytics";
+import AnalyticsDashboard from "@/pages/analytics-dashboard";
+import SpeedGrader from "@/pages/speed-grader";
 import UserManagement from "@/pages/user-management";
 import ExamInterface from "@/pages/exam-interface";
 import AdminSettings from "@/pages/admin-settings";
@@ -34,12 +37,24 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/item-banks" component={ItemBanks} />
+          <Route path="/testbanks/:id/questions">
+            {(params) => <QuestionManager testbankId={params.id} />}
+          </Route>
           <Route path="/quiz-builder" component={QuizBuilder} />
           <Route path="/live-exams" component={LiveExams} />
           <Route path="/analytics" component={Analytics} />
+          <Route path="/analytics-dashboard" component={AnalyticsDashboard} />
+          <Route path="/speed-grader">
+            {() => <SpeedGrader />}
+          </Route>
+          <Route path="/speed-grader/:quizId">
+            {(params) => <SpeedGrader quizId={params.quizId} />}
+          </Route>
           <Route path="/user-management" component={UserManagement} />
           <Route path="/admin-settings" component={AdminSettings} />
-          <Route path="/exam/:id" component={ExamInterface} />
+          <Route path="/exam/:id">
+            {(params) => <ExamInterface examId={params.id} />}
+          </Route>
         </>
       )}
       <Route component={NotFound} />

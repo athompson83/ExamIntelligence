@@ -15,7 +15,7 @@ import {
   insertAiResourceSchema,
   insertNotificationSchema,
 } from "@shared/schema";
-import { validateQuestion, generateStudyGuide, generateImprovementPlan } from "./aiService";
+import { validateQuestion, generateStudyGuide, generateImprovementPlan, generateQuestionsWithAI } from "./aiService";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -175,6 +175,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting question:", error);
       res.status(500).json({ message: "Failed to delete question" });
+    }
+  });
+
+  // AI Question Generation routes
+  app.post('/api/testbanks/:id/generate-questions', isAuthenticated, async (req: any, res) => {
+    try {
+      const formData = req.body;
+      const data = JSON.parse(formData.data || '{}');
+      
+      // Validate required fields
+      if (!data.topic || !data.questionTypes || data.questionTypes.length === 0) {
+        return res.status(400).json({ message: "Topic and question types are required" });
+      }
+
+      // Generate questions using AI
+      const generatedQuestions = await generateQuestionsWithAI({
+        topic: data.topic,
+        questionCount: data.questionCount || 5,
+        questionTypes: data.questionTypes,
+        difficultyRange: data.difficultyRange || [3, 7],
+        bloomsLevels: data.bloomsLevels || ["understand", "apply"],
+        includeReferences: data.includeReferences || false,
+        referenceLinks: data.referenceLinks || [],
+        targetAudience: data.targetAudience,
+        learningObjectives: data.learningObjectives || [],
+        questionStyle: data.questionStyle || "formal",
+        includeImages: data.includeImages || false,
+        includeMultimedia: data.includeMultimedia || false,
+        customInstructions: data.customInstructions,
+        testbankId: req.params.id
+      });
+
+      // Save generated questions to database
+      const savedQuestions = [];
+      for (const generatedQuestion of generatedQuestions) {
+        const questionData = insertQuestionSchema.parse({
+          ...generatedQuestion,
+          testbankId: req.params.id,
+          creatorId: req.user.claims.sub,
+        });
+        
+        const question = await storage.createQuestion(questionData);
+        
+        // Create answer options if provided
+        if (generatedQuestion.answerOptions && Array.isArray(generatedQuestion.answerOptions)) {
+          for (const option of generatedQuestion.answerOptions) {
+            const optionData = insertAnswerOptionSchema.parse({
+              ...option,
+              questionId: question.id,
+            });
+            await storage.createAnswerOption(optionData);
+          }
+        }
+        
+        savedQuestions.push(question);
+      }
+
+      res.json({ count: savedQuestions.length, questions: savedQuestions });
+    } catch (error) {
+      console.error("Error generating questions:", error);
+      res.status(500).json({ message: "Failed to generate questions" });
+    }
+  });
+
+  // Enhanced question creation route for testbanks
+  app.post('/api/testbanks/:id/questions', isAuthenticated, async (req: any, res) => {
+    try {
+      const questionData = insertQuestionSchema.parse({
+        ...req.body,
+        testbankId: req.params.id,
+        creatorId: req.user.claims.sub,
+      });
+      
+      const question = await storage.createQuestion(questionData);
+      
+      // Create answer options if provided
+      if (req.body.answerOptions && Array.isArray(req.body.answerOptions)) {
+        for (const option of req.body.answerOptions) {
+          const optionData = insertAnswerOptionSchema.parse({
+            ...option,
+            questionId: question.id,
+          });
+          await storage.createAnswerOption(optionData);
+        }
+      }
+      
+      res.json(question);
+    } catch (error) {
+      console.error("Error creating question:", error);
+      res.status(400).json({ message: "Failed to create question" });
     }
   });
 

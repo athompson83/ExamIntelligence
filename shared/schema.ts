@@ -52,22 +52,74 @@ export const testbanks = pgTable("testbanks", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Question table
+// Question table - Enhanced with full Canvas LMS support
 export const questions = pgTable("questions", {
   id: uuid("id").primaryKey().defaultRandom(),
   testbankId: uuid("testbank_id").references(() => testbanks.id),
   questionText: text("question_text").notNull(),
   questionType: varchar("question_type", { 
-    enum: ["multiple_choice", "multiple_response", "constructed_response", "hot_spot", "categorization", "formula", "true_false", "fill_blank", "essay"] 
+    enum: [
+      "multiple_choice", "multiple_response", "true_false", "fill_blank", 
+      "multiple_fill_blank", "matching", "ordering", "categorization", 
+      "hot_spot", "essay", "file_upload", "numerical", "formula", 
+      "stimulus", "constructed_response", "text_no_question"
+    ] 
   }).notNull(),
+  
+  // Enhanced question properties
+  points: numeric("points", { precision: 5, scale: 2 }).default("1.00"),
   difficultyScore: numeric("difficulty_score", { precision: 3, scale: 1 }).default("5.0"),
+  estimatedTime: integer("estimated_time").default(60), // seconds
+  
+  // Canvas-style categorization
   tags: jsonb("tags").$type<string[]>().default([]),
+  keywords: jsonb("keywords").$type<string[]>().default([]),
+  learningObjectives: jsonb("learning_objectives").$type<string[]>().default([]),
   bloomsLevel: varchar("blooms_level", { 
     enum: ["remember", "understand", "apply", "analyze", "evaluate", "create"] 
   }),
-  additionalData: jsonb("additional_data"),
-  lastValidatedAt: timestamp("last_validated_at"),
+  
+  // Media and content
+  imageUrl: text("image_url"),
+  audioUrl: text("audio_url"),
+  videoUrl: text("video_url"),
+  attachmentUrls: jsonb("attachment_urls").$type<string[]>().default([]),
+  stimulusContent: text("stimulus_content"), // For complex question scenarios
+  
+  // Question configuration (Canvas-style)
+  questionConfig: jsonb("question_config"), // Type-specific settings
+  
+  // Feedback system (Canvas style)
+  correctFeedback: text("correct_feedback"),
+  incorrectFeedback: text("incorrect_feedback"),
+  generalFeedback: text("general_feedback"),
+  neutralFeedback: text("neutral_feedback"),
+  
+  // Advanced grading features
+  partialCredit: boolean("partial_credit").default(false),
+  caseSensitive: boolean("case_sensitive").default(false),
+  exactMatch: boolean("exact_match").default(true),
+  showAnswers: boolean("show_answers").default(true),
+  
+  // AI validation and analysis
   aiFeedback: text("ai_feedback"),
+  aiValidationStatus: varchar("ai_validation_status", {
+    enum: ["pending", "approved", "rejected", "needs_review"]
+  }).default("pending"),
+  aiConfidenceScore: numeric("ai_confidence_score", { precision: 3, scale: 2 }),
+  
+  // Accessibility features
+  altText: text("alt_text"),
+  screenReaderText: text("screen_reader_text"),
+  mathmlContent: text("mathml_content"),
+  
+  // Usage analytics
+  lastValidatedAt: timestamp("last_validated_at"),
+  lastUsed: timestamp("last_used"),
+  usageCount: integer("usage_count").default(0),
+  
+  // Additional Canvas features
+  additionalData: jsonb("additional_data"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -82,25 +134,97 @@ export const answerOptions = pgTable("answer_options", {
   displayOrder: integer("display_order").default(0),
 });
 
-// Quiz table
+// Quiz table - Enhanced with full Canvas LMS features
 export const quizzes = pgTable("quizzes", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title").notNull(),
   description: text("description"),
+  instructions: text("instructions"), // Student instructions
   creatorId: varchar("creator_id").references(() => users.id).notNull(),
+  
+  // Canvas quiz types: graded_quiz, practice_quiz, graded_survey, ungraded_survey
+  quizType: varchar("quiz_type", {
+    enum: ["graded_quiz", "practice_quiz", "graded_survey", "ungraded_survey"]
+  }).default("graded_quiz"),
+  
+  // Timing and availability
   timeLimit: integer("time_limit"), // in minutes
+  availableFrom: timestamp("available_from"),
+  availableUntil: timestamp("available_until"),
+  lockAt: timestamp("lock_at"),
+  unlockAt: timestamp("unlock_at"),
+  
+  // Question behavior
   shuffleAnswers: boolean("shuffle_answers").default(false),
   shuffleQuestions: boolean("shuffle_questions").default(false),
+  oneQuestionAtTime: boolean("one_question_at_time").default(false),
+  cantGoBack: boolean("cant_go_back").default(false),
+  
+  // Attempt settings
   allowMultipleAttempts: boolean("allow_multiple_attempts").default(false),
+  maxAttempts: integer("max_attempts").default(1),
+  scoringPolicy: varchar("scoring_policy", {
+    enum: ["keep_highest", "keep_latest", "keep_average"]
+  }).default("keep_highest"),
+  
+  // Security features
   passwordProtected: boolean("password_protected").default(false),
   password: varchar("password"),
   ipLocking: boolean("ip_locking").default(false),
-  adaptiveTesting: boolean("adaptive_testing").default(false),
-  startTime: timestamp("start_time"),
-  endTime: timestamp("end_time"),
-  maxAttempts: integer("max_attempts").default(1),
+  allowedIps: jsonb("allowed_ips").$type<string[]>().default([]),
+  accessCode: varchar("access_code"),
+  
+  // Proctoring and monitoring
   proctoring: boolean("proctoring").default(false),
-  proctoringSettings: jsonb("proctoring_settings"),
+  proctoringSettings: jsonb("proctoring_settings").$type<{
+    requireCamera: boolean;
+    requireMicrophone: boolean;
+    lockdownBrowser: boolean;
+    preventTabSwitching: boolean;
+    requireFullscreen: boolean;
+    monitorKeystrokes: boolean;
+    recordSession: boolean;
+  }>(),
+  
+  // Grading and feedback
+  pointsPossible: numeric("points_possible", { precision: 10, scale: 2 }),
+  gradingType: varchar("grading_type", {
+    enum: ["percentage", "points", "letter_grade", "gpa_scale", "pass_fail"]
+  }).default("percentage"),
+  
+  // Answer visibility settings
+  showCorrectAnswers: boolean("show_correct_answers").default(true),
+  showCorrectAnswersAt: timestamp("show_correct_answers_at"),
+  hideCorrectAnswersAt: timestamp("hide_correct_answers_at"),
+  showCorrectAnswersLastAttempt: boolean("show_correct_answers_last_attempt").default(false),
+  
+  // Canvas-style result display
+  hideResults: boolean("hide_results").default(false),
+  onlyVisibleToOverrides: boolean("only_visible_to_overrides").default(false),
+  
+  // Advanced features
+  adaptiveTesting: boolean("adaptive_testing").default(false),
+  anonymousSubmissions: boolean("anonymous_submissions").default(false),
+  
+  // Publishing and status
+  published: boolean("published").default(false),
+  workflow_state: varchar("workflow_state", {
+    enum: ["unpublished", "published", "deleted"]
+  }).default("unpublished"),
+  
+  // Analytics and tracking
+  allowedAttempts: integer("allowed_attempts").default(1),
+  questionCount: integer("question_count").default(0),
+  
+  // Canvas integrations
+  assignmentId: uuid("assignment_id"), // Links to assignments if needed
+  assignmentGroupId: uuid("assignment_group_id"),
+  
+  // Metadata
+  hasAccessCode: boolean("has_access_code").default(false),
+  ipFilter: text("ip_filter"),
+  dueAt: timestamp("due_at"),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -1,100 +1,126 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useWebSocket } from "@/hooks/useWebSocket";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
+  Camera, 
+  Mic, 
+  Eye, 
+  EyeOff, 
+  Clock, 
+  AlertTriangle, 
+  Flag, 
   ChevronLeft, 
   ChevronRight, 
-  Flag, 
-  Clock, 
-  Camera,
-  Mic,
-  Monitor,
-  AlertTriangle
+  Save, 
+  Send,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Shield,
+  FileText,
+  CheckCircle
 } from "lucide-react";
 
-interface ExamQuestion {
+interface Question {
   id: string;
   questionText: string;
   questionType: string;
-  answerOptions?: Array<{
-    id: string;
-    answerText: string;
-  }>;
+  imageUrl?: string;
+  audioUrl?: string;
   points: number;
+  options?: {
+    id: string;
+    text: string;
+    isCorrect: boolean;
+  }[];
 }
 
 interface ExamAttempt {
   id: string;
   quizId: string;
+  userId: string;
+  startedAt: string;
   timeRemaining: number;
   currentQuestionIndex: number;
-  totalQuestions: number;
   responses: Record<string, any>;
-  flaggedQuestions: string[];
+  flags: string[];
+  proctoringWarnings: string[];
+  isSubmitted: boolean;
+  quiz: {
+    title: string;
+    description: string;
+    instructions: string;
+    timeLimit: number;
+    shuffleQuestions: boolean;
+    shuffleAnswers: boolean;
+    proctoring: boolean;
+    proctoringSettings: {
+      requireCamera: boolean;
+      requireMicrophone: boolean;
+      lockdownBrowser: boolean;
+      preventTabSwitching: boolean;
+    };
+  };
+  questions: Question[];
 }
 
-export default function ExamInterface() {
-  const { id: quizId } = useParams();
-  const { user, isAuthenticated, isLoading } = useAuth();
+interface ExamInterfaceProps {
+  examId?: string;
+}
+
+export default function ExamInterface({ examId }: ExamInterfaceProps) {
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
-  const { sendMessage, isConnected } = useWebSocket();
-  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, any>>({});
-  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [isProctoringActive, setIsProctoringActive] = useState(false);
-  const [cameraPermission, setCameraPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [microphoneStream, setMicrophoneStream] = useState<MediaStream | null>(null);
+  const [proctoringWarnings, setProctoringWarnings] = useState<string[]>([]);
+  const [flags, setFlags] = useState<string[]>([]);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [isExamStarted, setIsExamStarted] = useState(false);
+  const [examPassword, setExamPassword] = useState("");
+  const [showPasswordDialog, setShowPasswordDialog] = useState(true);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: quiz, isLoading: quizLoading } = useQuery({
-    queryKey: ['/api/quizzes', quizId],
-    enabled: isAuthenticated && !!quizId,
+  const { data: examAttempt, isLoading: examLoading } = useQuery({
+    queryKey: ['/api/exam-attempts', examId],
+    enabled: isAuthenticated && !!examId,
   });
 
-  const { data: questions, isLoading: questionsLoading } = useQuery({
-    queryKey: ['/api/quizzes', quizId, 'questions'],
-    enabled: isAuthenticated && !!quizId,
-  });
-
-  const { data: attempt, isLoading: attemptLoading } = useQuery({
-    queryKey: ['/api/attempts/current', quizId],
-    enabled: isAuthenticated && !!quizId,
-  });
-
-  const startAttemptMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", `/api/quizzes/${quizId}/attempts`);
-      return response.json();
+  const startExamMutation = useMutation({
+    mutationFn: async (data: { quizId: string; password?: string }) => {
+      return await apiRequest("POST", "/api/exam-attempts", data);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/attempts/current', quizId] });
-      setTimeRemaining(data.timeLimit * 60); // Convert to seconds
-      
-      // Join exam session via WebSocket
-      if (isConnected) {
-        sendMessage({
-          type: 'join_exam',
-          data: {
-            userId: user?.id,
-            attemptId: data.id,
-            quizId: quizId,
-          },
-        });
-      }
+      setIsExamStarted(true);
+      setShowPasswordDialog(false);
+      setTimeRemaining(data.timeRemaining);
+      setResponses(data.responses || {});
+      setCurrentQuestionIndex(data.currentQuestionIndex || 0);
+      queryClient.invalidateQueries({ queryKey: ['/api/exam-attempts', examId] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -117,45 +143,35 @@ export default function ExamInterface() {
   });
 
   const saveResponseMutation = useMutation({
-    mutationFn: async ({ questionId, response }: { questionId: string; response: any }) => {
-      await apiRequest("POST", `/api/attempts/${attempt?.id}/responses`, {
-        questionId,
-        response,
-      });
+    mutationFn: async (data: { attemptId: string; questionId: string; response: any }) => {
+      await apiRequest("POST", "/api/exam-responses", data);
+    },
+    onSuccess: () => {
+      // Auto-save successful
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
+      if (!isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Auto-save failed",
+          description: "Your response couldn't be saved automatically",
           variant: "destructive",
         });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
       }
-      toast({
-        title: "Error",
-        description: "Failed to save response",
-        variant: "destructive",
-      });
     },
   });
 
   const submitExamMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("PUT", `/api/attempts/${attempt?.id}`, {
-        status: 'submitted',
-        submittedAt: new Date().toISOString(),
-      });
+    mutationFn: async (attemptId: string) => {
+      await apiRequest("POST", `/api/exam-attempts/${attemptId}/submit`);
     },
     onSuccess: () => {
+      setShowSubmitDialog(false);
       toast({
-        title: "Success",
-        description: "Exam submitted successfully",
+        title: "Exam Submitted",
+        description: "Your exam has been submitted successfully",
       });
-      window.location.href = '/';
+      // Redirect to results or dashboard
+      window.location.href = "/dashboard";
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -177,135 +193,222 @@ export default function ExamInterface() {
     },
   });
 
-  // Request camera permission for proctoring
+  // Initialize WebSocket connection for proctoring
   useEffect(() => {
-    if (quiz?.proctoring && attempt) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(() => {
-          setCameraPermission('granted');
-          setIsProctoringActive(true);
-        })
-        .catch(() => {
-          setCameraPermission('denied');
+    if (isExamStarted && examAttempt?.quiz.proctoring) {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      wsRef.current = new WebSocket(wsUrl);
+      
+      wsRef.current.onopen = () => {
+        wsRef.current?.send(JSON.stringify({
+          type: "authentication",
+          data: { userId: user?.id, role: "student" }
+        }));
+        
+        wsRef.current?.send(JSON.stringify({
+          type: "join_exam",
+          data: { attemptId: examAttempt.id, quizId: examAttempt.quizId }
+        }));
+      };
+
+      wsRef.current.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === "proctoring_warning") {
+          setProctoringWarnings(prev => [...prev, message.data.warning]);
           toast({
-            title: "Camera Access Required",
-            description: "This exam requires camera access for proctoring",
+            title: "Proctoring Warning",
+            description: message.data.warning,
             variant: "destructive",
           });
-        });
+        }
+      };
+
+      return () => {
+        wsRef.current?.close();
+      };
     }
-  }, [quiz, attempt]);
+  }, [isExamStarted, examAttempt, user]);
 
   // Timer countdown
   useEffect(() => {
-    if (timeRemaining > 0 && attempt?.status === 'in_progress') {
-      const timer = setInterval(() => {
+    if (isExamStarted && timeRemaining > 0) {
+      intervalRef.current = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
             // Auto-submit when time runs out
-            submitExamMutation.mutate();
+            if (examAttempt?.id) {
+              submitExamMutation.mutate(examAttempt.id);
+            }
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
 
-      return () => clearInterval(timer);
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+      };
     }
-  }, [timeRemaining, attempt, submitExamMutation]);
+  }, [isExamStarted, timeRemaining, examAttempt, submitExamMutation]);
 
-  // Mock data for demonstration
-  const mockQuestions: ExamQuestion[] = [
-    {
-      id: '1',
-      questionText: 'Which of the following best describes the process of photosynthesis?',
-      questionType: 'multiple_choice',
-      answerOptions: [
-        { id: 'a', answerText: 'The process by which plants convert sunlight into chemical energy' },
-        { id: 'b', answerText: 'The process by which plants absorb water from the soil' },
-        { id: 'c', answerText: 'The process by which plants release oxygen into the atmosphere' },
-        { id: 'd', answerText: 'The process by which plants reproduce' },
-      ],
-      points: 10
-    },
-    {
-      id: '2',
-      questionText: 'Explain the difference between mitosis and meiosis.',
-      questionType: 'essay',
-      points: 20
-    },
-  ];
+  // Initialize camera and microphone for proctoring
+  useEffect(() => {
+    const initializeProctoring = async () => {
+      if (isExamStarted && examAttempt?.quiz.proctoring) {
+        try {
+          if (examAttempt.quiz.proctoringSettings.requireCamera) {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            setCameraStream(stream);
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+            }
+          }
 
-  const mockAttempt: ExamAttempt = {
-    id: 'attempt-1',
-    quizId: quizId || '',
-    timeRemaining: 2700, // 45 minutes
-    currentQuestionIndex: 0,
-    totalQuestions: 2,
-    responses: {},
-    flaggedQuestions: []
-  };
+          if (examAttempt.quiz.proctoringSettings.requireMicrophone) {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            setMicrophoneStream(stream);
+          }
+        } catch (error) {
+          toast({
+            title: "Proctoring Setup Failed",
+            description: "Could not access camera/microphone",
+            variant: "destructive",
+          });
+        }
+      }
+    };
 
-  const examQuestions = questions || mockQuestions;
-  const examAttempt = attempt || mockAttempt;
-  const currentQuestion = examQuestions[currentQuestionIndex];
+    initializeProctoring();
+
+    return () => {
+      cameraStream?.getTracks().forEach(track => track.stop());
+      microphoneStream?.getTracks().forEach(track => track.stop());
+    };
+  }, [isExamStarted, examAttempt]);
+
+  // Prevent tab switching and fullscreen exit
+  useEffect(() => {
+    if (isExamStarted && examAttempt?.quiz.proctoringSettings.preventTabSwitching) {
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          setTabSwitchCount(prev => prev + 1);
+          wsRef.current?.send(JSON.stringify({
+            type: "proctoring_event",
+            data: {
+              attemptId: examAttempt.id,
+              event: "tab_switch",
+              timestamp: new Date().toISOString()
+            }
+          }));
+        }
+      };
+
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        e.returnValue = '';
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }
+  }, [isExamStarted, examAttempt]);
+
+  // Auto-save responses
+  useEffect(() => {
+    const currentQuestion = examAttempt?.questions[currentQuestionIndex];
+    if (currentQuestion && responses[currentQuestion.id] && examAttempt?.id) {
+      const timeoutId = setTimeout(() => {
+        saveResponseMutation.mutate({
+          attemptId: examAttempt.id,
+          questionId: currentQuestion.id,
+          response: responses[currentQuestion.id]
+        });
+      }, 2000);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [responses, currentQuestionIndex, examAttempt]);
 
   const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleResponseChange = (questionId: string, response: any) => {
+  const handleResponseChange = (questionId: string, value: any) => {
     setResponses(prev => ({
       ...prev,
-      [questionId]: response
+      [questionId]: value
     }));
-
-    // Auto-save response
-    saveResponseMutation.mutate({ questionId, response });
   };
 
-  const toggleFlag = (questionId: string) => {
-    setFlaggedQuestions(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(questionId)) {
-        newSet.delete(questionId);
-      } else {
-        newSet.add(questionId);
-      }
-      return newSet;
-    });
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < (examAttempt?.questions.length || 0) - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
   };
 
-  const handlePrevious = () => {
+  const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
   };
 
-  const handleNext = () => {
-    if (currentQuestionIndex < examQuestions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+  const handleFlag = () => {
+    const currentQuestion = examAttempt?.questions[currentQuestionIndex];
+    if (currentQuestion) {
+      setFlags(prev => 
+        prev.includes(currentQuestion.id) 
+          ? prev.filter(id => id !== currentQuestion.id)
+          : [...prev, currentQuestion.id]
+      );
     }
   };
 
-  const renderQuestionInput = (question: ExamQuestion) => {
-    const currentResponse = responses[question.id];
+  const handleStartExam = () => {
+    if (examId) {
+      startExamMutation.mutate({ 
+        quizId: examId, 
+        password: examPassword || undefined 
+      });
+    }
+  };
+
+  const handleSubmitExam = () => {
+    setShowSubmitDialog(true);
+  };
+
+  const confirmSubmitExam = () => {
+    if (examAttempt?.id) {
+      submitExamMutation.mutate(examAttempt.id);
+    }
+  };
+
+  const renderQuestion = (question: Question) => {
+    const response = responses[question.id];
 
     switch (question.questionType) {
       case 'multiple_choice':
         return (
-          <RadioGroup
-            value={currentResponse || ''}
+          <RadioGroup 
+            value={response || ""} 
             onValueChange={(value) => handleResponseChange(question.id, value)}
           >
-            {question.answerOptions?.map((option) => (
-              <div key={option.id} className="flex items-center space-x-3 p-3 border border-border rounded-lg hover:bg-accent">
+            {question.options?.map(option => (
+              <div key={option.id} className="flex items-center space-x-2">
                 <RadioGroupItem value={option.id} id={option.id} />
-                <label htmlFor={option.id} className="flex-1 cursor-pointer">
-                  {option.answerText}
-                </label>
+                <Label htmlFor={option.id}>{option.text}</Label>
               </div>
             ))}
           </RadioGroup>
@@ -313,37 +416,61 @@ export default function ExamInterface() {
 
       case 'multiple_response':
         return (
-          <div className="space-y-3">
-            {question.answerOptions?.map((option) => (
-              <div key={option.id} className="flex items-center space-x-3 p-3 border border-border rounded-lg hover:bg-accent">
+          <div className="space-y-2">
+            {question.options?.map(option => (
+              <div key={option.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={option.id}
-                  checked={currentResponse?.includes(option.id) || false}
+                  checked={response?.includes(option.id) || false}
                   onCheckedChange={(checked) => {
-                    const current = currentResponse || [];
-                    const updated = checked
-                      ? [...current, option.id]
-                      : current.filter((id: string) => id !== option.id);
-                    handleResponseChange(question.id, updated);
+                    const newResponse = response || [];
+                    if (checked) {
+                      handleResponseChange(question.id, [...newResponse, option.id]);
+                    } else {
+                      handleResponseChange(question.id, newResponse.filter((id: string) => id !== option.id));
+                    }
                   }}
                 />
-                <label htmlFor={option.id} className="flex-1 cursor-pointer">
-                  {option.answerText}
-                </label>
+                <Label htmlFor={option.id}>{option.text}</Label>
               </div>
             ))}
           </div>
+        );
+
+      case 'true_false':
+        return (
+          <RadioGroup 
+            value={response || ""} 
+            onValueChange={(value) => handleResponseChange(question.id, value)}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="true" id="true" />
+              <Label htmlFor="true">True</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="false" id="false" />
+              <Label htmlFor="false">False</Label>
+            </div>
+          </RadioGroup>
         );
 
       case 'essay':
       case 'constructed_response':
         return (
           <Textarea
-            placeholder="Enter your response here..."
-            value={currentResponse || ''}
+            value={response || ""}
             onChange={(e) => handleResponseChange(question.id, e.target.value)}
-            rows={8}
-            className="w-full"
+            placeholder="Enter your answer here..."
+            className="min-h-32"
+          />
+        );
+
+      case 'fill_blank':
+        return (
+          <Input
+            value={response || ""}
+            onChange={(e) => handleResponseChange(question.id, e.target.value)}
+            placeholder="Enter your answer"
           />
         );
 
@@ -352,7 +479,84 @@ export default function ExamInterface() {
     }
   };
 
-  if (isLoading || quizLoading || questionsLoading) {
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Please log in to access the exam.</div>
+      </div>
+    );
+  }
+
+  if (!isExamStarted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <FileText className="mr-2 h-5 w-5" />
+              Start Exam
+            </CardTitle>
+            <CardDescription>
+              You are about to start the exam. Please read the instructions carefully.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {examAttempt?.quiz.passwordProtected && (
+              <div>
+                <Label htmlFor="password">Exam Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={examPassword}
+                  onChange={(e) => setExamPassword(e.target.value)}
+                  placeholder="Enter exam password"
+                />
+              </div>
+            )}
+            
+            {examAttempt?.quiz.instructions && (
+              <div>
+                <Label>Instructions</Label>
+                <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded">
+                  {examAttempt.quiz.instructions}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span>Time Limit:</span>
+                <Badge>{examAttempt?.quiz.timeLimit} minutes</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Questions:</span>
+                <Badge>{examAttempt?.questions.length}</Badge>
+              </div>
+              {examAttempt?.quiz.proctoring && (
+                <div className="flex items-center justify-between">
+                  <span>Proctoring:</span>
+                  <Badge variant="destructive">
+                    <Camera className="mr-1 h-3 w-3" />
+                    Enabled
+                  </Badge>
+                </div>
+              )}
+            </div>
+
+            <Button 
+              onClick={handleStartExam} 
+              className="w-full"
+              disabled={startExamMutation.isPending}
+            >
+              {startExamMutation.isPending ? "Starting..." : "Start Exam"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (examLoading || !examAttempt) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -360,193 +564,258 @@ export default function ExamInterface() {
     );
   }
 
-  if (!attempt) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Start Exam</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium">{quiz?.title}</h3>
-                <p className="text-sm text-muted-foreground">{quiz?.description}</p>
+  const currentQuestion = examAttempt.questions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / examAttempt.questions.length) * 100;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold">{examAttempt.quiz.title}</h1>
+              <p className="text-sm text-gray-600">
+                Question {currentQuestionIndex + 1} of {examAttempt.questions.length}
+              </p>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* Time Remaining */}
+              <div className="flex items-center space-x-2">
+                <Clock className="h-4 w-4 text-red-500" />
+                <span className={`font-mono ${timeRemaining < 300 ? 'text-red-500' : 'text-gray-700'}`}>
+                  {formatTime(timeRemaining)}
+                </span>
               </div>
-              
-              {quiz?.proctoring && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <Camera className="h-5 w-5 text-amber-600 mr-2" />
-                    <span className="text-sm font-medium text-amber-800">
-                      Proctoring Required
-                    </span>
-                  </div>
-                  <p className="text-sm text-amber-700 mt-1">
-                    This exam requires camera and microphone access for monitoring.
-                  </p>
+
+              {/* Proctoring Status */}
+              {examAttempt.quiz.proctoring && (
+                <div className="flex items-center space-x-2">
+                  <Camera className="h-4 w-4 text-green-500" />
+                  <span className="text-sm text-green-600">Recording</span>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">Time Limit:</span>
-                  <div>{quiz?.timeLimit} minutes</div>
-                </div>
-                <div>
-                  <span className="font-medium">Questions:</span>
-                  <div>{examQuestions.length}</div>
-                </div>
-              </div>
-
-              <Button 
-                onClick={() => startAttemptMutation.mutate()} 
-                disabled={startAttemptMutation.isPending}
-                className="w-full"
-              >
-                {startAttemptMutation.isPending ? 'Starting...' : 'Start Exam'}
+              {/* Submit Button */}
+              <Button onClick={handleSubmitExam} variant="outline">
+                <Send className="mr-2 h-4 w-4" />
+                Submit Exam
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const progressPercentage = ((currentQuestionIndex + 1) / examQuestions.length) * 100;
-
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Exam Header */}
-      <div className="bg-primary text-primary-foreground p-4 sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold">{quiz?.title}</h2>
-            <p className="text-sm opacity-90">
-              Question {currentQuestionIndex + 1} of {examQuestions.length}
-            </p>
           </div>
-          
-          <div className="text-right">
-            <div className="text-2xl font-bold flex items-center">
-              <Clock className="mr-2 h-5 w-5" />
-              {formatTime(timeRemaining)}
-            </div>
-            <p className="text-sm opacity-90">Time remaining</p>
+
+          {/* Progress Bar */}
+          <div className="mt-3">
+            <Progress value={progress} className="h-2" />
           </div>
         </div>
       </div>
 
-      {/* Proctoring Status */}
-      {quiz?.proctoring && (
-        <div className="bg-amber-50 border-b border-amber-200 p-2">
-          <div className="container mx-auto flex items-center justify-center text-sm">
-            {isProctoringActive ? (
-              <div className="flex items-center text-amber-800">
-                <Camera className="mr-2 h-4 w-4" />
-                <span>Proctoring active - You are being monitored</span>
-                <div className="ml-2 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              </div>
-            ) : (
-              <div className="flex items-center text-red-800">
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                <span>Camera access required for this exam</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className="container mx-auto p-6 max-w-4xl">
-        <Card>
-          <CardContent className="p-6">
-            {currentQuestion && (
-              <div className="space-y-6">
-                {/* Question Header */}
+      <div className="max-w-6xl mx-auto p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <Card>
+              <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-lg font-medium mb-4">
-                      {currentQuestion.questionText}
-                    </h3>
-                    {currentQuestion.points && (
-                      <Badge variant="outline" className="mb-4">
-                        {currentQuestion.points} points
+                    <CardTitle className="text-lg mb-2">
+                      Question {currentQuestionIndex + 1}
+                      <Badge className="ml-2" variant="secondary">
+                        {currentQuestion.points} point{currentQuestion.points !== 1 ? 's' : ''}
                       </Badge>
-                    )}
+                    </CardTitle>
+                    <CardDescription className="text-base">
+                      {currentQuestion.questionText}
+                    </CardDescription>
                   </div>
                   
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => toggleFlag(currentQuestion.id)}
-                    className={flaggedQuestions.has(currentQuestion.id) ? 'bg-amber-100 border-amber-300' : ''}
+                    onClick={handleFlag}
+                    className={flags.includes(currentQuestion.id) ? "text-red-500" : ""}
                   >
-                    <Flag className="mr-2 h-4 w-4" />
-                    {flaggedQuestions.has(currentQuestion.id) ? 'Flagged' : 'Flag for Review'}
+                    <Flag className="h-4 w-4" />
                   </Button>
                 </div>
+              </CardHeader>
+              
+              <CardContent>
+                {currentQuestion.imageUrl && (
+                  <div className="mb-4">
+                    <img 
+                      src={currentQuestion.imageUrl} 
+                      alt="Question image" 
+                      className="max-w-full h-auto rounded"
+                    />
+                  </div>
+                )}
 
-                {/* Question Input */}
+                {currentQuestion.audioUrl && (
+                  <div className="mb-4">
+                    <audio controls className="w-full">
+                      <source src={currentQuestion.audioUrl} type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                )}
+
                 <div className="space-y-4">
-                  {renderQuestionInput(currentQuestion)}
+                  {renderQuestion(currentQuestion)}
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-6">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentQuestionIndex === 0}
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Previous
-          </Button>
-          
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" onClick={() => toggleFlag(currentQuestion?.id || '')}>
-              <Flag className="mr-2 h-4 w-4" />
-              Flag for Review
-            </Button>
-            
-            {currentQuestionIndex === examQuestions.length - 1 ? (
-              <Button 
-                onClick={() => submitExamMutation.mutate()}
-                disabled={submitExamMutation.isPending}
-                className="bg-destructive hover:bg-destructive/90"
+            {/* Navigation */}
+            <div className="flex items-center justify-between mt-6">
+              <Button
+                variant="outline"
+                onClick={handlePreviousQuestion}
+                disabled={currentQuestionIndex === 0}
               >
-                {submitExamMutation.isPending ? 'Submitting...' : 'Submit Exam'}
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Previous
               </Button>
-            ) : (
-              <Button onClick={handleNext} className="bg-primary hover:bg-primary/90">
-                Save & Continue
+
+              <div className="flex items-center space-x-2">
+                <Save className="h-4 w-4 text-green-500" />
+                <span className="text-sm text-green-600">Auto-saved</span>
+              </div>
+
+              <Button
+                onClick={handleNextQuestion}
+                disabled={currentQuestionIndex === examAttempt.questions.length - 1}
+              >
+                Next
+                <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-4">
+            {/* Question Navigator */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Question Navigator</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-5 gap-2">
+                  {examAttempt.questions.map((_, index) => {
+                    const questionId = examAttempt.questions[index].id;
+                    const hasResponse = responses[questionId];
+                    const isFlagged = flags.includes(questionId);
+                    const isCurrent = index === currentQuestionIndex;
+
+                    return (
+                      <Button
+                        key={index}
+                        variant={isCurrent ? "default" : "outline"}
+                        size="sm"
+                        className={`relative ${
+                          hasResponse ? "border-green-500" : ""
+                        } ${isFlagged ? "border-red-500" : ""}`}
+                        onClick={() => setCurrentQuestionIndex(index)}
+                      >
+                        {index + 1}
+                        {hasResponse && (
+                          <CheckCircle className="absolute -top-1 -right-1 h-3 w-3 text-green-500" />
+                        )}
+                        {isFlagged && (
+                          <Flag className="absolute -top-1 -right-1 h-3 w-3 text-red-500" />
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Proctoring Feed */}
+            {examAttempt.quiz.proctoring && examAttempt.quiz.proctoringSettings.requireCamera && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center">
+                    <Camera className="mr-2 h-4 w-4" />
+                    Proctoring
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    className="w-full rounded"
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Warnings */}
+            {(proctoringWarnings.length > 0 || tabSwitchCount > 0) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center text-red-600">
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Warnings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {tabSwitchCount > 0 && (
+                      <Alert>
+                        <AlertDescription>
+                          Tab switches detected: {tabSwitchCount}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {proctoringWarnings.map((warning, index) => (
+                      <Alert key={index}>
+                        <AlertDescription>{warning}</AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
-          
-          <Button
-            variant="outline"
-            onClick={handleNext}
-            disabled={currentQuestionIndex === examQuestions.length - 1}
-          >
-            Next
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mt-6 p-4 bg-muted rounded-lg">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Progress</span>
-            <span className="text-sm text-muted-foreground">{Math.round(progressPercentage)}%</span>
-          </div>
-          <Progress value={progressPercentage} className="w-full" />
         </div>
       </div>
+
+      {/* Submit Confirmation Dialog */}
+      <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Submit Exam</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p>Are you sure you want to submit your exam? This action cannot be undone.</p>
+            
+            <div className="text-sm text-gray-600">
+              <p>Answered: {Object.keys(responses).length} of {examAttempt.questions.length} questions</p>
+              <p>Time remaining: {formatTime(timeRemaining)}</p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                onClick={confirmSubmitExam}
+                disabled={submitExamMutation.isPending}
+              >
+                {submitExamMutation.isPending ? "Submitting..." : "Submit Exam"}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowSubmitDialog(false)}
+              >
+                Continue Exam
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
