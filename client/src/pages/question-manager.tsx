@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -76,13 +76,25 @@ interface Question {
 }
 
 interface QuestionManagerProps {
-  testbankId: string;
+  testbankId?: string;
 }
 
 export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
+
+  // Check if testbankId is provided
+  if (!testbankId) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Invalid Test Bank</h2>
+          <p className="text-gray-600">Test bank ID is required to view questions.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Redirect if not authenticated
   if (!isLoading && !isAuthenticated) {
@@ -399,22 +411,29 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     }));
   };
 
-  const filteredQuestions = questions?.filter((question: Question) => {
-    if (!question) return false;
+  const filteredQuestions = useMemo(() => {
+    if (!questions || !Array.isArray(questions)) return [];
     
-    const matchesSearch = !searchTerm || 
-                         (question.questionText && question.questionText.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         (question.tags && question.tags.some(tag => tag && tag.toLowerCase().includes(searchTerm.toLowerCase())));
-    
-    const matchesType = filterType === "all" || question.questionType === filterType;
-    const matchesDifficulty = filterDifficulty === "all" || 
-                             (filterDifficulty === "easy" && question.difficultyScore <= 3) ||
-                             (filterDifficulty === "medium" && question.difficultyScore > 3 && question.difficultyScore <= 7) ||
-                             (filterDifficulty === "hard" && question.difficultyScore > 7);
-    const matchesBlooms = filterBloomsLevel === "all" || question.bloomsLevel === filterBloomsLevel;
-    
-    return matchesSearch && matchesType && matchesDifficulty && matchesBlooms;
-  }) || [];
+    return questions.filter((question: Question) => {
+      if (!question) return false;
+      
+      const matchesSearch = !searchTerm || 
+                           (question.questionText && typeof question.questionText === 'string' && 
+                            question.questionText.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                           (question.tags && Array.isArray(question.tags) && 
+                            question.tags.some(tag => tag && typeof tag === 'string' && 
+                                              tag.toLowerCase().includes(searchTerm.toLowerCase())));
+      
+      const matchesType = filterType === "all" || question.questionType === filterType;
+      const matchesDifficulty = filterDifficulty === "all" || 
+                               (filterDifficulty === "easy" && question.difficultyScore <= 3) ||
+                               (filterDifficulty === "medium" && question.difficultyScore > 3 && question.difficultyScore <= 7) ||
+                               (filterDifficulty === "hard" && question.difficultyScore > 7);
+      const matchesBlooms = filterBloomsLevel === "all" || question.bloomsLevel === filterBloomsLevel;
+      
+      return matchesSearch && matchesType && matchesDifficulty && matchesBlooms;
+    });
+  }, [questions, searchTerm, filterType, filterDifficulty, filterBloomsLevel]);
 
   if (!isAuthenticated) {
     return (
