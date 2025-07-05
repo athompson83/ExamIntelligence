@@ -81,6 +81,7 @@ function Router() {
           <Route path="/badges-certificates" component={BadgesCertificates} />
           <Route path="/learning-feedback" component={LearningFeedback} />
           <Route path="/difficulty-tracking" component={EnhancedDifficultyTracking} />
+          <Route path="/enhanced-difficulty-tracking" component={EnhancedDifficultyTracking} />
           <Route path="/accessibility-settings" component={AccessibilitySettings} />
           <Route path="/project-status" component={ProjectStatus} />
           <Route path="/exam/:id">

@@ -163,16 +163,14 @@ export default function EnhancedDifficultyTrackingPage() {
     }
   ];
 
-  // Use React Query for data fetching with fallback to mock data
-  const { data: questions = getMockQuestions(), isLoading, error, refetch } = useQuery({
+  // Use React Query for data fetching with real API
+  const { data: questions = [], isLoading, error, refetch } = useQuery({
     queryKey: ['/api/difficulty-tracking/questions'],
-    queryFn: () => getMockQuestions(), // Fallback to mock data
     refetchInterval: autoRefresh ? 30000 : false,
   });
 
   const { data: analytics = getMockAnalytics() } = useQuery({
     queryKey: ['/api/difficulty-tracking/analytics'],
-    queryFn: () => getMockAnalytics(), // Fallback to mock data
     refetchInterval: autoRefresh ? 60000 : false,
   });
 

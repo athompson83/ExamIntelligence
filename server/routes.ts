@@ -139,7 +139,313 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test difficulty tracking endpoint
+  // Enhanced Difficulty tracking API endpoints
+  app.get('/api/difficulty-tracking/questions', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Get sample questions for demonstration (simplified approach)
+      const questions = [
+        {
+          id: 'q1', 
+          questionText: 'What is the capital of France?',
+          questionType: 'multiple_choice',
+          difficultyLevel: 3,
+          testbankId: 'tb1',
+          isPilotQuestion: true,
+          pilotResponsesNeeded: 30,
+          pilotValidated: false,
+          updatedAt: new Date()
+        },
+        {
+          id: 'q2',
+          questionText: 'Calculate the integral of x^2 dx',
+          questionType: 'fill_blank',
+          difficultyLevel: 7,
+          testbankId: 'tb2',
+          isPilotQuestion: false,
+          pilotResponsesNeeded: 30,
+          pilotValidated: true,
+          updatedAt: new Date()
+        },
+        {
+          id: 'q3',
+          questionText: 'Which programming language is known for its simplicity?',
+          questionType: 'multiple_choice',
+          difficultyLevel: 4,
+          testbankId: 'tb1',
+          isPilotQuestion: true,
+          pilotResponsesNeeded: 30,
+          pilotValidated: false,
+          updatedAt: new Date()
+        }
+      ];
+      
+      const difficultyStats = await Promise.all(questions.map(async (question) => {
+        // Simulate response data for testing (replace with real data)
+        const totalResponses = Math.floor(Math.random() * 100) + 10;
+        const correctResponses = Math.floor(totalResponses * (Math.random() * 0.8 + 0.1));
+        const accuracyPercentage = (correctResponses / totalResponses) * 100;
+        
+        // Calculate current difficulty based on accuracy
+        let currentDifficulty: number;
+        if (accuracyPercentage >= 90) currentDifficulty = 1;
+        else if (accuracyPercentage >= 80) currentDifficulty = 2;
+        else if (accuracyPercentage >= 70) currentDifficulty = 3;
+        else if (accuracyPercentage >= 60) currentDifficulty = 4;
+        else if (accuracyPercentage >= 50) currentDifficulty = 5;
+        else if (accuracyPercentage >= 40) currentDifficulty = 6;
+        else if (accuracyPercentage >= 30) currentDifficulty = 7;
+        else if (accuracyPercentage >= 20) currentDifficulty = 8;
+        else if (accuracyPercentage >= 10) currentDifficulty = 9;
+        else currentDifficulty = 10;
+        
+        const originalDifficulty = question.difficultyLevel || 5;
+        
+        // Determine trend
+        let difficultyTrend: 'increasing' | 'decreasing' | 'stable';
+        if (Math.abs(currentDifficulty - originalDifficulty) < 0.5) {
+          difficultyTrend = 'stable';
+        } else if (currentDifficulty > originalDifficulty) {
+          difficultyTrend = 'increasing';
+        } else {
+          difficultyTrend = 'decreasing';
+        }
+        
+        // Get testbank name
+        const testbank = question.testbankId ? await storage.getTestbank(question.testbankId) : null;
+        
+        return {
+          questionId: question.id,
+          questionText: question.questionText,
+          currentDifficulty,
+          originalDifficulty,
+          correctResponses,
+          totalResponses,
+          accuracyPercentage: Number(accuracyPercentage.toFixed(1)),
+          isPilotQuestion: question.isPilotQuestion || false,
+          pilotResponsesNeeded: question.pilotResponsesNeeded || 30,
+          pilotResponsesCount: totalResponses,
+          pilotValidated: question.pilotValidated || (totalResponses >= (question.pilotResponsesNeeded || 30)),
+          questionType: question.questionType,
+          testbankName: testbank?.title || 'Unassigned',
+          lastUpdated: question.updatedAt || new Date(),
+          difficultyTrend,
+          confidenceScore: Math.min(0.99, Math.max(0.1, totalResponses / 50))
+        };
+      }));
+
+      res.json(difficultyStats);
+    } catch (error) {
+      console.error('Error fetching difficulty questions:', error);
+      res.status(500).json({ error: 'Failed to fetch difficulty tracking data' });
+    }
+  });
+
+  app.get('/api/difficulty-tracking/analytics', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Use the same sample questions for analytics consistency
+      const questions = [
+        {
+          id: 'q1', 
+          questionText: 'What is the capital of France?',
+          questionType: 'multiple_choice',
+          difficultyLevel: 3,
+          testbankId: 'tb1',
+          isPilotQuestion: true,
+          pilotResponsesNeeded: 30,
+          pilotValidated: false,
+          updatedAt: new Date()
+        },
+        {
+          id: 'q2',
+          questionText: 'Calculate the integral of x^2 dx',
+          questionType: 'fill_blank',
+          difficultyLevel: 7,
+          testbankId: 'tb2',
+          isPilotQuestion: false,
+          pilotResponsesNeeded: 30,
+          pilotValidated: true,
+          updatedAt: new Date()
+        },
+        {
+          id: 'q3',
+          questionText: 'Which programming language is known for its simplicity?',
+          questionType: 'multiple_choice',
+          difficultyLevel: 4,
+          testbankId: 'tb1',
+          isPilotQuestion: true,
+          pilotResponsesNeeded: 30,
+          pilotValidated: false,
+          updatedAt: new Date()
+        }
+      ];
+      
+      let totalQuestions = questions.length;
+      let pilotQuestions = 0;
+      let validatedQuestions = 0;
+      let totalDifficulty = 0;
+      let recentAdjustments = 0;
+      let difficultyDistribution: Record<number, number> = {
+        1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+      };
+
+      const questionStats = questions.map((question) => {
+        // Simulate response data
+        const totalResponses = Math.floor(Math.random() * 100) + 10;
+        const correctResponses = Math.floor(totalResponses * (Math.random() * 0.8 + 0.1));
+        const accuracyPercentage = (correctResponses / totalResponses) * 100;
+        
+        // Calculate current difficulty
+        let currentDifficulty: number;
+        if (accuracyPercentage >= 90) currentDifficulty = 1;
+        else if (accuracyPercentage >= 80) currentDifficulty = 2;
+        else if (accuracyPercentage >= 70) currentDifficulty = 3;
+        else if (accuracyPercentage >= 60) currentDifficulty = 4;
+        else if (accuracyPercentage >= 50) currentDifficulty = 5;
+        else if (accuracyPercentage >= 40) currentDifficulty = 6;
+        else if (accuracyPercentage >= 30) currentDifficulty = 7;
+        else if (accuracyPercentage >= 20) currentDifficulty = 8;
+        else if (accuracyPercentage >= 10) currentDifficulty = 9;
+        else currentDifficulty = 10;
+        
+        const originalDifficulty = question.difficultyLevel || 5;
+        
+        return {
+          question,
+          currentDifficulty,
+          originalDifficulty,
+          totalResponses,
+          correctResponses,
+          accuracyPercentage
+        };
+      });
+
+      // Calculate analytics
+      questionStats.forEach(({ question, currentDifficulty, originalDifficulty, totalResponses }) => {
+        if (question.isPilotQuestion) pilotQuestions++;
+        if (question.pilotValidated || totalResponses >= (question.pilotResponsesNeeded || 30)) {
+          validatedQuestions++;
+        }
+        
+        totalDifficulty += currentDifficulty;
+        difficultyDistribution[Math.round(currentDifficulty)]++;
+        
+        // Count as recent adjustment if difficulty changed significantly
+        if (Math.abs(currentDifficulty - originalDifficulty) > 0.5) {
+          recentAdjustments++;
+        }
+      });
+
+      // Generate accuracy trends (last 7 days)
+      const accuracyTrends = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dayStats = questionStats.filter(s => s.totalResponses > 0);
+        const avgAccuracy = dayStats.length > 0 
+          ? dayStats.reduce((sum, s) => sum + s.accuracyPercentage, 0) / dayStats.length
+          : 0;
+        
+        accuracyTrends.push({
+          date: date.toISOString().split('T')[0],
+          accuracy: Number(avgAccuracy.toFixed(1))
+        });
+      }
+
+      // Top performing questions (highest accuracy with sufficient responses)
+      const topPerformingQuestions = questionStats
+        .filter(s => s.totalResponses >= 10)
+        .sort((a, b) => b.accuracyPercentage - a.accuracyPercentage)
+        .slice(0, 5)
+        .map(s => ({
+          questionId: s.question.id,
+          questionText: s.question.questionText,
+          accuracyPercentage: s.accuracyPercentage,
+          totalResponses: s.totalResponses
+        }));
+
+      // Questions needing attention (low accuracy or high difficulty drift)
+      const needsAttentionQuestions = questionStats
+        .filter(s => s.accuracyPercentage < 40 || Math.abs(s.currentDifficulty - s.originalDifficulty) > 2)
+        .sort((a, b) => a.accuracyPercentage - b.accuracyPercentage)
+        .slice(0, 5)
+        .map(s => ({
+          questionId: s.question.id,
+          questionText: s.question.questionText,
+          accuracyPercentage: s.accuracyPercentage,
+          currentDifficulty: s.currentDifficulty,
+          originalDifficulty: s.originalDifficulty,
+          totalResponses: s.totalResponses
+        }));
+
+      const analytics = {
+        totalQuestions,
+        pilotQuestions,
+        validatedQuestions,
+        avgDifficulty: totalQuestions > 0 ? Number((totalDifficulty / totalQuestions).toFixed(1)) : 0,
+        difficultyDistribution,
+        recentAdjustments,
+        accuracyTrends,
+        topPerformingQuestions,
+        needsAttentionQuestions
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching difficulty analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch analytics data' });
+    }
+  });
+
+  app.post('/api/difficulty-tracking/adjust/:questionId', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { questionId } = req.params;
+      const { newDifficulty, reason } = req.body;
+
+      if (!newDifficulty || newDifficulty < 1 || newDifficulty > 10) {
+        return res.status(400).json({ error: 'Invalid difficulty level' });
+      }
+
+      const question = await storage.getQuestion(questionId);
+      if (!question) {
+        return res.status(404).json({ error: 'Question not found' });
+      }
+
+      // Update question difficulty
+      await storage.updateQuestion(questionId, {
+        difficultyLevel: newDifficulty,
+        updatedAt: new Date()
+      });
+
+      // Log the manual adjustment
+      console.log(`Manual difficulty adjustment: Question ${questionId} adjusted to ${newDifficulty}. Reason: ${reason || 'No reason provided'}`);
+
+      res.json({ 
+        success: true, 
+        message: 'Difficulty level updated successfully',
+        newDifficulty 
+      });
+    } catch (error) {
+      console.error('Error adjusting difficulty:', error);
+      res.status(500).json({ error: 'Failed to adjust difficulty level' });
+    }
+  });
+
+  // Test difficulty tracking endpoint (legacy)
   app.get('/api/difficulty/test', mockAuth, async (req: any, res) => {
     try {
       // Get first question from database for testing
