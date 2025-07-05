@@ -137,6 +137,7 @@ export interface IStorage {
   getQuizAnalytics(quizId: string): Promise<any>;
   getTestbankAnalytics(testbankId: string): Promise<any>;
   getDashboardStats(userId: string): Promise<any>;
+  getAdditionalDashboardStats(userId: string): Promise<any>;
   
   // Reference Bank operations
   createReferenceBank(bank: InsertReferenceBank): Promise<ReferenceBank>;
@@ -533,6 +534,43 @@ export class DatabaseStorage implements IStorage {
       totalStudents: totalStudents?.count || 0,
       itemBanks: itemBanks?.count || 0,
       aiValidations: aiValidations?.count || 0,
+    };
+  }
+
+  async getAdditionalDashboardStats(userId: string): Promise<any> {
+    // Get total quizzes created by user
+    const [totalQuizzes] = await db.select({
+      count: count(quizzes.id),
+    }).from(quizzes).where(eq(quizzes.creatorId, userId));
+
+    // Get total questions across all user's testbanks
+    const [totalQuestions] = await db.select({
+      count: count(questions.id),
+    }).from(questions)
+      .innerJoin(testbanks, eq(questions.testbankId, testbanks.id))
+      .where(eq(testbanks.creatorId, userId));
+
+    // Get completed quiz attempts
+    const [completedAttempts] = await db.select({
+      count: count(quizAttempts.id),
+    }).from(quizAttempts)
+      .innerJoin(quizzes, eq(quizAttempts.quizId, quizzes.id))
+      .where(and(
+        eq(quizzes.creatorId, userId),
+        eq(quizAttempts.status, "submitted")
+      ));
+
+    // Get total notifications for user
+    const [recentActivity] = await db.select({
+      count: count(notifications.id),
+    }).from(notifications)
+      .where(eq(notifications.userId, userId));
+
+    return {
+      totalQuizzes: totalQuizzes?.count || 0,
+      totalQuestions: totalQuestions?.count || 0,
+      completedAttempts: completedAttempts?.count || 0,
+      recentActivity: recentActivity?.count || 0,
     };
   }
 
