@@ -292,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // AI Question Generation routes
   // Progress tracking for question generation
-  app.get('/api/testbanks/:id/generate-questions-progress',  async (req: any, res) => {
+  app.get('/api/testbanks/:id/generate-questions-progress', mockAuth, async (req: any, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -302,16 +302,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Parse generation parameters from query
-    const data = JSON.parse(req.query.data || '{}');
+    let data;
+    try {
+      data = JSON.parse(req.query.data || '{}');
+    } catch (parseError) {
+      console.error("Error parsing query data:", parseError);
+      res.write(`data: ${JSON.stringify({ 
+        type: 'error',
+        error: "Invalid query data format"
+      })}\n\n`);
+      res.end();
+      return;
+    }
     
     // Validate required fields
     if (!data.topic || !data.questionTypes || data.questionTypes.length === 0) {
-      res.write(`data: ${JSON.stringify({ error: "Topic and question types are required" })}\n\n`);
+      res.write(`data: ${JSON.stringify({ 
+        type: 'error',
+        error: "Topic and question types are required" 
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // Check if API key is available
+    if (!process.env.OPENAI_API_KEY) {
+      res.write(`data: ${JSON.stringify({ 
+        type: 'error',
+        error: "OpenAI API key is not configured. Please contact your administrator." 
+      })}\n\n`);
       res.end();
       return;
     }
 
     try {
+      // Send initial progress
+      res.write(`data: ${JSON.stringify({ 
+        type: 'progress',
+        status: 'Starting question generation...',
+        current: 0,
+        total: data.questionCount || 5,
+        percentage: 0
+      })}\n\n`);
+
       // Generate questions using AI with progress callback
       const generatedQuestions = await generateQuestionsWithAI({
         topic: data.topic,
@@ -330,13 +363,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         testbankId: req.params.id
       }, (progress) => {
         // Send progress update to client
-        res.write(`data: ${JSON.stringify({ 
-          type: 'progress',
-          status: progress.status,
-          current: progress.current,
-          total: progress.total,
-          percentage: Math.round((progress.current / progress.total) * 100)
-        })}\n\n`);
+        try {
+          res.write(`data: ${JSON.stringify({ 
+            type: 'progress',
+            status: progress.status,
+            current: progress.current,
+            total: progress.total,
+            percentage: Math.round((progress.current / progress.total) * 100)
+          })}\n\n`);
+        } catch (writeError) {
+          console.error("Error writing progress:", writeError);
+        }
       });
 
       // Save generated questions to database
@@ -345,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'Saving questions to database...',
         current: generatedQuestions.length,
         total: generatedQuestions.length,
-        percentage: 100
+        percentage: 90
       })}\n\n`);
 
       const savedQuestions = [];
@@ -388,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error generating questions:", error);
       res.write(`data: ${JSON.stringify({ 
         type: 'error',
-        error: "Failed to generate questions"
+        error: "Failed to generate questions: " + (error instanceof Error ? error.message : String(error))
       })}\n\n`);
       res.end();
     }

@@ -719,6 +719,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     // Prepare reference material context
     let referenceContext = "";
     if (includeReferences && referenceLinks.length > 0) {
+      progressCallback?.({ status: 'Processing reference materials...', current: 1, total: questionCount });
       referenceContext = `
         Reference Materials:
         ${referenceLinks.map((link, index) => `${index + 1}. ${link}`).join('\n')}
@@ -874,6 +875,9 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       - Ensure proper grammar, spelling, and formatting
       - Include diverse question formats as specified
     `;
+
+    // Send progress update before AI call
+    progressCallback?.({ status: 'Sending request to AI...', current: 2, total: questionCount });
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
