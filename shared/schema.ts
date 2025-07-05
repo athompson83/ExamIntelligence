@@ -771,6 +771,156 @@ export type LlmProvider = typeof llmProviders.$inferSelect;
 export type InsertCustomInstruction = z.infer<typeof insertCustomInstructionSchema>;
 export type CustomInstruction = typeof customInstructions.$inferSelect;
 
+// Custom Badges table - for achievement and recognition badges
+export const badges = pgTable("badges", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  
+  // Badge design and metadata
+  name: varchar("name").notNull(),
+  description: text("description"),
+  iconType: varchar("icon_type", { enum: ["emoji", "lucide", "custom"] }).notNull().default("emoji"),
+  iconValue: varchar("icon_value").notNull(), // emoji character, lucide icon name, or custom icon URL
+  color: varchar("color").notNull().default("#3B82F6"), // hex color code
+  backgroundColor: varchar("background_color").notNull().default("#EFF6FF"),
+  
+  // Badge criteria and rules
+  badgeType: varchar("badge_type", { 
+    enum: ["achievement", "skill", "completion", "performance", "participation", "custom"] 
+  }).notNull(),
+  
+  // Criteria for earning the badge (JSON object)
+  criteria: jsonb("criteria").$type<{
+    minScore?: number;
+    minAccuracy?: number;
+    completedQuizzes?: number;
+    perfectScores?: number;
+    streakDays?: number;
+    timeConstraint?: number; // seconds
+    specificQuizIds?: string[];
+    customRules?: string;
+  }>(),
+  
+  // Badge settings
+  isActive: boolean("is_active").notNull().default(true),
+  isAutoAwarded: boolean("is_auto_awarded").notNull().default(true),
+  maxRecipients: integer("max_recipients"), // null for unlimited
+  rarity: varchar("rarity", { enum: ["common", "uncommon", "rare", "epic", "legendary"] }).notNull().default("common"),
+  
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Certificate Templates table - for creating digital certificates
+export const certificateTemplates = pgTable("certificate_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  
+  // Template design and metadata
+  name: varchar("name").notNull(),
+  description: text("description"),
+  templateType: varchar("template_type", { 
+    enum: ["completion", "achievement", "skill", "mastery", "participation", "custom"] 
+  }).notNull(),
+  
+  // Certificate design
+  layout: varchar("layout", { enum: ["modern", "classic", "elegant", "minimal", "bold"] }).notNull().default("modern"),
+  primaryColor: varchar("primary_color").notNull().default("#1F2937"),
+  accentColor: varchar("accent_color").notNull().default("#3B82F6"),
+  backgroundPattern: varchar("background_pattern", { 
+    enum: ["none", "watermark", "border", "geometric", "organic"] 
+  }).notNull().default("none"),
+  
+  // Content fields
+  title: varchar("title").notNull().default("Certificate of Achievement"),
+  subtitle: text("subtitle"),
+  bodyText: text("body_text"),
+  footerText: text("footer_text"),
+  
+  // Criteria for receiving certificate
+  criteria: jsonb("criteria").$type<{
+    minScore?: number;
+    minAccuracy?: number;
+    completedQuizzes?: number;
+    perfectScores?: number;
+    specificQuizIds?: string[];
+    timeConstraint?: number;
+    customRules?: string;
+  }>(),
+  
+  // Template settings
+  isActive: boolean("is_active").notNull().default(true),
+  isAutoAwarded: boolean("is_auto_awarded").notNull().default(true),
+  includeQRCode: boolean("include_qr_code").notNull().default(true),
+  includeSignature: boolean("include_signature").notNull().default(true),
+  signatoryName: varchar("signatory_name"),
+  signatoryTitle: varchar("signatory_title"),
+  
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Awarded Badges table - tracks badges earned by students
+export const awardedBadges = pgTable("awarded_badges", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  badgeId: uuid("badge_id").references(() => badges.id).notNull(),
+  recipientId: varchar("recipient_id").references(() => users.id).notNull(),
+  awardedBy: varchar("awarded_by").references(() => users.id), // null if auto-awarded
+  
+  // Award context
+  quizAttemptId: uuid("quiz_attempt_id").references(() => quizAttempts.id), // if related to specific quiz
+  reason: text("reason"), // why the badge was awarded
+  score: numeric("score"), // score when earned
+  metadata: jsonb("metadata"), // additional context data
+  
+  // Award details
+  awardedAt: timestamp("awarded_at").defaultNow(),
+  isVisible: boolean("is_visible").notNull().default(true),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Issued Certificates table - tracks certificates issued to students
+export const issuedCertificates = pgTable("issued_certificates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  templateId: uuid("template_id").references(() => certificateTemplates.id).notNull(),
+  recipientId: varchar("recipient_id").references(() => users.id).notNull(),
+  issuedBy: varchar("issued_by").references(() => users.id), // null if auto-issued
+  
+  // Certificate data
+  certificateNumber: varchar("certificate_number").notNull().unique(),
+  recipientName: varchar("recipient_name").notNull(),
+  achievementDetails: text("achievement_details"),
+  completionDate: timestamp("completion_date").notNull(),
+  
+  // Related quiz/assignment data
+  quizAttemptId: uuid("quiz_attempt_id").references(() => quizAttempts.id),
+  finalScore: numeric("final_score"),
+  accuracy: numeric("accuracy"),
+  timeSpent: integer("time_spent"), // in seconds
+  
+  // Certificate file and verification
+  certificateUrl: text("certificate_url"), // URL to generated PDF certificate
+  verificationCode: varchar("verification_code").notNull().unique(),
+  qrCodeData: text("qr_code_data"), // QR code content for verification
+  
+  // Status and metadata
+  status: varchar("status", { enum: ["issued", "revoked", "expired"] }).notNull().default("issued"),
+  expirationDate: timestamp("expiration_date"),
+  revokedAt: timestamp("revoked_at"),
+  revokedBy: varchar("revoked_by").references(() => users.id),
+  revocationReason: text("revocation_reason"),
+  
+  // Metadata
+  issuedAt: timestamp("issued_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Audit logs table for compliance and security tracking
 export const auditLogs = pgTable("audit_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -786,6 +936,22 @@ export const auditLogs = pgTable("audit_logs", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+// Schema exports for badges and certificates
+export const insertBadgeSchema = createInsertSchema(badges);
+export const insertCertificateTemplateSchema = createInsertSchema(certificateTemplates);
+export const insertAwardedBadgeSchema = createInsertSchema(awardedBadges);
+export const insertIssuedCertificateSchema = createInsertSchema(issuedCertificates);
+
 export const insertAuditLogSchema = createInsertSchema(auditLogs);
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
+
+// Badge and Certificate Types
+export type InsertBadge = z.infer<typeof insertBadgeSchema>;
+export type Badge = typeof badges.$inferSelect;
+export type InsertCertificateTemplate = z.infer<typeof insertCertificateTemplateSchema>;
+export type CertificateTemplate = typeof certificateTemplates.$inferSelect;
+export type InsertAwardedBadge = z.infer<typeof insertAwardedBadgeSchema>;
+export type AwardedBadge = typeof awardedBadges.$inferSelect;
+export type InsertIssuedCertificate = z.infer<typeof insertIssuedCertificateSchema>;
+export type IssuedCertificate = typeof issuedCertificates.$inferSelect;

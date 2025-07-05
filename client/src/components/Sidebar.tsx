@@ -9,7 +9,8 @@ import {
   Brain, 
   Users, 
   Settings,
-  Puzzle
+  Puzzle,
+  Award
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -23,6 +24,7 @@ export default function Sidebar() {
     { href: "/live-exams", label: "Live Exams", icon: PlayCircle },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/ai-resources", label: "AI Resources", icon: Brain },
+    { href: "/badges-certificates", label: "Badges & Certificates", icon: Award },
   ];
 
   const systemItems = [

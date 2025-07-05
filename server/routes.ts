@@ -2542,6 +2542,375 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Badge Routes
+  app.get('/api/badges', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const badges = await storage.getBadgesByAccount(user.accountId);
+      res.json(badges);
+    } catch (error) {
+      console.error('Error fetching badges:', error);
+      res.status(500).json({ message: 'Failed to fetch badges' });
+    }
+  });
+
+  app.get('/api/badges/active', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const badges = await storage.getActiveBadges(user.accountId);
+      res.json(badges);
+    } catch (error) {
+      console.error('Error fetching active badges:', error);
+      res.status(500).json({ message: 'Failed to fetch active badges' });
+    }
+  });
+
+  app.post('/api/badges', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const badgeData = {
+        ...req.body,
+        accountId: user.accountId,
+        createdBy: user.id
+      };
+
+      const badge = await storage.createBadge(badgeData);
+      res.status(201).json(badge);
+    } catch (error) {
+      console.error('Error creating badge:', error);
+      res.status(500).json({ message: 'Failed to create badge' });
+    }
+  });
+
+  app.get('/api/badges/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const badge = await storage.getBadge(req.params.id);
+      if (!badge || badge.accountId !== user.accountId) {
+        return res.status(404).json({ message: 'Badge not found' });
+      }
+
+      res.json(badge);
+    } catch (error) {
+      console.error('Error fetching badge:', error);
+      res.status(500).json({ message: 'Failed to fetch badge' });
+    }
+  });
+
+  app.put('/api/badges/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const badge = await storage.getBadge(req.params.id);
+      if (!badge || badge.accountId !== user.accountId) {
+        return res.status(404).json({ message: 'Badge not found' });
+      }
+
+      const updatedBadge = await storage.updateBadge(req.params.id, req.body);
+      res.json(updatedBadge);
+    } catch (error) {
+      console.error('Error updating badge:', error);
+      res.status(500).json({ message: 'Failed to update badge' });
+    }
+  });
+
+  app.delete('/api/badges/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const badge = await storage.getBadge(req.params.id);
+      if (!badge || badge.accountId !== user.accountId) {
+        return res.status(404).json({ message: 'Badge not found' });
+      }
+
+      await storage.deleteBadge(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting badge:', error);
+      res.status(500).json({ message: 'Failed to delete badge' });
+    }
+  });
+
+  // Certificate Template Routes
+  app.get('/api/certificate-templates', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const templates = await storage.getCertificateTemplatesByAccount(user.accountId);
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching certificate templates:', error);
+      res.status(500).json({ message: 'Failed to fetch certificate templates' });
+    }
+  });
+
+  app.get('/api/certificate-templates/active', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const templates = await storage.getActiveCertificateTemplates(user.accountId);
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching active certificate templates:', error);
+      res.status(500).json({ message: 'Failed to fetch active certificate templates' });
+    }
+  });
+
+  app.post('/api/certificate-templates', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const templateData = {
+        ...req.body,
+        accountId: user.accountId,
+        createdBy: user.id
+      };
+
+      const template = await storage.createCertificateTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('Error creating certificate template:', error);
+      res.status(500).json({ message: 'Failed to create certificate template' });
+    }
+  });
+
+  app.get('/api/certificate-templates/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const template = await storage.getCertificateTemplate(req.params.id);
+      if (!template || template.accountId !== user.accountId) {
+        return res.status(404).json({ message: 'Certificate template not found' });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error('Error fetching certificate template:', error);
+      res.status(500).json({ message: 'Failed to fetch certificate template' });
+    }
+  });
+
+  app.put('/api/certificate-templates/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const template = await storage.getCertificateTemplate(req.params.id);
+      if (!template || template.accountId !== user.accountId) {
+        return res.status(404).json({ message: 'Certificate template not found' });
+      }
+
+      const updatedTemplate = await storage.updateCertificateTemplate(req.params.id, req.body);
+      res.json(updatedTemplate);
+    } catch (error) {
+      console.error('Error updating certificate template:', error);
+      res.status(500).json({ message: 'Failed to update certificate template' });
+    }
+  });
+
+  app.delete('/api/certificate-templates/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const template = await storage.getCertificateTemplate(req.params.id);
+      if (!template || template.accountId !== user.accountId) {
+        return res.status(404).json({ message: 'Certificate template not found' });
+      }
+
+      await storage.deleteCertificateTemplate(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting certificate template:', error);
+      res.status(500).json({ message: 'Failed to delete certificate template' });
+    }
+  });
+
+  // Awarded Badge Routes
+  app.get('/api/awarded-badges/student/:studentId', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Students can only view their own badges, teachers/admins can view any student's badges
+      if (user.role === 'student' && user.id !== req.params.studentId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const badges = await storage.getStudentBadgesWithDetails(req.params.studentId);
+      res.json(badges);
+    } catch (error) {
+      console.error('Error fetching student badges:', error);
+      res.status(500).json({ message: 'Failed to fetch student badges' });
+    }
+  });
+
+  app.post('/api/awarded-badges', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const awardData = {
+        ...req.body,
+        awardedBy: user.id,
+        verificationCode: `badge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      };
+
+      const award = await storage.awardBadge(awardData);
+      res.status(201).json(award);
+    } catch (error) {
+      console.error('Error awarding badge:', error);
+      res.status(500).json({ message: 'Failed to award badge' });
+    }
+  });
+
+  app.delete('/api/awarded-badges/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const award = await storage.getAwardedBadge(req.params.id);
+      if (!award) {
+        return res.status(404).json({ message: 'Awarded badge not found' });
+      }
+
+      await storage.deleteAwardedBadge(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error removing awarded badge:', error);
+      res.status(500).json({ message: 'Failed to remove awarded badge' });
+    }
+  });
+
+  // Issued Certificate Routes
+  app.get('/api/issued-certificates/student/:studentId', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Students can only view their own certificates, teachers/admins can view any student's certificates
+      if (user.role === 'student' && user.id !== req.params.studentId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const certificates = await storage.getStudentCertificatesWithTemplate(req.params.studentId);
+      res.json(certificates);
+    } catch (error) {
+      console.error('Error fetching student certificates:', error);
+      res.status(500).json({ message: 'Failed to fetch student certificates' });
+    }
+  });
+
+  app.post('/api/issued-certificates', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const certificateData = {
+        ...req.body,
+        issuedBy: user.id,
+        certificateNumber: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        verificationCode: `verify_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      };
+
+      const certificate = await storage.issueCertificate(certificateData);
+      res.status(201).json(certificate);
+    } catch (error) {
+      console.error('Error issuing certificate:', error);
+      res.status(500).json({ message: 'Failed to issue certificate' });
+    }
+  });
+
+  app.get('/api/issued-certificates/verify/:verificationCode', async (req: any, res) => {
+    try {
+      const certificate = await storage.getCertificateByVerificationCode(req.params.verificationCode);
+      if (!certificate) {
+        return res.status(404).json({ message: 'Certificate not found' });
+      }
+
+      if (certificate.isRevoked) {
+        return res.status(410).json({ 
+          message: 'Certificate has been revoked',
+          revocationReason: certificate.revocationReason,
+          revokedAt: certificate.revokedAt
+        });
+      }
+
+      res.json(certificate);
+    } catch (error) {
+      console.error('Error verifying certificate:', error);
+      res.status(500).json({ message: 'Failed to verify certificate' });
+    }
+  });
+
+  app.post('/api/issued-certificates/:id/revoke', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const { reason } = req.body;
+      if (!reason) {
+        return res.status(400).json({ message: 'Revocation reason is required' });
+      }
+
+      const certificate = await storage.revokeCertificate(req.params.id, user.id, reason);
+      res.json(certificate);
+    } catch (error) {
+      console.error('Error revoking certificate:', error);
+      res.status(500).json({ message: 'Failed to revoke certificate' });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 

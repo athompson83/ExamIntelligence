@@ -22,6 +22,10 @@ import {
   promptTemplates,
   llmProviders,
   customInstructions,
+  badges,
+  certificateTemplates,
+  awardedBadges,
+  issuedCertificates,
   type User,
   type UpsertUser,
   type Account,
@@ -66,6 +70,14 @@ import {
   type InsertLlmProvider,
   type CustomInstruction,
   type InsertCustomInstruction,
+  type Badge,
+  type InsertBadge,
+  type CertificateTemplate,
+  type InsertCertificateTemplate,
+  type AwardedBadge,
+  type InsertAwardedBadge,
+  type IssuedCertificate,
+  type InsertIssuedCertificate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, count, avg, like, inArray } from "drizzle-orm";
@@ -220,6 +232,43 @@ export interface IStorage {
   updateCustomInstruction(id: string, data: Partial<InsertCustomInstruction>): Promise<CustomInstruction>;
   incrementCustomInstructionUsage(id: string): Promise<void>;
   deleteCustomInstruction(id: string): Promise<void>;
+
+  // Badge operations
+  createBadge(badge: InsertBadge): Promise<Badge>;
+  getBadge(id: string): Promise<Badge | undefined>;
+  getBadgesByAccount(accountId: string): Promise<Badge[]>;
+  getActiveBadges(accountId: string): Promise<Badge[]>;
+  updateBadge(id: string, data: Partial<InsertBadge>): Promise<Badge>;
+  deleteBadge(id: string): Promise<void>;
+
+  // Certificate Template operations
+  createCertificateTemplate(template: InsertCertificateTemplate): Promise<CertificateTemplate>;
+  getCertificateTemplate(id: string): Promise<CertificateTemplate | undefined>;
+  getCertificateTemplatesByAccount(accountId: string): Promise<CertificateTemplate[]>;
+  getActiveCertificateTemplates(accountId: string): Promise<CertificateTemplate[]>;
+  updateCertificateTemplate(id: string, data: Partial<InsertCertificateTemplate>): Promise<CertificateTemplate>;
+  deleteCertificateTemplate(id: string): Promise<void>;
+
+  // Awarded Badge operations
+  awardBadge(award: InsertAwardedBadge): Promise<AwardedBadge>;
+  getAwardedBadge(id: string): Promise<AwardedBadge | undefined>;
+  getAwardedBadgesByStudent(studentId: string): Promise<AwardedBadge[]>;
+  getAwardedBadgesByBadge(badgeId: string): Promise<AwardedBadge[]>;
+  getStudentBadgesWithDetails(studentId: string): Promise<(AwardedBadge & { badge: Badge })[]>;
+  updateAwardedBadge(id: string, data: Partial<InsertAwardedBadge>): Promise<AwardedBadge>;
+  deleteAwardedBadge(id: string): Promise<void>;
+
+  // Issued Certificate operations
+  issueCertificate(certificate: InsertIssuedCertificate): Promise<IssuedCertificate>;
+  getIssuedCertificate(id: string): Promise<IssuedCertificate | undefined>;
+  getCertificateByNumber(certificateNumber: string): Promise<IssuedCertificate | undefined>;
+  getCertificateByVerificationCode(verificationCode: string): Promise<IssuedCertificate | undefined>;
+  getIssuedCertificatesByStudent(studentId: string): Promise<IssuedCertificate[]>;
+  getIssuedCertificatesByTemplate(templateId: string): Promise<IssuedCertificate[]>;
+  getStudentCertificatesWithTemplate(studentId: string): Promise<(IssuedCertificate & { template: CertificateTemplate })[]>;
+  updateIssuedCertificate(id: string, data: Partial<InsertIssuedCertificate>): Promise<IssuedCertificate>;
+  revokeCertificate(id: string, revokedBy: string, reason: string): Promise<IssuedCertificate>;
+  deleteIssuedCertificate(id: string): Promise<void>;
 
   // Role-based access operations
   getUsersByAccount(accountId: string): Promise<User[]>;
@@ -1242,6 +1291,265 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+
+  // Badge operations
+  async createBadge(badge: InsertBadge): Promise<Badge> {
+    const [newBadge] = await db.insert(badges).values({
+      ...badge,
+      id: `badge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date()
+    }).returning();
+    return newBadge;
+  }
+
+  async getBadge(id: string): Promise<Badge | undefined> {
+    const [badge] = await db.select().from(badges).where(eq(badges.id, id));
+    return badge;
+  }
+
+  async getBadgesByAccount(accountId: string): Promise<Badge[]> {
+    return await db.select().from(badges)
+      .where(eq(badges.accountId, accountId))
+      .orderBy(desc(badges.createdAt));
+  }
+
+  async getActiveBadges(accountId: string): Promise<Badge[]> {
+    return await db.select().from(badges)
+      .where(and(
+        eq(badges.accountId, accountId),
+        eq(badges.isActive, true)
+      ))
+      .orderBy(desc(badges.createdAt));
+  }
+
+  async updateBadge(id: string, data: Partial<InsertBadge>): Promise<Badge> {
+    const [badge] = await db.update(badges)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(badges.id, id))
+      .returning();
+    return badge;
+  }
+
+  async deleteBadge(id: string): Promise<void> {
+    await db.delete(badges).where(eq(badges.id, id));
+  }
+
+  // Certificate Template operations
+  async createCertificateTemplate(template: InsertCertificateTemplate): Promise<CertificateTemplate> {
+    const [newTemplate] = await db.insert(certificateTemplates).values({
+      ...template,
+      id: `cert_template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date()
+    }).returning();
+    return newTemplate;
+  }
+
+  async getCertificateTemplate(id: string): Promise<CertificateTemplate | undefined> {
+    const [template] = await db.select().from(certificateTemplates).where(eq(certificateTemplates.id, id));
+    return template;
+  }
+
+  async getCertificateTemplatesByAccount(accountId: string): Promise<CertificateTemplate[]> {
+    return await db.select().from(certificateTemplates)
+      .where(eq(certificateTemplates.accountId, accountId))
+      .orderBy(desc(certificateTemplates.createdAt));
+  }
+
+  async getActiveCertificateTemplates(accountId: string): Promise<CertificateTemplate[]> {
+    return await db.select().from(certificateTemplates)
+      .where(and(
+        eq(certificateTemplates.accountId, accountId),
+        eq(certificateTemplates.isActive, true)
+      ))
+      .orderBy(desc(certificateTemplates.createdAt));
+  }
+
+  async updateCertificateTemplate(id: string, data: Partial<InsertCertificateTemplate>): Promise<CertificateTemplate> {
+    const [template] = await db.update(certificateTemplates)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(certificateTemplates.id, id))
+      .returning();
+    return template;
+  }
+
+  async deleteCertificateTemplate(id: string): Promise<void> {
+    await db.delete(certificateTemplates).where(eq(certificateTemplates.id, id));
+  }
+
+  // Awarded Badge operations
+  async awardBadge(award: InsertAwardedBadge): Promise<AwardedBadge> {
+    const [awardedBadge] = await db.insert(awardedBadges).values({
+      ...award,
+      id: `awarded_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      awardedAt: award.awardedAt || new Date()
+    }).returning();
+    return awardedBadge;
+  }
+
+  async getAwardedBadge(id: string): Promise<AwardedBadge | undefined> {
+    const [award] = await db.select().from(awardedBadges).where(eq(awardedBadges.id, id));
+    return award;
+  }
+
+  async getAwardedBadgesByStudent(studentId: string): Promise<AwardedBadge[]> {
+    return await db.select().from(awardedBadges)
+      .where(eq(awardedBadges.studentId, studentId))
+      .orderBy(desc(awardedBadges.awardedAt));
+  }
+
+  async getAwardedBadgesByBadge(badgeId: string): Promise<AwardedBadge[]> {
+    return await db.select().from(awardedBadges)
+      .where(eq(awardedBadges.badgeId, badgeId))
+      .orderBy(desc(awardedBadges.awardedAt));
+  }
+
+  async getStudentBadgesWithDetails(studentId: string): Promise<(AwardedBadge & { badge: Badge })[]> {
+    return await db.select({
+      id: awardedBadges.id,
+      badgeId: awardedBadges.badgeId,
+      studentId: awardedBadges.studentId,
+      awardedBy: awardedBadges.awardedBy,
+      awardedAt: awardedBadges.awardedAt,
+      reason: awardedBadges.reason,
+      verificationCode: awardedBadges.verificationCode,
+      metadata: awardedBadges.metadata,
+      badge: {
+        id: badges.id,
+        name: badges.name,
+        description: badges.description,
+        iconUrl: badges.iconUrl,
+        badgeColor: badges.badgeColor,
+        textColor: badges.textColor,
+        criteria: badges.criteria,
+        pointsValue: badges.pointsValue,
+        category: badges.category,
+        isActive: badges.isActive,
+        accountId: badges.accountId,
+        createdBy: badges.createdBy,
+        createdAt: badges.createdAt,
+        updatedAt: badges.updatedAt
+      }
+    })
+    .from(awardedBadges)
+    .innerJoin(badges, eq(awardedBadges.badgeId, badges.id))
+    .where(eq(awardedBadges.studentId, studentId))
+    .orderBy(desc(awardedBadges.awardedAt));
+  }
+
+  async updateAwardedBadge(id: string, data: Partial<InsertAwardedBadge>): Promise<AwardedBadge> {
+    const [award] = await db.update(awardedBadges)
+      .set(data)
+      .where(eq(awardedBadges.id, id))
+      .returning();
+    return award;
+  }
+
+  async deleteAwardedBadge(id: string): Promise<void> {
+    await db.delete(awardedBadges).where(eq(awardedBadges.id, id));
+  }
+
+  // Issued Certificate operations
+  async issueCertificate(certificate: InsertIssuedCertificate): Promise<IssuedCertificate> {
+    const [issuedCert] = await db.insert(issuedCertificates).values({
+      ...certificate,
+      id: `issued_cert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      issuedAt: certificate.issuedAt || new Date()
+    }).returning();
+    return issuedCert;
+  }
+
+  async getIssuedCertificate(id: string): Promise<IssuedCertificate | undefined> {
+    const [cert] = await db.select().from(issuedCertificates).where(eq(issuedCertificates.id, id));
+    return cert;
+  }
+
+  async getCertificateByNumber(certificateNumber: string): Promise<IssuedCertificate | undefined> {
+    const [cert] = await db.select().from(issuedCertificates)
+      .where(eq(issuedCertificates.certificateNumber, certificateNumber));
+    return cert;
+  }
+
+  async getCertificateByVerificationCode(verificationCode: string): Promise<IssuedCertificate | undefined> {
+    const [cert] = await db.select().from(issuedCertificates)
+      .where(eq(issuedCertificates.verificationCode, verificationCode));
+    return cert;
+  }
+
+  async getIssuedCertificatesByStudent(studentId: string): Promise<IssuedCertificate[]> {
+    return await db.select().from(issuedCertificates)
+      .where(eq(issuedCertificates.studentId, studentId))
+      .orderBy(desc(issuedCertificates.issuedAt));
+  }
+
+  async getIssuedCertificatesByTemplate(templateId: string): Promise<IssuedCertificate[]> {
+    return await db.select().from(issuedCertificates)
+      .where(eq(issuedCertificates.templateId, templateId))
+      .orderBy(desc(issuedCertificates.issuedAt));
+  }
+
+  async getStudentCertificatesWithTemplate(studentId: string): Promise<(IssuedCertificate & { template: CertificateTemplate })[]> {
+    return await db.select({
+      id: issuedCertificates.id,
+      templateId: issuedCertificates.templateId,
+      studentId: issuedCertificates.studentId,
+      studentName: issuedCertificates.studentName,
+      certificateNumber: issuedCertificates.certificateNumber,
+      verificationCode: issuedCertificates.verificationCode,
+      issuedAt: issuedCertificates.issuedAt,
+      issuedBy: issuedCertificates.issuedBy,
+      isRevoked: issuedCertificates.isRevoked,
+      revokedAt: issuedCertificates.revokedAt,
+      revokedBy: issuedCertificates.revokedBy,
+      revocationReason: issuedCertificates.revocationReason,
+      completionData: issuedCertificates.completionData,
+      metadata: issuedCertificates.metadata,
+      template: {
+        id: certificateTemplates.id,
+        name: certificateTemplates.name,
+        description: certificateTemplates.description,
+        certificateText: certificateTemplates.certificateText,
+        designTemplate: certificateTemplates.designTemplate,
+        backgroundColor: certificateTemplates.backgroundColor,
+        textColor: certificateTemplates.textColor,
+        borderStyle: certificateTemplates.borderStyle,
+        logoUrl: certificateTemplates.logoUrl,
+        isActive: certificateTemplates.isActive,
+        accountId: certificateTemplates.accountId,
+        createdBy: certificateTemplates.createdBy,
+        createdAt: certificateTemplates.createdAt,
+        updatedAt: certificateTemplates.updatedAt
+      }
+    })
+    .from(issuedCertificates)
+    .innerJoin(certificateTemplates, eq(issuedCertificates.templateId, certificateTemplates.id))
+    .where(eq(issuedCertificates.studentId, studentId))
+    .orderBy(desc(issuedCertificates.issuedAt));
+  }
+
+  async updateIssuedCertificate(id: string, data: Partial<InsertIssuedCertificate>): Promise<IssuedCertificate> {
+    const [cert] = await db.update(issuedCertificates)
+      .set(data)
+      .where(eq(issuedCertificates.id, id))
+      .returning();
+    return cert;
+  }
+
+  async revokeCertificate(id: string, revokedBy: string, reason: string): Promise<IssuedCertificate> {
+    const [cert] = await db.update(issuedCertificates)
+      .set({
+        isRevoked: true,
+        revokedAt: new Date(),
+        revokedBy,
+        revocationReason: reason
+      })
+      .where(eq(issuedCertificates.id, id))
+      .returning();
+    return cert;
+  }
+
+  async deleteIssuedCertificate(id: string): Promise<void> {
+    await db.delete(issuedCertificates).where(eq(issuedCertificates.id, id));
   }
 }
 
