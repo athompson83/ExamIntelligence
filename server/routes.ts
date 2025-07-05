@@ -2979,6 +2979,182 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mood tracking routes
+  app.post('/api/mood-entries', mockAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user?.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const validatedData = {
+        userId: user.id,
+        mood: req.body.moodIcon,
+        moodLabel: req.body.moodLabel || 'neutral',
+        context: req.body.context || 'general',
+        notes: req.body.notes || null,
+        relatedQuizId: req.body.relatedQuizId || null,
+        relatedTestbankId: req.body.relatedTestbankId || null,
+        metadata: req.body.metadata || null
+      };
+
+      const entry = await storage.createMoodEntry(validatedData);
+      res.json(entry);
+    } catch (error) {
+      console.error('Error creating mood entry:', error);
+      res.status(500).json({ error: 'Failed to create mood entry' });
+    }
+  });
+
+  app.get('/api/mood-entries', mockAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user?.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { context, startDate, endDate } = req.query;
+
+      let entries;
+      if (context) {
+        entries = await storage.getMoodEntriesByContext(user.id, context as string);
+      } else if (startDate && endDate) {
+        entries = await storage.getMoodEntriesByDateRange(
+          user.id,
+          new Date(startDate as string),
+          new Date(endDate as string)
+        );
+      } else {
+        entries = await storage.getMoodEntriesByUser(user.id);
+      }
+
+      res.json(entries);
+    } catch (error) {
+      console.error('Error fetching mood entries:', error);
+      res.status(500).json({ error: 'Failed to fetch mood entries' });
+    }
+  });
+
+  app.delete('/api/mood-entries/:id', mockAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user?.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { id } = req.params;
+      
+      // Check if entry belongs to user
+      const entry = await storage.getMoodEntry(id);
+      if (!entry || entry.userId !== user.id) {
+        return res.status(404).json({ error: 'Mood entry not found' });
+      }
+
+      await storage.deleteMoodEntry(id);
+      res.json({ message: 'Mood entry deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting mood entry:', error);
+      res.status(500).json({ error: 'Failed to delete mood entry' });
+    }
+  });
+
+  // Difficulty tracking routes
+  app.post('/api/difficulty-entries', mockAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user?.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const validatedData = {
+        userId: user.id,
+        difficultyScore: req.body.difficultyLevel,
+        difficulty: req.body.difficultyIcon,
+        difficultyLabel: req.body.difficultyLabel || 'moderate',
+        contentType: req.body.contentType || 'concept',
+        contentTitle: req.body.contentTitle || 'Learning Content',
+        contentId: req.body.contentId || null,
+        feedback: req.body.feedback || null,
+        needsHelp: req.body.needsHelp || false,
+        studyTime: req.body.studyTime || null,
+        metadata: req.body.metadata || null
+      };
+
+      const entry = await storage.createDifficultyEntry(validatedData);
+      res.json(entry);
+    } catch (error) {
+      console.error('Error creating difficulty entry:', error);
+      res.status(500).json({ error: 'Failed to create difficulty entry' });
+    }
+  });
+
+  app.get('/api/difficulty-entries', mockAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user?.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { contentType, startDate, endDate } = req.query;
+
+      let entries;
+      if (contentType) {
+        entries = await storage.getDifficultyEntriesByContent(user.id, contentType as string);
+      } else if (startDate && endDate) {
+        entries = await storage.getDifficultyEntriesByDateRange(
+          user.id,
+          new Date(startDate as string),
+          new Date(endDate as string)
+        );
+      } else {
+        entries = await storage.getDifficultyEntriesByUser(user.id);
+      }
+
+      res.json(entries);
+    } catch (error) {
+      console.error('Error fetching difficulty entries:', error);
+      res.status(500).json({ error: 'Failed to fetch difficulty entries' });
+    }
+  });
+
+  app.get('/api/difficulty-entries/average', mockAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user?.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const average = await storage.getAverageDifficultyByUser(user.id);
+      res.json({ average });
+    } catch (error) {
+      console.error('Error calculating average difficulty:', error);
+      res.status(500).json({ error: 'Failed to calculate average difficulty' });
+    }
+  });
+
+  app.delete('/api/difficulty-entries/:id', mockAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user?.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { id } = req.params;
+      
+      // Check if entry belongs to user
+      const entry = await storage.getDifficultyEntry(id);
+      if (!entry || entry.userId !== user.id) {
+        return res.status(404).json({ error: 'Difficulty entry not found' });
+      }
+
+      await storage.deleteDifficultyEntry(id);
+      res.json({ message: 'Difficulty entry deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting difficulty entry:', error);
+      res.status(500).json({ error: 'Failed to delete difficulty entry' });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 

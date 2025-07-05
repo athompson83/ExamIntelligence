@@ -22,6 +22,8 @@ import {
   promptTemplates,
   llmProviders,
   customInstructions,
+  moodEntries,
+  difficultyEntries,
   badges,
   certificateTemplates,
   awardedBadges,
@@ -70,6 +72,10 @@ import {
   type InsertLlmProvider,
   type CustomInstruction,
   type InsertCustomInstruction,
+  type MoodEntry,
+  type InsertMoodEntry,
+  type DifficultyEntry,
+  type InsertDifficultyEntry,
   type Badge,
   type InsertBadge,
   type CertificateTemplate,
@@ -232,6 +238,23 @@ export interface IStorage {
   updateCustomInstruction(id: string, data: Partial<InsertCustomInstruction>): Promise<CustomInstruction>;
   incrementCustomInstructionUsage(id: string): Promise<void>;
   deleteCustomInstruction(id: string): Promise<void>;
+
+  // Mood Tracking operations
+  createMoodEntry(entry: InsertMoodEntry): Promise<MoodEntry>;
+  getMoodEntry(id: string): Promise<MoodEntry | undefined>;
+  getMoodEntriesByUser(userId: string): Promise<MoodEntry[]>;
+  getMoodEntriesByContext(userId: string, context: string): Promise<MoodEntry[]>;
+  getMoodEntriesByDateRange(userId: string, startDate: Date, endDate: Date): Promise<MoodEntry[]>;
+  deleteMoodEntry(id: string): Promise<void>;
+
+  // Difficulty Tracking operations
+  createDifficultyEntry(entry: InsertDifficultyEntry): Promise<DifficultyEntry>;
+  getDifficultyEntry(id: string): Promise<DifficultyEntry | undefined>;
+  getDifficultyEntriesByUser(userId: string): Promise<DifficultyEntry[]>;
+  getDifficultyEntriesByContent(userId: string, contentType: string): Promise<DifficultyEntry[]>;
+  getDifficultyEntriesByDateRange(userId: string, startDate: Date, endDate: Date): Promise<DifficultyEntry[]>;
+  getAverageDifficultyByUser(userId: string): Promise<number>;
+  deleteDifficultyEntry(id: string): Promise<void>;
 
   // Badge operations
   createBadge(badge: InsertBadge): Promise<Badge>;
@@ -1585,6 +1608,114 @@ export class DatabaseStorage implements IStorage {
   async updateUserAccessibilitySettings(userId: string, settings: any): Promise<void> {
     // For now, just log the settings update
     console.log(`Updating accessibility settings for user ${userId}:`, settings);
+  }
+
+  // Mood Tracking operations
+  async createMoodEntry(entry: InsertMoodEntry): Promise<MoodEntry> {
+    const [result] = await db.insert(moodEntries)
+      .values(entry)
+      .returning();
+    return result;
+  }
+
+  async getMoodEntry(id: string): Promise<MoodEntry | undefined> {
+    const result = await db.select()
+      .from(moodEntries)
+      .where(eq(moodEntries.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async getMoodEntriesByUser(userId: string): Promise<MoodEntry[]> {
+    return await db.select()
+      .from(moodEntries)
+      .where(eq(moodEntries.userId, userId))
+      .orderBy(desc(moodEntries.createdAt));
+  }
+
+  async getMoodEntriesByContext(userId: string, context: string): Promise<MoodEntry[]> {
+    return await db.select()
+      .from(moodEntries)
+      .where(and(
+        eq(moodEntries.userId, userId),
+        eq(moodEntries.context, context)
+      ))
+      .orderBy(desc(moodEntries.createdAt));
+  }
+
+  async getMoodEntriesByDateRange(userId: string, startDate: Date, endDate: Date): Promise<MoodEntry[]> {
+    return await db.select()
+      .from(moodEntries)
+      .where(and(
+        eq(moodEntries.userId, userId),
+        sql`${moodEntries.createdAt} >= ${startDate}`,
+        sql`${moodEntries.createdAt} <= ${endDate}`
+      ))
+      .orderBy(desc(moodEntries.createdAt));
+  }
+
+  async deleteMoodEntry(id: string): Promise<void> {
+    await db.delete(moodEntries)
+      .where(eq(moodEntries.id, id));
+  }
+
+  // Difficulty Tracking operations
+  async createDifficultyEntry(entry: InsertDifficultyEntry): Promise<DifficultyEntry> {
+    const [result] = await db.insert(difficultyEntries)
+      .values(entry)
+      .returning();
+    return result;
+  }
+
+  async getDifficultyEntry(id: string): Promise<DifficultyEntry | undefined> {
+    const result = await db.select()
+      .from(difficultyEntries)
+      .where(eq(difficultyEntries.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async getDifficultyEntriesByUser(userId: string): Promise<DifficultyEntry[]> {
+    return await db.select()
+      .from(difficultyEntries)
+      .where(eq(difficultyEntries.userId, userId))
+      .orderBy(desc(difficultyEntries.createdAt));
+  }
+
+  async getDifficultyEntriesByContent(userId: string, contentType: string): Promise<DifficultyEntry[]> {
+    return await db.select()
+      .from(difficultyEntries)
+      .where(and(
+        eq(difficultyEntries.userId, userId),
+        eq(difficultyEntries.contentType, contentType)
+      ))
+      .orderBy(desc(difficultyEntries.createdAt));
+  }
+
+  async getDifficultyEntriesByDateRange(userId: string, startDate: Date, endDate: Date): Promise<DifficultyEntry[]> {
+    return await db.select()
+      .from(difficultyEntries)
+      .where(and(
+        eq(difficultyEntries.userId, userId),
+        sql`${difficultyEntries.createdAt} >= ${startDate}`,
+        sql`${difficultyEntries.createdAt} <= ${endDate}`
+      ))
+      .orderBy(desc(difficultyEntries.createdAt));
+  }
+
+  async getAverageDifficultyByUser(userId: string): Promise<number> {
+    const result = await db.select({
+      average: avg(difficultyEntries.difficultyLevel)
+    })
+    .from(difficultyEntries)
+    .where(eq(difficultyEntries.userId, userId));
+    
+    return Number(result[0]?.average) || 0;
+  }
+
+  async deleteDifficultyEntry(id: string): Promise<void> {
+    await db.delete(difficultyEntries)
+      .where(eq(difficultyEntries.id, id));
   }
 }
 

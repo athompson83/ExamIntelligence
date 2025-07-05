@@ -573,6 +573,67 @@ export const customInstructions = pgTable("custom_instructions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Mood and Learning Difficulty Tracking
+export const moodEntries = pgTable("mood_entries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Mood selection with emoji representation
+  mood: varchar("mood", { 
+    enum: ["😊", "😐", "😟", "😤", "😴", "🤔", "😎", "🤗"] 
+  }).notNull(),
+  moodLabel: varchar("mood_label", { 
+    enum: ["happy", "neutral", "confused", "frustrated", "tired", "thinking", "confident", "excited"] 
+  }).notNull(),
+  
+  // Context information
+  context: varchar("context", { 
+    enum: ["before_study", "during_study", "after_study", "before_quiz", "after_quiz", "general"] 
+  }).notNull(),
+  notes: text("notes"), // Optional user notes
+  
+  // Session information
+  sessionType: varchar("session_type", { 
+    enum: ["study", "quiz", "review", "general"] 
+  }),
+  relatedQuizId: uuid("related_quiz_id").references(() => quizzes.id),
+  relatedTestbankId: uuid("related_testbank_id").references(() => testbanks.id),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const difficultyEntries = pgTable("difficulty_entries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Difficulty perception with emoji representation
+  difficulty: varchar("difficulty", { 
+    enum: ["😴", "😊", "🤔", "😅", "😰"] 
+  }).notNull(),
+  difficultyLabel: varchar("difficulty_label", { 
+    enum: ["very_easy", "easy", "moderate", "hard", "very_hard"] 
+  }).notNull(),
+  difficultyScore: integer("difficulty_score").notNull(), // 1-5 scale
+  
+  // Content information
+  contentType: varchar("content_type", { 
+    enum: ["question", "topic", "quiz", "study_material", "concept"] 
+  }).notNull(),
+  contentTitle: varchar("content_title").notNull(),
+  
+  // Specific content references
+  relatedQuestionId: uuid("related_question_id").references(() => questions.id),
+  relatedQuizId: uuid("related_quiz_id").references(() => quizzes.id),
+  relatedTestbankId: uuid("related_testbank_id").references(() => testbanks.id),
+  
+  // User feedback
+  feedback: text("feedback"), // What made it difficult/easy
+  timeSpent: integer("time_spent"), // Time in seconds
+  needsHelp: boolean("needs_help").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const accountsRelations = relations(accounts, ({ many }) => ({
   users: many(users),
@@ -593,6 +654,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   assignmentSubmissions: many(assignmentSubmissions),
   studyAids: many(studyAids),
   mobileDevices: many(mobileDevices),
+  moodEntries: many(moodEntries),
+  difficultyEntries: many(difficultyEntries),
 }));
 
 export const testbanksRelations = relations(testbanks, ({ one, many }) => ({
@@ -709,6 +772,19 @@ export const customInstructionsRelations = relations(customInstructions, ({ one 
   account: one(accounts, { fields: [customInstructions.accountId], references: [accounts.id] }),
 }));
 
+export const moodEntriesRelations = relations(moodEntries, ({ one }) => ({
+  user: one(users, { fields: [moodEntries.userId], references: [users.id] }),
+  relatedQuiz: one(quizzes, { fields: [moodEntries.relatedQuizId], references: [quizzes.id] }),
+  relatedTestbank: one(testbanks, { fields: [moodEntries.relatedTestbankId], references: [testbanks.id] }),
+}));
+
+export const difficultyEntriesRelations = relations(difficultyEntries, ({ one }) => ({
+  user: one(users, { fields: [difficultyEntries.userId], references: [users.id] }),
+  relatedQuestion: one(questions, { fields: [difficultyEntries.relatedQuestionId], references: [questions.id] }),
+  relatedQuiz: one(quizzes, { fields: [difficultyEntries.relatedQuizId], references: [quizzes.id] }),
+  relatedTestbank: one(testbanks, { fields: [difficultyEntries.relatedTestbankId], references: [testbanks.id] }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTestbankSchema = createInsertSchema(testbanks).omit({ id: true, createdAt: true, updatedAt: true });
@@ -733,6 +809,8 @@ export const insertMobileDeviceSchema = createInsertSchema(mobileDevices).omit({
 export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertLlmProviderSchema = createInsertSchema(llmProviders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCustomInstructionSchema = createInsertSchema(customInstructions).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertMoodEntrySchema = createInsertSchema(moodEntries).omit({ id: true, createdAt: true });
+export const insertDifficultyEntrySchema = createInsertSchema(difficultyEntries).omit({ id: true, createdAt: true });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -781,6 +859,10 @@ export type InsertLlmProvider = z.infer<typeof insertLlmProviderSchema>;
 export type LlmProvider = typeof llmProviders.$inferSelect;
 export type InsertCustomInstruction = z.infer<typeof insertCustomInstructionSchema>;
 export type CustomInstruction = typeof customInstructions.$inferSelect;
+export type InsertMoodEntry = z.infer<typeof insertMoodEntrySchema>;
+export type MoodEntry = typeof moodEntries.$inferSelect;
+export type InsertDifficultyEntry = z.infer<typeof insertDifficultyEntrySchema>;
+export type DifficultyEntry = typeof difficultyEntries.$inferSelect;
 
 // Custom Badges table - for achievement and recognition badges
 export const badges = pgTable("badges", {

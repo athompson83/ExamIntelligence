@@ -11,7 +11,8 @@ import {
   Settings,
   Puzzle,
   Award,
-  SettingsIcon
+  SettingsIcon,
+  Heart
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -25,6 +26,7 @@ export default function Sidebar() {
     { href: "/live-exams", label: "Live Exams", icon: PlayCircle },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/ai-resources", label: "AI Resources", icon: Brain },
+    { href: "/learning-feedback", label: "Learning Feedback", icon: Heart },
     { href: "/badges-certificates", label: "Badges & Certificates", icon: Award },
   ];
 
