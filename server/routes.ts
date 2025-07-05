@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     firstName: "Test",
     lastName: "User",
     accountId: "default-account",
-    role: "teacher"
+    role: "super_admin"
   };
 
   // Auth routes
@@ -78,6 +78,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Mock logout route for development
+  app.get('/api/logout', async (req: any, res) => {
+    try {
+      // Since we're using mock authentication, just redirect to landing page
+      res.redirect('/');
+    } catch (error) {
+      console.error("Error during logout:", error);
+      res.status(500).json({ message: "Failed to logout" });
     }
   });
 
