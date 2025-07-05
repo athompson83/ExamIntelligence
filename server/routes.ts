@@ -520,7 +520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/testbanks', async (req: any, res) => {
+  app.get('/api/testbanks', mockAuth, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub || req.user?.id || "test-user";
       const testbanks = await storage.getTestbanksByUser(userId);
@@ -578,6 +578,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Question routes
+  // Get all questions for current user
+  app.get('/api/questions', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
+      
+      // Get all testbanks for user first
+      const testbanks = await storage.getTestbanksByUser(userId);
+      
+      // Get all questions from all user's testbanks
+      const allQuestions = [];
+      for (const testbank of testbanks) {
+        const questions = await storage.getQuestionsByTestbank(testbank.id);
+        
+        // Add answer options to each question
+        const questionsWithOptions = await Promise.all(
+          questions.map(async (question) => {
+            const answerOptions = await storage.getAnswerOptionsByQuestion(question.id);
+            return {
+              ...question,
+              answerOptions
+            };
+          })
+        );
+        
+        allQuestions.push(...questionsWithOptions);
+      }
+      
+      res.json(allQuestions);
+    } catch (error) {
+      console.error("Error fetching all questions:", error);
+      res.status(500).json({ message: "Failed to fetch questions" });
+    }
+  });
+
   app.post('/api/questions',  async (req: any, res) => {
     try {
       const questionData = insertQuestionSchema.parse(req.body);
