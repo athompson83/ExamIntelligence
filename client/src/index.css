@@ -73,3 +73,9 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+@layer components {
+  .sidebar-white {
+    background-color: white !important;
+  }
+}

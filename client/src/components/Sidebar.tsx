@@ -36,7 +36,7 @@ export default function Sidebar() {
   };
 
   return (
-    <nav className="bg-white dark:bg-white border-r border-gray-200 dark:border-gray-700 w-64 fixed inset-y-0 left-0 z-50 shadow-sm" style={{ backgroundColor: 'white' }}>
+    <nav className="sidebar-white w-64 fixed inset-y-0 left-0 z-50 shadow-sm border-r border-gray-200 dark:border-gray-700">
       {/* Logo */}
       <div className="flex items-center justify-center h-16 bg-primary">
         <div className="flex items-center">
