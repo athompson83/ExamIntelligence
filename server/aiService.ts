@@ -730,11 +730,17 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
 
     // Build comprehensive prompt with multiple reinforcements
     const prompt = `
-      **MANDATORY REQUIREMENT**: You MUST generate exactly ${questionCount} complete questions. 
+      **CRITICAL REQUIREMENT**: You MUST generate exactly ${questionCount} COMPLETE, WELL-FORMED questions. 
       **COUNT REQUIREMENT**: ${questionCount} questions - not more, not less.
       **TOPIC**: "${topic}"
       
-      IMPORTANT: Your response must contain exactly ${questionCount} questions in the JSON array. If you generate fewer than ${questionCount} questions, the system will fail.
+      **QUESTION QUALITY REQUIREMENTS**:
+      - Each question MUST have a clear, complete question statement (not just a title)
+      - Each question MUST include proper answer options with one correct answer
+      - Each question MUST be a fully functional assessment item
+      - NO incomplete questions, titles only, or placeholder content
+      
+      IMPORTANT: Your response must contain exactly ${questionCount} COMPLETE questions in the JSON array. Each entry must be a fully formed question with questionText that ends with a question mark.
       
       GENERATION PARAMETERS:
       - Question Types: ${questionTypes.join(', ')}
@@ -867,13 +873,18 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         ]
       }
       
-      QUALITY STANDARDS:
-      - Each question must be clear, unambiguous, and educationally valuable
-      - Answer options should be plausible and well-crafted
+      **CRITICAL QUALITY STANDARDS**:
+      - NEVER generate incomplete questions, titles only, or placeholder content
+      - Each question MUST be a complete, grammatically correct question
+      - Question text MUST be at least 25 characters and contain actual assessment content
+      - Each question MUST end with a question mark OR contain clear interrogative words
+      - Answer options should be plausible, detailed, and well-crafted
       - Feedback should be instructive and help learning
       - Questions should vary in approach and cognitive demands
       - Ensure proper grammar, spelling, and formatting
       - Include diverse question formats as specified
+      
+      **VALIDATION CHECKPOINT**: Before including any question, verify it meets ALL criteria above.
     `;
 
     // Send progress update before AI call
@@ -998,7 +1009,13 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     progressCallback?.({ status: 'Validating and processing questions...', current: Math.floor(questions.length * 0.7), total: questionCount });
 
     // Validate and process each question with enhanced quality checks
-    const processedQuestions = questions.map((question: any, index: number) => {
+    const processedQuestions = questions.filter((question: any) => {
+      // Filter out invalid questions
+      if (!question.questionText || typeof question.questionText !== 'string') return false;
+      if (question.questionText.length < 15) return false; // Too short to be a real question
+      if (!question.questionText.includes('?') && !question.questionText.toLowerCase().includes('which') && !question.questionText.toLowerCase().includes('what') && !question.questionText.toLowerCase().includes('how')) return false; // Must be a question
+      return true;
+    }).map((question: any, index: number) => {
       // Quality validation scoring
       let confidenceScore = 0.7; // Base score
       
@@ -1045,6 +1062,89 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
 
     // Send final progress update
     progressCallback?.({ status: 'Questions generation completed!', current: processedQuestions.length, total: questionCount });
+
+    // Check if we need to generate additional questions due to filtering
+    if (processedQuestions.length < questionCount) {
+      const missingCount = questionCount - processedQuestions.length;
+      progressCallback?.({ status: `Generating ${missingCount} additional questions...`, current: processedQuestions.length, total: questionCount });
+      
+      try {
+        // Generate additional questions with stricter prompt
+        const additionalPrompt = `
+          **CRITICAL REQUIREMENT**: Generate exactly ${missingCount} COMPLETE, WELL-FORMED questions about "${topic}".
+          
+          **STRICT REQUIREMENTS**:
+          - Each question MUST be a complete, grammatically correct question
+          - Each question MUST end with a question mark OR contain question words (what, which, how, when, where, who, why)
+          - Each question MUST be at least 25 characters long
+          - Each question MUST include proper answer choices with one correct answer
+          - NO titles, fragments, or incomplete sentences
+          
+          Return exactly ${missingCount} questions in JSON format:
+          {
+            "questions": [
+              {
+                "questionText": "Complete question here?",
+                "questionType": "${questionTypes[0]}",
+                "answerOptions": [
+                  {"text": "Option A", "isCorrect": true},
+                  {"text": "Option B", "isCorrect": false},
+                  {"text": "Option C", "isCorrect": false},
+                  {"text": "Option D", "isCorrect": false}
+                ],
+                "difficultyScore": 5,
+                "points": 1,
+                "bloomsLevel": "understand"
+              }
+            ]
+          }
+        `;
+
+        const additionalResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          max_tokens: 4000,
+          messages: [
+            {
+              role: "system",
+              content: "You are an educational assessment expert. Generate only complete, well-formed questions.",
+            },
+            {
+              role: "user",
+              content: additionalPrompt,
+            },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.7,
+        });
+
+        const additionalData = JSON.parse(additionalResponse.choices[0].message.content || '{"questions": []}');
+        const additionalQuestions = additionalData.questions || [];
+
+        // Filter and process additional questions
+        const filteredAdditional = additionalQuestions.filter((question: any) => {
+          if (!question.questionText || typeof question.questionText !== 'string') return false;
+          if (question.questionText.length < 15) return false;
+          if (!question.questionText.includes('?') && !question.questionText.toLowerCase().includes('which') && !question.questionText.toLowerCase().includes('what') && !question.questionText.toLowerCase().includes('how')) return false;
+          return true;
+        }).map((question: any) => ({
+          ...question,
+          aiConfidenceScore: 0.8, // Higher confidence for additional questions
+          isAiGenerated: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }));
+
+        // Add the additional questions
+        processedQuestions.push(...filteredAdditional.slice(0, missingCount));
+        
+      } catch (error) {
+        console.error("Error generating additional questions:", error);
+        progressCallback?.({ status: `Warning: Only generated ${processedQuestions.length} out of ${questionCount} questions`, current: processedQuestions.length, total: questionCount });
+      }
+    }
+
+    // Send final progress update
+    progressCallback?.({ status: `Successfully generated ${processedQuestions.length} questions`, current: processedQuestions.length, total: questionCount });
 
     return processedQuestions;
 
