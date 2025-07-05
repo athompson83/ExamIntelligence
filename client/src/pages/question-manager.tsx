@@ -939,8 +939,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                             { value: "conversational", label: "Conversational" },
                             { value: "scenario", label: "Scenario-based" },
                             { value: "problem_solving", label: "Problem Solving" },
-                            { value: "case_study", label: "Case Study" },
-                            { value: "nremt", label: "NREMT Style" }
+                            { value: "case_study", label: "Case Study" }
                           ].map((style) => (
                             <div key={style.value} className="flex items-center space-x-2">
                               <input

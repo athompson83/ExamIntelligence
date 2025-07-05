@@ -783,7 +783,6 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       ${questionStyles.includes('scenario') ? '- SCENARIO-BASED: Create realistic situations requiring application of knowledge' : ''}
       ${questionStyles.includes('problem_solving') ? '- PROBLEM SOLVING: Present challenges requiring analytical thinking and step-by-step solutions' : ''}
       ${questionStyles.includes('case_study') ? '- CASE STUDY: Provide complex, real-world situations for analysis' : ''}
-      ${questionStyles.includes('nremt') ? '- NREMT STYLE: Follow National Registry Emergency Medical Technician format with clinical scenarios, clear distractors, and evidence-based answers' : ''}
       
       **Question Type Best Practices:**
       - Multiple Choice: Test comprehension and application, not just memorization
