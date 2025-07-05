@@ -467,9 +467,9 @@ export async function generateSimilarQuestionWithContext(
       .map(opt => `${opt.isCorrect ? '[CORRECT]' : '[INCORRECT]'} ${opt.answerText}`)
       .join('\n');
 
-    const prompt = `You are an expert educational assessment specialist. I need you to create a SIMILAR question to the one provided, while ensuring it's distinct enough to test the same concept differently.
+    const prompt = `You are an expert educational assessment specialist. Create a NEW question that shares the same STYLE and APPROACH as the original question but covers different specific content within the same topic area.
 
-ORIGINAL QUESTION DETAILS:
+ORIGINAL QUESTION ANALYSIS:
 Question: ${originalQuestion.questionText}
 Type: ${originalQuestion.questionType}
 Difficulty: ${originalQuestion.difficultyScore}/10
@@ -482,13 +482,15 @@ ${existingQuestionsContext || 'No other questions in testbank yet.'}
 
 ${originalPrompt ? `ORIGINAL GENERATION INSTRUCTIONS: ${originalPrompt}` : ''}
 
-REQUIREMENTS:
-1. Create a question that tests the SAME learning objective but with different wording/scenario
-2. Maintain the same difficulty level (${originalQuestion.difficultyScore}/10)
-3. Use the same question type (${originalQuestion.questionType})
-4. Ensure the question is DISTINCT from all existing questions shown above
-5. Follow educational assessment best practices
-6. Provide plausible distractors for multiple choice questions
+REQUIREMENTS FOR SIMILAR STYLE QUESTION:
+1. Use the same question FORMAT and STRUCTURE as the original
+2. Target the same DIFFICULTY level (${originalQuestion.difficultyScore}/10) and Bloom's taxonomy level
+3. Test related but DIFFERENT content within the same subject area
+4. Use similar language patterns and question phrasing style
+5. Maintain the same number of answer options with similar complexity
+6. Create a question that feels like it belongs in the same assessment but isn't a duplicate
+7. If the original uses scenarios, create a different scenario in the same context
+8. If the original tests calculations, create a different calculation problem
 
 Please respond with a JSON object containing the new question data in this format:
 {
@@ -722,11 +724,13 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       `;
     }
 
-    // Build comprehensive prompt
+    // Build comprehensive prompt with multiple reinforcements
     const prompt = `
-      CRITICAL REQUIREMENT: Generate exactly ${questionCount} high-quality educational questions about: "${topic}"
+      **MANDATORY REQUIREMENT**: You MUST generate exactly ${questionCount} complete questions. 
+      **COUNT REQUIREMENT**: ${questionCount} questions - not more, not less.
+      **TOPIC**: "${topic}"
       
-      YOU MUST GENERATE ALL ${questionCount} QUESTIONS - NO EXCEPTIONS.
+      IMPORTANT: Your response must contain exactly ${questionCount} questions in the JSON array. If you generate fewer than ${questionCount} questions, the system will fail.
       
       GENERATION PARAMETERS:
       - Question Types: ${questionTypes.join(', ')}
@@ -926,6 +930,47 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     if (questions.length < questionCount) {
       console.warn(`Warning: AI generated ${questions.length} questions instead of requested ${questionCount}`);
       console.log("Actual response:", response.choices[0].message.content?.substring(0, 1000));
+      
+      // Try to generate additional questions to reach the target
+      const missingCount = questionCount - questions.length;
+      console.log(`Attempting to generate ${missingCount} additional questions...`);
+      
+      try {
+        const additionalPrompt = `
+          **MANDATORY**: Generate exactly ${missingCount} MORE questions about "${topic}".
+          
+          You previously generated ${questions.length} questions. Now generate ${missingCount} additional questions to reach the total of ${questionCount}.
+          
+          Use the same requirements:
+          - Question Types: ${questionTypes.join(', ')}
+          - Difficulty Range: ${difficultyRange[0]} to ${difficultyRange[1]}
+          - Bloom's Levels: ${bloomsLevels.join(', ')}
+          - Target Audience: ${targetAudience}
+          
+          Return JSON with exactly ${missingCount} questions in the same format.
+        `;
+        
+        const additionalResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: "You are an expert educational assessment specialist with PhD-level expertise in psychometrics and item response theory." },
+            { role: "user", content: additionalPrompt }
+          ],
+          max_tokens: 8000,
+          temperature: 0.7,
+          response_format: { type: "json_object" }
+        });
+        
+        const additionalResult = JSON.parse(additionalResponse.choices[0].message.content || '{"questions": []}');
+        const additionalQuestions = additionalResult.questions || [];
+        
+        if (additionalQuestions.length > 0) {
+          questions.push(...additionalQuestions);
+          console.log(`Successfully generated ${additionalQuestions.length} additional questions. Total: ${questions.length}`);
+        }
+      } catch (error) {
+        console.error('Failed to generate additional questions:', error);
+      }
     }
 
     // Validate and process each question with enhanced quality checks

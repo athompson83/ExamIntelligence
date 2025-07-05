@@ -391,7 +391,29 @@ Currently, ProficiencyAI is built as a responsive web application that works wel
 ### Production Ready Status
 The platform is now feature-complete and ready for production deployment with comprehensive enterprise-grade capabilities.
 
+## Super Admin Access Instructions
+
+To access super admin features for prompt management:
+
+1. **Current Super Admin Account**: The test account (test@example.com) has been elevated to super admin status
+2. **Access Settings**: Navigate to Settings page to manage:
+   - System-wide prompt templates
+   - LLM provider configurations
+   - Account management
+3. **Prompt Management**: Super admins can create custom prompts for:
+   - Question generation
+   - Question validation
+   - General AI operations
+4. **Default Settings**: The system includes default prompts based on current best practices
+
 ## Recent Enhancements
+
+### AI Question Generation Improvements (July 05, 2025)
+- **Enhanced Count Validation**: Improved AI prompt to better ensure exact question count generation
+- **Additional Question Generation**: System now attempts to generate missing questions if initial count is insufficient
+- **Similar Question Enhancement**: Improved similar question generation to create questions with similar style but different content
+- **Authentication Fix**: Fixed similar question generation endpoint authentication issues
+- **Super Admin Setup**: Configured super admin account access for prompt management
 
 ### Multi-Provider AI System with Custom Prompt Management (July 05, 2025)
 - **Generic AI Platform**: Removed NREMT-specific branding and created a fully generic educational assessment platform suitable for any subject area

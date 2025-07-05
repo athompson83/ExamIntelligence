@@ -439,8 +439,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/questions/:id/similar',  async (req: any, res) => {
+  app.post('/api/questions/:id/similar', async (req: any, res) => {
     try {
+      // Get user from session
+      const user = req.session?.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const question = await storage.getQuestion(req.params.id);
       if (!question) {
         return res.status(404).json({ message: "Question not found" });
@@ -462,7 +468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const createdQuestion = await storage.createQuestion({
           ...newQuestion,
           testbankId: question.testbankId,
-          creatorId: req.user.id,
+          creatorId: user.id,
           aiValidationStatus: 'pending',
           aiFeedback: 'Similar question generated with enhanced context and quality standards'
         });
