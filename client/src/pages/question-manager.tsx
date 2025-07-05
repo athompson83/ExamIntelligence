@@ -138,7 +138,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     referenceLinks: [""],
     targetAudience: "",
     learningObjectives: [""],
-    questionStyle: "formal",
+    questionStyles: ["formal"],
     includeImages: false,
     includeMultimedia: false,
     customInstructions: ""
@@ -279,7 +279,8 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       setAiForm(prev => ({
         ...prev,
         topic: "",
-        customInstructions: ""
+        customInstructions: "",
+        questionStyles: ["formal"]
       }));
       
       toast({
@@ -931,21 +932,42 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                       </div>
                       
                       <div>
-                        <Label htmlFor="questionStyle">Question Style</Label>
-                        <Select 
-                          value={aiForm.questionStyle} 
-                          onValueChange={(value) => setAiForm(prev => ({ ...prev, questionStyle: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="formal">Formal Academic</SelectItem>
-                            <SelectItem value="conversational">Conversational</SelectItem>
-                            <SelectItem value="scenario">Scenario-based</SelectItem>
-                            <SelectItem value="problem_solving">Problem Solving</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label>Question Styles (Select Multiple)</Label>
+                        <div className="grid grid-cols-2 gap-3 mt-2">
+                          {[
+                            { value: "formal", label: "Formal Academic" },
+                            { value: "conversational", label: "Conversational" },
+                            { value: "scenario", label: "Scenario-based" },
+                            { value: "problem_solving", label: "Problem Solving" },
+                            { value: "case_study", label: "Case Study" },
+                            { value: "nremt", label: "NREMT Style" }
+                          ].map((style) => (
+                            <div key={style.value} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`style-${style.value}`}
+                                checked={aiForm.questionStyles.includes(style.value)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setAiForm(prev => ({ 
+                                      ...prev, 
+                                      questionStyles: [...prev.questionStyles, style.value] 
+                                    }));
+                                  } else {
+                                    setAiForm(prev => ({ 
+                                      ...prev, 
+                                      questionStyles: prev.questionStyles.filter(s => s !== style.value) 
+                                    }));
+                                  }
+                                }}
+                                className="rounded border-gray-300"
+                              />
+                              <Label htmlFor={`style-${style.value}`} className="text-sm">
+                                {style.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                       
                       <div className="flex items-center space-x-2">

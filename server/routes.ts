@@ -255,14 +255,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Question Generation routes
   app.post('/api/testbanks/:id/generate-questions',  upload.any(), async (req: any, res) => {
     try {
-      console.log("Raw req.body:", req.body); // Debug log
-      console.log("Raw req.files:", req.files); // Debug log
-      
       // Parse the data from the multipart form
       const data = JSON.parse(req.body.data || '{}');
-      
-      console.log("Received AI generation request:", JSON.stringify(data, null, 2)); // Debug log
-      console.log("Files received:", req.files?.length || 0); // Debug log
       
       // Validate required fields
       if (!data.topic || !data.questionTypes || data.questionTypes.length === 0) {
@@ -281,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         referenceLinks: data.referenceLinks || [],
         targetAudience: data.targetAudience,
         learningObjectives: data.learningObjectives || [],
-        questionStyle: data.questionStyle || "formal",
+        questionStyles: data.questionStyles || ["formal"],
         includeImages: data.includeImages || false,
         includeMultimedia: data.includeMultimedia || false,
         customInstructions: data.customInstructions,

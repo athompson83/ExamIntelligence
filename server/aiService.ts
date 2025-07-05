@@ -435,7 +435,7 @@ interface AIQuestionGenerationParams {
   referenceLinks: string[];
   targetAudience?: string;
   learningObjectives: string[];
-  questionStyle: string;
+  questionStyles: string[];
   includeImages: boolean;
   includeMultimedia: boolean;
   customInstructions?: string;
@@ -705,7 +705,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       referenceLinks,
       targetAudience,
       learningObjectives,
-      questionStyle,
+      questionStyles,
       includeImages,
       includeMultimedia,
       customInstructions
@@ -730,7 +730,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       - Question Types: ${questionTypes.join(', ')}
       - Difficulty Range: ${difficultyRange[0]}-${difficultyRange[1]} (on a 1-10 scale)
       - Bloom's Taxonomy Levels: ${bloomsLevels.join(', ')}
-      - Question Style: ${questionStyle}
+      - Question Styles: ${questionStyles.join(', ')}
       - Target Audience: ${targetAudience || 'General students'}
       
       ${learningObjectives.length > 0 ? `
@@ -776,6 +776,14 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       - Analyze: Break down into components (Compare, Contrast, Categorize)
       - Evaluate: Make judgments based on criteria (Assess, Critique, Justify)
       - Create: Combine elements into new patterns (Design, Construct, Formulate)
+      
+      **Question Style Guidelines:**
+      ${questionStyles.includes('formal') ? '- FORMAL ACADEMIC: Use precise, scholarly language with complete sentences and professional terminology' : ''}
+      ${questionStyles.includes('conversational') ? '- CONVERSATIONAL: Use friendly, engaging language that feels like a discussion' : ''}
+      ${questionStyles.includes('scenario') ? '- SCENARIO-BASED: Create realistic situations requiring application of knowledge' : ''}
+      ${questionStyles.includes('problem_solving') ? '- PROBLEM SOLVING: Present challenges requiring analytical thinking and step-by-step solutions' : ''}
+      ${questionStyles.includes('case_study') ? '- CASE STUDY: Provide complex, real-world situations for analysis' : ''}
+      ${questionStyles.includes('nremt') ? '- NREMT STYLE: Follow National Registry Emergency Medical Technician format with clinical scenarios, clear distractors, and evidence-based answers' : ''}
       
       **Question Type Best Practices:**
       - Multiple Choice: Test comprehension and application, not just memorization
