@@ -3,7 +3,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Brain, TrendingUp, TrendingDown, Target, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
+import { Brain, TrendingUp, TrendingDown, Target, AlertCircle, CheckCircle2, XCircle, Search, Filter, RefreshCw, BarChart3 } from 'lucide-react';
 
 interface DifficultyStats {
   questionId: string;
@@ -17,6 +21,20 @@ interface DifficultyStats {
   pilotResponsesNeeded: number;
   pilotResponsesCount: number;
   pilotValidated: boolean;
+  questionType: string;
+  testbankName: string;
+  lastUpdated: Date;
+  difficultyTrend: 'increasing' | 'decreasing' | 'stable';
+  confidenceScore: number;
+}
+
+interface DifficultyAnalytics {
+  totalQuestions: number;
+  pilotQuestions: number;
+  validatedQuestions: number;
+  avgDifficulty: number;
+  difficultyDistribution: Record<number, number>;
+  recentAdjustments: number;
 }
 
 interface DifficultyRange {
@@ -39,15 +57,24 @@ const DIFFICULTY_RANGES: Record<number, DifficultyRange> = {
 };
 
 export default function DifficultyTrackingPage() {
-  const [questions, setQuestions] = useState<DifficultyStats[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterDifficulty, setFilterDifficulty] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [autoRefresh, setAutoRefresh] = useState(false);
 
-  const fetchQuestionStats = async () => {
-    try {
-      setLoading(true);
-      // In a real app, this would fetch multiple questions
-      // For now, we'll simulate some data since the API endpoint isn't working as expected
+  // Use React Query for data fetching
+  const { data: questions = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['/api/difficulty-tracking/questions'],
+    refetchInterval: autoRefresh ? 30000 : false, // Auto-refresh every 30 seconds if enabled
+  });
+
+  const { data: analytics } = useQuery({
+    queryKey: ['/api/difficulty-tracking/analytics'],
+    refetchInterval: autoRefresh ? 60000 : false, // Analytics refresh every minute
+  });
+
+  // Enhanced mock data with more realistic scenarios
+  const getMockData = (): DifficultyStats[] => {
       const mockData: DifficultyStats[] = [
         {
           questionId: "1",
