@@ -44,7 +44,19 @@ interface Quiz {
   passwordProtected: boolean;
   password: string;
   ipLocking: boolean;
+  
+  // Enhanced CAT Settings
   adaptiveTesting: boolean;
+  catModel: string;
+  catSettings: {
+    initialDifficulty: number;
+    targetSEM: number;
+    maxQuestions: number;
+    minQuestions: number;
+    terminationCriteria: string;
+  };
+  
+  // Enhanced Proctoring Settings
   proctoring: boolean;
   proctoringSettings: {
     requireCamera: boolean;
@@ -53,7 +65,52 @@ interface Quiz {
     preventTabSwitching: boolean;
     recordSession: boolean;
     flagSuspiciousActivity: boolean;
+    faceDetection: boolean;
+    eyeTracking: boolean;
+    roomScan: boolean;
+    idVerification: boolean;
+    allowedApplications: string[];
+    blockedWebsites: string[];
   };
+  
+  // Attempt and Time Management
+  attemptSettings: {
+    maxAttempts: number;
+    attemptGap: number; // minutes between attempts
+    keepHighestScore: boolean;
+    allowReviewBetweenAttempts: boolean;
+    timeExtensions: {
+      enabled: boolean;
+      percentage: number; // % of additional time
+      eligibleStudents: string[];
+    };
+  };
+  
+  // Navigation and Display
+  navigationSettings: {
+    allowBacktrack: boolean;
+    showProgressBar: boolean;
+    showQuestionNumbers: boolean;
+    showTimeRemaining: boolean;
+    oneQuestionPerPage: boolean;
+    allowSaveAndContinue: boolean;
+  };
+  
+  // Calculator and Tools
+  allowCalculator: boolean;
+  calculatorType: string; // 'basic', 'scientific', 'graphing'
+  allowedTools: string[];
+  
+  // Accessibility Features
+  accessibilitySettings: {
+    allowScreenReader: boolean;
+    fontSize: string;
+    highContrast: boolean;
+    colorBlindSupport: boolean;
+    keyboardNavigation: boolean;
+  };
+  
+  // Existing fields
   availableFrom: string;
   availableUntil: string;
   showCorrectAnswers: boolean;
@@ -112,7 +169,19 @@ export default function EnhancedQuizBuilder() {
     passwordProtected: false,
     password: "",
     ipLocking: false,
+    
+    // Enhanced CAT Settings
     adaptiveTesting: false,
+    catModel: "rasch",
+    catSettings: {
+      initialDifficulty: 0,
+      targetSEM: 0.32,
+      maxQuestions: 50,
+      minQuestions: 5,
+      terminationCriteria: "fixed_sem"
+    },
+    
+    // Enhanced Proctoring Settings
     proctoring: false,
     proctoringSettings: {
       requireCamera: false,
@@ -121,7 +190,52 @@ export default function EnhancedQuizBuilder() {
       preventTabSwitching: false,
       recordSession: false,
       flagSuspiciousActivity: false,
+      faceDetection: false,
+      eyeTracking: false,
+      roomScan: false,
+      idVerification: false,
+      allowedApplications: [],
+      blockedWebsites: []
     },
+    
+    // Attempt and Time Management
+    attemptSettings: {
+      maxAttempts: 1,
+      attemptGap: 0,
+      keepHighestScore: true,
+      allowReviewBetweenAttempts: false,
+      timeExtensions: {
+        enabled: false,
+        percentage: 50,
+        eligibleStudents: []
+      }
+    },
+    
+    // Navigation and Display
+    navigationSettings: {
+      allowBacktrack: true,
+      showProgressBar: true,
+      showQuestionNumbers: true,
+      showTimeRemaining: true,
+      oneQuestionPerPage: false,
+      allowSaveAndContinue: true
+    },
+    
+    // Calculator and Tools
+    allowCalculator: false,
+    calculatorType: "basic",
+    allowedTools: [],
+    
+    // Accessibility Features
+    accessibilitySettings: {
+      allowScreenReader: true,
+      fontSize: "normal",
+      highContrast: false,
+      colorBlindSupport: false,
+      keyboardNavigation: true
+    },
+    
+    // Existing fields
     showCorrectAnswers: false,
     showCorrectAnswersAfter: "immediately",
     pointsPerQuestion: 1,
@@ -330,6 +444,10 @@ export default function EnhancedQuizBuilder() {
               <TabsTrigger value="grading" className="flex items-center gap-2">
                 <Award className="h-4 w-4" />
                 Grading
+              </TabsTrigger>
+              <TabsTrigger value="navigation" className="flex items-center gap-2">
+                <Monitor className="h-4 w-4" />
+                Navigation
               </TabsTrigger>
             </TabsList>
 
@@ -625,6 +743,121 @@ export default function EnhancedQuizBuilder() {
                         />
                       </div>
 
+                      {quiz.adaptiveTesting && (
+                        <div className="ml-6 border-l-2 border-blue-200 pl-4 space-y-4 bg-blue-50/50 rounded-r-lg p-4">
+                          <h4 className="font-medium text-blue-900 flex items-center gap-2">
+                            <Brain className="h-4 w-4" />
+                            CAT Configuration
+                          </h4>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="catModel">CAT Model</Label>
+                              <Select 
+                                value={quiz.catModel || "rasch"} 
+                                onValueChange={(value) => setQuiz(prev => ({ ...prev, catModel: value }))}
+                              >
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="rasch">Rasch Model</SelectItem>
+                                  <SelectItem value="2pl">2-Parameter Logistic (2PL)</SelectItem>
+                                  <SelectItem value="3pl">3-Parameter Logistic (3PL)</SelectItem>
+                                  <SelectItem value="grm">Graded Response Model (GRM)</SelectItem>
+                                  <SelectItem value="gpcm">Generalized Partial Credit Model</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div>
+                              <Label htmlFor="terminationCriteria">Termination Criteria</Label>
+                              <Select 
+                                value={quiz.catSettings?.terminationCriteria || "fixed_sem"} 
+                                onValueChange={(value) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  catSettings: { ...prev.catSettings, terminationCriteria: value }
+                                }))}
+                              >
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="fixed_sem">Fixed Standard Error</SelectItem>
+                                  <SelectItem value="fixed_length">Fixed Test Length</SelectItem>
+                                  <SelectItem value="variable_length">Variable Length</SelectItem>
+                                  <SelectItem value="confidence_interval">Confidence Interval</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="minQuestions">Minimum Questions: {quiz.catSettings?.minQuestions || 5}</Label>
+                              <Slider
+                                value={[quiz.catSettings?.minQuestions || 5]}
+                                onValueChange={(value) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  catSettings: { ...prev.catSettings, minQuestions: value[0] }
+                                }))}
+                                max={20}
+                                min={1}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="maxQuestions">Maximum Questions: {quiz.catSettings?.maxQuestions || 50}</Label>
+                              <Slider
+                                value={[quiz.catSettings?.maxQuestions || 50]}
+                                onValueChange={(value) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  catSettings: { ...prev.catSettings, maxQuestions: value[0] }
+                                }))}
+                                max={100}
+                                min={5}
+                                step={1}
+                                className="mt-2"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="targetSEM">Target Standard Error: {quiz.catSettings?.targetSEM || 0.32}</Label>
+                              <Slider
+                                value={[quiz.catSettings?.targetSEM || 0.32]}
+                                onValueChange={(value) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  catSettings: { ...prev.catSettings, targetSEM: value[0] }
+                                }))}
+                                max={1.0}
+                                min={0.1}
+                                step={0.01}
+                                className="mt-2"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="initialDifficulty">Initial Difficulty: {quiz.catSettings?.initialDifficulty || 0}</Label>
+                              <Slider
+                                value={[quiz.catSettings?.initialDifficulty || 0]}
+                                onValueChange={(value) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  catSettings: { ...prev.catSettings, initialDifficulty: value[0] }
+                                }))}
+                                max={3}
+                                min={-3}
+                                step={0.1}
+                                className="mt-2"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between">
                         <div>
                           <Label htmlFor="allowCalculator">On-Screen Calculator</Label>
@@ -671,16 +904,135 @@ export default function EnhancedQuizBuilder() {
                       </div>
 
                       {quiz.allowMultipleAttempts && (
-                        <div>
-                          <Label htmlFor="maxAttempts">Maximum Attempts</Label>
-                          <Input
-                            id="maxAttempts"
-                            type="number"
-                            min="1"
-                            max="10"
-                            value={quiz.maxAttempts || 1}
-                            onChange={(e) => setQuiz(prev => ({ ...prev, maxAttempts: parseInt(e.target.value) || 1 }))}
-                          />
+                        <div className="ml-6 border-l-2 border-green-200 pl-4 space-y-4 bg-green-50/50 rounded-r-lg p-4">
+                          <h4 className="font-medium text-green-900 flex items-center gap-2">
+                            <Timer className="h-4 w-4" />
+                            Attempt Configuration
+                          </h4>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="maxAttempts">Maximum Attempts</Label>
+                              <Input
+                                id="maxAttempts"
+                                type="number"
+                                min="1"
+                                max="10"
+                                value={quiz.attemptSettings?.maxAttempts || 1}
+                                onChange={(e) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  attemptSettings: { 
+                                    ...prev.attemptSettings, 
+                                    maxAttempts: parseInt(e.target.value) || 1 
+                                  }
+                                }))}
+                                className="mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="attemptGap">Gap Between Attempts (minutes)</Label>
+                              <Input
+                                id="attemptGap"
+                                type="number"
+                                min="0"
+                                max="1440"
+                                value={quiz.attemptSettings?.attemptGap || 0}
+                                onChange={(e) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  attemptSettings: { 
+                                    ...prev.attemptSettings, 
+                                    attemptGap: parseInt(e.target.value) || 0 
+                                  }
+                                }))}
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <Label htmlFor="keepHighestScore">Keep Highest Score</Label>
+                                <p className="text-xs text-muted-foreground">Use the highest attempt score</p>
+                              </div>
+                              <Switch
+                                id="keepHighestScore"
+                                checked={quiz.attemptSettings?.keepHighestScore || true}
+                                onCheckedChange={(checked) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  attemptSettings: { 
+                                    ...prev.attemptSettings, 
+                                    keepHighestScore: checked 
+                                  }
+                                }))}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <Label htmlFor="allowReviewBetweenAttempts">Allow Review Between Attempts</Label>
+                                <p className="text-xs text-muted-foreground">Students can see results before retaking</p>
+                              </div>
+                              <Switch
+                                id="allowReviewBetweenAttempts"
+                                checked={quiz.attemptSettings?.allowReviewBetweenAttempts || false}
+                                onCheckedChange={(checked) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  attemptSettings: { 
+                                    ...prev.attemptSettings, 
+                                    allowReviewBetweenAttempts: checked 
+                                  }
+                                }))}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <Label htmlFor="timeExtensions">Time Extensions</Label>
+                                <p className="text-xs text-muted-foreground">Allow extra time for eligible students</p>
+                              </div>
+                              <Switch
+                                id="timeExtensions"
+                                checked={quiz.attemptSettings?.timeExtensions?.enabled || false}
+                                onCheckedChange={(checked) => setQuiz(prev => ({ 
+                                  ...prev, 
+                                  attemptSettings: { 
+                                    ...prev.attemptSettings, 
+                                    timeExtensions: {
+                                      ...prev.attemptSettings?.timeExtensions,
+                                      enabled: checked
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+
+                            {quiz.attemptSettings?.timeExtensions?.enabled && (
+                              <div className="ml-4 border-l-2 border-gray-200 pl-4">
+                                <div>
+                                  <Label htmlFor="timeExtensionPercentage">Additional Time (%): {quiz.attemptSettings?.timeExtensions?.percentage || 50}%</Label>
+                                  <Slider
+                                    value={[quiz.attemptSettings?.timeExtensions?.percentage || 50]}
+                                    onValueChange={(value) => setQuiz(prev => ({ 
+                                      ...prev, 
+                                      attemptSettings: { 
+                                        ...prev.attemptSettings, 
+                                        timeExtensions: {
+                                          ...prev.attemptSettings?.timeExtensions,
+                                          percentage: value[0]
+                                        }
+                                      }
+                                    }))}
+                                    max={200}
+                                    min={10}
+                                    step={10}
+                                    className="mt-2"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -908,6 +1260,97 @@ export default function EnhancedQuizBuilder() {
                           />
                         </div>
                       </div>
+
+                      <Separator className="my-4" />
+                      
+                      <div className="space-y-4">
+                        <h4 className="font-medium text-orange-900 flex items-center gap-2">
+                          <Eye className="h-4 w-4" />
+                          Advanced Monitoring
+                        </h4>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label htmlFor="faceDetection">Face Detection</Label>
+                              <p className="text-xs text-muted-foreground">Verify student presence</p>
+                            </div>
+                            <Switch
+                              id="faceDetection"
+                              checked={quiz.proctoringSettings?.faceDetection || false}
+                              onCheckedChange={(checked) => 
+                                setQuiz(prev => ({
+                                  ...prev,
+                                  proctoringSettings: {
+                                    ...prev.proctoringSettings,
+                                    faceDetection: checked
+                                  }
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label htmlFor="eyeTracking">Eye Tracking</Label>
+                              <p className="text-xs text-muted-foreground">Monitor gaze patterns</p>
+                            </div>
+                            <Switch
+                              id="eyeTracking"
+                              checked={quiz.proctoringSettings?.eyeTracking || false}
+                              onCheckedChange={(checked) => 
+                                setQuiz(prev => ({
+                                  ...prev,
+                                  proctoringSettings: {
+                                    ...prev.proctoringSettings,
+                                    eyeTracking: checked
+                                  }
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label htmlFor="roomScan">Room Scan</Label>
+                              <p className="text-xs text-muted-foreground">Require environment check</p>
+                            </div>
+                            <Switch
+                              id="roomScan"
+                              checked={quiz.proctoringSettings?.roomScan || false}
+                              onCheckedChange={(checked) => 
+                                setQuiz(prev => ({
+                                  ...prev,
+                                  proctoringSettings: {
+                                    ...prev.proctoringSettings,
+                                    roomScan: checked
+                                  }
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label htmlFor="idVerification">ID Verification</Label>
+                              <p className="text-xs text-muted-foreground">Verify student identity</p>
+                            </div>
+                            <Switch
+                              id="idVerification"
+                              checked={quiz.proctoringSettings?.idVerification || false}
+                              onCheckedChange={(checked) => 
+                                setQuiz(prev => ({
+                                  ...prev,
+                                  proctoringSettings: {
+                                    ...prev.proctoringSettings,
+                                    idVerification: checked
+                                  }
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -1049,6 +1492,276 @@ export default function EnhancedQuizBuilder() {
                           </p>
                         </div>
                       )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Navigation & Accessibility Tab */}
+            <TabsContent value="navigation" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Monitor className="h-5 w-5" />
+                    Navigation & Accessibility
+                  </CardTitle>
+                  <CardDescription>
+                    Configure exam navigation, display options, and accessibility features
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="font-medium mb-4 flex items-center gap-2">
+                        <ArrowUpDown className="h-4 w-4" />
+                        Navigation Controls
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="allowBacktrack">Allow Backtracking</Label>
+                            <p className="text-xs text-muted-foreground">Students can go back to previous questions</p>
+                          </div>
+                          <Switch
+                            id="allowBacktrack"
+                            checked={quiz.navigationSettings?.allowBacktrack || true}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                navigationSettings: {
+                                  ...prev.navigationSettings,
+                                  allowBacktrack: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="oneQuestionPerPage">One Question Per Page</Label>
+                            <p className="text-xs text-muted-foreground">Display questions individually</p>
+                          </div>
+                          <Switch
+                            id="oneQuestionPerPage"
+                            checked={quiz.navigationSettings?.oneQuestionPerPage || false}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                navigationSettings: {
+                                  ...prev.navigationSettings,
+                                  oneQuestionPerPage: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="allowSaveAndContinue">Save & Continue Later</Label>
+                            <p className="text-xs text-muted-foreground">Allow pausing and resuming</p>
+                          </div>
+                          <Switch
+                            id="allowSaveAndContinue"
+                            checked={quiz.navigationSettings?.allowSaveAndContinue || false}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                navigationSettings: {
+                                  ...prev.navigationSettings,
+                                  allowSaveAndContinue: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h4 className="font-medium mb-4 flex items-center gap-2">
+                        <Info className="h-4 w-4" />
+                        Display Options
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="showProgressBar">Progress Bar</Label>
+                            <p className="text-xs text-muted-foreground">Show completion progress</p>
+                          </div>
+                          <Switch
+                            id="showProgressBar"
+                            checked={quiz.navigationSettings?.showProgressBar || true}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                navigationSettings: {
+                                  ...prev.navigationSettings,
+                                  showProgressBar: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="showQuestionNumbers">Question Numbers</Label>
+                            <p className="text-xs text-muted-foreground">Display question numbering</p>
+                          </div>
+                          <Switch
+                            id="showQuestionNumbers"
+                            checked={quiz.navigationSettings?.showQuestionNumbers || true}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                navigationSettings: {
+                                  ...prev.navigationSettings,
+                                  showQuestionNumbers: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="showTimeRemaining">Time Remaining</Label>
+                            <p className="text-xs text-muted-foreground">Display countdown timer</p>
+                          </div>
+                          <Switch
+                            id="showTimeRemaining"
+                            checked={quiz.navigationSettings?.showTimeRemaining || true}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                navigationSettings: {
+                                  ...prev.navigationSettings,
+                                  showTimeRemaining: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h4 className="font-medium mb-4 flex items-center gap-2">
+                        <Keyboard className="h-4 w-4" />
+                        Accessibility Features
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="allowScreenReader">Screen Reader Support</Label>
+                            <p className="text-xs text-muted-foreground">Optimize for assistive technology</p>
+                          </div>
+                          <Switch
+                            id="allowScreenReader"
+                            checked={quiz.accessibilitySettings?.allowScreenReader || true}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                accessibilitySettings: {
+                                  ...prev.accessibilitySettings,
+                                  allowScreenReader: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="keyboardNavigation">Keyboard Navigation</Label>
+                            <p className="text-xs text-muted-foreground">Full keyboard accessibility</p>
+                          </div>
+                          <Switch
+                            id="keyboardNavigation"
+                            checked={quiz.accessibilitySettings?.keyboardNavigation || true}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                accessibilitySettings: {
+                                  ...prev.accessibilitySettings,
+                                  keyboardNavigation: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="highContrast">High Contrast Mode</Label>
+                            <p className="text-xs text-muted-foreground">Enhanced visual contrast</p>
+                          </div>
+                          <Switch
+                            id="highContrast"
+                            checked={quiz.accessibilitySettings?.highContrast || false}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                accessibilitySettings: {
+                                  ...prev.accessibilitySettings,
+                                  highContrast: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="colorBlindSupport">Color Blind Support</Label>
+                            <p className="text-xs text-muted-foreground">Alternative visual indicators</p>
+                          </div>
+                          <Switch
+                            id="colorBlindSupport"
+                            checked={quiz.accessibilitySettings?.colorBlindSupport || false}
+                            onCheckedChange={(checked) => 
+                              setQuiz(prev => ({
+                                ...prev,
+                                accessibilitySettings: {
+                                  ...prev.accessibilitySettings,
+                                  colorBlindSupport: checked
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <Label htmlFor="fontSize">Font Size</Label>
+                        <Select 
+                          value={quiz.accessibilitySettings?.fontSize || "normal"} 
+                          onValueChange={(value) => setQuiz(prev => ({ 
+                            ...prev, 
+                            accessibilitySettings: {
+                              ...prev.accessibilitySettings,
+                              fontSize: value
+                            }
+                          }))}
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="small">Small</SelectItem>
+                            <SelectItem value="normal">Normal</SelectItem>
+                            <SelectItem value="large">Large</SelectItem>
+                            <SelectItem value="extra-large">Extra Large</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
