@@ -150,6 +150,21 @@ export const questions = pgTable("questions", {
   lastUsed: timestamp("last_used"),
   usageCount: integer("usage_count").default(0),
   
+  // Dynamic difficulty tracking
+  originalDifficultyScore: numeric("original_difficulty_score", { precision: 3, scale: 1 }),
+  currentDifficultyScore: numeric("current_difficulty_score", { precision: 3, scale: 1 }),
+  correctResponsesCount: integer("correct_responses_count").default(0),
+  totalResponsesCount: integer("total_responses_count").default(0),
+  accuracyPercentage: numeric("accuracy_percentage", { precision: 5, scale: 2 }).default("0.00"),
+  lastDifficultyUpdate: timestamp("last_difficulty_update"),
+  
+  // Pilot question validation
+  isPilotQuestion: boolean("is_pilot_question").default(false),
+  pilotResponsesNeeded: integer("pilot_responses_needed").default(30),
+  pilotResponsesCount: integer("pilot_responses_count").default(0),
+  pilotValidated: boolean("pilot_validated").default(false),
+  pilotValidationDate: timestamp("pilot_validation_date"),
+  
   // Additional Canvas features
   additionalData: jsonb("additional_data"),
   createdAt: timestamp("created_at").defaultNow(),

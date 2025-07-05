@@ -41,6 +41,7 @@ import {
   generateQuestionVariationWithContext,
   generateNewAnswerOptionsWithContext
 } from "./aiService";
+import { DifficultyService } from "./difficultyService";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -135,6 +136,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching active exam sessions:", error);
       res.status(500).json({ message: "Failed to fetch active exam sessions" });
+    }
+  });
+
+  // Test difficulty tracking endpoint
+  app.get('/api/difficulty/test', mockAuth, async (req: any, res) => {
+    try {
+      // Get first question from database for testing
+      const questions = await storage.getQuestions();
+      if (questions.length === 0) {
+        return res.status(404).json({ message: 'No questions found for testing' });
+      }
+      
+      const testQuestion = questions[0];
+      const stats = {
+        questionId: testQuestion.id,
+        questionText: testQuestion.questionText,
+        currentDifficulty: testQuestion.currentDifficultyScore || testQuestion.difficultyScore,
+        originalDifficulty: testQuestion.originalDifficultyScore || testQuestion.difficultyScore,
+        correctResponses: testQuestion.correctResponsesCount || 0,
+        totalResponses: testQuestion.totalResponsesCount || 0,
+        accuracyPercentage: testQuestion.accuracyPercentage || 0,
+        isPilotQuestion: testQuestion.isPilotQuestion || false,
+        pilotResponsesNeeded: testQuestion.pilotResponsesNeeded || 30,
+        pilotResponsesCount: testQuestion.pilotResponsesCount || 0,
+        pilotValidated: testQuestion.pilotValidated || false
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error testing difficulty tracking:', error);
+      res.status(500).json({ message: 'Failed to test difficulty tracking' });
     }
   });
 
@@ -819,6 +851,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const response = await storage.createQuizResponse(responseData);
+      
+      // Process difficulty tracking for this response
+      if (responseData.questionId && responseData.isCorrect !== undefined && responseData.isCorrect !== null) {
+        const question = await storage.getQuestionById(responseData.questionId);
+        const isPilotQuestion = question?.isPilotQuestion || false;
+        
+        // Update question statistics and difficulty
+        await DifficultyService.processQuestionResponse(
+          responseData.questionId,
+          Boolean(responseData.isCorrect),
+          isPilotQuestion
+        );
+      }
+      
       res.json(response);
     } catch (error) {
       console.error("Error creating quiz response:", error);

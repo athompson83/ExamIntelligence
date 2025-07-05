@@ -103,10 +103,12 @@ export interface IStorage {
   // Question operations
   createQuestion(question: InsertQuestion): Promise<Question>;
   getQuestion(id: string): Promise<Question | undefined>;
+  getQuestionById(id: string): Promise<Question | undefined>;
   getQuestionsByTestbank(testbankId: string): Promise<Question[]>;
   getQuestionsByQuiz(quizId: string): Promise<Question[]>;
   updateQuestion(id: string, data: Partial<InsertQuestion>): Promise<Question>;
   deleteQuestion(id: string): Promise<void>;
+  getPilotQuestionsNeedingValidation(testbankId?: string): Promise<Question[]>;
   
   // Answer option operations
   createAnswerOption(option: InsertAnswerOption): Promise<AnswerOption>;
@@ -399,6 +401,26 @@ export class DatabaseStorage implements IStorage {
     await db.delete(answerOptions).where(eq(answerOptions.questionId, id));
     // Then delete the question
     await db.delete(questions).where(eq(questions.id, id));
+  }
+
+  async getQuestionById(id: string): Promise<Question | undefined> {
+    const [question] = await db.select().from(questions).where(eq(questions.id, id));
+    return question;
+  }
+
+  async getPilotQuestionsNeedingValidation(testbankId?: string): Promise<Question[]> {
+    let query = db.select().from(questions).where(
+      and(
+        eq(questions.isPilotQuestion, true),
+        eq(questions.pilotValidated, false)
+      )
+    );
+
+    if (testbankId) {
+      query = query.where(eq(questions.testbankId, testbankId));
+    }
+
+    return await query.orderBy(desc(questions.createdAt));
   }
 
   // Answer option operations

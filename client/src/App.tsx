@@ -21,6 +21,7 @@ import EnhancedQuizBuilder from "@/pages/enhanced-quiz-builder";
 import StudyAids from "@/pages/study-aids";
 import MLAnalytics from "@/pages/MLAnalytics";
 import ComprehensiveAnalytics from "@/pages/ComprehensiveAnalytics";
+import DifficultyTracking from "@/pages/difficulty-tracking";
 import NotFound from "@/pages/not-found";
 import ProjectStatus from "@/pages/project-status";
 import LanguageTest from "@/pages/language-test";
@@ -79,6 +80,7 @@ function Router() {
           <Route path="/study-aids" component={StudyAids} />
           <Route path="/badges-certificates" component={BadgesCertificates} />
           <Route path="/learning-feedback" component={LearningFeedback} />
+          <Route path="/difficulty-tracking" component={DifficultyTracking} />
           <Route path="/accessibility-settings" component={AccessibilitySettings} />
           <Route path="/project-status" component={ProjectStatus} />
           <Route path="/exam/:id">
