@@ -38,54 +38,58 @@ export default function Sidebar() {
   return (
     <nav className="sidebar-white w-64 fixed inset-y-0 left-0 z-50 shadow-sm border-r border-gray-200 dark:border-gray-700">
       {/* Logo */}
-      <div className="flex items-center justify-center h-16 bg-primary">
+      <div className="flex items-center justify-center h-16 bg-primary px-4">
         <div className="flex items-center">
-          <div className="bg-white rounded-lg p-2 mr-2">
+          <div className="bg-white rounded-lg p-2 mr-3">
             <ClipboardCheck className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-white text-xl font-bold">ExamGen Pro</h1>
+          <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
         </div>
       </div>
       
       {/* Navigation */}
-      <div className="flex flex-col mt-8">
-        <div className="px-6 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          MAIN MENU
+      <div className="flex flex-col mt-6">
+        <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          Main Menu
         </div>
         
-        {navigationItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
-            >
-              <Icon className="h-5 w-5 mr-3" />
-              {item.label}
-            </Link>
-          );
-        })}
+        <div className="space-y-1">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
+              >
+                <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
         
         {systemItems.length > 0 && (
           <>
-            <div className="px-6 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-8">
-              SYSTEM
+            <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6">
+              System
             </div>
             
-            {systemItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
-                >
-                  <Icon className="h-5 w-5 mr-3" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            <div className="space-y-1">
+              {systemItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
+                  >
+                    <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </>
         )}
       </div>

@@ -78,4 +78,16 @@
   .sidebar-white {
     background-color: white !important;
   }
+  
+  .nav-item {
+    @apply flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 font-medium text-sm;
+  }
+  
+  .nav-item.active {
+    @apply bg-primary/10 text-primary border-r-4 border-primary font-semibold;
+  }
+  
+  .nav-item:hover:not(.active) {
+    @apply bg-gray-100 transform translate-x-1;
+  }
 }
