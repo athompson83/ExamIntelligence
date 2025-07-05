@@ -215,8 +215,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           difficultyTrend = 'decreasing';
         }
         
-        // Get testbank name
-        const testbank = question.testbankId ? await storage.getTestbank(question.testbankId) : null;
+        // Get testbank name - handle non-UUID testbank IDs for demo data
+        let testbank = null;
+        let testbankName = 'Demo Testbank';
+        if (question.testbankId) {
+          try {
+            testbank = await storage.getTestbank(question.testbankId);
+            testbankName = testbank?.title || 'Unknown Testbank';
+          } catch (error) {
+            // If testbank ID is not a valid UUID, use demo names
+            if (question.testbankId === 'tb1') {
+              testbankName = 'General Knowledge';
+            } else if (question.testbankId === 'tb2') {
+              testbankName = 'Mathematics';
+            } else {
+              testbankName = 'Demo Testbank';
+            }
+          }
+        }
         
         return {
           questionId: question.id,
@@ -231,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           pilotResponsesCount: totalResponses,
           pilotValidated: question.pilotValidated || (totalResponses >= (question.pilotResponsesNeeded || 30)),
           questionType: question.questionType,
-          testbankName: testbank?.title || 'Unassigned',
+          testbankName: testbankName,
           lastUpdated: question.updatedAt || new Date(),
           difficultyTrend,
           confidenceScore: Math.min(0.99, Math.max(0.1, totalResponses / 50))

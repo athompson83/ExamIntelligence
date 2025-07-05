@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useQuery } from '@tanstack/react-query';
+import Sidebar from '@/components/Sidebar';
+import TopBar from '@/components/TopBar';
 import { 
   Brain, TrendingUp, TrendingDown, Target, AlertCircle, CheckCircle2, XCircle, 
   Search, Filter, RefreshCw, BarChart3, Clock, Users, BookOpen, Activity,
@@ -243,17 +245,28 @@ export default function EnhancedDifficultyTrackingPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading difficulty tracking data...</p>
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <TopBar />
+          <div className="flex-1 p-6">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading difficulty tracking data...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <TopBar />
+        <div className="flex-1 p-6 overflow-auto">
+          <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Brain className="w-8 h-8 text-primary" />
@@ -568,7 +581,7 @@ export default function EnhancedDifficultyTrackingPage() {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-600">Last Updated:</span>
-                            <span className="text-sm">{question.lastUpdated.toLocaleDateString()}</span>
+                            <span className="text-sm">{new Date(question.lastUpdated).toLocaleDateString()}</span>
                           </div>
                           {question.isPilotQuestion && (
                             <div className="mt-2 p-2 bg-purple-50 rounded">
@@ -717,6 +730,9 @@ export default function EnhancedDifficultyTrackingPage() {
           </div>
         </CardContent>
       </Card>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
