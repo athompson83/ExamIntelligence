@@ -30,6 +30,7 @@ import SuperAdminSettings from "@/pages/super-admin-settings";
 import BadgesCertificates from "@/pages/badges-certificates";
 import AccessibilitySettings from "@/pages/accessibility-settings";
 import LearningFeedback from "@/pages/learning-feedback";
+import AIResources from "@/pages/AIResources";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -78,6 +79,7 @@ function Router() {
           <Route path="/super-admin-settings" component={SuperAdminSettings} />
           <Route path="/reference-banks" component={ReferenceBanks} />
           <Route path="/study-aids" component={StudyAids} />
+          <Route path="/ai-resources" component={AIResources} />
           <Route path="/badges-certificates" component={BadgesCertificates} />
           <Route path="/learning-feedback" component={LearningFeedback} />
           <Route path="/difficulty-tracking" component={EnhancedDifficultyTracking} />

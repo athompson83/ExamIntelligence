@@ -267,6 +267,8 @@ export default function EnhancedQuizBuilder() {
   const [questionGroups, setQuestionGroups] = useState<QuestionGroup[]>([]);
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTestbankFilter, setSelectedTestbankFilter] = useState("");
 
   // Fetch available questions
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
@@ -383,7 +385,17 @@ export default function EnhancedQuizBuilder() {
     });
   };
 
-  const availableQuestions = questions.filter((q: Question) => q.testbankId);
+  const availableQuestions = questions
+    .filter((q: Question) => q.testbankId)
+    .filter((q: Question) => {
+      const matchesSearch = !searchTerm || 
+        q.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        q.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesTestbank = !selectedTestbankFilter || q.testbankId === selectedTestbankFilter;
+      
+      return matchesSearch && matchesTestbank;
+    });
 
   return (
     <div className="min-h-screen bg-background">
@@ -412,10 +424,10 @@ export default function EnhancedQuizBuilder() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
                 <BookOpen className="h-8 w-8 text-primary" />
-                Canvas-Style Quiz Builder
+                Enhanced Quiz Builder
               </h1>
               <p className="text-muted-foreground mt-2">
-                Create sophisticated assessments with Canvas LMS-style features including question groups, CAT, and advanced proctoring
+                Create sophisticated assessments with advanced features including question groups, CAT, and comprehensive proctoring
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -873,19 +885,38 @@ export default function EnhancedQuizBuilder() {
                         <Input
                           placeholder="Search questions..."
                           className="max-w-sm"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <Select>
+                        <Select value={selectedTestbankFilter} onValueChange={setSelectedTestbankFilter}>
                           <SelectTrigger className="w-48">
                             <SelectValue placeholder="Filter by testbank" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="">All testbanks</SelectItem>
                             {testbanks.map((testbank: any) => (
                               <SelectItem key={testbank.id} value={testbank.id}>
-                                {testbank.name}
+                                {testbank.title}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                          {availableQuestions.length} question{availableQuestions.length === 1 ? '' : 's'} available
+                          {selectedQuestions.length > 0 && ` (${selectedQuestions.length} selected)`}
+                        </p>
+                        {selectedQuestions.length > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedQuestions([])}
+                          >
+                            Clear Selection
+                          </Button>
+                        )}
                       </div>
                       
                       <div className="grid gap-4">

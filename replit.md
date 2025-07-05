@@ -408,6 +408,13 @@ To access super admin features for prompt management:
 
 ## Recent Enhancements
 
+### Quiz Builder and Data Accuracy Improvements (July 05, 2025)
+- **Removed Canvas-Style References**: Updated Enhanced Quiz Builder to remove all Canvas LMS branding, now uses generic "Enhanced Quiz Builder" title
+- **Accurate Question Count Display**: Fixed Item Banks page to show real question counts from database instead of random numbers
+- **Enhanced Question Import**: Improved quiz builder question selection with search and filter functionality for selecting questions from existing item banks
+- **Real-time Filtering**: Added searchable question selection with testbank filtering and selection count display
+- **Database Integration**: Updated testbanks API endpoint to include actual question counts for accurate display
+
 ### AI Question Generation Improvements (July 05, 2025)
 - **Enhanced Count Validation**: Improved AI prompt to better ensure exact question count generation
 - **Additional Question Generation**: System now attempts to generate missing questions if initial count is insufficient

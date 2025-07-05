@@ -524,7 +524,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub || req.user?.id || "test-user";
       const testbanks = await storage.getTestbanksByUser(userId);
-      res.json(testbanks);
+      
+      // Add question count for each testbank
+      const testbanksWithCounts = await Promise.all(
+        testbanks.map(async (testbank) => {
+          const questions = await storage.getQuestionsByTestbank(testbank.id);
+          return {
+            ...testbank,
+            questionCount: questions.length
+          };
+        })
+      );
+      
+      res.json(testbanksWithCounts);
     } catch (error) {
       console.error("Error fetching testbanks:", error);
       res.status(500).json({ message: "Failed to fetch testbanks" });

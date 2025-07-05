@@ -337,7 +337,7 @@ export default function ItemBanks() {
                           )}
                           <div className="flex items-center mt-1">
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                              {Math.floor(Math.random() * 50) + 10} questions
+                              {testbank.questionCount || 0} questions
                             </span>
                           </div>
                         </div>

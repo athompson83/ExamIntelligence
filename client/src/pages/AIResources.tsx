@@ -52,7 +52,7 @@ export default function AIResources() {
   }, [isAuthenticated, authLoading, toast]);
 
   const { data: aiResources, isLoading } = useQuery({
-    queryKey: ["/api/ai-resources"],
+    queryKey: ["/api/ai/resources"],
     enabled: isAuthenticated,
     retry: false,
   });
@@ -80,14 +80,14 @@ export default function AIResources() {
 
   const generateStudyGuideMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("POST", "/api/ai-resources/study-guide", data);
+      await apiRequest("POST", "/api/ai/study-guide", data);
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Study guide generated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/ai-resources"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ai/resources"] });
       setIsGenerateDialogOpen(false);
       form.reset();
     },
@@ -113,14 +113,14 @@ export default function AIResources() {
 
   const generateImprovementPlanMutation = useMutation({
     mutationFn: async (attemptId: string) => {
-      await apiRequest("POST", "/api/ai-resources/improvement-plan", { attemptId });
+      await apiRequest("POST", "/api/ai/improvement-plan", { attemptId });
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Improvement plan generated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/ai-resources"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ai/resources"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
