@@ -127,6 +127,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/dashboard/active-sessions', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const activeSessions = await storage.getActiveExamSessions(userId);
+      res.json(activeSessions);
+    } catch (error) {
+      console.error("Error fetching active exam sessions:", error);
+      res.status(500).json({ message: "Failed to fetch active exam sessions" });
+    }
+  });
+
   // Testbank routes
   app.post('/api/testbanks', async (req: any, res) => {
     // For now, use a test user ID since authentication might not be fully set up

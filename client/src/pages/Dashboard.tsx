@@ -47,6 +47,12 @@ export default function Dashboard() {
     retry: false,
   });
 
+  const { data: activeExamSessions } = useQuery({
+    queryKey: ["/api/dashboard/active-sessions"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
   if (isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -151,70 +157,52 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Active Exam */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-800 dark:text-gray-200">Biology Final Exam</h4>
-                    <Badge className="bg-secondary/10 text-secondary">Active</Badge>
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                    <div className="flex items-center mb-1">
-                      <Users className="h-4 w-4 mr-2" />
-                      <span>24 students online</span>
+              {activeExamSessions && activeExamSessions.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {activeExamSessions.map((session: any) => (
+                    <div key={session.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-gray-800 dark:text-gray-200">{session.title}</h4>
+                        <Badge className="bg-secondary/10 text-secondary">Active</Badge>
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                        <div className="flex items-center mb-1">
+                          <Users className="h-4 w-4 mr-2" />
+                          <span>Student: {session.studentEmail}</span>
+                        </div>
+                        <div className="flex items-center mb-1">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>
+                            {session.remainingTime !== null 
+                              ? `${session.remainingTime} min remaining`
+                              : `Started ${new Date(session.startedAt).toLocaleTimeString()}`
+                            }
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-500">Status: {session.status}</div>
+                        <Button variant="link" size="sm" onClick={() => window.location.href = `/live-exams?session=${session.id}`}>
+                          Monitor
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center mb-1">
-                      <Clock className="h-4 w-4 mr-2" />
-                      <span>45 min remaining</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="camera-feed">
-                      <div className="live-badge">Live</div>
-                    </div>
-                    <div className="camera-feed">
-                      <div className="live-badge">Live</div>
-                    </div>
-                    <div className="camera-feed alert">
-                      <div className="alert-badge">Alert</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-gray-500">2 alerts pending</div>
-                    <Button variant="link" size="sm">View Details</Button>
-                  </div>
+                  ))}
                 </div>
-
-                {/* Scheduled Exam */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-800 dark:text-gray-200">Chemistry Quiz</h4>
-                    <Badge className="bg-accent/10 text-accent">Starting</Badge>
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                    <div className="flex items-center mb-1">
-                      <Users className="h-4 w-4 mr-2" />
-                      <span>18 students waiting</span>
-                    </div>
-                    <div className="flex items-center mb-1">
-                      <Clock className="h-4 w-4 mr-2" />
-                      <span>Starts in 5 min</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="camera-feed">
-                    </div>
-                    <div className="camera-feed">
-                    </div>
-                    <div className="camera-feed">
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-gray-500">System checks in progress</div>
-                    <Button variant="link" size="sm">Setup</Button>
-                  </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Eye className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    No Active Exam Sessions
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Start a live proctored exam to see monitoring details here.
+                  </p>
+                  <Button onClick={() => window.location.href = '/live-exams'}>
+                    Start Live Proctored Exam
+                  </Button>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

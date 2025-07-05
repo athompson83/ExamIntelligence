@@ -138,6 +138,7 @@ export interface IStorage {
   getTestbankAnalytics(testbankId: string): Promise<any>;
   getDashboardStats(userId: string): Promise<any>;
   getAdditionalDashboardStats(userId: string): Promise<any>;
+  getActiveExamSessions(userId: string): Promise<any[]>;
   
   // Reference Bank operations
   createReferenceBank(bank: InsertReferenceBank): Promise<ReferenceBank>;
@@ -572,6 +573,41 @@ export class DatabaseStorage implements IStorage {
       completedAttempts: completedAttempts?.count || 0,
       recentActivity: recentActivity?.count || 0,
     };
+  }
+
+  async getActiveExamSessions(userId: string): Promise<any[]> {
+    // Get active quiz attempts (in_progress status) with quiz details
+    const activeSessions = await db.select({
+      attemptId: quizAttempts.id,
+      quizId: quizAttempts.quizId,
+      quizTitle: quizzes.title,
+      studentId: quizAttempts.studentId,
+      studentEmail: users.email,
+      startedAt: quizAttempts.startedAt,
+      timeLimit: quizzes.timeLimit,
+      status: quizAttempts.status,
+    }).from(quizAttempts)
+      .innerJoin(quizzes, eq(quizAttempts.quizId, quizzes.id))
+      .innerJoin(users, eq(quizAttempts.studentId, users.id))
+      .where(and(
+        eq(quizAttempts.status, "in_progress"),
+        eq(quizzes.creatorId, userId) // Only show sessions for quizzes created by this user
+      ))
+      .orderBy(desc(quizAttempts.startedAt));
+
+    return activeSessions.map(session => ({
+      id: session.attemptId,
+      quizId: session.quizId,
+      title: session.quizTitle,
+      studentEmail: session.studentEmail,
+      startedAt: session.startedAt,
+      timeLimit: session.timeLimit,
+      status: session.status,
+      // Calculate remaining time if there's a time limit
+      remainingTime: session.timeLimit && session.startedAt 
+        ? Math.max(0, session.timeLimit - Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 60000))
+        : null,
+    }));
   }
 
   // Reference Bank operations
