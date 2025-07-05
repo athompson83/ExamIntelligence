@@ -153,7 +153,6 @@ interface QuestionGroup {
   pickCount: number;
   totalQuestions: number;
   pointsPerQuestion: string;
-  useCAT: boolean;
   difficultyWeight: string;
   bloomsWeight: string;
   displayOrder: number;
@@ -269,6 +268,18 @@ export default function EnhancedQuizBuilder() {
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTestbankFilter, setSelectedTestbankFilter] = useState("all");
+  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
+  const [showAddQuestionDialog, setShowAddQuestionDialog] = useState(false);
+  const [newQuestion, setNewQuestion] = useState<Partial<Question>>({
+    questionText: '',
+    questionType: 'multiple_choice',
+    difficultyLevel: 5,
+    bloomsLevel: 'remember',
+    points: '1',
+    tags: [],
+    testbankId: ''
+  });
+  const [isAddQuestionDialogOpen, setIsAddQuestionDialogOpen] = useState(false);
 
   // Fetch available questions
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
@@ -352,14 +363,148 @@ export default function EnhancedQuizBuilder() {
     createQuizMutation.mutate(quiz);
   };
 
-  const handleAddQuestionGroup = (groupData: Partial<QuestionGroup>) => {
-    if (!quiz.id) {
+  // Save quiz mutation
+  const saveQuizMutation = useMutation({
+    mutationFn: async (quizData: Partial<Quiz>) => {
+      if (quiz.id) {
+        const response = await apiRequest("PUT", `/api/quizzes/${quiz.id}`, quizData);
+        return response.json();
+      } else {
+        const response = await apiRequest("POST", "/api/quizzes", quizData);
+        return response.json();
+      }
+    },
+    onSuccess: (savedQuiz) => {
+      setQuiz(prev => ({ ...prev, ...savedQuiz }));
+      toast({
+        title: "Quiz Saved",
+        description: quiz.id ? "Quiz updated successfully." : "Quiz created successfully.",
+      });
+      if (!quiz.id) {
+        window.history.replaceState(null, '', `/enhanced-quiz-builder?id=${savedQuiz.id}`);
+      }
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
       toast({
         title: "Error",
-        description: "Please save the quiz first before adding question groups.",
+        description: "Failed to save quiz. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveQuiz = () => {
+    if (!quiz.title?.trim()) {
+      toast({
+        title: "Error",
+        description: "Quiz title is required.",
         variant: "destructive",
       });
       return;
+    }
+    
+    saveQuizMutation.mutate(quiz);
+  };
+
+  // Add question mutation
+  const addQuestionMutation = useMutation({
+    mutationFn: async (questionData: Partial<Question>) => {
+      const response = await apiRequest("POST", "/api/questions", questionData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/questions"] });
+      setShowAddQuestionDialog(false);
+      setNewQuestion({
+        questionText: '',
+        questionType: 'multiple_choice',
+        difficultyLevel: 5,
+        bloomsLevel: 'remember',
+        points: '1',
+        tags: [],
+        testbankId: ''
+      });
+      toast({
+        title: "Question Added",
+        description: "Question created successfully.",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create question. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddQuestion = () => {
+    if (!newQuestion.questionText?.trim()) {
+      toast({
+        title: "Error",
+        description: "Question text is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!newQuestion.testbankId) {
+      toast({
+        title: "Error",
+        description: "Please select an item bank.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    addQuestionMutation.mutate(newQuestion);
+  };
+
+  const handleAddQuestionGroup = async (groupData: Partial<QuestionGroup>) => {
+    // If quiz doesn't have an ID, save it first
+    if (!quiz.id) {
+      if (!quiz.title?.trim()) {
+        toast({
+          title: "Error",
+          description: "Quiz title is required before adding question groups.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      try {
+        await saveQuizMutation.mutateAsync(quiz);
+        // The quiz should now have an ID from the save operation
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save quiz. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     createQuestionGroupMutation.mutate({
       ...groupData,
@@ -437,9 +582,14 @@ export default function EnhancedQuizBuilder() {
                 <Copy className="h-4 w-4 mr-2" />
                 Preview
               </Button>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSaveQuiz} 
+                disabled={saveQuizMutation.isPending}
+              >
                 <Save className="h-4 w-4 mr-2" />
-                Save Draft
+                {saveQuizMutation.isPending ? "Saving..." : "Save Draft"}
               </Button>
               <Button onClick={handleCreateQuiz} disabled={createQuizMutation.isPending}>
                 <Play className="h-4 w-4 mr-2" />
@@ -860,13 +1010,25 @@ export default function EnhancedQuizBuilder() {
             <TabsContent value="questions" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
-                    Question Bank Selection
-                  </CardTitle>
-                  <CardDescription>
-                    Select questions from your testbanks to include in this quiz
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <BookOpen className="h-5 w-5" />
+                        Question Bank Selection
+                      </CardTitle>
+                      <CardDescription>
+                        Select questions from your testbanks to include in this quiz
+                      </CardDescription>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowAddQuestionDialog(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Question
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {questionsLoading ? (
@@ -903,6 +1065,13 @@ export default function EnhancedQuizBuilder() {
                             ))}
                           </SelectContent>
                         </Select>
+                        <Button
+                          onClick={() => setIsAddQuestionDialogOpen(true)}
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Question
+                        </Button>
                       </div>
                       
                       <div className="flex items-center justify-between">
@@ -950,9 +1119,18 @@ export default function EnhancedQuizBuilder() {
                                     {question.points} pts
                                   </Badge>
                                 </div>
-                                <p className="text-sm">
+                                <p className="text-sm mb-2">
                                   {question.questionText?.slice(0, 200)}...
                                 </p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setPreviewQuestion(question)}
+                                  className="mt-2"
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Preview
+                                </Button>
                               </div>
                             </div>
                           </Card>
@@ -2104,6 +2282,169 @@ export default function EnhancedQuizBuilder() {
           </Tabs>
         </main>
       </div>
+
+      {/* Question Preview Dialog */}
+      <Dialog open={!!previewQuestion} onOpenChange={() => setPreviewQuestion(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Question Preview</DialogTitle>
+          </DialogHeader>
+          {previewQuestion && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Question Text</Label>
+                <p className="mt-1 text-sm">{previewQuestion.questionText}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Type</Label>
+                  <p className="mt-1 text-sm capitalize">{previewQuestion.questionType.replace('_', ' ')}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Difficulty</Label>
+                  <p className="mt-1 text-sm">{previewQuestion.difficultyLevel}/10</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Bloom's Level</Label>
+                  <p className="mt-1 text-sm capitalize">{previewQuestion.bloomsLevel}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Points</Label>
+                  <p className="mt-1 text-sm">{previewQuestion.points}</p>
+                </div>
+              </div>
+              {previewQuestion.tags && previewQuestion.tags.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium">Tags</Label>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {previewQuestion.tags.map((tag, index) => (
+                      <Badge key={index} variant="outline">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Question Dialog */}
+      <Dialog open={showAddQuestionDialog} onOpenChange={setShowAddQuestionDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Question</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="questionText">Question Text *</Label>
+              <Textarea
+                id="questionText"
+                value={newQuestion.questionText || ''}
+                onChange={(e) => setNewQuestion(prev => ({ ...prev, questionText: e.target.value }))}
+                placeholder="Enter your question text..."
+                className="mt-1"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="questionType">Question Type</Label>
+                <Select 
+                  value={newQuestion.questionType} 
+                  onValueChange={(value) => setNewQuestion(prev => ({ ...prev, questionType: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                    <SelectItem value="multiple_response">Multiple Response</SelectItem>
+                    <SelectItem value="true_false">True/False</SelectItem>
+                    <SelectItem value="fill_blank">Fill in the Blank</SelectItem>
+                    <SelectItem value="essay">Essay</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="testbankId">Item Bank *</Label>
+                <Select 
+                  value={newQuestion.testbankId} 
+                  onValueChange={(value) => setNewQuestion(prev => ({ ...prev, testbankId: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select item bank" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {testbanks?.map((testbank) => (
+                      <SelectItem key={testbank.id} value={testbank.id}>
+                        {testbank.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="difficultyLevel">Difficulty (1-10)</Label>
+                <Input
+                  id="difficultyLevel"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={newQuestion.difficultyLevel || 5}
+                  onChange={(e) => setNewQuestion(prev => ({ ...prev, difficultyLevel: parseInt(e.target.value) || 5 }))}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="bloomsLevel">Bloom's Level</Label>
+                <Select 
+                  value={newQuestion.bloomsLevel} 
+                  onValueChange={(value) => setNewQuestion(prev => ({ ...prev, bloomsLevel: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="remember">Remember</SelectItem>
+                    <SelectItem value="understand">Understand</SelectItem>
+                    <SelectItem value="apply">Apply</SelectItem>
+                    <SelectItem value="analyze">Analyze</SelectItem>
+                    <SelectItem value="evaluate">Evaluate</SelectItem>
+                    <SelectItem value="create">Create</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="points">Points</Label>
+                <Input
+                  id="points"
+                  value={newQuestion.points || '1'}
+                  onChange={(e) => setNewQuestion(prev => ({ ...prev, points: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAddQuestionDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddQuestion} 
+                disabled={addQuestionMutation.isPending}
+              >
+                {addQuestionMutation.isPending ? "Adding..." : "Add Question"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
