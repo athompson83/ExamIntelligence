@@ -276,6 +276,10 @@ export interface IStorage {
   updateUserRole(userId: string, role: string): Promise<User>;
   getSharedTestbanksByAccount(accountId: string): Promise<Testbank[]>;
   getSharedQuizzesByAccount(accountId: string): Promise<Quiz[]>;
+
+  // Accessibility Settings operations
+  getUserAccessibilitySettings(userId: string): Promise<any>;
+  updateUserAccessibilitySettings(userId: string, settings: any): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1560,6 +1564,27 @@ export class DatabaseStorage implements IStorage {
 
   async deleteIssuedCertificate(id: string): Promise<void> {
     await db.delete(issuedCertificates).where(eq(issuedCertificates.id, id));
+  }
+
+  // Accessibility Settings operations
+  async getUserAccessibilitySettings(userId: string): Promise<any> {
+    // Return default settings for test user
+    return {
+      highContrast: false,
+      textToSpeech: false,
+      fontSize: "medium",
+      reducedMotion: false,
+      keyboardNavigation: false,
+      screenReader: false,
+      voiceSpeed: 1.0,
+      voicePitch: 1.0,
+      autoReadContent: false
+    };
+  }
+
+  async updateUserAccessibilitySettings(userId: string, settings: any): Promise<void> {
+    // For now, just log the settings update
+    console.log(`Updating accessibility settings for user ${userId}:`, settings);
   }
 }
 
