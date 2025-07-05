@@ -28,6 +28,9 @@ import {
   insertAssignmentSubmissionSchema,
   insertStudyAidSchema,
   insertMobileDeviceSchema,
+  insertPromptTemplateSchema,
+  insertLlmProviderSchema,
+  insertCustomInstructionSchema,
 } from "@shared/schema";
 import { 
   validateQuestion, 
@@ -1895,6 +1898,289 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking notification as read:", error);
       res.status(500).json({ message: "Failed to update notification" });
+    }
+  });
+
+  // ===== PROMPT TEMPLATE ROUTES =====
+
+  // Create a new prompt template (Super Admin only)
+  app.post("/api/prompt-templates", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      if (user.role !== "super_admin") {
+        return res.status(403).json({ message: "Only super admins can create prompt templates" });
+      }
+
+      const validatedData = insertPromptTemplateSchema.parse(req.body);
+      const template = await storage.createPromptTemplate({
+        ...validatedData,
+        accountId: user.accountId,
+        createdBy: user.id,
+      });
+      res.json(template);
+    } catch (error) {
+      console.error("Error creating prompt template:", error);
+      res.status(500).json({ message: "Failed to create prompt template" });
+    }
+  });
+
+  // Get prompt templates for account
+  app.get("/api/prompt-templates", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const { category } = req.query;
+
+      let templates;
+      if (category) {
+        templates = await storage.getPromptTemplatesByCategory(user.accountId, category as string);
+      } else {
+        templates = await storage.getPromptTemplatesByAccount(user.accountId);
+      }
+      
+      // Include system defaults for super admins
+      if (user.role === "super_admin") {
+        const systemDefaults = await storage.getSystemDefaultPromptTemplates();
+        templates = [...systemDefaults, ...templates];
+      }
+
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching prompt templates:", error);
+      res.status(500).json({ message: "Failed to fetch prompt templates" });
+    }
+  });
+
+  // Update prompt template
+  app.put("/api/prompt-templates/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const { id } = req.params;
+      
+      // Check if user can modify this template
+      const template = await storage.getPromptTemplate(id);
+      if (!template || (template.accountId !== user.accountId && user.role !== "super_admin")) {
+        return res.status(404).json({ message: "Prompt template not found" });
+      }
+
+      const validatedData = insertPromptTemplateSchema.partial().parse(req.body);
+      const updated = await storage.updatePromptTemplate(id, validatedData);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating prompt template:", error);
+      res.status(500).json({ message: "Failed to update prompt template" });
+    }
+  });
+
+  // Delete prompt template
+  app.delete("/api/prompt-templates/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const { id } = req.params;
+      
+      const template = await storage.getPromptTemplate(id);
+      if (!template || (template.accountId !== user.accountId && user.role !== "super_admin")) {
+        return res.status(404).json({ message: "Prompt template not found" });
+      }
+
+      await storage.deletePromptTemplate(id);
+      res.json({ message: "Prompt template deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting prompt template:", error);
+      res.status(500).json({ message: "Failed to delete prompt template" });
+    }
+  });
+
+  // ===== LLM PROVIDER ROUTES =====
+
+  // Create LLM provider configuration
+  app.post("/api/llm-providers", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      if (user.role !== "super_admin" && user.role !== "admin") {
+        return res.status(403).json({ message: "Only admins can configure LLM providers" });
+      }
+
+      const validatedData = insertLlmProviderSchema.parse(req.body);
+      const provider = await storage.createLlmProvider({
+        ...validatedData,
+        accountId: user.accountId,
+        configuredBy: user.id,
+      });
+      res.json(provider);
+    } catch (error) {
+      console.error("Error creating LLM provider:", error);
+      res.status(500).json({ message: "Failed to create LLM provider" });
+    }
+  });
+
+  // Get LLM providers for account
+  app.get("/api/llm-providers", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const { activeOnly } = req.query;
+
+      let providers;
+      if (activeOnly === "true") {
+        providers = await storage.getActiveLlmProviders(user.accountId);
+      } else {
+        providers = await storage.getLlmProvidersByAccount(user.accountId);
+      }
+
+      res.json(providers);
+    } catch (error) {
+      console.error("Error fetching LLM providers:", error);
+      res.status(500).json({ message: "Failed to fetch LLM providers" });
+    }
+  });
+
+  // Update LLM provider
+  app.put("/api/llm-providers/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const { id } = req.params;
+      
+      if (user.role !== "super_admin" && user.role !== "admin") {
+        return res.status(403).json({ message: "Only admins can update LLM providers" });
+      }
+
+      const provider = await storage.getLlmProvider(id);
+      if (!provider || provider.accountId !== user.accountId) {
+        return res.status(404).json({ message: "LLM provider not found" });
+      }
+
+      const validatedData = insertLlmProviderSchema.partial().parse(req.body);
+      const updated = await storage.updateLlmProvider(id, validatedData);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating LLM provider:", error);
+      res.status(500).json({ message: "Failed to update LLM provider" });
+    }
+  });
+
+  // Test LLM provider connection
+  app.post("/api/llm-providers/:id/test", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const { id } = req.params;
+      
+      if (user.role !== "super_admin" && user.role !== "admin") {
+        return res.status(403).json({ message: "Only admins can test LLM providers" });
+      }
+
+      const provider = await storage.getLlmProvider(id);
+      if (!provider || provider.accountId !== user.accountId) {
+        return res.status(404).json({ message: "LLM provider not found" });
+      }
+
+      // Import multiProviderAI and test connection
+      const { multiProviderAI } = await import("./multiProviderAI");
+      const isWorking = await multiProviderAI.testProviderConnection(provider.providerName, provider.apiKeyHash);
+      
+      res.json({ 
+        success: isWorking, 
+        message: isWorking ? "Connection successful" : "Connection failed" 
+      });
+    } catch (error) {
+      console.error("Error testing LLM provider:", error);
+      res.status(500).json({ message: "Failed to test LLM provider" });
+    }
+  });
+
+  // ===== CUSTOM INSTRUCTION ROUTES =====
+
+  // Create custom instruction
+  app.post("/api/custom-instructions", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const validatedData = insertCustomInstructionSchema.parse(req.body);
+      
+      const instruction = await storage.createCustomInstruction({
+        ...validatedData,
+        accountId: user.accountId,
+        createdBy: user.id,
+      });
+      res.json(instruction);
+    } catch (error) {
+      console.error("Error creating custom instruction:", error);
+      res.status(500).json({ message: "Failed to create custom instruction" });
+    }
+  });
+
+  // Get custom instructions
+  app.get("/api/custom-instructions", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const { category, includePublic } = req.query;
+
+      let instructions = [];
+      
+      if (category) {
+        instructions = await storage.getCustomInstructionsByCategory(user.accountId, category as string);
+      } else {
+        instructions = await storage.getCustomInstructionsByAccount(user.accountId);
+      }
+
+      // Add public instructions if requested
+      if (includePublic === "true") {
+        const publicInstructions = await storage.getPublicCustomInstructions();
+        instructions = [...instructions, ...publicInstructions];
+      }
+
+      res.json(instructions);
+    } catch (error) {
+      console.error("Error fetching custom instructions:", error);
+      res.status(500).json({ message: "Failed to fetch custom instructions" });
+    }
+  });
+
+  // Update custom instruction
+  app.put("/api/custom-instructions/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const { id } = req.params;
+      
+      const instruction = await storage.getCustomInstruction(id);
+      if (!instruction || (instruction.accountId !== user.accountId && instruction.createdBy !== user.id)) {
+        return res.status(404).json({ message: "Custom instruction not found" });
+      }
+
+      const validatedData = insertCustomInstructionSchema.partial().parse(req.body);
+      const updated = await storage.updateCustomInstruction(id, validatedData);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating custom instruction:", error);
+      res.status(500).json({ message: "Failed to update custom instruction" });
+    }
+  });
+
+  // Increment usage count
+  app.post("/api/custom-instructions/:id/use", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.incrementCustomInstructionUsage(id);
+      res.json({ message: "Usage count updated" });
+    } catch (error) {
+      console.error("Error updating usage count:", error);
+      res.status(500).json({ message: "Failed to update usage count" });
+    }
+  });
+
+  // Delete custom instruction
+  app.delete("/api/custom-instructions/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const { id } = req.params;
+      
+      const instruction = await storage.getCustomInstruction(id);
+      if (!instruction || (instruction.accountId !== user.accountId && instruction.createdBy !== user.id)) {
+        return res.status(404).json({ message: "Custom instruction not found" });
+      }
+
+      await storage.deleteCustomInstruction(id);
+      res.json({ message: "Custom instruction deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting custom instruction:", error);
+      res.status(500).json({ message: "Failed to delete custom instruction" });
     }
   });
 

@@ -19,6 +19,9 @@ import {
   studyAids,
   mobileDevices,
   questionGroups,
+  promptTemplates,
+  llmProviders,
+  customInstructions,
   type User,
   type UpsertUser,
   type Account,
@@ -57,6 +60,12 @@ import {
   type InsertMobileDevice,
   type QuestionGroup,
   type InsertQuestionGroup,
+  type PromptTemplate,
+  type InsertPromptTemplate,
+  type LlmProvider,
+  type InsertLlmProvider,
+  type CustomInstruction,
+  type InsertCustomInstruction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, count, avg, like, inArray } from "drizzle-orm";
@@ -182,6 +191,33 @@ export interface IStorage {
   getMobileDevicesByUser(userId: string): Promise<MobileDevice[]>;
   updateMobileDevice(id: string, data: Partial<InsertMobileDevice>): Promise<MobileDevice>;
   deleteMobileDevice(id: string): Promise<void>;
+
+  // Prompt Template operations
+  createPromptTemplate(template: InsertPromptTemplate): Promise<PromptTemplate>;
+  getPromptTemplate(id: string): Promise<PromptTemplate | undefined>;
+  getPromptTemplatesByAccount(accountId: string): Promise<PromptTemplate[]>;
+  getPromptTemplatesByCategory(accountId: string, category: string): Promise<PromptTemplate[]>;
+  getSystemDefaultPromptTemplates(): Promise<PromptTemplate[]>;
+  updatePromptTemplate(id: string, data: Partial<InsertPromptTemplate>): Promise<PromptTemplate>;
+  deletePromptTemplate(id: string): Promise<void>;
+
+  // LLM Provider operations
+  createLlmProvider(provider: InsertLlmProvider): Promise<LlmProvider>;
+  getLlmProvider(id: string): Promise<LlmProvider | undefined>;
+  getLlmProvidersByAccount(accountId: string): Promise<LlmProvider[]>;
+  getActiveLlmProviders(accountId: string): Promise<LlmProvider[]>;
+  updateLlmProvider(id: string, data: Partial<InsertLlmProvider>): Promise<LlmProvider>;
+  deleteLlmProvider(id: string): Promise<void>;
+
+  // Custom Instruction operations
+  createCustomInstruction(instruction: InsertCustomInstruction): Promise<CustomInstruction>;
+  getCustomInstruction(id: string): Promise<CustomInstruction | undefined>;
+  getCustomInstructionsByAccount(accountId: string): Promise<CustomInstruction[]>;
+  getCustomInstructionsByCategory(accountId: string, category: string): Promise<CustomInstruction[]>;
+  getPublicCustomInstructions(): Promise<CustomInstruction[]>;
+  updateCustomInstruction(id: string, data: Partial<InsertCustomInstruction>): Promise<CustomInstruction>;
+  incrementCustomInstructionUsage(id: string): Promise<void>;
+  deleteCustomInstruction(id: string): Promise<void>;
 
   // Role-based access operations
   getUsersByAccount(accountId: string): Promise<User[]>;
@@ -842,6 +878,129 @@ export class DatabaseStorage implements IStorage {
   async getQuestionsByGroup(groupId: string): Promise<Question[]> {
     // For now, return empty array until proper junction table is implemented
     return [];
+  }
+
+  // Prompt Template operations
+  async createPromptTemplate(template: InsertPromptTemplate): Promise<PromptTemplate> {
+    const [created] = await db.insert(promptTemplates).values(template).returning();
+    return created;
+  }
+
+  async getPromptTemplate(id: string): Promise<PromptTemplate | undefined> {
+    const [template] = await db.select().from(promptTemplates).where(eq(promptTemplates.id, id));
+    return template;
+  }
+
+  async getPromptTemplatesByAccount(accountId: string): Promise<PromptTemplate[]> {
+    return await db.select().from(promptTemplates)
+      .where(eq(promptTemplates.accountId, accountId))
+      .orderBy(desc(promptTemplates.createdAt));
+  }
+
+  async getPromptTemplatesByCategory(accountId: string, category: string): Promise<PromptTemplate[]> {
+    return await db.select().from(promptTemplates)
+      .where(and(eq(promptTemplates.accountId, accountId), eq(promptTemplates.category, category)))
+      .orderBy(desc(promptTemplates.createdAt));
+  }
+
+  async getSystemDefaultPromptTemplates(): Promise<PromptTemplate[]> {
+    return await db.select().from(promptTemplates)
+      .where(eq(promptTemplates.isSystemDefault, true))
+      .orderBy(desc(promptTemplates.createdAt));
+  }
+
+  async updatePromptTemplate(id: string, data: Partial<InsertPromptTemplate>): Promise<PromptTemplate> {
+    const [updated] = await db.update(promptTemplates)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(promptTemplates.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deletePromptTemplate(id: string): Promise<void> {
+    await db.delete(promptTemplates).where(eq(promptTemplates.id, id));
+  }
+
+  // LLM Provider operations
+  async createLlmProvider(provider: InsertLlmProvider): Promise<LlmProvider> {
+    const [created] = await db.insert(llmProviders).values(provider).returning();
+    return created;
+  }
+
+  async getLlmProvider(id: string): Promise<LlmProvider | undefined> {
+    const [provider] = await db.select().from(llmProviders).where(eq(llmProviders.id, id));
+    return provider;
+  }
+
+  async getLlmProvidersByAccount(accountId: string): Promise<LlmProvider[]> {
+    return await db.select().from(llmProviders)
+      .where(eq(llmProviders.accountId, accountId))
+      .orderBy(asc(llmProviders.priority));
+  }
+
+  async getActiveLlmProviders(accountId: string): Promise<LlmProvider[]> {
+    return await db.select().from(llmProviders)
+      .where(and(eq(llmProviders.accountId, accountId), eq(llmProviders.isActive, true)))
+      .orderBy(asc(llmProviders.priority));
+  }
+
+  async updateLlmProvider(id: string, data: Partial<InsertLlmProvider>): Promise<LlmProvider> {
+    const [updated] = await db.update(llmProviders)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(llmProviders.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteLlmProvider(id: string): Promise<void> {
+    await db.delete(llmProviders).where(eq(llmProviders.id, id));
+  }
+
+  // Custom Instruction operations
+  async createCustomInstruction(instruction: InsertCustomInstruction): Promise<CustomInstruction> {
+    const [created] = await db.insert(customInstructions).values(instruction).returning();
+    return created;
+  }
+
+  async getCustomInstruction(id: string): Promise<CustomInstruction | undefined> {
+    const [instruction] = await db.select().from(customInstructions).where(eq(customInstructions.id, id));
+    return instruction;
+  }
+
+  async getCustomInstructionsByAccount(accountId: string): Promise<CustomInstruction[]> {
+    return await db.select().from(customInstructions)
+      .where(eq(customInstructions.accountId, accountId))
+      .orderBy(desc(customInstructions.createdAt));
+  }
+
+  async getCustomInstructionsByCategory(accountId: string, category: string): Promise<CustomInstruction[]> {
+    return await db.select().from(customInstructions)
+      .where(and(eq(customInstructions.accountId, accountId), eq(customInstructions.category, category)))
+      .orderBy(desc(customInstructions.createdAt));
+  }
+
+  async getPublicCustomInstructions(): Promise<CustomInstruction[]> {
+    return await db.select().from(customInstructions)
+      .where(eq(customInstructions.isPublic, true))
+      .orderBy(desc(customInstructions.usageCount));
+  }
+
+  async updateCustomInstruction(id: string, data: Partial<InsertCustomInstruction>): Promise<CustomInstruction> {
+    const [updated] = await db.update(customInstructions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(customInstructions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async incrementCustomInstructionUsage(id: string): Promise<void> {
+    await db.update(customInstructions)
+      .set({ usageCount: sql`${customInstructions.usageCount} + 1` })
+      .where(eq(customInstructions.id, id));
+  }
+
+  async deleteCustomInstruction(id: string): Promise<void> {
+    await db.delete(customInstructions).where(eq(customInstructions.id, id));
   }
 }
 

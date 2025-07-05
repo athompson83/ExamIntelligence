@@ -508,6 +508,60 @@ export const mobileDevices = pgTable("mobile_devices", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Custom prompt templates for AI services
+export const promptTemplates = pgTable("prompt_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  category: varchar("category", { 
+    enum: ["question_generation", "validation", "study_guide", "improvement_plan", "custom"] 
+  }).notNull(),
+  template: text("template").notNull(),
+  variables: jsonb("variables").$type<string[]>().default([]),
+  isSystemDefault: boolean("is_system_default").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// LLM provider configurations
+export const llmProviders = pgTable("llm_providers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  provider: varchar("provider", { 
+    enum: ["openai", "anthropic", "google", "meta", "xai", "deepseek", "custom"] 
+  }).notNull(),
+  apiKey: varchar("api_key"),
+  apiEndpoint: varchar("api_endpoint"),
+  defaultModel: varchar("default_model").notNull(),
+  availableModels: jsonb("available_models").$type<string[]>().default([]),
+  isActive: boolean("is_active").notNull().default(true),
+  priority: integer("priority").default(1),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User saved custom instructions for AI generation
+export const customInstructions = pgTable("custom_instructions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  instructions: text("instructions").notNull(),
+  category: varchar("category", { 
+    enum: ["question_generation", "validation", "general", "custom"] 
+  }).notNull(),
+  isPublic: boolean("is_public").notNull().default(false),
+  usageCount: integer("usage_count").default(0),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const accountsRelations = relations(accounts, ({ many }) => ({
   users: many(users),
@@ -629,6 +683,21 @@ export const mobileDevicesRelations = relations(mobileDevices, ({ one }) => ({
   user: one(users, { fields: [mobileDevices.userId], references: [users.id] }),
 }));
 
+export const promptTemplatesRelations = relations(promptTemplates, ({ one }) => ({
+  creator: one(users, { fields: [promptTemplates.createdBy], references: [users.id] }),
+  account: one(accounts, { fields: [promptTemplates.accountId], references: [accounts.id] }),
+}));
+
+export const llmProvidersRelations = relations(llmProviders, ({ one }) => ({
+  creator: one(users, { fields: [llmProviders.createdBy], references: [users.id] }),
+  account: one(accounts, { fields: [llmProviders.accountId], references: [accounts.id] }),
+}));
+
+export const customInstructionsRelations = relations(customInstructions, ({ one }) => ({
+  creator: one(users, { fields: [customInstructions.createdBy], references: [users.id] }),
+  account: one(accounts, { fields: [customInstructions.accountId], references: [accounts.id] }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTestbankSchema = createInsertSchema(testbanks).omit({ id: true, createdAt: true, updatedAt: true });
@@ -650,6 +719,9 @@ export const insertScheduledAssignmentSchema = createInsertSchema(scheduledAssig
 export const insertAssignmentSubmissionSchema = createInsertSchema(assignmentSubmissions).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertStudyAidSchema = createInsertSchema(studyAids).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMobileDeviceSchema = createInsertSchema(mobileDevices).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertLlmProviderSchema = createInsertSchema(llmProviders).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCustomInstructionSchema = createInsertSchema(customInstructions).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -692,6 +764,12 @@ export type InsertStudyAid = z.infer<typeof insertStudyAidSchema>;
 export type StudyAid = typeof studyAids.$inferSelect;
 export type InsertMobileDevice = z.infer<typeof insertMobileDeviceSchema>;
 export type MobileDevice = typeof mobileDevices.$inferSelect;
+export type InsertPromptTemplate = z.infer<typeof insertPromptTemplateSchema>;
+export type PromptTemplate = typeof promptTemplates.$inferSelect;
+export type InsertLlmProvider = z.infer<typeof insertLlmProviderSchema>;
+export type LlmProvider = typeof llmProviders.$inferSelect;
+export type InsertCustomInstruction = z.infer<typeof insertCustomInstructionSchema>;
+export type CustomInstruction = typeof customInstructions.$inferSelect;
 
 // Audit logs table for compliance and security tracking
 export const auditLogs = pgTable("audit_logs", {
