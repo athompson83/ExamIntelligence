@@ -268,7 +268,7 @@ export default function EnhancedQuizBuilder() {
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTestbankFilter, setSelectedTestbankFilter] = useState("");
+  const [selectedTestbankFilter, setSelectedTestbankFilter] = useState("all");
 
   // Fetch available questions
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
@@ -394,7 +394,7 @@ export default function EnhancedQuizBuilder() {
         q.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
         q.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      const matchesTestbank = !selectedTestbankFilter || q.testbankId === selectedTestbankFilter;
+      const matchesTestbank = selectedTestbankFilter === "all" || q.testbankId === selectedTestbankFilter;
       
       return matchesSearch && matchesTestbank;
     });
@@ -895,7 +895,7 @@ export default function EnhancedQuizBuilder() {
                             <SelectValue placeholder="Filter by testbank" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All testbanks</SelectItem>
+                            <SelectItem value="all">All testbanks</SelectItem>
                             {testbanks.map((testbank: any) => (
                               <SelectItem key={testbank.id} value={testbank.id}>
                                 {testbank.title}
