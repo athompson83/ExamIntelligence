@@ -25,6 +25,7 @@ import NotFound from "@/pages/not-found";
 import ProjectStatus from "@/pages/project-status";
 import LanguageTest from "@/pages/language-test";
 import Settings from "@/pages/Settings";
+import SuperAdminSettings from "@/pages/super-admin-settings";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -70,6 +71,7 @@ function Router() {
           <Route path="/user-management" component={UserManagement} />
           <Route path="/admin-settings" component={AdminSettings} />
           <Route path="/settings" component={Settings} />
+          <Route path="/super-admin-settings" component={SuperAdminSettings} />
           <Route path="/reference-banks" component={ReferenceBanks} />
           <Route path="/study-aids" component={StudyAids} />
           <Route path="/project-status" component={ProjectStatus} />

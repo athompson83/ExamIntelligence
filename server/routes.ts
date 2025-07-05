@@ -2293,6 +2293,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Super Admin CRM Endpoints
+  
+  // Get all accounts (super admin only)
+  app.get('/api/super-admin/accounts', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const accounts = await storage.getAllAccountsWithStats();
+      res.json(accounts);
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+      res.status(500).json({ message: 'Failed to fetch accounts' });
+    }
+  });
+
+  // Create new account (super admin only)
+  app.post('/api/super-admin/accounts', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const account = await storage.createAccount(req.body);
+      res.json(account);
+    } catch (error) {
+      console.error('Error creating account:', error);
+      res.status(500).json({ message: 'Failed to create account' });
+    }
+  });
+
+  // Update account (super admin only)
+  app.put('/api/super-admin/accounts/:id', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const account = await storage.updateAccount(req.params.id, req.body);
+      res.json(account);
+    } catch (error) {
+      console.error('Error updating account:', error);
+      res.status(500).json({ message: 'Failed to update account' });
+    }
+  });
+
+  // Delete account (super admin only)
+  app.delete('/api/super-admin/accounts/:id', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      await storage.deleteAccount(req.params.id);
+      res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      res.status(500).json({ message: 'Failed to delete account' });
+    }
+  });
+
+  // Get all users across all accounts (super admin only)
+  app.get('/api/super-admin/users', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const users = await storage.getAllUsersWithAccountInfo();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
+  // Create new user (super admin only)
+  app.post('/api/super-admin/users', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const newUser = await storage.createUserWithAccount(req.body);
+      res.json(newUser);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ message: 'Failed to create user' });
+    }
+  });
+
+  // Update user (super admin only)
+  app.put('/api/super-admin/users/:id', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const updatedUser = await storage.updateUserWithRole(req.params.id, req.body);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ message: 'Failed to update user' });
+    }
+  });
+
+  // Get all prompt templates (super admin only)
+  app.get('/api/super-admin/prompt-templates', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const templates = await storage.getAllPromptTemplatesWithStats();
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching prompt templates:', error);
+      res.status(500).json({ message: 'Failed to fetch prompt templates' });
+    }
+  });
+
+  // Create prompt template (super admin only)
+  app.post('/api/super-admin/prompt-templates', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const template = await storage.createPromptTemplate({
+        ...req.body,
+        accountId: null, // System-wide template
+        createdBy: user.id
+      });
+      res.json(template);
+    } catch (error) {
+      console.error('Error creating prompt template:', error);
+      res.status(500).json({ message: 'Failed to create prompt template' });
+    }
+  });
+
+  // Update prompt template (super admin only)
+  app.put('/api/super-admin/prompt-templates/:id', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const template = await storage.updatePromptTemplate(req.params.id, req.body);
+      res.json(template);
+    } catch (error) {
+      console.error('Error updating prompt template:', error);
+      res.status(500).json({ message: 'Failed to update prompt template' });
+    }
+  });
+
+  // Get all LLM providers across accounts (super admin only)
+  app.get('/api/super-admin/llm-providers', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const providers = await storage.getAllLLMProvidersWithAccountInfo();
+      res.json(providers);
+    } catch (error) {
+      console.error('Error fetching LLM providers:', error);
+      res.status(500).json({ message: 'Failed to fetch LLM providers' });
+    }
+  });
+
+  // Get system statistics (super admin only)
+  app.get('/api/super-admin/system-stats', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const stats = await storage.getSystemStatistics();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching system stats:', error);
+      res.status(500).json({ message: 'Failed to fetch system statistics' });
+    }
+  });
+
+  // Make test user super admin (for development)
+  app.post('/api/super-admin/elevate-test-user', async (req: any, res) => {
+    try {
+      const testUser = await storage.getUserByEmail('test@example.com');
+      if (testUser) {
+        await storage.updateUserWithRole(testUser.id, { role: 'super_admin' });
+        res.json({ message: 'Test user elevated to super admin' });
+      } else {
+        res.status(404).json({ message: 'Test user not found' });
+      }
+    } catch (error) {
+      console.error('Error elevating test user:', error);
+      res.status(500).json({ message: 'Failed to elevate test user' });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 

@@ -1002,6 +1002,173 @@ export class DatabaseStorage implements IStorage {
   async deleteCustomInstruction(id: string): Promise<void> {
     await db.delete(customInstructions).where(eq(customInstructions.id, id));
   }
+
+  // Super Admin CRM methods
+  async getAllAccountsWithStats(): Promise<Account[]> {
+    const allAccounts = await db.select().from(accounts).orderBy(asc(accounts.name));
+    
+    // Add user count and storage stats for each account
+    const accountsWithStats = await Promise.all(allAccounts.map(async (account) => {
+      const userCount = await db.select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(eq(users.accountId, account.id));
+      
+      return {
+        ...account,
+        userCount: userCount[0]?.count || 0,
+        storageUsed: 0, // Placeholder - could calculate actual storage usage
+        maxUsers: account.maxUsers || 50,
+        maxStorage: account.maxStorage || 5000
+      };
+    }));
+    
+    return accountsWithStats;
+  }
+
+  async createAccount(data: InsertAccount): Promise<Account> {
+    const [account] = await db.insert(accounts).values({
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return account;
+  }
+
+  async updateAccount(id: string, data: Partial<InsertAccount>): Promise<Account> {
+    const [account] = await db.update(accounts)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(accounts.id, id))
+      .returning();
+    return account;
+  }
+
+  async deleteAccount(id: string): Promise<void> {
+    // In a real implementation, you'd want to handle cascading deletes carefully
+    await db.delete(accounts).where(eq(accounts.id, id));
+  }
+
+  async getAllUsersWithAccountInfo(): Promise<any[]> {
+    return await db.select({
+      id: users.id,
+      email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      role: users.role,
+      accountId: users.accountId,
+      accountName: accounts.name,
+      isActive: users.isActive,
+      lastLogin: users.lastLogin,
+      createdAt: users.createdAt
+    })
+    .from(users)
+    .leftJoin(accounts, eq(users.accountId, accounts.id))
+    .orderBy(asc(users.email));
+  }
+
+  async createUserWithAccount(data: any): Promise<any> {
+    const [user] = await db.insert(users).values({
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    
+    // Return user with account info
+    const userWithAccount = await db.select({
+      id: users.id,
+      email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      role: users.role,
+      accountId: users.accountId,
+      accountName: accounts.name,
+      isActive: users.isActive,
+      lastLogin: users.lastLogin,
+      createdAt: users.createdAt
+    })
+    .from(users)
+    .leftJoin(accounts, eq(users.accountId, accounts.id))
+    .where(eq(users.id, user.id));
+    
+    return userWithAccount[0];
+  }
+
+  async updateUserWithRole(id: string, data: any): Promise<any> {
+    const [user] = await db.update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    
+    // Return user with account info
+    const userWithAccount = await db.select({
+      id: users.id,
+      email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      role: users.role,
+      accountId: users.accountId,
+      accountName: accounts.name,
+      isActive: users.isActive,
+      lastLogin: users.lastLogin,
+      createdAt: users.createdAt
+    })
+    .from(users)
+    .leftJoin(accounts, eq(users.accountId, accounts.id))
+    .where(eq(users.id, user.id));
+    
+    return userWithAccount[0];
+  }
+
+  async getAllPromptTemplatesWithStats(): Promise<any[]> {
+    return await db.select({
+      id: promptTemplates.id,
+      name: promptTemplates.name,
+      description: promptTemplates.description,
+      promptText: promptTemplates.promptText,
+      category: promptTemplates.category,
+      isActive: promptTemplates.isActive,
+      usageCount: promptTemplates.usageCount,
+      createdAt: promptTemplates.createdAt
+    })
+    .from(promptTemplates)
+    .where(isNull(promptTemplates.accountId)) // System-wide templates only
+    .orderBy(asc(promptTemplates.name));
+  }
+
+  async getAllLLMProvidersWithAccountInfo(): Promise<any[]> {
+    return await db.select({
+      id: llmProviders.id,
+      name: llmProviders.name,
+      provider: llmProviders.provider,
+      accountId: llmProviders.accountId,
+      accountName: accounts.name,
+      isActive: llmProviders.isActive,
+      createdAt: llmProviders.createdAt
+    })
+    .from(llmProviders)
+    .leftJoin(accounts, eq(llmProviders.accountId, accounts.id))
+    .orderBy(asc(llmProviders.name));
+  }
+
+  async getSystemStatistics(): Promise<any> {
+    const totalAccounts = await db.select({ count: sql<number>`count(*)` }).from(accounts);
+    const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const totalQuizzes = await db.select({ count: sql<number>`count(*)` }).from(quizzes);
+    const activeAttempts = await db.select({ count: sql<number>`count(*)` })
+      .from(quizAttempts)
+      .where(eq(quizAttempts.status, 'in_progress'));
+
+    return {
+      totalAccounts: totalAccounts[0]?.count || 0,
+      totalUsers: totalUsers[0]?.count || 0,
+      totalQuizzes: totalQuizzes[0]?.count || 0,
+      activeSessions: activeAttempts[0]?.count || 0
+    };
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
 }
 
 export const storage = new DatabaseStorage();
