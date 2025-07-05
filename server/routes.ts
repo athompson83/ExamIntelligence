@@ -102,19 +102,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Testbank routes
   app.post('/api/testbanks', async (req: any, res) => {
+    // For now, use a test user ID since authentication might not be fully set up
+    const userId = req.user?.claims?.sub || req.user?.id || "test-user";
+    
+    // Prepare data with required fields
+    const requestData = {
+      ...req.body,
+      creatorId: userId,
+      accountId: req.body.accountId || '00000000-0000-0000-0000-000000000001', // Default account
+    };
+    
     try {
-      // For now, use a test user ID since authentication might not be fully set up
-      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
-      const testbankData = insertTestbankSchema.parse({
-        ...req.body,
-        creatorId: userId,
-      });
+      const testbankData = insertTestbankSchema.parse(requestData);
       
       const testbank = await storage.createTestbank(testbankData);
       res.json(testbank);
     } catch (error) {
       console.error("Error creating testbank:", error);
-      res.status(400).json({ message: "Failed to create testbank" });
+      console.error("Request body:", req.body);
+      console.error("Request data:", requestData);
+      res.status(400).json({ 
+        message: "Failed to create testbank",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
