@@ -226,76 +226,172 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // AI Generation mutation with enhanced validation
-  const generateQuestionsMutation = useMutation({
-    mutationFn: async (data: any) => {
-      // Validate API key first
-      if (!apiKeyStatus?.available) {
-        throw new Error('OpenAI API key is required for AI question generation. Please contact your administrator to set up the API key.');
-      }
+  // Progress tracking state
+  const [generationProgress, setGenerationProgress] = useState({
+    isGenerating: false,
+    status: '',
+    current: 0,
+    total: 0,
+    percentage: 0
+  });
 
-      // Validate required fields
-      if (!data.topic?.trim()) {
-        throw new Error('Please enter a topic for question generation.');
-      }
+  // AI Generation with real-time progress tracking
+  const handleAIGeneration = async (data: any) => {
+    console.log("Generating questions with data:", data);
+    
+    // Validate API key first
+    if (!apiKeyStatus?.available) {
+      toast({
+        title: "API Key Required",
+        description: "OpenAI API key is required for AI question generation. Please contact your administrator to set up the API key.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      if (data.questionCount < 1 || data.questionCount > 50) {
-        throw new Error('Please enter a question count between 1 and 50.');
-      }
+    // Validate required fields
+    if (!data.topic?.trim()) {
+      toast({
+        title: "Topic Required",
+        description: "Please enter a topic for question generation.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      // Optimize the prompt automatically
-      const optimizedData = {
-        ...data,
-        customInstructions: data.customInstructions ? 
-          `Enhanced instructions: ${data.customInstructions}. Please generate high-quality, educationally sound questions following evidence-based assessment practices and Canvas LMS standards.` :
-          "Generate high-quality, educationally sound questions following evidence-based assessment practices and Canvas LMS standards."
+    if (data.questionCount < 1 || data.questionCount > 50) {
+      toast({
+        title: "Invalid Question Count",
+        description: "Please enter a question count between 1 and 50.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Optimize the prompt automatically
+    const optimizedData = {
+      ...data,
+      customInstructions: data.customInstructions ? 
+        `Enhanced instructions: ${data.customInstructions}. Please generate high-quality, educationally sound questions following evidence-based assessment practices and Canvas LMS standards.` :
+        "Generate high-quality, educationally sound questions following evidence-based assessment practices and Canvas LMS standards."
+    };
+
+    // Start progress tracking
+    setGenerationProgress({
+      isGenerating: true,
+      status: 'Initializing question generation...',
+      current: 0,
+      total: data.questionCount || 5,
+      percentage: 0
+    });
+
+    try {
+      // Use Server-Sent Events for real-time progress
+      const params = new URLSearchParams({
+        data: JSON.stringify(optimizedData)
+      });
+      
+      const eventSource = new EventSource(`/api/testbanks/${effectiveTestbankId}/generate-questions-progress?${params}`);
+      
+      eventSource.onmessage = (event) => {
+        const progressData = JSON.parse(event.data);
+        
+        if (progressData.type === 'progress') {
+          setGenerationProgress({
+            isGenerating: true,
+            status: progressData.status,
+            current: progressData.current,
+            total: progressData.total,
+            percentage: progressData.percentage
+          });
+        } else if (progressData.type === 'complete') {
+          eventSource.close();
+          setGenerationProgress({
+            isGenerating: false,
+            status: 'Generation completed!',
+            current: progressData.count,
+            total: progressData.count,
+            percentage: 100
+          });
+          
+          // Refresh questions list
+          queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
+          setIsAiDialogOpen(false);
+          
+          // Reset form
+          setAiForm(prev => ({
+            ...prev,
+            topic: "",
+            customInstructions: "",
+            questionStyles: ["formal"]
+          }));
+          
+          toast({
+            title: "Questions Generated Successfully",
+            description: `Generated ${progressData.count} high-quality questions with AI validation`,
+          });
+          
+          // Reset progress after 2 seconds
+          setTimeout(() => {
+            setGenerationProgress({
+              isGenerating: false,
+              status: '',
+              current: 0,
+              total: 0,
+              percentage: 0
+            });
+          }, 2000);
+        } else if (progressData.type === 'error') {
+          eventSource.close();
+          setGenerationProgress({
+            isGenerating: false,
+            status: 'Generation failed',
+            current: 0,
+            total: 0,
+            percentage: 0
+          });
+          
+          toast({
+            title: "Generation Failed",
+            description: progressData.error || "Failed to generate questions",
+            variant: "destructive",
+          });
+        }
       };
-
-      const formData = new FormData();
-      formData.append('data', JSON.stringify(optimizedData));
       
-      // Add reference files
-      data.referenceFiles?.forEach((file: File, index: number) => {
-        formData.append(`referenceFile_${index}`, file);
-      });
-
-      const response = await fetch(`/api/testbanks/${effectiveTestbankId}/generate-questions`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to generate questions');
-      }
-
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
-      setIsAiDialogOpen(false);
+      eventSource.onerror = () => {
+        eventSource.close();
+        setGenerationProgress({
+          isGenerating: false,
+          status: 'Connection error',
+          current: 0,
+          total: 0,
+          percentage: 0
+        });
+        
+        toast({
+          title: "Connection Error",
+          description: "Lost connection to server during generation",
+          variant: "destructive",
+        });
+      };
       
-      // Reset form for next use
-      setAiForm(prev => ({
-        ...prev,
-        topic: "",
-        customInstructions: "",
-        questionStyles: ["formal"]
-      }));
+    } catch (error: any) {
+      setGenerationProgress({
+        isGenerating: false,
+        status: 'Error occurred',
+        current: 0,
+        total: 0,
+        percentage: 0
+      });
       
       toast({
-        title: "Questions Generated Successfully",
-        description: `Generated ${data.count} high-quality questions with AI validation`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Generation Failed", 
+        title: "Generation Failed",
         description: error.message || "Failed to generate questions with AI",
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
   // Update question mutation
   const updateQuestionMutation = useMutation({
@@ -433,7 +529,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     };
 
     console.log("Sending AI generation data:", data); // Debug log
-    generateQuestionsMutation.mutate(data);
+    handleAIGeneration(data);
   };
 
   // Question Management Actions
@@ -1119,10 +1215,10 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                       )}
                       <Button 
                         onClick={handleSubmitAiGeneration}
-                        disabled={generateQuestionsMutation.isPending || !aiForm.topic || !apiKeyStatus?.available}
+                        disabled={generationProgress.isGenerating || !aiForm.topic || !apiKeyStatus?.available}
                         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50"
                       >
-                        {generateQuestionsMutation.isPending ? (
+                        {generationProgress.isGenerating ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                             Generating...
@@ -1134,8 +1230,35 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                           </>
                         )}
                       </Button>
+                      
+                      {/* Progress Indicator */}
+                      {generationProgress.isGenerating && (
+                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-blue-900">
+                              {generationProgress.status}
+                            </span>
+                            <span className="text-sm text-blue-700">
+                              {generationProgress.percentage}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-blue-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                              style={{ width: `${generationProgress.percentage}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-blue-600 mt-1">
+                            {generationProgress.current} of {generationProgress.total} questions
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <Button variant="outline" onClick={() => setIsAiDialogOpen(false)}>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsAiDialogOpen(false)}
+                      disabled={generationProgress.isGenerating}
+                    >
                       Cancel
                     </Button>
                   </div>

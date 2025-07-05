@@ -256,6 +256,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Question Generation routes
+  // Progress tracking for question generation
+  app.get('/api/testbanks/:id/generate-questions-progress',  async (req: any, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control'
+    });
+
+    // Parse generation parameters from query
+    const data = JSON.parse(req.query.data || '{}');
+    
+    // Validate required fields
+    if (!data.topic || !data.questionTypes || data.questionTypes.length === 0) {
+      res.write(`data: ${JSON.stringify({ error: "Topic and question types are required" })}\n\n`);
+      res.end();
+      return;
+    }
+
+    try {
+      // Generate questions using AI with progress callback
+      const generatedQuestions = await generateQuestionsWithAI({
+        topic: data.topic,
+        questionCount: data.questionCount || 5,
+        questionTypes: data.questionTypes,
+        difficultyRange: data.difficultyRange || [3, 7],
+        bloomsLevels: data.bloomsLevels || ["understand", "apply"],
+        includeReferences: data.includeReferences || false,
+        referenceLinks: data.referenceLinks || [],
+        targetAudience: data.targetAudience,
+        learningObjectives: data.learningObjectives || [],
+        questionStyles: data.questionStyles || ["formal"],
+        includeImages: data.includeImages || false,
+        includeMultimedia: data.includeMultimedia || false,
+        customInstructions: data.customInstructions,
+        testbankId: req.params.id
+      }, (progress) => {
+        // Send progress update to client
+        res.write(`data: ${JSON.stringify({ 
+          type: 'progress',
+          status: progress.status,
+          current: progress.current,
+          total: progress.total,
+          percentage: Math.round((progress.current / progress.total) * 100)
+        })}\n\n`);
+      });
+
+      // Save generated questions to database
+      res.write(`data: ${JSON.stringify({ 
+        type: 'progress',
+        status: 'Saving questions to database...',
+        current: generatedQuestions.length,
+        total: generatedQuestions.length,
+        percentage: 100
+      })}\n\n`);
+
+      const savedQuestions = [];
+      for (const generatedQuestion of generatedQuestions) {
+        const questionData = insertQuestionSchema.parse({
+          ...generatedQuestion,
+          testbankId: req.params.id,
+          creatorId: req.user?.claims?.sub || req.user?.id || "test-user",
+          // Convert numeric values to strings for validation
+          points: generatedQuestion.points?.toString() || "1.00",
+          difficultyScore: generatedQuestion.difficultyScore?.toString() || "5.0",
+          aiConfidenceScore: generatedQuestion.aiConfidenceScore?.toString() || "0.75",
+        });
+        
+        const question = await storage.createQuestion(questionData);
+        
+        // Create answer options if provided
+        if (generatedQuestion.answerOptions && Array.isArray(generatedQuestion.answerOptions)) {
+          for (const option of generatedQuestion.answerOptions) {
+            const optionData = insertAnswerOptionSchema.parse({
+              ...option,
+              questionId: question.id,
+            });
+            await storage.createAnswerOption(optionData);
+          }
+        }
+        
+        savedQuestions.push(question);
+      }
+
+      // Send completion event
+      res.write(`data: ${JSON.stringify({ 
+        type: 'complete',
+        count: savedQuestions.length,
+        questions: savedQuestions
+      })}\n\n`);
+      
+      res.end();
+    } catch (error) {
+      console.error("Error generating questions:", error);
+      res.write(`data: ${JSON.stringify({ 
+        type: 'error',
+        error: "Failed to generate questions"
+      })}\n\n`);
+      res.end();
+    }
+  });
+
   app.post('/api/testbanks/:id/generate-questions',  upload.any(), async (req: any, res) => {
     try {
       // Parse the data from the multipart form

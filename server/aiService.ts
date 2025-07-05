@@ -695,7 +695,7 @@ Please respond with a JSON array of answer options in this format:
   }
 }
 
-export async function generateQuestionsWithAI(params: AIQuestionGenerationParams): Promise<any[]> {
+export async function generateQuestionsWithAI(params: AIQuestionGenerationParams, progressCallback?: (progress: { status: string; current: number; total: number }) => void): Promise<any[]> {
   try {
     const {
       topic,
@@ -712,6 +712,9 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       includeMultimedia,
       customInstructions
     } = params;
+
+    // Send initial progress
+    progressCallback?.({ status: 'Preparing AI request...', current: 0, total: questionCount });
 
     // Prepare reference material context
     let referenceContext = "";
@@ -923,6 +926,9 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       temperature: 0.7,
     });
 
+    // Send progress update after AI response
+    progressCallback?.({ status: 'Processing AI response...', current: Math.floor(questionCount * 0.3), total: questionCount });
+
     const result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
     const questions = result.questions || [];
 
@@ -936,6 +942,9 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       console.log(`Attempting to generate ${missingCount} additional questions...`);
       
       try {
+        // Send progress update during additional generation
+        progressCallback?.({ status: `Generating ${missingCount} additional questions...`, current: questions.length, total: questionCount });
+
         const additionalPrompt = `
           **MANDATORY**: Generate exactly ${missingCount} MORE questions about "${topic}".
           
@@ -967,11 +976,22 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         if (additionalQuestions.length > 0) {
           questions.push(...additionalQuestions);
           console.log(`Successfully generated ${additionalQuestions.length} additional questions. Total: ${questions.length}`);
+          // Update progress after additional questions
+          progressCallback?.({ status: 'Additional questions generated', current: questions.length, total: questionCount });
         }
       } catch (error) {
         console.error('Failed to generate additional questions:', error);
       }
     }
+
+    // Ensure exact question count by trimming if we have too many
+    if (questions.length > questionCount) {
+      console.log(`Trimming ${questions.length - questionCount} excess questions to match requested count of ${questionCount}`);
+      questions.splice(questionCount);
+    }
+
+    // Send progress update for validation phase
+    progressCallback?.({ status: 'Validating and processing questions...', current: Math.floor(questions.length * 0.7), total: questionCount });
 
     // Validate and process each question with enhanced quality checks
     const processedQuestions = questions.map((question: any, index: number) => {
@@ -1018,6 +1038,9 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         answerOptions: validatedAnswerOptions
       };
     });
+
+    // Send final progress update
+    progressCallback?.({ status: 'Questions generation completed!', current: processedQuestions.length, total: questionCount });
 
     return processedQuestions;
 
