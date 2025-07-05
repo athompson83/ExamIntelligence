@@ -84,7 +84,7 @@
   }
   
   .nav-item.active {
-    @apply bg-primary/10 text-primary border-r-4 border-primary font-semibold;
+    @apply bg-blue-50 text-primary border-r-4 border-primary font-semibold;
   }
   
   .nav-item:hover:not(.active) {
