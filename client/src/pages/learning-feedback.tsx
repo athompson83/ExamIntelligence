@@ -139,17 +139,19 @@ export default function LearningFeedback() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Learning Feedback</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white truncate">
+            Learning Feedback
+          </h1>
+          <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1">
             Track your learning mood and difficulty experiences
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 lg:flex-shrink-0">
           <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-32 lg:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -159,7 +161,7 @@ export default function LearningFeedback() {
             </SelectContent>
           </Select>
           <Select value={selectedContext} onValueChange={setSelectedContext}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-32 lg:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -175,27 +177,39 @@ export default function LearningFeedback() {
         </div>
       </div>
 
-      <Tabs defaultValue="submit" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="submit">Submit Feedback</TabsTrigger>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="mood">Mood Tracking</TabsTrigger>
-          <TabsTrigger value="difficulty">Difficulty Tracking</TabsTrigger>
+      <Tabs defaultValue="submit" className="space-y-4 lg:space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto p-1">
+          <TabsTrigger value="submit" className="text-xs sm:text-sm py-2 px-2 lg:px-4">
+            <span className="hidden sm:inline">Submit Feedback</span>
+            <span className="sm:hidden">Submit</span>
+          </TabsTrigger>
+          <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 px-2 lg:px-4">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="mood" className="text-xs sm:text-sm py-2 px-2 lg:px-4">
+            <span className="hidden sm:inline">Mood Tracking</span>
+            <span className="sm:hidden">Mood</span>
+          </TabsTrigger>
+          <TabsTrigger value="difficulty" className="text-xs sm:text-sm py-2 px-2 lg:px-4">
+            <span className="hidden sm:inline">Difficulty Tracking</span>
+            <span className="sm:hidden">Difficulty</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Submit Feedback Tab */}
-        <TabsContent value="submit" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="h-5 w-5" />
-                Share Your Learning Experience
+        <TabsContent value="submit" className="space-y-4 lg:space-y-6">
+          <Card className="p-3 lg:p-6">
+            <CardHeader className="px-0 pt-0 pb-3 lg:pb-6">
+              <CardTitle className="flex items-center gap-2 text-lg lg:text-xl">
+                <Heart className="h-4 w-4 lg:h-5 lg:w-5 flex-shrink-0" />
+                <span className="hidden sm:inline">Share Your Learning Experience</span>
+                <span className="sm:hidden">Learning Experience</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm lg:text-base">
                 Help us understand how you're feeling and the difficulty level you're experiencing
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-0 pb-0">
               <EmojiMoodSelector
                 context="general"
                 contentType="concept"
@@ -206,65 +220,77 @@ export default function LearningFeedback() {
         </TabsContent>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Mood</CardTitle>
-                <Heart className="h-4 w-4 text-muted-foreground" />
+        <TabsContent value="overview" className="space-y-4 lg:space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+            <Card className="p-3 lg:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs lg:text-sm font-medium truncate">
+                  <span className="hidden sm:inline">Average Mood</span>
+                  <span className="sm:hidden">Mood</span>
+                </CardTitle>
+                <Heart className="h-3 w-3 lg:h-4 lg:w-4 text-muted-foreground flex-shrink-0" />
               </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${getMoodColor(mood.average)}`}>
+              <CardContent className="px-0 pb-0">
+                <div className={`text-lg lg:text-2xl font-bold ${getMoodColor(mood.average)}`}>
                   {mood.average.toFixed(1)}/5
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {mood.total} entries recorded
+                <p className="text-xs text-muted-foreground truncate">
+                  {mood.total} entries
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Difficulty</CardTitle>
-                <Star className="h-4 w-4 text-muted-foreground" />
+            <Card className="p-3 lg:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs lg:text-sm font-medium truncate">
+                  <span className="hidden sm:inline">Average Difficulty</span>
+                  <span className="sm:hidden">Difficulty</span>
+                </CardTitle>
+                <Star className="h-3 w-3 lg:h-4 lg:w-4 text-muted-foreground flex-shrink-0" />
               </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${getDifficultyColor(difficulty.average)}`}>
+              <CardContent className="px-0 pb-0">
+                <div className={`text-lg lg:text-2xl font-bold ${getDifficultyColor(difficulty.average)}`}>
                   {difficulty.average.toFixed(1)}/5
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {difficulty.total} entries recorded
+                <p className="text-xs text-muted-foreground truncate">
+                  {difficulty.total} entries
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Learning Sessions</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Card className="p-3 lg:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs lg:text-sm font-medium truncate">
+                  <span className="hidden sm:inline">Learning Sessions</span>
+                  <span className="sm:hidden">Sessions</span>
+                </CardTitle>
+                <Calendar className="h-3 w-3 lg:h-4 lg:w-4 text-muted-foreground flex-shrink-0" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className="px-0 pb-0">
+                <div className="text-lg lg:text-2xl font-bold">
                   {Math.max(mood.total, difficulty.total)}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   This {selectedTimeRange}
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Feedback Notes</CardTitle>
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            <Card className="p-3 lg:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs lg:text-sm font-medium truncate">
+                  <span className="hidden sm:inline">Feedback Notes</span>
+                  <span className="sm:hidden">Notes</span>
+                </CardTitle>
+                <MessageCircle className="h-3 w-3 lg:h-4 lg:w-4 text-muted-foreground flex-shrink-0" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className="px-0 pb-0">
+                <div className="text-lg lg:text-2xl font-bold">
                   {[...moodEntries, ...difficultyEntries].filter(entry => 
                     (entry as any).notes || (entry as any).feedback
                   ).length}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   Notes provided
                 </p>
               </CardContent>
@@ -339,25 +365,34 @@ export default function LearningFeedback() {
                   No mood entries found for the selected time range
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 lg:space-y-4">
                   {moodEntries.map((entry: MoodEntry) => (
-                    <div key={entry.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{entry.mood}</span>
-                          <div>
-                            <div className="font-medium capitalize">{entry.moodLabel}</div>
-                            <div className="text-sm text-muted-foreground capitalize">
+                    <div key={entry.id} className="border rounded-lg p-3 lg:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
+                          <span className="text-xl lg:text-2xl flex-shrink-0">{entry.mood}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium capitalize text-sm lg:text-base truncate">
+                              {entry.moodLabel}
+                            </div>
+                            <div className="text-xs lg:text-sm text-muted-foreground capitalize truncate">
                               {entry.context.replace('_', ' ')}
                             </div>
                           </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {format(new Date(entry.createdAt), 'MMM d, yyyy h:mm a')}
+                        <div className="text-xs lg:text-sm text-muted-foreground flex-shrink-0">
+                          <span className="hidden sm:inline">
+                            {format(new Date(entry.createdAt), 'MMM d, yyyy h:mm a')}
+                          </span>
+                          <span className="sm:hidden">
+                            {format(new Date(entry.createdAt), 'MMM d, h:mm a')}
+                          </span>
                         </div>
                       </div>
                       {entry.notes && (
-                        <p className="text-sm text-muted-foreground mt-2">{entry.notes}</p>
+                        <p className="text-xs lg:text-sm text-muted-foreground mt-2 break-words">
+                          {entry.notes}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -384,25 +419,34 @@ export default function LearningFeedback() {
                   No difficulty entries found for the selected time range
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 lg:space-y-4">
                   {difficultyEntries.map((entry: DifficultyEntry) => (
-                    <div key={entry.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{entry.difficulty}</span>
-                          <div>
-                            <div className="font-medium capitalize">{entry.difficultyLabel}</div>
-                            <div className="text-sm text-muted-foreground">
+                    <div key={entry.id} className="border rounded-lg p-3 lg:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
+                          <span className="text-xl lg:text-2xl flex-shrink-0">{entry.difficulty}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium capitalize text-sm lg:text-base truncate">
+                              {entry.difficultyLabel}
+                            </div>
+                            <div className="text-xs lg:text-sm text-muted-foreground truncate">
                               {entry.contentTitle} ({entry.contentType})
                             </div>
                           </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {format(new Date(entry.createdAt), 'MMM d, yyyy h:mm a')}
+                        <div className="text-xs lg:text-sm text-muted-foreground flex-shrink-0">
+                          <span className="hidden sm:inline">
+                            {format(new Date(entry.createdAt), 'MMM d, yyyy h:mm a')}
+                          </span>
+                          <span className="sm:hidden">
+                            {format(new Date(entry.createdAt), 'MMM d, h:mm a')}
+                          </span>
                         </div>
                       </div>
                       {entry.feedback && (
-                        <p className="text-sm text-muted-foreground mt-2">{entry.feedback}</p>
+                        <p className="text-xs lg:text-sm text-muted-foreground mt-2 break-words">
+                          {entry.feedback}
+                        </p>
                       )}
                     </div>
                   ))}
