@@ -255,6 +255,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Question Generation routes
   app.post('/api/testbanks/:id/generate-questions',  upload.any(), async (req: any, res) => {
     try {
+      console.log("Raw req.body:", req.body); // Debug log
+      console.log("Raw req.files:", req.files); // Debug log
+      
       // Parse the data from the multipart form
       const data = JSON.parse(req.body.data || '{}');
       
@@ -291,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const questionData = insertQuestionSchema.parse({
           ...generatedQuestion,
           testbankId: req.params.id,
-          creatorId: req.user.claims?.sub || req.user.id,
+          creatorId: req.user?.claims?.sub || req.user?.id || "test-user",
           // Convert numeric values to strings for validation
           points: generatedQuestion.points?.toString() || "1.00",
           difficultyScore: generatedQuestion.difficultyScore?.toString() || "5.0",
