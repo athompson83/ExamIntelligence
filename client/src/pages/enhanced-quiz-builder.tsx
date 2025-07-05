@@ -956,6 +956,55 @@ export default function EnhancedQuizBuilder() {
                           </Card>
                         ))}
                       </div>
+                      
+                      {selectedQuestions.length > 0 && (
+                        <div className="flex justify-end pt-4 border-t">
+                          <Button
+                            onClick={async () => {
+                              if (!quiz.id) {
+                                toast({
+                                  title: "Error",
+                                  description: "Please save the quiz first before adding questions.",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+
+                              try {
+                                // Add selected questions to quiz
+                                const response = await apiRequest("POST", `/api/quizzes/${quiz.id}/questions`, {
+                                  questionIds: selectedQuestions
+                                });
+                                
+                                if (response.ok) {
+                                  toast({
+                                    title: "Questions Added",
+                                    description: `${selectedQuestions.length} questions added to quiz.`,
+                                  });
+                                  
+                                  // Clear selection
+                                  setSelectedQuestions([]);
+                                  
+                                  // Optionally refresh quiz data
+                                  queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
+                                } else {
+                                  throw new Error("Failed to add questions");
+                                }
+                              } catch (error) {
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to add questions to quiz. Please try again.",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add {selectedQuestions.length} Selected Question{selectedQuestions.length === 1 ? '' : 's'}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
