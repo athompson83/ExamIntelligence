@@ -82,7 +82,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Exams</p>
                 <p className="text-3xl font-bold text-primary">
-                  {dashboardStats?.activeQuizzes || 0}
+                  {dashboardStats?.activeExams || 0}
                 </p>
               </div>
               <div className="stats-icon bg-primary/10">
@@ -95,7 +95,9 @@ export default function Dashboard() {
             <CardContent className="flex items-center justify-between p-6">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Students</p>
-                <p className="text-3xl font-bold text-secondary">1,247</p>
+                <p className="text-3xl font-bold text-secondary">
+                  {dashboardStats?.totalStudents || 0}
+                </p>
               </div>
               <div className="stats-icon bg-secondary/10">
                 <Users className="h-6 w-6 text-secondary" />
@@ -108,7 +110,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Item Banks</p>
                 <p className="text-3xl font-bold text-accent">
-                  {dashboardStats?.testbankCount || 0}
+                  {dashboardStats?.itemBanks || 0}
                 </p>
               </div>
               <div className="stats-icon bg-accent/10">
@@ -121,7 +123,9 @@ export default function Dashboard() {
             <CardContent className="flex items-center justify-between p-6">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300">AI Validations</p>
-                <p className="text-3xl font-bold text-purple-600">156</p>
+                <p className="text-3xl font-bold text-purple-600">
+                  {dashboardStats?.aiValidations || 0}
+                </p>
               </div>
               <div className="stats-icon bg-purple-100">
                 <Brain className="h-6 w-6 text-purple-600" />
