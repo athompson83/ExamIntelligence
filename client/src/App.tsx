@@ -24,6 +24,7 @@ import ComprehensiveAnalytics from "@/pages/ComprehensiveAnalytics";
 import NotFound from "@/pages/not-found";
 import ProjectStatus from "@/pages/project-status";
 import LanguageTest from "@/pages/language-test";
+import Settings from "@/pages/Settings";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -68,6 +69,7 @@ function Router() {
           </Route>
           <Route path="/user-management" component={UserManagement} />
           <Route path="/admin-settings" component={AdminSettings} />
+          <Route path="/settings" component={Settings} />
           <Route path="/reference-banks" component={ReferenceBanks} />
           <Route path="/study-aids" component={StudyAids} />
           <Route path="/project-status" component={ProjectStatus} />
