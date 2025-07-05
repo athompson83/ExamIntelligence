@@ -10,7 +10,8 @@ import {
   Users, 
   Settings,
   Puzzle,
-  Award
+  Award,
+  SettingsIcon
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -30,6 +31,7 @@ export default function Sidebar() {
   const systemItems = [
     ...(user?.role === 'admin' ? [{ href: "/user-management", label: "User Management", icon: Users }] : []),
     { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/accessibility-settings", label: "Accessibility", icon: SettingsIcon },
   ];
 
   const isActive = (href: string) => {

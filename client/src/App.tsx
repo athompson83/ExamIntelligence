@@ -27,6 +27,7 @@ import LanguageTest from "@/pages/language-test";
 import Settings from "@/pages/Settings";
 import SuperAdminSettings from "@/pages/super-admin-settings";
 import BadgesCertificates from "@/pages/badges-certificates";
+import AccessibilitySettings from "@/pages/accessibility-settings";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -76,6 +77,7 @@ function Router() {
           <Route path="/reference-banks" component={ReferenceBanks} />
           <Route path="/study-aids" component={StudyAids} />
           <Route path="/badges-certificates" component={BadgesCertificates} />
+          <Route path="/accessibility-settings" component={AccessibilitySettings} />
           <Route path="/project-status" component={ProjectStatus} />
           <Route path="/exam/:id">
             {(params) => <ExamInterface examId={params.id} />}

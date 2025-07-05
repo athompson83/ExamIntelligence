@@ -48,6 +48,17 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role", { enum: ["super_admin", "admin", "teacher", "student"] }).notNull().default("student"),
   accountId: uuid("account_id").references(() => accounts.id),
+  accessibilitySettings: jsonb("accessibility_settings").default({
+    highContrast: false,
+    textToSpeech: false,
+    fontSize: "medium",
+    reducedMotion: false,
+    keyboardNavigation: false,
+    screenReader: false,
+    voiceSpeed: 1.0,
+    voicePitch: 1.0,
+    autoReadContent: false
+  }),
   isActive: boolean("is_active").notNull().default(true),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),

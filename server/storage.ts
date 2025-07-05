@@ -998,6 +998,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(questionGroups.id, groupId));
   }
 
+  // Accessibility Settings
+  async updateUserAccessibilitySettings(userId: string, settings: any): Promise<void> {
+    await db.update(users)
+      .set({ 
+        accessibilitySettings: settings,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+
   async getQuestionsByGroup(groupId: string): Promise<Question[]> {
     // For now, return empty array until proper junction table is implemented
     return [];

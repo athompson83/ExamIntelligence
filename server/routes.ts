@@ -2948,6 +2948,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Accessibility Settings Routes
+  app.get("/api/accessibility-settings", async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
+      const user = await storage.getUserById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const settings = user.accessibilitySettings || {
+        highContrast: false,
+        textToSpeech: false,
+        fontSize: "medium",
+        reducedMotion: false,
+        keyboardNavigation: false,
+        screenReader: false,
+        voiceSpeed: 1.0,
+        voicePitch: 1.0,
+        autoReadContent: false
+      };
+
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching accessibility settings:", error);
+      res.status(500).json({ message: "Failed to fetch accessibility settings" });
+    }
+  });
+
+  app.put("/api/accessibility-settings", async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
+      const settings = req.body;
+
+      await storage.updateUserAccessibilitySettings(userId, settings);
+
+      res.json({ message: "Accessibility settings updated successfully" });
+    } catch (error) {
+      console.error("Error updating accessibility settings:", error);
+      res.status(500).json({ message: "Failed to update accessibility settings" });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 

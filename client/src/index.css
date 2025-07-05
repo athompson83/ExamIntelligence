@@ -91,3 +91,107 @@
     @apply bg-gray-100 transform translate-x-1;
   }
 }
+
+/* Accessibility Styles */
+
+/* High Contrast Mode */
+.high-contrast {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 80%;
+  --accent: 0 0% 20%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 30%;
+  --input: 0 0% 20%;
+  --ring: 0 0% 100%;
+}
+
+.high-contrast * {
+  border-color: hsl(var(--border)) !important;
+}
+
+.high-contrast img {
+  filter: contrast(1.2) brightness(0.9);
+}
+
+.high-contrast .text-gray-500,
+.high-contrast .text-gray-600,
+.high-contrast .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Font Size Scaling */
+:root {
+  --font-size-multiplier: 1;
+}
+
+html.font-size-adjusted {
+  font-size: calc(1rem * var(--font-size-multiplier));
+}
+
+/* Enhanced Focus Indicators for Keyboard Navigation */
+.enhanced-focus *:focus {
+  outline: 3px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring)) !important;
+}
+
+/* Reduced Motion */
+:root {
+  --animation-duration: 0.3s;
+  --transition-duration: 0.15s;
+}
+
+* {
+  animation-duration: var(--animation-duration) !important;
+  transition-duration: var(--transition-duration) !important;
+}
+
+/* Screen Reader Only Content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Text-to-Speech Indicators */
+.speaking-indicator {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* High contrast improvements */
+.high-contrast button,
+.high-contrast [role="button"] {
+  border: 2px solid hsl(var(--border)) !important;
+}
+
+.high-contrast a {
+  text-decoration: underline !important;
+  color: hsl(var(--primary)) !important;
+}
