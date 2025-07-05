@@ -724,7 +724,9 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
 
     // Build comprehensive prompt
     const prompt = `
-      Generate ${questionCount} high-quality educational questions about: "${topic}"
+      CRITICAL REQUIREMENT: Generate exactly ${questionCount} high-quality educational questions about: "${topic}"
+      
+      YOU MUST GENERATE ALL ${questionCount} QUESTIONS - NO EXCEPTIONS.
       
       GENERATION PARAMETERS:
       - Question Types: ${questionTypes.join(', ')}
@@ -819,7 +821,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       8. ${includeImages ? 'Suggest relevant images or diagrams that enhance understanding' : ''}
       9. ${includeMultimedia ? 'Include multimedia suggestions that support learning objectives' : ''}
       
-      Return a JSON array with this exact structure:
+      CRITICAL: Return exactly ${questionCount} questions. Your response must contain all ${questionCount} questions in this exact JSON structure:
       {
         "questions": [
           {
@@ -868,6 +870,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
+      max_tokens: 16000, // Increase token limit for larger question sets
       messages: [
         {
           role: "system",
@@ -918,6 +921,12 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
 
     const result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
     const questions = result.questions || [];
+
+    // Check if we got the expected number of questions
+    if (questions.length < questionCount) {
+      console.warn(`Warning: AI generated ${questions.length} questions instead of requested ${questionCount}`);
+      console.log("Actual response:", response.choices[0].message.content?.substring(0, 1000));
+    }
 
     // Validate and process each question with enhanced quality checks
     const processedQuestions = questions.map((question: any, index: number) => {
