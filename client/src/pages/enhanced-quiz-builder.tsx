@@ -131,10 +131,19 @@ export default function EnhancedQuizBuilder() {
 
   const saveDraftMutation = useMutation({
     mutationFn: async (draftData: Partial<Quiz>) => {
-      return apiRequest('/api/quizzes', {
+      const response = await fetch('/api/quizzes', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(draftData),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -155,7 +164,9 @@ export default function EnhancedQuizBuilder() {
 
   const handleSaveDraft = () => {
     const draftData = {
-      ...quiz,
+      title: quiz.title || "Untitled Quiz",
+      description: quiz.description || null,
+      instructions: quiz.instructions || null,
       status: "draft" as const,
       timeLimit: quiz.timeLimit || null,
     };
@@ -356,14 +367,24 @@ export default function EnhancedQuizBuilder() {
                     </CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Label htmlFor="toggle-view" className="text-sm">
-                      {viewingQuizQuestions ? "Show Item Bank Questions" : "Show Quiz Questions"}
-                    </Label>
-                    <Switch
-                      id="toggle-view"
-                      checked={viewingQuizQuestions}
-                      onCheckedChange={setViewingQuizQuestions}
-                    />
+                    <div className="flex rounded-md border">
+                      <Button
+                        variant={!viewingQuizQuestions ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setViewingQuizQuestions(false)}
+                        className="rounded-r-none"
+                      >
+                        Item Banks
+                      </Button>
+                      <Button
+                        variant={viewingQuizQuestions ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setViewingQuizQuestions(true)}
+                        className="rounded-l-none border-l-0"
+                      >
+                        Quiz Questions
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
