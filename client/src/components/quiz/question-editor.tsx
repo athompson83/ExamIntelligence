@@ -336,7 +336,7 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
         
         <div className="space-y-4">
           {formData.answerOptions?.map((option, index) => (
-            <div key={index} className="p-4 border border-border rounded-lg space-y-3">
+            <div key={index} className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="flex items-center">
                   <GripVertical className="h-4 w-4 text-muted-foreground mr-2" />
@@ -346,33 +346,10 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
                       handleAnswerOptionChange(index, 'isCorrect', checked)
                     }
                   />
-                  <Label className="ml-2 text-sm">
-                    {option.isCorrect ? 'Correct' : 'Incorrect'}
+                  <Label className="ml-2 text-sm font-medium">
+                    {option.isCorrect ? '✓ Correct Answer' : 'Possible Answer'}
                   </Label>
                 </div>
-                
-                <div className="flex-1">
-                  <Input
-                    placeholder={`Option ${String.fromCharCode(65 + index)}`}
-                    value={option.answerText}
-                    onChange={(e) => 
-                      handleAnswerOptionChange(index, 'answerText', e.target.value)
-                    }
-                  />
-                </div>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    toast({
-                      title: "Media Upload",
-                      description: "Media upload functionality to be implemented",
-                    });
-                  }}
-                >
-                  <Image className="h-4 w-4" />
-                </Button>
                 
                 {formData.questionType !== 'true_false' && formData.answerOptions && formData.answerOptions.length > 2 && (
                   <Button
@@ -385,20 +362,31 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
                 )}
               </div>
               
-              <div>
-                <Label className="text-sm text-muted-foreground">
-                  Response Feedback (optional)
-                </Label>
-                <Textarea
-                  placeholder="Feedback shown when this option is selected..."
-                  value={option.feedback || ''}
-                  onChange={(e) => 
-                    handleAnswerOptionChange(index, 'feedback', e.target.value)
-                  }
-                  className="mt-1"
-                  rows={2}
-                />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Answer Text</Label>
+                  <RichTextEditor
+                    value={option.answerText}
+                    onChange={(value) => handleAnswerOptionChange(index, 'answerText', value)}
+                    placeholder={`Answer ${String.fromCharCode(65 + index)}`}
+                    className="mt-1"
+                    allowMedia={true}
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Answer Comment</Label>
+                  <RichTextEditor
+                    value={option.feedback || ''}
+                    onChange={(value) => handleAnswerOptionChange(index, 'feedback', value)}
+                    placeholder="Feedback for this specific answer..."
+                    className="mt-1"
+                    allowMedia={false}
+                  />
+                </div>
               </div>
+              
+              <Separator />
             </div>
           ))}
         </div>
@@ -483,57 +471,77 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
             )}
           </TabsContent>
 
-          <TabsContent value="feedback" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Question Feedback</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="generalFeedback">General Feedback</Label>
-                  <RichTextEditor
-                    value={formData.generalFeedback || ''}
-                    onChange={(value) => handleInputChange('generalFeedback', value)}
-                    placeholder="Provide general feedback that appears regardless of student response..."
-                    className="mt-1"
-                    allowMedia={true}
-                  />
-                </div>
+          <TabsContent value="feedback" className="space-y-6">
+            <div className="space-y-6">
+              <div>
+                <Label className="text-base font-semibold">Question Feedback Settings</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Configure feedback messages that students will see based on their responses.
+                </p>
+              </div>
 
-                <div>
-                  <Label htmlFor="correctFeedback">Correct Answer Feedback</Label>
-                  <RichTextEditor
-                    value={formData.correctFeedback || ''}
-                    onChange={(value) => handleInputChange('correctFeedback', value)}
-                    placeholder="Feedback shown when student answers correctly..."
-                    className="mt-1"
-                    allowMedia={true}
-                  />
-                </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <Label className="font-semibold text-green-700">Correct Answer Feedback</Label>
+                    </div>
+                    <RichTextEditor
+                      value={formData.correctFeedback || ''}
+                      onChange={(value) => handleInputChange('correctFeedback', value)}
+                      placeholder="Feedback shown when the student answers correctly..."
+                      allowMedia={false}
+                    />
+                  </div>
+                </Card>
 
-                <div>
-                  <Label htmlFor="incorrectFeedback">Incorrect Answer Feedback</Label>
-                  <RichTextEditor
-                    value={formData.incorrectFeedback || ''}
-                    onChange={(value) => handleInputChange('incorrectFeedback', value)}
-                    placeholder="Feedback shown when student answers incorrectly..."
-                    className="mt-1"
-                    allowMedia={true}
-                  />
-                </div>
+                <Card className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <Label className="font-semibold text-red-700">Incorrect Answer Feedback</Label>
+                    </div>
+                    <RichTextEditor
+                      value={formData.incorrectFeedback || ''}
+                      onChange={(value) => handleInputChange('incorrectFeedback', value)}
+                      placeholder="Feedback shown when the student answers incorrectly..."
+                      allowMedia={false}
+                    />
+                  </div>
+                </Card>
 
-                <div>
-                  <Label htmlFor="neutralFeedback">Neutral Feedback</Label>
+                <Card className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <Label className="font-semibold text-blue-700">General Feedback (All)</Label>
+                    </div>
+                    <RichTextEditor
+                      value={formData.generalFeedback || ''}
+                      onChange={(value) => handleInputChange('generalFeedback', value)}
+                      placeholder="Feedback shown to all students regardless of their answer..."
+                      allowMedia={false}
+                    />
+                  </div>
+                </Card>
+              </div>
+
+              <Card className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                    <Label className="font-semibold text-gray-700">Neutral/Partial Credit Feedback</Label>
+                  </div>
                   <RichTextEditor
                     value={formData.neutralFeedback || ''}
                     onChange={(value) => handleInputChange('neutralFeedback', value)}
-                    placeholder="Feedback shown for partial credit or neutral responses..."
-                    className="mt-1"
-                    allowMedia={true}
+                    placeholder="Feedback for partial credit or neutral responses..."
+                    allowMedia={false}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="metadata" className="space-y-4">
