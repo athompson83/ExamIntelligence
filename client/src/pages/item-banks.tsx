@@ -14,7 +14,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, Search, Edit, Trash2, BookOpen, Clock, Tag, Zap } from "lucide-react";
+import { Plus, Search, Edit, Trash2, BookOpen, Clock, Tag, Zap, Download, FileText, Upload } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator 
+} from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 
 interface Testbank {
@@ -137,6 +144,54 @@ export default function ItemBanks() {
       });
     },
   });
+
+  const exportTestbankMutation = useMutation({
+    mutationFn: async ({ id, format }: { id: string; format: string }) => {
+      const response = await fetch(`/api/testbanks/${id}/export?format=${format}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      return { response, format };
+    },
+    onSuccess: async ({ response, format }, { id }) => {
+      const testbank = testbanks?.find((t: Testbank) => t.id === id);
+      const filename = `${testbank?.title || 'testbank'}_${format}.${format === 'qti' ? 'zip' : format}`;
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Export Complete",
+        description: `Item bank exported as ${format.toUpperCase()}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export item bank",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleExport = (testbankId: string, format: string) => {
+    exportTestbankMutation.mutate({ id: testbankId, format });
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -355,6 +410,69 @@ export default function ItemBanks() {
                             <BookOpen className="h-3 w-3 mr-1" />
                             View Questions
                           </Button>
+                          
+                          {/* Export Dropdown */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="text-xs">
+                                <Download className="h-3 w-3 mr-1" />
+                                Export
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                onClick={() => handleExport(testbank.id, 'qti')}
+                                disabled={exportTestbankMutation.isPending}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                QTI Package (.zip)
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleExport(testbank.id, 'json')}
+                                disabled={exportTestbankMutation.isPending}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                JSON Format
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleExport(testbank.id, 'csv')}
+                                disabled={exportTestbankMutation.isPending}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                CSV Format
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleExport(testbank.id, 'xml')}
+                                disabled={exportTestbankMutation.isPending}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                XML Format
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleExport(testbank.id, 'canvas')}
+                                disabled={exportTestbankMutation.isPending}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Canvas Compatible
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleExport(testbank.id, 'moodle')}
+                                disabled={exportTestbankMutation.isPending}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Moodle Compatible
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleExport(testbank.id, 'blackboard')}
+                                disabled={exportTestbankMutation.isPending}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Blackboard Compatible
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+
                           <Button 
                             variant="outline" 
                             size="sm"

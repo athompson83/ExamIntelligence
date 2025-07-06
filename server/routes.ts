@@ -42,6 +42,14 @@ import {
   generateNewAnswerOptionsWithContext
 } from "./aiService";
 import { DifficultyService } from "./difficultyService";
+import { 
+  generateQTIExport,
+  generateCSVExport,
+  generateXMLExport,
+  generateCanvasExport,
+  generateMoodleExport,
+  generateBlackboardExport
+} from "./exportService";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -938,6 +946,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting testbank:", error);
       res.status(500).json({ message: "Failed to delete testbank" });
+    }
+  });
+
+  // Export testbank in various formats
+  app.get('/api/testbanks/:id/export', mockAuth, async (req: any, res) => {
+    try {
+      const testbankId = req.params.id;
+      const format = req.query.format || 'json';
+      
+      // Get testbank and questions
+      const testbank = await storage.getTestbank(testbankId);
+      if (!testbank) {
+        return res.status(404).json({ message: "Testbank not found" });
+      }
+      
+      const questions = await storage.getQuestionsByTestbank(testbankId);
+      
+      // Fetch answer options for each question
+      const questionsWithOptions = await Promise.all(
+        questions.map(async (question) => {
+          const answerOptions = await storage.getAnswerOptionsByQuestion(question.id);
+          return { ...question, answerOptions };
+        })
+      );
+      
+      // Generate export based on format
+      let exportData: any;
+      let contentType: string;
+      let filename: string;
+      
+      switch (format.toLowerCase()) {
+        case 'qti':
+          exportData = generateQTIExport(testbank, questionsWithOptions);
+          contentType = 'application/zip';
+          filename = `${testbank.title}_qti.zip`;
+          break;
+          
+        case 'csv':
+          exportData = generateCSVExport(testbank, questionsWithOptions);
+          contentType = 'text/csv';
+          filename = `${testbank.title}.csv`;
+          break;
+          
+        case 'xml':
+          exportData = generateXMLExport(testbank, questionsWithOptions);
+          contentType = 'application/xml';
+          filename = `${testbank.title}.xml`;
+          break;
+          
+        case 'canvas':
+          exportData = generateCanvasExport(testbank, questionsWithOptions);
+          contentType = 'application/xml';
+          filename = `${testbank.title}_canvas.xml`;
+          break;
+          
+        case 'moodle':
+          exportData = generateMoodleExport(testbank, questionsWithOptions);
+          contentType = 'application/xml';
+          filename = `${testbank.title}_moodle.xml`;
+          break;
+          
+        case 'blackboard':
+          exportData = generateBlackboardExport(testbank, questionsWithOptions);
+          contentType = 'text/plain';
+          filename = `${testbank.title}_blackboard.txt`;
+          break;
+          
+        default: // json
+          exportData = {
+            testbank,
+            questions: questionsWithOptions,
+            exportedAt: new Date().toISOString(),
+            format: 'ProficiencyAI JSON'
+          };
+          contentType = 'application/json';
+          filename = `${testbank.title}.json`;
+      }
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      
+      if (typeof exportData === 'string') {
+        res.send(exportData);
+      } else {
+        res.json(exportData);
+      }
+      
+    } catch (error) {
+      console.error("Error exporting testbank:", error);
+      res.status(500).json({ message: "Failed to export testbank" });
     }
   });
 
