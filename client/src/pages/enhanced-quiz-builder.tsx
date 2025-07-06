@@ -64,32 +64,17 @@ export default function EnhancedQuizBuilder() {
     title: "",
     description: "",
     instructions: "",
-    status: "draft",
     timeLimit: 60,
-    passingGrade: 70,
     shuffleQuestions: false,
     shuffleAnswers: false,
-    showCorrectAnswers: true,
-    allowReview: true,
     maxAttempts: 1,
-    gradeToShow: "percentage",
-    availableFrom: "",
-    availableUntil: "",
-    catSettings: {
-      initialDifficulty: 5,
-      targetSEM: 0.3,
-      maxQuestions: 50,
-      minQuestions: 10,
-      terminationCriteria: "sem",
-    },
-    attemptSettings: {
-      maxAttempts: 1,
-      attemptGap: 0,
-      attemptGapUnit: "minutes",
-      keepHighestScore: true,
-      allowReviewBetweenAttempts: false,
-      timeExtensions: {},
-    },
+    allowMultipleAttempts: false,
+    proctoring: false,
+    adaptiveTesting: false,
+    enableQuestionFeedback: false,
+    enableLearningPrescription: false,
+    passwordProtected: false,
+    ipLocking: false,
   });
 
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
@@ -177,8 +162,17 @@ export default function EnhancedQuizBuilder() {
       title: quiz.title || "Untitled Quiz",
       description: quiz.description || null,
       instructions: quiz.instructions || null,
-      status: "draft" as const,
       timeLimit: quiz.timeLimit || null,
+      shuffleQuestions: quiz.shuffleQuestions || false,
+      shuffleAnswers: quiz.shuffleAnswers || false,
+      maxAttempts: quiz.maxAttempts || 1,
+      allowMultipleAttempts: quiz.allowMultipleAttempts || false,
+      proctoring: quiz.proctoring || false,
+      adaptiveTesting: quiz.adaptiveTesting || false,
+      enableQuestionFeedback: quiz.enableQuestionFeedback || false,
+      enableLearningPrescription: quiz.enableLearningPrescription || false,
+      passwordProtected: quiz.passwordProtected || false,
+      ipLocking: quiz.ipLocking || false,
     };
     saveDraftMutation.mutate(draftData);
   };
@@ -213,13 +207,12 @@ export default function EnhancedQuizBuilder() {
 
         {/* Main Content */}
         <Tabs defaultValue="basic" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="basic">Basic Settings</TabsTrigger>
             <TabsTrigger value="questions">Questions</TabsTrigger>
             <TabsTrigger value="groups">Question Groups</TabsTrigger>
             <TabsTrigger value="timing">Timing & Attempts</TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
-            <TabsTrigger value="cat">CAT Settings</TabsTrigger>
           </TabsList>
 
           {/* Basic Settings Tab */}
@@ -247,16 +240,9 @@ export default function EnhancedQuizBuilder() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
-                    <Select value={quiz.status || "draft"} onValueChange={(value) => setQuiz(prev => ({ ...prev, status: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="archived">Archived</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center h-10 px-3 py-2 bg-muted rounded-md">
+                      <span className="text-sm text-muted-foreground">Draft</span>
+                    </div>
                   </div>
                 </div>
 
@@ -314,15 +300,16 @@ export default function EnhancedQuizBuilder() {
                       type="number"
                       min="0"
                       max="100"
-                      value={quiz.passingGrade || 70}
-                      onChange={(e) => setQuiz(prev => ({ ...prev, passingGrade: parseInt(e.target.value) || 70 }))}
+                      value="70"
+                      placeholder="70"
+                      disabled
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="gradeToShow">Grade Display</Label>
-                  <Select value={quiz.gradeToShow || "percentage"} onValueChange={(value) => setQuiz(prev => ({ ...prev, gradeToShow: value }))}>
+                  <Select value="percentage" disabled>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -337,21 +324,21 @@ export default function EnhancedQuizBuilder() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="availableFrom">Available From</Label>
+                    <Label htmlFor="startTime">Start Time</Label>
                     <Input
-                      id="availableFrom"
+                      id="startTime"
                       type="datetime-local"
-                      value={quiz.availableFrom || ""}
-                      onChange={(e) => setQuiz(prev => ({ ...prev, availableFrom: e.target.value }))}
+                      value={quiz.startTime ? new Date(quiz.startTime).toISOString().slice(0, 16) : ""}
+                      onChange={(e) => setQuiz(prev => ({ ...prev, startTime: e.target.value ? new Date(e.target.value) : null }))}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="availableUntil">Available Until</Label>
+                    <Label htmlFor="endTime">End Time</Label>
                     <Input
-                      id="availableUntil"
+                      id="endTime"
                       type="datetime-local"
-                      value={quiz.availableUntil || ""}
-                      onChange={(e) => setQuiz(prev => ({ ...prev, availableUntil: e.target.value }))}
+                      value={quiz.endTime ? new Date(quiz.endTime).toISOString().slice(0, 16) : ""}
+                      onChange={(e) => setQuiz(prev => ({ ...prev, endTime: e.target.value ? new Date(e.target.value) : null }))}
                     />
                   </div>
                 </div>
@@ -653,18 +640,10 @@ export default function EnhancedQuizBuilder() {
                       id="max-attempts"
                       type="number"
                       min="1"
-                      value={quiz.attemptSettings?.maxAttempts || 1}
+                      value={quiz.maxAttempts || 1}
                       onChange={(e) => setQuiz(prev => ({
                         ...prev,
-                        attemptSettings: {
-                          ...prev.attemptSettings,
-                          maxAttempts: parseInt(e.target.value) || 1,
-                          attemptGap: prev.attemptSettings?.attemptGap || 0,
-                          attemptGapUnit: prev.attemptSettings?.attemptGapUnit || "minutes",
-                          keepHighestScore: prev.attemptSettings?.keepHighestScore || true,
-                          allowReviewBetweenAttempts: prev.attemptSettings?.allowReviewBetweenAttempts || false,
-                          timeExtensions: prev.attemptSettings?.timeExtensions || {},
-                        }
+                        maxAttempts: parseInt(e.target.value) || 1
                       }))}
                     />
                   </div>
@@ -685,156 +664,26 @@ export default function EnhancedQuizBuilder() {
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="show-correct-answers"
-                    checked={quiz.showCorrectAnswers || false}
-                    onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, showCorrectAnswers: checked }))}
+                    id="enable-question-feedback"
+                    checked={quiz.enableQuestionFeedback || false}
+                    onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableQuestionFeedback: checked }))}
                   />
-                  <Label htmlFor="show-correct-answers">Show Correct Answers After Submission</Label>
+                  <Label htmlFor="enable-question-feedback">Enable Question Feedback</Label>
                 </div>
 
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="allow-review"
-                    checked={quiz.allowReview || false}
-                    onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, allowReview: checked }))}
+                    id="enable-learning-prescription"
+                    checked={quiz.enableLearningPrescription || false}
+                    onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableLearningPrescription: checked }))}
                   />
-                  <Label htmlFor="allow-review">Allow Review Before Submission</Label>
+                  <Label htmlFor="enable-learning-prescription">Enable Learning Prescription</Label>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* CAT Settings Tab */}
-          <TabsContent value="cat">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Computer Adaptive Testing (CAT)
-                </CardTitle>
-                <CardDescription>
-                  Configure adaptive testing parameters for personalized assessments
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="termination-criteria">Termination Criteria</Label>
-                  <Select 
-                    value={quiz.catSettings?.terminationCriteria || "sem"} 
-                    onValueChange={(value) => setQuiz(prev => ({
-                      ...prev,
-                      catSettings: {
-                        ...prev.catSettings,
-                        terminationCriteria: value,
-                        initialDifficulty: prev.catSettings?.initialDifficulty || 5,
-                        targetSEM: prev.catSettings?.targetSEM || 0.3,
-                        maxQuestions: prev.catSettings?.maxQuestions || 50,
-                        minQuestions: prev.catSettings?.minQuestions || 10,
-                      }
-                    }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sem">Standard Error of Measurement</SelectItem>
-                      <SelectItem value="fixed">Fixed Number of Items</SelectItem>
-                      <SelectItem value="confidence">Confidence Interval</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="min-questions">Minimum Questions</Label>
-                    <Input
-                      id="min-questions"
-                      type="number"
-                      min="1"
-                      value={quiz.catSettings?.minQuestions || 10}
-                      onChange={(e) => setQuiz(prev => ({
-                        ...prev,
-                        catSettings: {
-                          ...prev.catSettings,
-                          minQuestions: parseInt(e.target.value) || 10,
-                          initialDifficulty: prev.catSettings?.initialDifficulty || 5,
-                          targetSEM: prev.catSettings?.targetSEM || 0.3,
-                          maxQuestions: prev.catSettings?.maxQuestions || 50,
-                          terminationCriteria: prev.catSettings?.terminationCriteria || "sem",
-                        }
-                      }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="max-questions">Maximum Questions</Label>
-                    <Input
-                      id="max-questions"
-                      type="number"
-                      min="1"
-                      value={quiz.catSettings?.maxQuestions || 50}
-                      onChange={(e) => setQuiz(prev => ({
-                        ...prev,
-                        catSettings: {
-                          ...prev.catSettings,
-                          maxQuestions: parseInt(e.target.value) || 50,
-                          initialDifficulty: prev.catSettings?.initialDifficulty || 5,
-                          targetSEM: prev.catSettings?.targetSEM || 0.3,
-                          minQuestions: prev.catSettings?.minQuestions || 10,
-                          terminationCriteria: prev.catSettings?.terminationCriteria || "sem",
-                        }
-                      }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="target-sem">Target SEM</Label>
-                    <Input
-                      id="target-sem"
-                      type="number"
-                      step="0.01"
-                      min="0.1"
-                      max="1.0"
-                      value={quiz.catSettings?.targetSEM || 0.3}
-                      onChange={(e) => setQuiz(prev => ({
-                        ...prev,
-                        catSettings: {
-                          ...prev.catSettings,
-                          targetSEM: parseFloat(e.target.value) || 0.3,
-                          initialDifficulty: prev.catSettings?.initialDifficulty || 5,
-                          maxQuestions: prev.catSettings?.maxQuestions || 50,
-                          minQuestions: prev.catSettings?.minQuestions || 10,
-                          terminationCriteria: prev.catSettings?.terminationCriteria || "sem",
-                        }
-                      }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="initial-difficulty">Initial Difficulty (1-10)</Label>
-                    <Input
-                      id="initial-difficulty"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={quiz.catSettings?.initialDifficulty || 5}
-                      onChange={(e) => setQuiz(prev => ({
-                        ...prev,
-                        catSettings: {
-                          ...prev.catSettings,
-                          initialDifficulty: parseInt(e.target.value) || 5,
-                          targetSEM: prev.catSettings?.targetSEM || 0.3,
-                          maxQuestions: prev.catSettings?.maxQuestions || 50,
-                          minQuestions: prev.catSettings?.minQuestions || 10,
-                          terminationCriteria: prev.catSettings?.terminationCriteria || "sem",
-                        }
-                      }))}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
 
