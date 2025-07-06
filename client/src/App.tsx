@@ -94,6 +94,7 @@ function Router() {
             {(params) => <ExamInterface examId={params.id} />}
           </Route>
           <Route path="/student-dashboard" component={StudentDashboard} />
+          <Route path="/student-quiz" component={StudentQuiz} />
           <Route path="/student/quiz/:quizId" component={StudentQuiz} />
         </>
       )}
