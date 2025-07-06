@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Bold, 
@@ -15,12 +15,40 @@ import {
   Quote
 } from 'lucide-react';
 
+// Memoized toolbar button component for better performance
+const ToolbarButton = memo(({ 
+  icon: Icon, 
+  onClick, 
+  title, 
+  compact = false 
+}: { 
+  icon: any; 
+  onClick: () => void; 
+  title: string; 
+  compact?: boolean;
+}) => (
+  <Button
+    type="button"
+    variant="ghost"
+    size="sm"
+    onClick={onClick}
+    title={title}
+    className={`p-0 ${compact ? 'h-6 w-6' : 'h-8 w-8'}`}
+    aria-label={title}
+  >
+    <Icon className={`${compact ? 'h-3 w-3' : 'h-4 w-4'}`} />
+  </Button>
+));
+
+ToolbarButton.displayName = 'ToolbarButton';
+
 interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
   allowMedia?: boolean;
+  compact?: boolean;
 }
 
 export function RichTextEditor({ 
@@ -28,15 +56,20 @@ export function RichTextEditor({
   onChange, 
   placeholder = "Enter text...", 
   className = "",
-  allowMedia = true 
+  allowMedia = true,
+  compact = false
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(false);
 
   const execCommand = useCallback((command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+    try {
+      document.execCommand(command, false, value);
+      if (editorRef.current) {
+        onChange(editorRef.current.innerHTML);
+      }
+    } catch (error) {
+      console.warn('Editor command failed:', command, error);
     }
   }, [onChange]);
 
@@ -55,40 +88,48 @@ export function RichTextEditor({
 
   const insertLink = useCallback(() => {
     const url = prompt('Enter URL:');
-    if (url) {
+    if (url && url.trim()) {
       execCommand('createLink', url);
     }
   }, [execCommand]);
 
-  const formatButtons = [
-    { command: 'bold', icon: Bold, title: 'Bold' },
-    { command: 'italic', icon: Italic, title: 'Italic' },
-    { command: 'underline', icon: Underline, title: 'Underline' },
-    { command: 'insertUnorderedList', icon: List, title: 'Bullet List' },
-    { command: 'insertOrderedList', icon: ListOrdered, title: 'Numbered List' },
-    { command: 'justifyLeft', icon: AlignLeft, title: 'Align Left' },
-    { command: 'justifyCenter', icon: AlignCenter, title: 'Align Center' },
-    { command: 'justifyRight', icon: AlignRight, title: 'Align Right' },
-    { command: 'formatBlock', icon: Code, title: 'Code Block', value: 'pre' },
-    { command: 'formatBlock', icon: Quote, title: 'Quote', value: 'blockquote' },
-  ];
+  // Memoized toolbar buttons for better performance
+  const toolbarButtons = useMemo(() => {
+    const baseButtons = [
+      { icon: Bold, command: 'bold', title: 'Bold' },
+      { icon: Italic, command: 'italic', title: 'Italic' },
+      { icon: Underline, command: 'underline', title: 'Underline' },
+      { icon: List, command: 'insertUnorderedList', title: 'Bullet List' },
+      { icon: ListOrdered, command: 'insertOrderedList', title: 'Numbered List' },
+    ];
+
+    if (!compact) {
+      baseButtons.push(
+        { icon: AlignLeft, command: 'justifyLeft', title: 'Align Left' },
+        { icon: AlignCenter, command: 'justifyCenter', title: 'Align Center' },
+        { icon: AlignRight, command: 'justifyRight', title: 'Align Right' },
+        { icon: Code, command: 'code', title: 'Code' },
+        { icon: Quote, command: 'blockquote', title: 'Quote' }
+      );
+    }
+
+    return baseButtons;
+  }, [compact]);
+
+
 
   return (
     <div className={`border rounded-md ${className}`}>
       {/* Toolbar */}
-      <div className="border-b p-2 flex flex-wrap gap-1">
-        {formatButtons.map((btn, index) => (
-          <Button
+      <div className={`border-b p-2 flex flex-wrap gap-1 ${compact ? 'py-1' : ''}`}>
+        {toolbarButtons.map((btn, index) => (
+          <ToolbarButton
             key={index}
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => execCommand(btn.command, btn.value)}
+            icon={btn.icon}
+            onClick={() => execCommand(btn.command)}
             title={btn.title}
-            className="h-8 w-8 p-0"
-          >
-            <btn.icon className="h-4 w-4" />
-          </Button>
+            compact={compact}
+          />
         ))}
         
         {allowMedia && (
@@ -140,7 +181,7 @@ export function RichTextEditor({
         data-placeholder={!value ? placeholder : ''}
       />
       
-      <style jsx>{`
+      <style>{`
         [contenteditable]:empty:before {
           content: attr(data-placeholder);
           color: #9ca3af;

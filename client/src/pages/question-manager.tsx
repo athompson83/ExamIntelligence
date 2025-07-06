@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1396,6 +1396,12 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     <DialogTitle>
                       {editingQuestion ? 'Edit Question' : 'Create New Question'}
                     </DialogTitle>
+                    <DialogDescription>
+                      {editingQuestion 
+                        ? 'Modify the question details, answer options, and feedback using the rich text editor below.'
+                        : 'Create a new question with Canvas LMS-style formatting, media attachments, and comprehensive feedback options.'
+                      }
+                    </DialogDescription>
                   </DialogHeader>
                   
                   {/* Question form content would go here - abbreviated for space */}
