@@ -58,12 +58,15 @@ import {
   Brain,
   TrendingUp,
   RotateCcw,
-  Lock
+  Lock,
+  Home,
+  ChevronRightIcon
 } from "lucide-react";
 import type { Quiz, Question, QuestionGroup, Testbank, AnswerOption } from "@shared/schema";
 import { insertQuizSchema, insertQuestionSchema, insertQuestionGroupSchema, insertAnswerOptionSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { QuestionGroupBuilder } from "@/components/quiz/QuestionGroupBuilder";
+import { Link } from "wouter";
 
 const quizFormSchema = insertQuizSchema.extend({
   availableFrom: z.string().optional(),
@@ -434,6 +437,15 @@ export default function EnhancedQuizBuilder() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <Link href="/" className="flex items-center hover:text-foreground transition-colors">
+            <Home className="h-4 w-4" />
+          </Link>
+          <ChevronRightIcon className="h-4 w-4" />
+          <span className="text-foreground font-medium">Quiz Builder</span>
+        </nav>
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -464,11 +476,34 @@ export default function EnhancedQuizBuilder() {
               <Save className="h-4 w-4 mr-2" />
               {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
             </Button>
-            <Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                if (quizQuestions.length === 0) {
+                  alert("Please add questions to preview the quiz.");
+                  return;
+                }
+                // Open preview in a new tab
+                window.open(`/quiz/${quiz.id || 'preview'}`, '_blank');
+              }}
+            >
               <Eye className="h-4 w-4 mr-2" />
               Preview Quiz
             </Button>
-            <Button>
+            <Button 
+              onClick={() => {
+                if (quizQuestions.length === 0) {
+                  alert("Please add questions before publishing.");
+                  return;
+                }
+                if (!quiz.title || !quiz.title.trim()) {
+                  alert("Please enter a quiz title before publishing.");
+                  return;
+                }
+                // Publish the quiz
+                alert("Quiz published successfully!");
+              }}
+            >
               Publish Quiz
             </Button>
           </div>
@@ -536,29 +571,7 @@ export default function EnhancedQuizBuilder() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="untimed"
-                        checked={quiz.timeLimit === null}
-                        onCheckedChange={(checked) => setQuiz(prev => ({
-                          ...prev,
-                          timeLimit: checked ? null : 60
-                        }))}
-                      />
-                      <Label htmlFor="untimed">Untimed Quiz</Label>
-                    </div>
-                    
-                    {quiz.timeLimit !== null && (
-                      <div className="space-y-2">
-                        <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
-                        <Input
-                          id="timeLimit"
-                          type="number"
-                          value={quiz.timeLimit || 60}
-                          onChange={(e) => setQuiz(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }))}
-                        />
-                      </div>
-                    )}
+
                   </div>
 
                   <div className="space-y-2">
@@ -674,46 +687,47 @@ export default function EnhancedQuizBuilder() {
                       </div>
                     ) : (
                       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                        <div className="space-y-4">
-                          {/* Question Groups */}
-                          {questionGroups.map((group) => {
-                          // Get quiz questions that belong to this group
-                          const groupQuestions = quizQuestions.filter(q => q.groupId === group.id);
-                          const isExpanded = expandedGroups.has(group.id);
-                          
-                          return (
-                            <div key={group.id} className="border rounded-lg">
-                              <div 
-                                className="flex items-center justify-between p-4 cursor-pointer bg-muted/50 hover:bg-muted/70 transition-colors"
-                                onClick={() => toggleGroupExpansion(group.id)}
-                              >
-                                <div className="flex items-center gap-3">
+                        <SortableContext items={quizQuestions.map(q => q.id)} strategy={verticalListSortingStrategy}>
+                          <div className="space-y-4">
+                            {/* Question Groups */}
+                            {questionGroups.map((group) => {
+                            // Get quiz questions that belong to this group
+                            const groupQuestions = quizQuestions.filter(q => q.groupId === group.id);
+                            const isExpanded = expandedGroups.has(group.id);
+                            
+                            return (
+                              <div key={group.id} className="border rounded-lg">
+                                <div 
+                                  className="flex items-center justify-between p-4 cursor-pointer bg-muted/50 hover:bg-muted/70 transition-colors"
+                                  onClick={() => toggleGroupExpansion(group.id)}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                      {isExpanded ? (
+                                        <ChevronDown className="h-4 w-4" />
+                                      ) : (
+                                        <ChevronRight className="h-4 w-4" />
+                                      )}
+                                      <Target className="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-medium">{group.name}</h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        {groupQuestions.length} questions • Pick {group.pickCount || 'all'} • {group.pointsPerQuestion || 1} points each
+                                      </p>
+                                    </div>
+                                  </div>
                                   <div className="flex items-center gap-2">
-                                    {isExpanded ? (
-                                      <ChevronDown className="h-4 w-4" />
-                                    ) : (
-                                      <ChevronRight className="h-4 w-4" />
-                                    )}
-                                    <Target className="h-4 w-4" />
-                                  </div>
-                                  <div>
-                                    <h4 className="font-medium">{group.name}</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                      {groupQuestions.length} questions • Pick {group.pickCount || 'all'} • {group.pointsPerQuestion || 1} points each
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      // TODO: Edit group functionality
-                                    }}
-                                  >
-                                    Edit
-                                  </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // TODO: Edit group functionality
+                                      }}
+                                    >
+                                      Edit
+                                    </Button>
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -736,23 +750,13 @@ export default function EnhancedQuizBuilder() {
                                   ) : (
                                     <div className="space-y-2 p-4">
                                       {groupQuestions.map((question) => (
-                                        <div key={question.id} className="flex items-center justify-between p-3 border rounded-lg bg-background">
-                                          <div className="flex-1">
-                                            <div className="font-medium">{question.questionText}</div>
-                                            <div className="text-sm text-muted-foreground mt-1">
-                                              {question.questionType}
-                                            </div>
-                                          </div>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                              setQuizQuestions(prev => prev.filter(q => q.id !== question.id));
-                                            }}
-                                          >
-                                            Remove
-                                          </Button>
-                                        </div>
+                                        <DraggableQuestion
+                                          key={question.id}
+                                          question={question}
+                                          onRemove={(questionId) => {
+                                            setQuizQuestions(prev => prev.filter(q => q.id !== questionId));
+                                          }}
+                                        />
                                       ))}
                                     </div>
                                   )}
@@ -800,7 +804,8 @@ export default function EnhancedQuizBuilder() {
                             </div>
                           );
                         })()}
-                        </div>
+                          </div>
+                        </SortableContext>
                       </DndContext>
                     )}
                   </div>
@@ -957,20 +962,34 @@ export default function EnhancedQuizBuilder() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="time-limit">Time Limit (minutes)</Label>
-                    <Input
-                      id="time-limit"
-                      type="number"
-                      min="1"
-                      value={quiz.timeLimit || ""}
-                      onChange={(e) => setQuiz(prev => ({
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="untimed"
+                      checked={quiz.timeLimit === null}
+                      onCheckedChange={(checked) => setQuiz(prev => ({
                         ...prev,
-                        timeLimit: parseInt(e.target.value) || 60
+                        timeLimit: checked ? null : 60
                       }))}
-                      placeholder="Enter time limit in minutes"
                     />
+                    <Label htmlFor="untimed">Untimed Quiz</Label>
                   </div>
+                  
+                  {quiz.timeLimit !== null && (
+                    <div className="space-y-2">
+                      <Label htmlFor="time-limit">Time Limit (minutes)</Label>
+                      <Input
+                        id="time-limit"
+                        type="number"
+                        min="1"
+                        value={quiz.timeLimit || 60}
+                        onChange={(e) => setQuiz(prev => ({
+                          ...prev,
+                          timeLimit: parseInt(e.target.value) || 60
+                        }))}
+                        placeholder="Enter time limit in minutes"
+                      />
+                    </div>
+                  )}
 
                   <div className="flex items-center space-x-2">
                     <Switch

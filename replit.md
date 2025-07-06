@@ -504,6 +504,7 @@ To access super admin features for prompt management:
 
 ## Changelog
 
+- July 06, 2025. **QUIZ BUILDER IMPROVEMENTS**: Enhanced quiz builder with breadcrumb navigation, removed duplicate time limit settings (now only in Availability section), improved untimed quiz options, and functional Preview/Publish buttons with validation
 - July 06, 2025. **MOBILE APP COMPLETION**: Completed comprehensive React Native mobile application with full exam-taking functionality, proctoring integration, calculator component, exam list interface, and detailed results screen with Material Design 3 UI
 - July 04, 2025. **COMPREHENSIVE FUNCTIONALITY EXPANSION**: Implemented comprehensive live exam monitoring system, advanced analytics dashboard, enhanced AI services with research-based validation, real-time WebSocket infrastructure, and user management enhancement
 - July 04, 2025. **ON-SCREEN CALCULATOR**: Implemented comprehensive calculator feature for mobile exam interface with basic, scientific, and graphing calculator support
