@@ -39,6 +39,12 @@ import CATExamBuilder from "@/pages/CATExamBuilder";
 import ProctoringSecurity from "@/pages/proctoring-security";
 import QuestionFeedbackPage from "@/pages/question-feedback";
 import AnonymousQuizAccessPage from "@/pages/anonymous-quiz-access";
+import NotificationSettings from "@/pages/notification-settings";
+import BugReporting from "@/pages/bug-reporting";
+import Announcements from "@/pages/announcements";
+import QuestionFlagging from "@/pages/question-flagging";
+import AIChatbot from "@/pages/ai-chatbot";
+import BackendPromptManagement from "@/pages/backend-prompt-management";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -100,6 +106,12 @@ function Router() {
           <Route path="/project-status" component={ProjectStatus} />
           <Route path="/question-feedback" component={QuestionFeedbackPage} />
           <Route path="/anonymous-quiz-access" component={AnonymousQuizAccessPage} />
+          <Route path="/notification-settings" component={NotificationSettings} />
+          <Route path="/bug-reporting" component={BugReporting} />
+          <Route path="/announcements" component={Announcements} />
+          <Route path="/question-flagging" component={QuestionFlagging} />
+          <Route path="/ai-chatbot" component={AIChatbot} />
+          <Route path="/backend-prompt-management" component={BackendPromptManagement} />
           <Route path="/exam/:id">
             {(params) => <ExamInterface examId={params.id} />}
           </Route>
