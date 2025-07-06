@@ -3836,6 +3836,366 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Badge Routes (for managing user earned badges)
+  app.get('/api/user-badges/user/:userId', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Users can only view their own badges unless they're admin/teacher
+      if (user.role === 'student' && user.id !== req.params.userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const userBadges = await storage.getUserBadgesWithBadgeDetails(req.params.userId);
+      res.json(userBadges);
+    } catch (error) {
+      console.error('Error fetching user badges:', error);
+      res.status(500).json({ message: 'Failed to fetch user badges' });
+    }
+  });
+
+  app.post('/api/user-badges', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const userBadge = await storage.createUserBadge(req.body);
+      res.status(201).json(userBadge);
+    } catch (error) {
+      console.error('Error creating user badge:', error);
+      res.status(500).json({ message: 'Failed to create user badge' });
+    }
+  });
+
+  app.delete('/api/user-badges/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      await storage.deleteUserBadge(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting user badge:', error);
+      res.status(500).json({ message: 'Failed to delete user badge' });
+    }
+  });
+
+  // Learning Milestone Routes
+  app.get('/api/learning-milestones/user/:userId', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Users can only view their own milestones unless they're admin/teacher
+      if (user.role === 'student' && user.id !== req.params.userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const milestones = await storage.getLearningMilestonesByUser(req.params.userId);
+      res.json(milestones);
+    } catch (error) {
+      console.error('Error fetching learning milestones:', error);
+      res.status(500).json({ message: 'Failed to fetch learning milestones' });
+    }
+  });
+
+  app.get('/api/learning-milestones/account', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'teacher' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin or teacher access required' });
+      }
+
+      const milestones = await storage.getLearningMilestonesByAccount(user.accountId);
+      res.json(milestones);
+    } catch (error) {
+      console.error('Error fetching account learning milestones:', error);
+      res.status(500).json({ message: 'Failed to fetch account learning milestones' });
+    }
+  });
+
+  app.post('/api/learning-milestones', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const milestoneData = {
+        ...req.body,
+        accountId: user.accountId,
+        userId: req.body.userId || user.id
+      };
+
+      const milestone = await storage.createLearningMilestone(milestoneData);
+      res.status(201).json(milestone);
+    } catch (error) {
+      console.error('Error creating learning milestone:', error);
+      res.status(500).json({ message: 'Failed to create learning milestone' });
+    }
+  });
+
+  app.put('/api/learning-milestones/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const milestone = await storage.getLearningMilestone(req.params.id);
+      if (!milestone || milestone.accountId !== user.accountId) {
+        return res.status(404).json({ message: 'Learning milestone not found' });
+      }
+
+      const updatedMilestone = await storage.updateLearningMilestone(req.params.id, req.body);
+      res.json(updatedMilestone);
+    } catch (error) {
+      console.error('Error updating learning milestone:', error);
+      res.status(500).json({ message: 'Failed to update learning milestone' });
+    }
+  });
+
+  app.delete('/api/learning-milestones/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const milestone = await storage.getLearningMilestone(req.params.id);
+      if (!milestone || milestone.accountId !== user.accountId) {
+        return res.status(404).json({ message: 'Learning milestone not found' });
+      }
+
+      await storage.deleteLearningMilestone(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting learning milestone:', error);
+      res.status(500).json({ message: 'Failed to delete learning milestone' });
+    }
+  });
+
+  // Social Share Routes
+  app.get('/api/social-shares/user/:userId', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Users can only view their own shares unless they're admin/teacher
+      if (user.role === 'student' && user.id !== req.params.userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const shares = await storage.getSocialSharesByUser(req.params.userId);
+      res.json(shares);
+    } catch (error) {
+      console.error('Error fetching user social shares:', error);
+      res.status(500).json({ message: 'Failed to fetch user social shares' });
+    }
+  });
+
+  app.get('/api/social-shares/public', async (req: any, res) => {
+    try {
+      const shares = await storage.getPublicSocialShares();
+      res.json(shares);
+    } catch (error) {
+      console.error('Error fetching public social shares:', error);
+      res.status(500).json({ message: 'Failed to fetch public social shares' });
+    }
+  });
+
+  app.get('/api/social-shares/platform/:platform', async (req: any, res) => {
+    try {
+      const shares = await storage.getSocialSharesByPlatform(req.params.platform);
+      res.json(shares);
+    } catch (error) {
+      console.error('Error fetching platform social shares:', error);
+      res.status(500).json({ message: 'Failed to fetch platform social shares' });
+    }
+  });
+
+  app.post('/api/social-shares', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const shareData = {
+        ...req.body,
+        userId: user.id
+      };
+
+      const share = await storage.createSocialShare(shareData);
+      res.status(201).json(share);
+    } catch (error) {
+      console.error('Error creating social share:', error);
+      res.status(500).json({ message: 'Failed to create social share' });
+    }
+  });
+
+  app.post('/api/social-shares/:id/engage/:type', async (req: any, res) => {
+    try {
+      const { id, type } = req.params;
+      
+      if (!['view', 'like', 'comment'].includes(type)) {
+        return res.status(400).json({ message: 'Invalid engagement type' });
+      }
+
+      await storage.incrementShareEngagement(id, type as 'view' | 'like' | 'comment');
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error incrementing engagement:', error);
+      res.status(500).json({ message: 'Failed to increment engagement' });
+    }
+  });
+
+  app.put('/api/social-shares/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const share = await storage.getSocialShare(req.params.id);
+      if (!share || share.userId !== user.id) {
+        return res.status(404).json({ message: 'Social share not found' });
+      }
+
+      const updatedShare = await storage.updateSocialShare(req.params.id, req.body);
+      res.json(updatedShare);
+    } catch (error) {
+      console.error('Error updating social share:', error);
+      res.status(500).json({ message: 'Failed to update social share' });
+    }
+  });
+
+  app.delete('/api/social-shares/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const share = await storage.getSocialShare(req.params.id);
+      if (!share || share.userId !== user.id) {
+        return res.status(404).json({ message: 'Social share not found' });
+      }
+
+      await storage.deleteSocialShare(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting social share:', error);
+      res.status(500).json({ message: 'Failed to delete social share' });
+    }
+  });
+
+  // Badge Template Routes
+  app.get('/api/badge-templates/category/:category', async (req: any, res) => {
+    try {
+      const templates = await storage.getBadgeTemplatesByCategory(req.params.category);
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching badge templates by category:', error);
+      res.status(500).json({ message: 'Failed to fetch badge templates by category' });
+    }
+  });
+
+  app.get('/api/badge-templates/popular', async (req: any, res) => {
+    try {
+      const templates = await storage.getPopularBadgeTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching popular badge templates:', error);
+      res.status(500).json({ message: 'Failed to fetch popular badge templates' });
+    }
+  });
+
+  app.post('/api/badge-templates', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const template = await storage.createBadgeTemplate(req.body);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('Error creating badge template:', error);
+      res.status(500).json({ message: 'Failed to create badge template' });
+    }
+  });
+
+  app.get('/api/badge-templates/:id', async (req: any, res) => {
+    try {
+      const template = await storage.getBadgeTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: 'Badge template not found' });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error('Error fetching badge template:', error);
+      res.status(500).json({ message: 'Failed to fetch badge template' });
+    }
+  });
+
+  app.put('/api/badge-templates/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const template = await storage.getBadgeTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: 'Badge template not found' });
+      }
+
+      const updatedTemplate = await storage.updateBadgeTemplate(req.params.id, req.body);
+      res.json(updatedTemplate);
+    } catch (error) {
+      console.error('Error updating badge template:', error);
+      res.status(500).json({ message: 'Failed to update badge template' });
+    }
+  });
+
+  app.post('/api/badge-templates/:id/use', async (req: any, res) => {
+    try {
+      await storage.incrementBadgeTemplateUsage(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error incrementing badge template usage:', error);
+      res.status(500).json({ message: 'Failed to increment badge template usage' });
+    }
+  });
+
+  app.delete('/api/badge-templates/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.accountId || (user.role !== 'admin' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      await storage.deleteBadgeTemplate(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting badge template:', error);
+      res.status(500).json({ message: 'Failed to delete badge template' });
+    }
+  });
+
   app.post('/api/issued-certificates/:id/revoke', mockAuth, async (req: any, res) => {
     try {
       const user = req.user;

@@ -28,6 +28,7 @@ import LanguageTest from "@/pages/language-test";
 import Settings from "@/pages/Settings";
 import SuperAdminSettings from "@/pages/super-admin-settings";
 import BadgesCertificates from "@/pages/badges-certificates";
+import BadgeSystem from "@/pages/badge-system";
 import AccessibilitySettings from "@/pages/accessibility-settings";
 import LearningFeedback from "@/pages/learning-feedback";
 import AIResources from "@/pages/AIResources";
@@ -87,6 +88,7 @@ function Router() {
           <Route path="/study-aids" component={StudyAids} />
           <Route path="/ai-resources" component={AIResources} />
           <Route path="/badges-certificates" component={BadgesCertificates} />
+          <Route path="/badge-system" component={BadgeSystem} />
           <Route path="/learning-feedback" component={LearningFeedback} />
           <Route path="/difficulty-tracking" component={EnhancedDifficultyTracking} />
           <Route path="/enhanced-difficulty-tracking" component={EnhancedDifficultyTracking} />

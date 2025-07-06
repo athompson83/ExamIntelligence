@@ -30,6 +30,7 @@ export default function Sidebar() {
     { href: "/difficulty-tracking", label: "Difficulty Tracking", icon: TrendingUp },
     { href: "/learning-feedback", label: "Learning Feedback", icon: Heart },
     { href: "/badges-certificates", label: "Badges & Certificates", icon: Award },
+    { href: "/badge-system", label: "Badge System", icon: Award },
   ];
 
   const systemItems = [

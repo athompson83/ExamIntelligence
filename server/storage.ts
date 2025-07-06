@@ -25,6 +25,10 @@ import {
   moodEntries,
   difficultyEntries,
   badges,
+  userBadges,
+  learningMilestones,
+  socialShares,
+  badgeTemplates,
   certificateTemplates,
   awardedBadges,
   issuedCertificates,
@@ -78,12 +82,16 @@ import {
   type InsertDifficultyEntry,
   type Badge,
   type InsertBadge,
+  type UserBadge,
+  type InsertUserBadge,
+  type LearningMilestone,
+  type InsertLearningMilestone,
+  type SocialShare,
+  type InsertSocialShare,
+  type BadgeTemplate,
+  type InsertBadgeTemplate,
   type CertificateTemplate,
   type InsertCertificateTemplate,
-  type AwardedBadge,
-  type InsertAwardedBadge,
-  type IssuedCertificate,
-  type InsertIssuedCertificate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, count, avg, like, inArray } from "drizzle-orm";
@@ -271,6 +279,42 @@ export interface IStorage {
   getActiveBadges(accountId: string): Promise<Badge[]>;
   updateBadge(id: string, data: Partial<InsertBadge>): Promise<Badge>;
   deleteBadge(id: string): Promise<void>;
+
+  // User Badge operations
+  createUserBadge(userBadge: InsertUserBadge): Promise<UserBadge>;
+  getUserBadge(id: string): Promise<UserBadge | undefined>;
+  getUserBadgesByUser(userId: string): Promise<UserBadge[]>;
+  getUserBadgesByBadge(badgeId: string): Promise<UserBadge[]>;
+  getUserBadgesWithBadgeDetails(userId: string): Promise<(UserBadge & { badge: Badge })[]>;
+  updateUserBadge(id: string, data: Partial<InsertUserBadge>): Promise<UserBadge>;
+  deleteUserBadge(id: string): Promise<void>;
+
+  // Learning Milestone operations
+  createLearningMilestone(milestone: InsertLearningMilestone): Promise<LearningMilestone>;
+  getLearningMilestone(id: string): Promise<LearningMilestone | undefined>;
+  getLearningMilestonesByUser(userId: string): Promise<LearningMilestone[]>;
+  getLearningMilestonesByAccount(accountId: string): Promise<LearningMilestone[]>;
+  updateLearningMilestone(id: string, data: Partial<InsertLearningMilestone>): Promise<LearningMilestone>;
+  deleteLearningMilestone(id: string): Promise<void>;
+
+  // Social Share operations
+  createSocialShare(share: InsertSocialShare): Promise<SocialShare>;
+  getSocialShare(id: string): Promise<SocialShare | undefined>;
+  getSocialSharesByUser(userId: string): Promise<SocialShare[]>;
+  getPublicSocialShares(): Promise<SocialShare[]>;
+  getSocialSharesByPlatform(platform: string): Promise<SocialShare[]>;
+  updateSocialShare(id: string, data: Partial<InsertSocialShare>): Promise<SocialShare>;
+  incrementShareEngagement(id: string, type: 'view' | 'like' | 'comment'): Promise<void>;
+  deleteSocialShare(id: string): Promise<void>;
+
+  // Badge Template operations
+  createBadgeTemplate(template: InsertBadgeTemplate): Promise<BadgeTemplate>;
+  getBadgeTemplate(id: string): Promise<BadgeTemplate | undefined>;
+  getBadgeTemplatesByCategory(category: string): Promise<BadgeTemplate[]>;
+  getPopularBadgeTemplates(): Promise<BadgeTemplate[]>;
+  updateBadgeTemplate(id: string, data: Partial<InsertBadgeTemplate>): Promise<BadgeTemplate>;
+  incrementBadgeTemplateUsage(id: string): Promise<void>;
+  deleteBadgeTemplate(id: string): Promise<void>;
 
   // Certificate Template operations
   createCertificateTemplate(template: InsertCertificateTemplate): Promise<CertificateTemplate>;
@@ -2048,6 +2092,217 @@ export class DatabaseStorage implements IStorage {
       finalDifficulty: session.currentDifficulty,
       timeSpent: session.completedAt.getTime() - session.startedAt.getTime()
     };
+  }
+
+  // Badge operations
+  async createBadge(badge: InsertBadge): Promise<Badge> {
+    const [newBadge] = await db.insert(badges).values(badge).returning();
+    return newBadge;
+  }
+
+  async getBadge(id: string): Promise<Badge | undefined> {
+    const [badge] = await db.select().from(badges).where(eq(badges.id, id));
+    return badge;
+  }
+
+  async getBadgesByAccount(accountId: string): Promise<Badge[]> {
+    return await db.select().from(badges).where(eq(badges.accountId, accountId));
+  }
+
+  async getActiveBadges(accountId: string): Promise<Badge[]> {
+    return await db.select()
+      .from(badges)
+      .where(and(eq(badges.accountId, accountId), eq(badges.isActive, true)));
+  }
+
+  async updateBadge(id: string, data: Partial<InsertBadge>): Promise<Badge> {
+    const [updatedBadge] = await db.update(badges)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(badges.id, id))
+      .returning();
+    return updatedBadge;
+  }
+
+  async deleteBadge(id: string): Promise<void> {
+    await db.delete(badges).where(eq(badges.id, id));
+  }
+
+  // User Badge operations
+  async createUserBadge(userBadge: InsertUserBadge): Promise<UserBadge> {
+    const [newUserBadge] = await db.insert(userBadges).values(userBadge).returning();
+    return newUserBadge;
+  }
+
+  async getUserBadge(id: string): Promise<UserBadge | undefined> {
+    const [userBadge] = await db.select().from(userBadges).where(eq(userBadges.id, id));
+    return userBadge;
+  }
+
+  async getUserBadgesByUser(userId: string): Promise<UserBadge[]> {
+    return await db.select()
+      .from(userBadges)
+      .where(eq(userBadges.userId, userId))
+      .orderBy(desc(userBadges.awardedAt));
+  }
+
+  async getUserBadgesByBadge(badgeId: string): Promise<UserBadge[]> {
+    return await db.select().from(userBadges).where(eq(userBadges.badgeId, badgeId));
+  }
+
+  async getUserBadgesWithBadgeDetails(userId: string): Promise<(UserBadge & { badge: Badge })[]> {
+    return await db.select()
+      .from(userBadges)
+      .leftJoin(badges, eq(userBadges.badgeId, badges.id))
+      .where(eq(userBadges.userId, userId))
+      .orderBy(desc(userBadges.awardedAt));
+  }
+
+  async updateUserBadge(id: string, data: Partial<InsertUserBadge>): Promise<UserBadge> {
+    const [updatedUserBadge] = await db.update(userBadges)
+      .set(data)
+      .where(eq(userBadges.id, id))
+      .returning();
+    return updatedUserBadge;
+  }
+
+  async deleteUserBadge(id: string): Promise<void> {
+    await db.delete(userBadges).where(eq(userBadges.id, id));
+  }
+
+  // Learning Milestone operations
+  async createLearningMilestone(milestone: InsertLearningMilestone): Promise<LearningMilestone> {
+    const [newMilestone] = await db.insert(learningMilestones).values(milestone).returning();
+    return newMilestone;
+  }
+
+  async getLearningMilestone(id: string): Promise<LearningMilestone | undefined> {
+    const [milestone] = await db.select().from(learningMilestones).where(eq(learningMilestones.id, id));
+    return milestone;
+  }
+
+  async getLearningMilestonesByUser(userId: string): Promise<LearningMilestone[]> {
+    return await db.select()
+      .from(learningMilestones)
+      .where(eq(learningMilestones.userId, userId))
+      .orderBy(desc(learningMilestones.createdAt));
+  }
+
+  async getLearningMilestonesByAccount(accountId: string): Promise<LearningMilestone[]> {
+    return await db.select()
+      .from(learningMilestones)
+      .where(eq(learningMilestones.accountId, accountId))
+      .orderBy(desc(learningMilestones.createdAt));
+  }
+
+  async updateLearningMilestone(id: string, data: Partial<InsertLearningMilestone>): Promise<LearningMilestone> {
+    const [updatedMilestone] = await db.update(learningMilestones)
+      .set(data)
+      .where(eq(learningMilestones.id, id))
+      .returning();
+    return updatedMilestone;
+  }
+
+  async deleteLearningMilestone(id: string): Promise<void> {
+    await db.delete(learningMilestones).where(eq(learningMilestones.id, id));
+  }
+
+  // Social Share operations
+  async createSocialShare(share: InsertSocialShare): Promise<SocialShare> {
+    const [newShare] = await db.insert(socialShares).values(share).returning();
+    return newShare;
+  }
+
+  async getSocialShare(id: string): Promise<SocialShare | undefined> {
+    const [share] = await db.select().from(socialShares).where(eq(socialShares.id, id));
+    return share;
+  }
+
+  async getSocialSharesByUser(userId: string): Promise<SocialShare[]> {
+    return await db.select()
+      .from(socialShares)
+      .where(eq(socialShares.userId, userId))
+      .orderBy(desc(socialShares.sharedAt));
+  }
+
+  async getPublicSocialShares(): Promise<SocialShare[]> {
+    return await db.select()
+      .from(socialShares)
+      .where(eq(socialShares.isPublic, true))
+      .orderBy(desc(socialShares.sharedAt));
+  }
+
+  async getSocialSharesByPlatform(platform: string): Promise<SocialShare[]> {
+    return await db.select()
+      .from(socialShares)
+      .where(eq(socialShares.platform, platform))
+      .orderBy(desc(socialShares.sharedAt));
+  }
+
+  async updateSocialShare(id: string, data: Partial<InsertSocialShare>): Promise<SocialShare> {
+    const [updatedShare] = await db.update(socialShares)
+      .set(data)
+      .where(eq(socialShares.id, id))
+      .returning();
+    return updatedShare;
+  }
+
+  async incrementShareEngagement(id: string, type: 'view' | 'like' | 'comment'): Promise<void> {
+    const updateData: any = {};
+    if (type === 'view') updateData.viewCount = sql`${socialShares.viewCount} + 1`;
+    if (type === 'like') updateData.likeCount = sql`${socialShares.likeCount} + 1`;
+    if (type === 'comment') updateData.commentCount = sql`${socialShares.commentCount} + 1`;
+
+    await db.update(socialShares)
+      .set(updateData)
+      .where(eq(socialShares.id, id));
+  }
+
+  async deleteSocialShare(id: string): Promise<void> {
+    await db.delete(socialShares).where(eq(socialShares.id, id));
+  }
+
+  // Badge Template operations
+  async createBadgeTemplate(template: InsertBadgeTemplate): Promise<BadgeTemplate> {
+    const [newTemplate] = await db.insert(badgeTemplates).values(template).returning();
+    return newTemplate;
+  }
+
+  async getBadgeTemplate(id: string): Promise<BadgeTemplate | undefined> {
+    const [template] = await db.select().from(badgeTemplates).where(eq(badgeTemplates.id, id));
+    return template;
+  }
+
+  async getBadgeTemplatesByCategory(category: string): Promise<BadgeTemplate[]> {
+    return await db.select()
+      .from(badgeTemplates)
+      .where(and(eq(badgeTemplates.category, category), eq(badgeTemplates.isActive, true)))
+      .orderBy(desc(badgeTemplates.usageCount));
+  }
+
+  async getPopularBadgeTemplates(): Promise<BadgeTemplate[]> {
+    return await db.select()
+      .from(badgeTemplates)
+      .where(eq(badgeTemplates.isActive, true))
+      .orderBy(desc(badgeTemplates.usageCount))
+      .limit(10);
+  }
+
+  async updateBadgeTemplate(id: string, data: Partial<InsertBadgeTemplate>): Promise<BadgeTemplate> {
+    const [updatedTemplate] = await db.update(badgeTemplates)
+      .set(data)
+      .where(eq(badgeTemplates.id, id))
+      .returning();
+    return updatedTemplate;
+  }
+
+  async incrementBadgeTemplateUsage(id: string): Promise<void> {
+    await db.update(badgeTemplates)
+      .set({ usageCount: sql`${badgeTemplates.usageCount} + 1` })
+      .where(eq(badgeTemplates.id, id));
+  }
+
+  async deleteBadgeTemplate(id: string): Promise<void> {
+    await db.delete(badgeTemplates).where(eq(badgeTemplates.id, id));
   }
 
   // Initialize in-memory storage for CAT exams (temporary)
