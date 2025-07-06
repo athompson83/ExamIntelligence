@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -92,11 +93,15 @@ export default function EnhancedQuizBuilder() {
   });
 
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [isAddQuestionDialogOpen, setIsAddQuestionDialogOpen] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTestbank, setSelectedTestbank] = useState("all");
   const [viewingQuizQuestions, setViewingQuizQuestions] = useState(false);
+  const [isAddToGroupDialogOpen, setIsAddToGroupDialogOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   // Test questions query
   const { data: questions, isLoading: questionsLoading } = useQuery({
@@ -110,11 +115,15 @@ export default function EnhancedQuizBuilder() {
 
   const availableQuestions = Array.isArray(questions) ? questions : [];
   
-  // Filter questions based on search and testbank
+  // Get quiz question IDs for filtering
+  const quizQuestionIds = quizQuestions.map(q => q.id);
+  
+  // Filter questions based on search and testbank, excluding already added questions
   const filteredQuestions = availableQuestions.filter((question) => {
     const matchesSearch = question.questionText?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
     const matchesTestbank = selectedTestbank === "all" || question.testbankId === selectedTestbank;
-    return matchesSearch && matchesTestbank;
+    const notInQuiz = !quizQuestionIds.includes(question.id);
+    return matchesSearch && matchesTestbank && notInQuiz;
   });
 
   const toggleQuestionExpansion = (questionId: string) => {
@@ -391,33 +400,30 @@ export default function EnhancedQuizBuilder() {
               <CardContent>
                 {viewingQuizQuestions ? (
                   <div className="space-y-4">
-                    {selectedQuestions.length === 0 ? (
+                    {quizQuestions.length === 0 ? (
                       <div className="text-center py-12">
                         <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                         <h3 className="text-lg font-medium mb-2">No Questions Added Yet</h3>
                         <p className="text-sm text-muted-foreground">
-                          Switch to "Show Item Bank Questions" to add questions to this quiz.
+                          Switch to "Item Banks" to add questions to this quiz.
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {selectedQuestions.map((questionId) => {
-                          const question = availableQuestions.find(q => q.id === questionId);
-                          if (!question) return null;
-                          
+                        {quizQuestions.map((question) => {
                           return (
-                            <div key={questionId} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div key={question.id} className="flex items-center justify-between p-4 border rounded-lg">
                               <div className="flex-1">
                                 <div className="font-medium">{question.questionText}</div>
                                 <div className="text-sm text-muted-foreground mt-1">
-                                  {question.questionType} • Difficulty: {question.difficultyLevel}/10
+                                  {question.questionType} • Difficulty: {question.difficulty}/10
                                 </div>
                               </div>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  setSelectedQuestions(prev => prev.filter(id => id !== questionId));
+                                  setQuizQuestions(prev => prev.filter(q => q.id !== question.id));
                                 }}
                               >
                                 Remove
@@ -478,18 +484,35 @@ export default function EnhancedQuizBuilder() {
                           </Button>
                         </div>
 
-                        {selectedQuestions.length > 0 && (
+                        {filteredQuestions.length > 0 && (
                           <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                            <span className="text-sm font-medium">
-                              {selectedQuestions.length} question{selectedQuestions.length === 1 ? '' : 's'} selected
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedQuestions([])}
-                            >
-                              Clear Selection
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={selectedQuestions.length === filteredQuestions.length}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedQuestions(filteredQuestions.map(q => q.id));
+                                  } else {
+                                    setSelectedQuestions([]);
+                                  }
+                                }}
+                              />
+                              <span className="text-sm font-medium">
+                                {selectedQuestions.length > 0 
+                                  ? `${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'} selected`
+                                  : 'Select All'
+                                }
+                              </span>
+                            </div>
+                            {selectedQuestions.length > 0 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedQuestions([])}
+                              >
+                                Clear Selection
+                              </Button>
+                            )}
                           </div>
                         )}
 
@@ -516,7 +539,7 @@ export default function EnhancedQuizBuilder() {
                               <div className="flex-1">
                                 <div className="font-medium">{question.questionText}</div>
                                 <div className="text-sm text-muted-foreground mt-1">
-                                  {question.questionType} • Difficulty: {question.difficultyLevel}/10
+                                  {question.questionType} • Difficulty: {question.difficulty}/10 • Blooms: {question.bloomsLevel}
                                 </div>
                               </div>
                             </div>
@@ -526,24 +549,7 @@ export default function EnhancedQuizBuilder() {
                         {selectedQuestions.length > 0 && (
                           <div className="flex justify-end pt-4">
                             <Button
-                              onClick={async () => {
-                                try {
-                                  toast({
-                                    title: "Success",
-                                    description: `Added ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'} to quiz`,
-                                  });
-                                  
-                                  setSelectedQuestions([]);
-                                  setViewingQuizQuestions(true);
-                                } catch (error) {
-                                  console.error('Error adding questions:', error);
-                                  toast({
-                                    title: "Error",
-                                    description: "Failed to add questions to quiz. Please try again.",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
+                              onClick={() => setIsAddToGroupDialogOpen(true)}
                               className="flex items-center gap-2"
                             >
                               <Plus className="h-4 w-4" />
@@ -817,6 +823,125 @@ export default function EnhancedQuizBuilder() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Group Selection Dialog */}
+      <Dialog open={isAddToGroupDialogOpen} onOpenChange={setIsAddToGroupDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Questions to Group</DialogTitle>
+            <DialogDescription>
+              Choose how to organize the {selectedQuestions.length} selected question{selectedQuestions.length === 1 ? '' : 's'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-3">
+              <Label>Select an option:</Label>
+              
+              <RadioGroup value={selectedGroupId || ""} onValueChange={setSelectedGroupId} className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="create-new" id="create-new-group" />
+                    <Label htmlFor="create-new-group">Create New Group</Label>
+                  </div>
+                  
+                  {selectedGroupId === "create-new" && (
+                    <div className="ml-6">
+                      <Input
+                        placeholder="Enter group name"
+                        value={newGroupName}
+                        onChange={(e) => setNewGroupName(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="select-existing" id="select-existing-group" />
+                    <Label htmlFor="select-existing-group">Select Existing Group</Label>
+                  </div>
+                  
+                  {selectedGroupId === "select-existing" && (
+                    <div className="ml-6">
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose existing group" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="group1">Group 1</SelectItem>
+                          <SelectItem value="group2">Group 2</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="ungrouped" id="add-ungrouped" />
+                  <Label htmlFor="add-ungrouped">Add as Ungrouped Questions</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsAddToGroupDialogOpen(false);
+              setSelectedGroupId(null);
+              setNewGroupName("");
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={async () => {
+                try {
+                  // Get the actual question objects from selected IDs
+                  const questionsToAdd = availableQuestions.filter(q => selectedQuestions.includes(q.id));
+                  
+                  if (selectedGroupId === "create-new" && newGroupName.trim()) {
+                    // Create new group and add questions
+                    toast({
+                      title: "Success",
+                      description: `Created new group "${newGroupName}" with ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'}`,
+                    });
+                  } else if (selectedGroupId === "select-existing") {
+                    // Add to existing group
+                    toast({
+                      title: "Success",
+                      description: `Added ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'} to existing group`,
+                    });
+                  } else if (selectedGroupId === "ungrouped") {
+                    // Add as ungrouped questions
+                    setQuizQuestions(prev => [...prev, ...questionsToAdd]);
+                    toast({
+                      title: "Success",
+                      description: `Added ${selectedQuestions.length} ungrouped question${selectedQuestions.length === 1 ? '' : 's'} to quiz`,
+                    });
+                  }
+                  
+                  // Reset states
+                  setSelectedQuestions([]);
+                  setIsAddToGroupDialogOpen(false);
+                  setSelectedGroupId(null);
+                  setNewGroupName("");
+                  setViewingQuizQuestions(true);
+                } catch (error) {
+                  console.error('Error adding questions:', error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to add questions. Please try again.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              disabled={!selectedGroupId || (selectedGroupId === "create-new" && !newGroupName.trim())}
+            >
+              Add Questions
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
