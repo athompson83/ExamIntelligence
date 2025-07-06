@@ -75,7 +75,8 @@ interface Quiz {
   // Attempt and Time Management
   attemptSettings: {
     maxAttempts: number;
-    attemptGap: number; // minutes between attempts
+    attemptGap: number; // value for time between attempts
+    attemptGapUnit: 'minutes' | 'hours' | 'days'; // unit for attemptGap
     keepHighestScore: boolean;
     allowReviewBetweenAttempts: boolean;
     timeExtensions: {
@@ -1180,22 +1181,42 @@ export default function EnhancedQuizBuilder() {
                             </div>
 
                             <div>
-                              <Label htmlFor="attemptGap">Gap Between Attempts (minutes)</Label>
-                              <Input
-                                id="attemptGap"
-                                type="number"
-                                min="0"
-                                max="1440"
-                                value={quiz.attemptSettings?.attemptGap || 0}
-                                onChange={(e) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  attemptSettings: { 
-                                    ...prev.attemptSettings, 
-                                    attemptGap: parseInt(e.target.value) || 0 
-                                  }
-                                }))}
-                                className="mt-1"
-                              />
+                              <Label htmlFor="attemptGap">Gap Between Attempts</Label>
+                              <div className="flex gap-2 mt-1">
+                                <Input
+                                  id="attemptGap"
+                                  type="number"
+                                  min="0"
+                                  value={quiz.attemptSettings?.attemptGap || 0}
+                                  onChange={(e) => setQuiz(prev => ({ 
+                                    ...prev, 
+                                    attemptSettings: { 
+                                      ...prev.attemptSettings, 
+                                      attemptGap: parseInt(e.target.value) || 0 
+                                    }
+                                  }))}
+                                  className="flex-1"
+                                />
+                                <Select
+                                  value={quiz.attemptSettings?.attemptGapUnit || 'minutes'}
+                                  onValueChange={(value) => setQuiz(prev => ({ 
+                                    ...prev, 
+                                    attemptSettings: { 
+                                      ...prev.attemptSettings, 
+                                      attemptGapUnit: value as 'minutes' | 'hours' | 'days'
+                                    }
+                                  }))}
+                                >
+                                  <SelectTrigger className="w-24">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minutes">Min</SelectItem>
+                                    <SelectItem value="hours">Hours</SelectItem>
+                                    <SelectItem value="days">Days</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
                           </div>
 

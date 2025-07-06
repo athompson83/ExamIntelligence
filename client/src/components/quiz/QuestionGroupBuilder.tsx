@@ -47,7 +47,6 @@ interface GroupFormData {
   description: string;
   pickCount: number;
   pointsPerQuestion: number;
-  useCAT: boolean;
   difficultyWeight: number;
   bloomsWeight: number;
 }
@@ -69,7 +68,6 @@ export function QuestionGroupBuilder({
     description: "",
     pickCount: 1,
     pointsPerQuestion: 1,
-    useCAT: false,
     difficultyWeight: 1,
     bloomsWeight: 1,
   });
@@ -81,7 +79,6 @@ export function QuestionGroupBuilder({
       description: "",
       pickCount: 1,
       pointsPerQuestion: 1,
-      useCAT: false,
       difficultyWeight: 1,
       bloomsWeight: 1,
     });
@@ -96,7 +93,6 @@ export function QuestionGroupBuilder({
       description: groupForm.description || null,
       pickCount: groupForm.pickCount,
       pointsPerQuestion: groupForm.pointsPerQuestion.toString(),
-      useCAT: groupForm.useCAT,
       difficultyWeight: groupForm.difficultyWeight.toString(),
       bloomsWeight: groupForm.bloomsWeight.toString(),
       displayOrder: questionGroups.length,
@@ -152,7 +148,7 @@ export function QuestionGroupBuilder({
             Question Groups
           </h3>
           <p className="text-sm text-muted-foreground">
-            Organize questions into groups for random selection and CAT
+            Organize questions into groups for random selection
           </p>
         </div>
         <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
@@ -211,46 +207,7 @@ export function QuestionGroupBuilder({
                     onChange={(e) => setGroupForm(prev => ({ ...prev, pointsPerQuestion: parseFloat(e.target.value) || 1 }))}
                   />
                 </div>
-                <div className="flex items-center space-x-2 pt-6">
-                  <Switch
-                    id="useCAT"
-                    checked={groupForm.useCAT}
-                    onCheckedChange={(checked) => setGroupForm(prev => ({ ...prev, useCAT: checked }))}
-                  />
-                  <Label htmlFor="useCAT">Enable Computer Adaptive Testing</Label>
-                </div>
               </div>
-
-              {groupForm.useCAT && (
-                <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
-                  <h4 className="font-medium flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    CAT Settings
-                  </h4>
-                  <div>
-                    <Label>Difficulty Weight: {groupForm.difficultyWeight}</Label>
-                    <Slider
-                      value={[groupForm.difficultyWeight]}
-                      onValueChange={(value) => setGroupForm(prev => ({ ...prev, difficultyWeight: value[0] }))}
-                      max={3}
-                      min={0.1}
-                      step={0.1}
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label>Bloom's Taxonomy Weight: {groupForm.bloomsWeight}</Label>
-                    <Slider
-                      value={[groupForm.bloomsWeight]}
-                      onValueChange={(value) => setGroupForm(prev => ({ ...prev, bloomsWeight: value[0] }))}
-                      max={3}
-                      min={0.1}
-                      step={0.1}
-                      className="mt-2"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsGroupDialogOpen(false)}>
