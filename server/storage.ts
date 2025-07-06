@@ -149,6 +149,8 @@ export interface IStorage {
   deleteQuiz(id: string): Promise<void>;
   addQuestionsToQuiz(quizId: string, questionIds: string[], userId: string): Promise<any>;
   getQuizById(id: string): Promise<Quiz | undefined>;
+  updateQuizQuestions(quizId: string, questions: any[]): Promise<void>;
+  updateQuizGroups(quizId: string, groups: any[]): Promise<void>;
   
   // Student-specific quiz operations
   getAvailableQuizzesForStudent(userId: string, accountId: string): Promise<any[]>;
@@ -557,7 +559,36 @@ export class DatabaseStorage implements IStorage {
 
   async getQuiz(id: string): Promise<Quiz | undefined> {
     const [result] = await db.select().from(quizzes).where(eq(quizzes.id, id));
-    return result;
+    if (!result) return result;
+
+    // Get quiz questions
+    const quizQuestionsData = await db
+      .select({
+        question: questions,
+        quizQuestion: quizQuestions,
+      })
+      .from(quizQuestions)
+      .innerJoin(questions, eq(quizQuestions.questionId, questions.id))
+      .where(eq(quizQuestions.quizId, id))
+      .orderBy(quizQuestions.displayOrder);
+
+    // Get question groups
+    const groups = await db
+      .select()
+      .from(questionGroups)
+      .where(eq(questionGroups.quizId, id))
+      .orderBy(questionGroups.displayOrder);
+
+    return {
+      ...result,
+      questions: quizQuestionsData.map(q => ({
+        ...q.question,
+        points: q.quizQuestion.points,
+        displayOrder: q.quizQuestion.displayOrder,
+        groupId: q.quizQuestion.groupId,
+      })),
+      groups: groups || [],
+    };
   }
 
   async getQuizzesByUser(userId: string): Promise<Quiz[]> {
@@ -591,6 +622,44 @@ export class DatabaseStorage implements IStorage {
       addedCount: questionIds.length,
       timestamp: new Date()
     };
+  }
+
+  async updateQuizQuestions(quizId: string, questions: any[]): Promise<void> {
+    // Clear existing quiz questions
+    await db.delete(quizQuestions).where(eq(quizQuestions.quizId, quizId));
+    
+    // Insert new quiz questions
+    if (questions && questions.length > 0) {
+      const quizQuestionsData = questions.map((question, index) => ({
+        quizId,
+        questionId: question.id,
+        displayOrder: question.displayOrder || index,
+        points: question.points || '1',
+        groupId: question.groupId || null,
+      }));
+      
+      await db.insert(quizQuestions).values(quizQuestionsData);
+    }
+  }
+
+  async updateQuizGroups(quizId: string, groups: any[]): Promise<void> {
+    // Clear existing question groups
+    await db.delete(questionGroups).where(eq(questionGroups.quizId, quizId));
+    
+    // Insert new question groups
+    if (groups && groups.length > 0) {
+      const groupsData = groups.map((group, index) => ({
+        id: group.id,
+        quizId,
+        name: group.name,
+        description: group.description || '',
+        pickCount: group.pickCount || 1,
+        pointsPerQuestion: group.pointsPerQuestion || '1',
+        displayOrder: group.displayOrder || index,
+      }));
+      
+      await db.insert(questionGroups).values(groupsData);
+    }
   }
 
   // Quiz attempt operations

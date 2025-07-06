@@ -12,7 +12,7 @@ export default function QuizPreview() {
   const quizId = params.id;
 
   const { data: quiz, isLoading, error } = useQuery({
-    queryKey: ['/api/quizzes', quizId],
+    queryKey: [`/api/quizzes/${quizId}`],
   });
 
   if (isLoading) {
@@ -46,6 +46,18 @@ export default function QuizPreview() {
     );
   }
 
+  // Provide default values to prevent property access errors
+  const safeQuiz = {
+    title: '',
+    description: '',
+    publishedAt: null,
+    timeLimit: null,
+    instructions: '',
+    questions: [],
+    groups: [],
+    ...quiz
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
@@ -75,13 +87,13 @@ export default function QuizPreview() {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <CardTitle className="text-2xl">{quiz.title || "Untitled Quiz"}</CardTitle>
+              <CardTitle className="text-2xl">{safeQuiz.title || "Untitled Quiz"}</CardTitle>
               <CardDescription className="mt-2 text-base">
-                {quiz.description || "No description provided"}
+                {safeQuiz.description || "No description provided"}
               </CardDescription>
             </div>
-            <Badge variant={quiz.publishedAt ? "default" : "secondary"} className={quiz.publishedAt ? "bg-green-100 text-green-800" : ""}>
-              {quiz.publishedAt ? "Published" : "Draft"}
+            <Badge variant={safeQuiz.publishedAt ? "default" : "secondary"} className={safeQuiz.publishedAt ? "bg-green-100 text-green-800" : ""}>
+              {safeQuiz.publishedAt ? "Published" : "Draft"}
             </Badge>
           </div>
         </CardHeader>
@@ -92,7 +104,7 @@ export default function QuizPreview() {
               <div>
                 <p className="font-medium">Time Limit</p>
                 <p className="text-sm text-muted-foreground">
-                  {quiz.timeLimit ? `${quiz.timeLimit} minutes` : "No time limit"}
+                  {safeQuiz.timeLimit ? `${safeQuiz.timeLimit} minutes` : "No time limit"}
                 </p>
               </div>
             </div>
@@ -102,7 +114,7 @@ export default function QuizPreview() {
               <div>
                 <p className="font-medium">Questions</p>
                 <p className="text-sm text-muted-foreground">
-                  {quiz.questions?.length || 0} questions
+                  {safeQuiz.questions?.length || 0} questions
                 </p>
               </div>
             </div>
@@ -118,18 +130,18 @@ export default function QuizPreview() {
             </div>
           </div>
 
-          {quiz.instructions && (
+          {safeQuiz.instructions && (
             <div className="mt-6 pt-6 border-t">
               <h3 className="font-medium mb-2">Instructions</h3>
-              <p className="text-muted-foreground">{quiz.instructions}</p>
+              <p className="text-muted-foreground">{safeQuiz.instructions}</p>
             </div>
           )}
 
-          {quiz.questions && quiz.questions.length > 0 && (
+          {safeQuiz.questions && safeQuiz.questions.length > 0 && (
             <div className="mt-6 pt-6 border-t">
               <h3 className="font-medium mb-4">Questions Preview</h3>
               <div className="space-y-4">
-                {quiz.questions.slice(0, 3).map((question: any, index: number) => (
+                {safeQuiz.questions.slice(0, 3).map((question: any, index: number) => (
                   <Card key={index} className="bg-muted/50">
                     <CardContent className="pt-4">
                       <div className="flex items-start gap-3">
@@ -146,9 +158,9 @@ export default function QuizPreview() {
                     </CardContent>
                   </Card>
                 ))}
-                {quiz.questions.length > 3 && (
+                {safeQuiz.questions.length > 3 && (
                   <p className="text-sm text-muted-foreground text-center">
-                    ... and {quiz.questions.length - 3} more questions
+                    ... and {safeQuiz.questions.length - 3} more questions
                   </p>
                 )}
               </div>

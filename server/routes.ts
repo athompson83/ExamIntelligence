@@ -1657,6 +1657,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update quiz
+  app.put('/api/quizzes/:id', mockAuth, async (req: any, res) => {
+    try {
+      const quizId = req.params.id;
+      const userId = req.user.claims?.sub || req.user.id;
+      const quizData = req.body;
+
+      // Verify quiz exists and user has permission
+      const existingQuiz = await storage.getQuiz(quizId);
+      if (!existingQuiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      // Update quiz
+      const updatedQuiz = await storage.updateQuiz(quizId, quizData);
+      
+      // Handle questions if they're included
+      if (quizData.questions && Array.isArray(quizData.questions)) {
+        await storage.updateQuizQuestions(quizId, quizData.questions);
+      }
+
+      // Handle groups if they're included
+      if (quizData.groups && Array.isArray(quizData.groups)) {
+        await storage.updateQuizGroups(quizId, quizData.groups);
+      }
+
+      res.json(updatedQuiz);
+    } catch (error) {
+      console.error("Error updating quiz:", error);
+      res.status(500).json({ message: "Failed to update quiz" });
+    }
+  });
+
   // Add questions to quiz
   app.post('/api/quizzes/:id/questions',  async (req: any, res) => {
     try {

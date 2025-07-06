@@ -387,9 +387,17 @@ export default function EnhancedQuizBuilder() {
   // Autosave functionality - only save when quiz actually changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const previousQuizRef = useRef<string>('');
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   useEffect(() => {
     const currentQuizState = JSON.stringify(quiz);
+    
+    // Skip change detection on initial load or if quiz is empty
+    if (isInitialLoad || !quiz.title) {
+      previousQuizRef.current = currentQuizState;
+      setIsInitialLoad(false);
+      return;
+    }
     
     // Check if quiz has actually changed
     if (currentQuizState !== previousQuizRef.current && previousQuizRef.current !== '') {
@@ -397,7 +405,7 @@ export default function EnhancedQuizBuilder() {
     }
     
     previousQuizRef.current = currentQuizState;
-  }, [quiz]);
+  }, [quiz, isInitialLoad]);
 
   // Load existing quiz if id parameter is provided
   useEffect(() => {
@@ -985,7 +993,7 @@ export default function EnhancedQuizBuilder() {
                                 <SelectItem value="all">All Testbanks</SelectItem>
                                 {Array.isArray(testbanks) && testbanks.map((testbank) => (
                                   <SelectItem key={testbank.id} value={testbank.id}>
-                                    {testbank.name}
+                                    {testbank.title}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
