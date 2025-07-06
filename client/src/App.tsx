@@ -37,6 +37,8 @@ import StudentDashboard from "@/pages/student-dashboard";
 import StudentQuiz from "@/pages/student-quiz";
 import CATExamBuilder from "@/pages/CATExamBuilder";
 import ProctoringSecurity from "@/pages/proctoring-security";
+import QuestionFeedbackPage from "@/pages/question-feedback";
+import AnonymousQuizAccessPage from "@/pages/anonymous-quiz-access";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -96,6 +98,8 @@ function Router() {
           <Route path="/accessibility-settings" component={AccessibilitySettings} />
           <Route path="/proctoring-security" component={ProctoringSecurity} />
           <Route path="/project-status" component={ProjectStatus} />
+          <Route path="/question-feedback" component={QuestionFeedbackPage} />
+          <Route path="/anonymous-quiz-access" component={AnonymousQuizAccessPage} />
           <Route path="/exam/:id">
             {(params) => <ExamInterface examId={params.id} />}
           </Route>

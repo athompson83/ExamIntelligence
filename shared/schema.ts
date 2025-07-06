@@ -982,56 +982,7 @@ export const badgeTemplates = pgTable("badge_templates", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Certificate Templates table - for generating certificates
-export const certificateTemplates = pgTable("certificate_templates", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  accountId: uuid("account_id").references(() => accounts.id).notNull(),
-  createdBy: varchar("created_by").references(() => users.id).notNull(),
-  
-  // Template details
-  name: varchar("name").notNull(),
-  description: text("description"),
-  templateType: varchar("template_type", {
-    enum: ["completion", "achievement", "performance", "participation", "custom"]
-  }).notNull(),
-  
-  // Design configuration
-  backgroundColor: varchar("background_color").notNull().default("#FFFFFF"),
-  borderColor: varchar("border_color").notNull().default("#000000"),
-  textColor: varchar("text_color").notNull().default("#000000"),
-  
-  // Certificate content
-  title: varchar("title").notNull(),
-  subtitle: varchar("subtitle"),
-  bodyText: text("body_text").notNull(),
-  footerText: text("footer_text"),
-  
-  // Dynamic fields (placeholders for data insertion)
-  dynamicFields: jsonb("dynamic_fields").$type<{
-    recipientName?: boolean;
-    courseName?: boolean;
-    completionDate?: boolean;
-    score?: boolean;
-    instructorName?: boolean;
-    institutionName?: boolean;
-  }>(),
-  
-  // Certificate requirements
-  requirements: jsonb("requirements").$type<{
-    minScore?: number;
-    minAccuracy?: number;
-    allQuestionsRequired?: boolean;
-    timeLimit?: number;
-  }>(),
-  
-  // Settings
-  isActive: boolean("is_active").notNull().default(true),
-  allowDownload: boolean("allow_download").notNull().default(true),
-  
-  // Metadata
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Certificate Templates table - removed duplicate, using version in NEW FEATURES section
 
 // Badge and milestone relations
 export const badgesRelations = relations(badges, ({ one, many }) => ({
@@ -1065,10 +1016,7 @@ export const socialSharesRelations = relations(socialShares, ({ one }) => ({
   attempt: one(quizAttempts, { fields: [socialShares.attemptId], references: [quizAttempts.id] }),
 }));
 
-export const certificateTemplatesRelations = relations(certificateTemplates, ({ one }) => ({
-  creator: one(users, { fields: [certificateTemplates.createdBy], references: [users.id] }),
-  account: one(accounts, { fields: [certificateTemplates.accountId], references: [accounts.id] }),
-}));
+// certificateTemplatesRelations moved to NEW FEATURES section
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1101,7 +1049,7 @@ export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({ id: t
 export const insertLearningMilestoneSchema = createInsertSchema(learningMilestones).omit({ id: true, createdAt: true });
 export const insertSocialShareSchema = createInsertSchema(socialShares).omit({ id: true, sharedAt: true });
 export const insertBadgeTemplateSchema = createInsertSchema(badgeTemplates).omit({ id: true, createdAt: true });
-export const insertCertificateTemplateSchema = createInsertSchema(certificateTemplates).omit({ id: true, createdAt: true, updatedAt: true });
+// Removed duplicate - using NEW FEATURES version
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -1164,8 +1112,7 @@ export type InsertSocialShare = z.infer<typeof insertSocialShareSchema>;
 export type SocialShare = typeof socialShares.$inferSelect;
 export type InsertBadgeTemplate = z.infer<typeof insertBadgeTemplateSchema>;
 export type BadgeTemplate = typeof badgeTemplates.$inferSelect;
-export type InsertCertificateTemplate = z.infer<typeof insertCertificateTemplateSchema>;
-export type CertificateTemplate = typeof certificateTemplates.$inferSelect;
+// Removed duplicate certificate types - using NEW FEATURES versions
 
 // Additional tables for badge and certificate system
 export const awardedBadges = pgTable("awarded_badges", {
@@ -1289,12 +1236,283 @@ export const proctorAlerts = pgTable("proctor_alerts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// ============= NEW FEATURES: QUESTION FEEDBACK & EXPLANATIONS =============
+
+// Question feedback table - stores explanations for correct/incorrect answers
+export const questionFeedback = pgTable("question_feedback", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  questionId: uuid("question_id").references(() => questions.id).notNull(),
+  feedbackType: varchar("feedback_type", { enum: ["correct", "incorrect", "general", "hint"] }).notNull(),
+  feedbackText: text("feedback_text").notNull(),
+  showTiming: varchar("show_timing", { enum: ["immediate", "after_answer", "after_quiz", "never"] }).default("after_answer"),
+  isActive: boolean("is_active").default(true),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Answer option explanations - specific feedback for each answer choice
+export const answerOptionFeedback = pgTable("answer_option_feedback", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  answerOptionId: uuid("answer_option_id").references(() => answerOptions.id).notNull(),
+  explanationText: text("explanation_text").notNull(),
+  showWhenSelected: boolean("show_when_selected").default(true),
+  showInReview: boolean("show_in_review").default(true),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ============= LEARNING PRESCRIPTIONS & STUDY GUIDES =============
+
+// Learning prescriptions - personalized study plans
+export const learningPrescriptions = pgTable("learning_prescriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  quizAttemptId: uuid("quiz_attempt_id").references(() => quizAttempts.id),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  weaknessAreas: jsonb("weakness_areas").$type<string[]>().default([]),
+  strengthAreas: jsonb("strength_areas").$type<string[]>().default([]),
+  recommendedStudyTime: integer("recommended_study_time"), // minutes
+  difficultyFocus: varchar("difficulty_focus", { enum: ["basic", "intermediate", "advanced", "mixed"] }).default("mixed"),
+  status: varchar("status", { enum: ["active", "completed", "paused", "archived"] }).default("active"),
+  completionPercentage: integer("completion_percentage").default(0),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Study plan items - individual tasks within learning prescriptions
+export const studyPlanItems = pgTable("study_plan_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  prescriptionId: uuid("prescription_id").references(() => learningPrescriptions.id).notNull(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  itemType: varchar("item_type", { enum: ["reading", "practice", "video", "exercise", "assessment"] }).notNull(),
+  resourceUrl: text("resource_url"),
+  estimatedTime: integer("estimated_time"), // minutes
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ============= ANONYMOUS QUIZ ACCESS =============
+
+// Anonymous quiz links - allow quiz access without accounts
+export const anonymousQuizLinks = pgTable("anonymous_quiz_links", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
+  accessToken: varchar("access_token").unique().notNull(),
+  linkName: varchar("link_name"),
+  maxAttempts: integer("max_attempts").default(1),
+  currentAttempts: integer("current_attempts").default(0),
+  browserLockdown: boolean("browser_lockdown").default(false),
+  allowPrint: boolean("allow_print").default(false),
+  allowCopyPaste: boolean("allow_copy_paste").default(false),
+  allowNavigation: boolean("allow_navigation").default(false),
+  ipRestrictions: jsonb("ip_restrictions").$type<string[]>().default([]),
+  timeLimit: integer("time_limit"), // minutes
+  validFrom: timestamp("valid_from"),
+  validUntil: timestamp("valid_until"),
+  isActive: boolean("is_active").default(true),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Anonymous quiz attempts - track guest attempts
+export const anonymousQuizAttempts = pgTable("anonymous_quiz_attempts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  linkId: uuid("link_id").references(() => anonymousQuizLinks.id).notNull(),
+  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
+  sessionId: varchar("session_id").notNull(),
+  guestName: varchar("guest_name"),
+  guestEmail: varchar("guest_email"),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  score: numeric("score", { precision: 5, scale: 2 }),
+  maxScore: numeric("max_score", { precision: 5, scale: 2 }),
+  percentage: numeric("percentage", { precision: 5, scale: 2 }),
+  timeSpent: integer("time_spent"), // seconds
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  browserFingerprint: text("browser_fingerprint"),
+  violationCount: integer("violation_count").default(0),
+  status: varchar("status", { enum: ["in_progress", "completed", "abandoned", "flagged"] }).default("in_progress"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ============= CUSTOM CERTIFICATES =============
+
+// Certificate templates - admin-created certificate designs
+export const certificateTemplates = pgTable("certificate_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  templateType: varchar("template_type", { enum: ["completion", "achievement", "score_based", "custom"] }).notNull(),
+  backgroundImage: text("background_image"),
+  logoImage: text("logo_image"),
+  titleText: varchar("title_text").default("Certificate of Achievement"),
+  bodyText: text("body_text"),
+  signatureImages: jsonb("signature_images").$type<string[]>().default([]),
+  fontFamily: varchar("font_family").default("Arial"),
+  primaryColor: varchar("primary_color").default("#000000"),
+  secondaryColor: varchar("secondary_color").default("#666666"),
+  layout: varchar("layout", { enum: ["portrait", "landscape"] }).default("landscape"),
+  isActive: boolean("is_active").default(true),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Certificate awards - individual certificates issued
+export const certificateAwards = pgTable("certificate_awards", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  templateId: uuid("template_id").references(() => certificateTemplates.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  quizId: uuid("quiz_id").references(() => quizzes.id),
+  recipientName: varchar("recipient_name").notNull(),
+  achievementText: text("achievement_text"),
+  scoreAchieved: numeric("score_achieved", { precision: 5, scale: 2 }),
+  awardDate: timestamp("award_date").defaultNow(),
+  certificateNumber: varchar("certificate_number").unique(),
+  issuedBy: varchar("issued_by").references(() => users.id).notNull(),
+  pdfPath: text("pdf_path"),
+  isRevoked: boolean("is_revoked").default(false),
+  revokedAt: timestamp("revoked_at"),
+  revokedBy: varchar("revoked_by").references(() => users.id),
+  revokeReason: text("revoke_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ============= MERCHANT ACCOUNT & PAYMENTS =============
+
+// Payment plans - for paid quiz access
+export const paymentPlans = pgTable("payment_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency").default("USD"),
+  billingInterval: varchar("billing_interval", { enum: ["one_time", "monthly", "yearly"] }).default("one_time"),
+  features: jsonb("features").$type<string[]>().default([]),
+  maxQuizzes: integer("max_quizzes"),
+  maxAttempts: integer("max_attempts"),
+  accessDuration: integer("access_duration"), // days
+  isActive: boolean("is_active").default(true),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Customer purchases - track paid access
+export const customerPurchases = pgTable("customer_purchases", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  planId: uuid("plan_id").references(() => paymentPlans.id).notNull(),
+  customerEmail: varchar("customer_email").notNull(),
+  customerName: varchar("customer_name"),
+  paymentIntentId: varchar("payment_intent_id"),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency").default("USD"),
+  status: varchar("status", { enum: ["pending", "completed", "failed", "refunded"] }).default("pending"),
+  accessToken: varchar("access_token").unique(),
+  validFrom: timestamp("valid_from").defaultNow(),
+  validUntil: timestamp("valid_until"),
+  quizAccess: jsonb("quiz_access").$type<string[]>().default([]), // quiz IDs
+  usedAttempts: integer("used_attempts").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ============= ERROR LOGGING FOR CRM =============
+
+// Error logs table - comprehensive error tracking
+export const errorLogs = pgTable("error_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id),
+  accountId: uuid("account_id").references(() => accounts.id),
+  errorType: varchar("error_type", { enum: ["api", "export", "ui", "validation", "security", "payment", "general"] }).notNull(),
+  severity: varchar("severity", { enum: ["low", "medium", "high", "critical"] }).notNull(),
+  source: varchar("source").notNull(),
+  message: text("message").notNull(),
+  stackTrace: text("stack_trace"),
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address"),
+  metadata: jsonb("metadata"),
+  resolved: boolean("resolved").default(false),
+  resolvedBy: varchar("resolved_by").references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
+  resolution: text("resolution"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Click logs table - user interaction tracking
+export const clickLogs = pgTable("click_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id),
+  accountId: uuid("account_id").references(() => accounts.id),
+  elementId: varchar("element_id"),
+  elementType: varchar("element_type").notNull(),
+  action: varchar("action", { enum: ["click", "hover", "focus", "scroll", "submit", "download", "export"] }).notNull(),
+  page: varchar("page").notNull(),
+  url: text("url").notNull(),
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address"),
+  metadata: jsonb("metadata"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
 // Create insert schemas for new tables
 export const insertSecurityEventSchema = createInsertSchema(securityEvents);
 export const insertProctorAlertSchema = createInsertSchema(proctorAlerts);
+export const insertQuestionFeedbackSchema = createInsertSchema(questionFeedback);
+export const insertAnswerOptionFeedbackSchema = createInsertSchema(answerOptionFeedback);
+export const insertLearningPrescriptionSchema = createInsertSchema(learningPrescriptions);
+export const insertStudyPlanItemSchema = createInsertSchema(studyPlanItems);
+export const insertAnonymousQuizLinkSchema = createInsertSchema(anonymousQuizLinks);
+export const insertAnonymousQuizAttemptSchema = createInsertSchema(anonymousQuizAttempts);
+export const insertCertificateTemplateSchema = createInsertSchema(certificateTemplates);
+export const insertCertificateAwardSchema = createInsertSchema(certificateAwards);
+export const insertPaymentPlanSchema = createInsertSchema(paymentPlans);
+export const insertCustomerPurchaseSchema = createInsertSchema(customerPurchases);
+export const insertErrorLogSchema = createInsertSchema(errorLogs);
+export const insertClickLogSchema = createInsertSchema(clickLogs);
 
 // Export types
 export type InsertSecurityEvent = z.infer<typeof insertSecurityEventSchema>;
 export type SecurityEvent = typeof securityEvents.$inferSelect;
 export type InsertProctorAlert = z.infer<typeof insertProctorAlertSchema>;
 export type ProctorAlert = typeof proctorAlerts.$inferSelect;
+export type InsertQuestionFeedback = z.infer<typeof insertQuestionFeedbackSchema>;
+export type QuestionFeedback = typeof questionFeedback.$inferSelect;
+export type InsertAnswerOptionFeedback = z.infer<typeof insertAnswerOptionFeedbackSchema>;
+export type AnswerOptionFeedback = typeof answerOptionFeedback.$inferSelect;
+export type InsertLearningPrescription = z.infer<typeof insertLearningPrescriptionSchema>;
+export type LearningPrescription = typeof learningPrescriptions.$inferSelect;
+export type InsertStudyPlanItem = z.infer<typeof insertStudyPlanItemSchema>;
+export type StudyPlanItem = typeof studyPlanItems.$inferSelect;
+export type InsertAnonymousQuizLink = z.infer<typeof insertAnonymousQuizLinkSchema>;
+export type AnonymousQuizLink = typeof anonymousQuizLinks.$inferSelect;
+export type InsertAnonymousQuizAttempt = z.infer<typeof insertAnonymousQuizAttemptSchema>;
+export type AnonymousQuizAttempt = typeof anonymousQuizAttempts.$inferSelect;
+export type InsertCertificateTemplate = z.infer<typeof insertCertificateTemplateSchema>;
+export type CertificateTemplate = typeof certificateTemplates.$inferSelect;
+export type InsertCertificateAward = z.infer<typeof insertCertificateAwardSchema>;
+export type CertificateAward = typeof certificateAwards.$inferSelect;
+export type InsertPaymentPlan = z.infer<typeof insertPaymentPlanSchema>;
+export type PaymentPlan = typeof paymentPlans.$inferSelect;
+export type InsertCustomerPurchase = z.infer<typeof insertCustomerPurchaseSchema>;
+export type CustomerPurchase = typeof customerPurchases.$inferSelect;
+export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
+export type ErrorLog = typeof errorLogs.$inferSelect;
+export type InsertClickLog = z.infer<typeof insertClickLogSchema>;
+export type ClickLog = typeof clickLogs.$inferSelect;

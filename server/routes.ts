@@ -43,6 +43,7 @@ import {
   generateQuestionVariationWithContext,
   generateNewAnswerOptionsWithContext
 } from "./aiService";
+import { errorLogger } from "./errorLogger";
 import { DifficultyService } from "./difficultyService";
 import { 
   generateQTIExport,
@@ -980,9 +981,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       switch (format.toLowerCase()) {
         case 'qti':
-          exportData = generateQTIExport(testbank, questionsWithOptions);
-          contentType = 'application/zip';
-          filename = `${testbank.title}_qti.zip`;
+          try {
+            exportData = generateQTIExport(testbank, questionsWithOptions);
+            contentType = 'application/zip';
+            filename = `${testbank.title}_qti.zip`;
+          } catch (qtiError) {
+            console.error("QTI Export Error:", qtiError);
+            await errorLogger.logError({
+              errorType: 'export',
+              severity: 'high',
+              source: '/api/testbanks/:id/export',
+              message: `QTI export failed: ${qtiError.message}`,
+              stackTrace: qtiError.stack,
+              userId: req.user?.id,
+              accountId: req.user?.accountId,
+              metadata: { testbankId, format }
+            });
+            return res.status(500).json({ message: "QTI export failed", error: qtiError.message });
+          }
           break;
           
         case 'csv':
