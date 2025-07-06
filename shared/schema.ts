@@ -200,10 +200,8 @@ export const quizzes = pgTable("quizzes", {
   
   // Timing and availability
   timeLimit: integer("time_limit"), // in minutes
-  availableFrom: timestamp("available_from"),
-  availableUntil: timestamp("available_until"),
-  lockAt: timestamp("lock_at"),
-  unlockAt: timestamp("unlock_at"),
+  startTime: timestamp("start_time"),
+  endTime: timestamp("end_time"),
   
   // Question behavior
   shuffleAnswers: boolean("shuffle_answers").default(false),

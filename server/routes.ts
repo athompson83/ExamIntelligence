@@ -1616,14 +1616,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = req.body;
 
       const quizData = insertQuizSchema.parse({
-        ...cleanBody,
+        title: req.body.title || "Untitled Quiz",
+        description: req.body.description || null,
+        instructions: req.body.instructions || null,
         creatorId: userId,
         accountId: user.accountId,
-        // Handle date fields properly
-        availableFrom: req.body.availableFrom ? new Date(req.body.availableFrom) : null,
-        availableUntil: req.body.availableUntil ? new Date(req.body.availableUntil) : null,
-        lockAt: req.body.lockAt ? new Date(req.body.lockAt) : null,
-        unlockAt: req.body.unlockAt ? new Date(req.body.unlockAt) : null,
+        timeLimit: req.body.timeLimit || null,
       });
       
       const quiz = await storage.createQuiz(quizData);
