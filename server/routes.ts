@@ -1607,8 +1607,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User account not found" });
       }
 
+      // Remove any unknown fields that might cause database errors
+      const {
+        quiz_type, // Remove this field if present
+        catSettings, // Remove CAT settings
+        useCAT, // Remove useCAT
+        ...cleanBody
+      } = req.body;
+
       const quizData = insertQuizSchema.parse({
-        ...req.body,
+        ...cleanBody,
         creatorId: userId,
         accountId: user.accountId,
         // Handle date fields properly

@@ -193,9 +193,10 @@ export const quizzes = pgTable("quizzes", {
   accountId: uuid("account_id").references(() => accounts.id).notNull(),
   
   // Canvas quiz types: graded_quiz, practice_quiz, graded_survey, ungraded_survey
-  quizType: varchar("quiz_type", {
-    enum: ["graded_quiz", "practice_quiz", "graded_survey", "ungraded_survey"]
-  }).default("graded_quiz"),
+  // TODO: Add quizType field back after database migration
+  // quizType: varchar("quiz_type", {
+  //   enum: ["graded_quiz", "practice_quiz", "graded_survey", "ungraded_survey"]
+  // }).default("graded_quiz"),
   
   // Timing and availability
   timeLimit: integer("time_limit"), // in minutes

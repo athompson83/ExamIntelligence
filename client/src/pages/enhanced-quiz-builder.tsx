@@ -1,2207 +1,801 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { QuestionGroupBuilder } from "@/components/quiz/QuestionGroupBuilder";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { Slider } from "@/components/ui/slider";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { 
-  Plus, Settings, Clock, Users, Shield, Zap, Eye, Edit, Trash2, Play, Calendar, Lock, 
-  Shuffle, Timer, Camera, AlertTriangle, Search, BookOpen, Target, BarChart3, Home,
-  Save, Copy, FileText, Globe, MessageSquare, Monitor, Keyboard, Brain, Award,
-  CheckCircle, XCircle, AlertCircle, Info, Move3D, GripVertical, ArrowUpDown
+  BookOpen, 
+  Plus, 
+  Settings,
+  Clock,
+  Users,
+  FileText,
+  Save,
+  Eye,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  Timer,
+  ShuffleIcon,
+  GraduationCap,
+  AlertCircle,
+  Target,
+  Brain,
+  TrendingUp,
+  RotateCcw
 } from "lucide-react";
-import { format } from "date-fns";
+import type { Quiz, Question, QuestionGroup, Testbank, AnswerOption } from "@shared/schema";
+import { insertQuizSchema, insertQuestionSchema, insertQuestionGroupSchema, insertAnswerOptionSchema } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { QuestionGroupBuilder } from "@/components/quiz/QuestionGroupBuilder";
 
-interface Quiz {
-  id: string;
-  title: string;
-  description: string;
-  instructions: string;
-  timeLimit: number;
-  shuffleAnswers: boolean;
-  shuffleQuestions: boolean;
-  allowMultipleAttempts: boolean;
-  maxAttempts: number;
-  passwordProtected: boolean;
-  password: string;
-  ipLocking: boolean;
-  
-  // Enhanced CAT Settings
-  adaptiveTesting: boolean;
-  catModel: string;
-  catSettings: {
-    initialDifficulty: number;
-    targetSEM: number;
-    maxQuestions: number;
-    minQuestions: number;
-    terminationCriteria: string;
-  };
-  
-  // Enhanced Proctoring Settings
-  proctoring: boolean;
-  proctoringSettings: {
-    requireCamera: boolean;
-    requireMicrophone: boolean;
-    lockdownBrowser: boolean;
-    preventTabSwitching: boolean;
-    recordSession: boolean;
-    flagSuspiciousActivity: boolean;
-    faceDetection: boolean;
-    eyeTracking: boolean;
-    roomScan: boolean;
-    idVerification: boolean;
-    allowedApplications: string[];
-    blockedWebsites: string[];
-  };
-  
-  // Attempt and Time Management
-  attemptSettings: {
-    maxAttempts: number;
-    attemptGap: number; // value for time between attempts
-    attemptGapUnit: 'minutes' | 'hours' | 'days'; // unit for attemptGap
-    keepHighestScore: boolean;
-    allowReviewBetweenAttempts: boolean;
-    timeExtensions: {
-      enabled: boolean;
-      percentage: number; // % of additional time
-      eligibleStudents: string[];
-    };
-  };
-  
-  // Navigation and Display
-  navigationSettings: {
-    allowBacktrack: boolean;
-    showProgressBar: boolean;
-    showQuestionNumbers: boolean;
-    showTimeRemaining: boolean;
-    oneQuestionPerPage: boolean;
-    allowSaveAndContinue: boolean;
-  };
-  
-  // Calculator and Tools
-  allowCalculator: boolean;
-  calculatorType: string; // 'basic', 'scientific', 'graphing'
-  allowedTools: string[];
-  
-  // Accessibility Features
-  accessibilitySettings: {
-    allowScreenReader: boolean;
-    fontSize: string;
-    highContrast: boolean;
-    colorBlindSupport: boolean;
-    keyboardNavigation: boolean;
-  };
-  
+const quizFormSchema = insertQuizSchema.extend({
+  availableFrom: z.string().optional(),
+  availableUntil: z.string().optional(),
+});
 
-  
-  // Existing fields
-  availableFrom: string;
-  availableUntil: string;
-  showCorrectAnswers: boolean;
-  showCorrectAnswersAfter: string;
-  pointsPerQuestion: number;
-  passingGrade: number;
-  gradeToShow: string;
-  status: string;
-  enableQuestionFeedback: boolean;
-  enableLearningPrescription: boolean;
-  showAnswerReasoning: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+type QuizFormData = z.infer<typeof quizFormSchema>;
 
-interface Question {
-  id: string;
-  questionText: string;
-  questionType: string;
-  difficultyLevel: number;
-  bloomsLevel: string;
-  points: string;
-  tags: string[];
-  testbankId: string;
-}
+const questionFormSchema = insertQuestionSchema.extend({
+  answerOptions: z.array(insertAnswerOptionSchema).optional(),
+});
 
-interface QuestionGroup {
-  id: string;
-  quizId: string;
-  name: string;
-  description?: string;
-  pickCount: number;
-  totalQuestions: number;
-  pointsPerQuestion: string;
-  difficultyWeight: string;
-  bloomsWeight: string;
-  displayOrder: number;
-}
+type QuestionFormData = z.infer<typeof questionFormSchema>;
 
 export default function EnhancedQuizBuilder() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  // Quiz state
   const [quiz, setQuiz] = useState<Partial<Quiz>>({
     title: "",
     description: "",
     instructions: "",
+    status: "draft",
     timeLimit: 60,
-    shuffleAnswers: false,
+    passingGrade: 70,
     shuffleQuestions: false,
-    allowMultipleAttempts: false,
+    shuffleAnswers: false,
+    showCorrectAnswers: true,
+    allowReview: true,
     maxAttempts: 1,
-    passwordProtected: false,
-    password: "",
-    ipLocking: false,
-    
-    // Enhanced CAT Settings
-    adaptiveTesting: false,
-    catModel: "rasch",
+    gradeToShow: "percentage",
+    availableFrom: "",
+    availableUntil: "",
     catSettings: {
-      initialDifficulty: 0,
-      targetSEM: 0.32,
+      initialDifficulty: 5,
+      targetSEM: 0.3,
       maxQuestions: 50,
-      minQuestions: 5,
-      terminationCriteria: "fixed_sem"
+      minQuestions: 10,
+      terminationCriteria: "sem",
     },
-    
-    // Enhanced Proctoring Settings
-    proctoring: false,
-    proctoringSettings: {
-      requireCamera: false,
-      requireMicrophone: false,
-      lockdownBrowser: false,
-      preventTabSwitching: false,
-      recordSession: false,
-      flagSuspiciousActivity: false,
-      faceDetection: false,
-      eyeTracking: false,
-      roomScan: false,
-      idVerification: false,
-      allowedApplications: [],
-      blockedWebsites: []
-    },
-    
-    // Attempt and Time Management
     attemptSettings: {
       maxAttempts: 1,
       attemptGap: 0,
+      attemptGapUnit: "minutes",
       keepHighestScore: true,
       allowReviewBetweenAttempts: false,
-      timeExtensions: {
-        enabled: false,
-        percentage: 50,
-        eligibleStudents: []
-      }
+      timeExtensions: {},
     },
-    
-    // Navigation and Display
-    navigationSettings: {
-      allowBacktrack: true,
-      showProgressBar: true,
-      showQuestionNumbers: true,
-      showTimeRemaining: true,
-      oneQuestionPerPage: false,
-      allowSaveAndContinue: true
-    },
-    
-    // Calculator and Tools
-    allowCalculator: false,
-    calculatorType: "basic",
-    allowedTools: [],
-    
-    // Accessibility Features
-    accessibilitySettings: {
-      allowScreenReader: true,
-      fontSize: "normal",
-      highContrast: false,
-      colorBlindSupport: false,
-      keyboardNavigation: true
-    },
-    
-
-    
-    // Existing fields
-    showCorrectAnswers: false,
-    showCorrectAnswersAfter: "immediately",
-    pointsPerQuestion: 1,
-    passingGrade: 70,
-    gradeToShow: "percentage",
-    status: "draft",
-    enableQuestionFeedback: true,
-    enableLearningPrescription: true,
-    showAnswerReasoning: false,
   });
 
-  const [activeTab, setActiveTab] = useState("details");
-  const [questionGroups, setQuestionGroups] = useState<QuestionGroup[]>([]);
-  const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTestbankFilter, setSelectedTestbankFilter] = useState("all");
-  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
-  const [showAddQuestionDialog, setShowAddQuestionDialog] = useState(false);
-  const [newQuestion, setNewQuestion] = useState<Partial<Question>>({
-    questionText: '',
-    questionType: 'multiple_choice',
-    difficultyLevel: 5,
-    bloomsLevel: 'remember',
-    points: '1',
-    tags: [],
-    testbankId: ''
-  });
   const [isAddQuestionDialogOpen, setIsAddQuestionDialogOpen] = useState(false);
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTestbank, setSelectedTestbank] = useState("all");
+  const [viewingQuizQuestions, setViewingQuizQuestions] = useState(false);
 
-  // Fetch available questions
-  const { data: questions = [], isLoading: questionsLoading } = useQuery({
-    queryKey: ["/api/questions"],
-    retry: false,
+  // Test questions query
+  const { data: questions, isLoading: questionsLoading } = useQuery({
+    queryKey: ['/api/questions'],
   });
 
-  // Fetch testbanks
-  const { data: testbanks = [], isLoading: testbanksLoading } = useQuery({
-    queryKey: ["/api/testbanks"],
-    retry: false,
+  // Test testbanks query  
+  const { data: testbanks } = useQuery({
+    queryKey: ['/api/testbanks'],
   });
 
-
-
-  // Create quiz mutation
-  const createQuizMutation = useMutation({
-    mutationFn: async (quizData: Partial<Quiz>) => {
-      const response = await apiRequest("POST", "/api/quizzes", quizData);
-      return response.json();
-    },
-    onSuccess: (newQuiz) => {
-      toast({
-        title: "Quiz Created",
-        description: "Your quiz has been created successfully.",
-      });
-      setQuiz(newQuiz);
-      queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to create quiz. Please try again.",
-        variant: "destructive",
-      });
-    },
+  const availableQuestions = Array.isArray(questions) ? questions : [];
+  
+  // Filter questions based on search and testbank
+  const filteredQuestions = availableQuestions.filter((question) => {
+    const matchesSearch = question.questionText?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const matchesTestbank = selectedTestbank === "all" || question.testbankId === selectedTestbank;
+    return matchesSearch && matchesTestbank;
   });
 
-  // Create question group mutation
-  const createQuestionGroupMutation = useMutation({
-    mutationFn: async (groupData: Partial<QuestionGroup>) => {
-      const response = await apiRequest("POST", "/api/question-groups", groupData);
-      return response.json();
-    },
-    onSuccess: (newGroup) => {
-      setQuestionGroups(prev => [...prev, newGroup]);
-      toast({
-        title: "Question Group Created",
-        description: "Your question group has been created successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to create question group.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleCreateQuiz = () => {
-    if (!quiz.title?.trim()) {
-      toast({
-        title: "Error",
-        description: "Quiz title is required.",
-        variant: "destructive",
-      });
-      return;
-    }
-    createQuizMutation.mutate(quiz);
-  };
-
-  // Save quiz mutation
-  const saveQuizMutation = useMutation({
-    mutationFn: async (quizData: Partial<Quiz>) => {
-      if (quiz.id) {
-        const response = await apiRequest("PUT", `/api/quizzes/${quiz.id}`, quizData);
-        return response.json();
+  const toggleQuestionExpansion = (questionId: string) => {
+    setExpandedQuestions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId);
       } else {
-        const response = await apiRequest("POST", "/api/quizzes", quizData);
-        return response.json();
+        newSet.add(questionId);
       }
-    },
-    onSuccess: (savedQuiz) => {
-      setQuiz(prev => ({ ...prev, ...savedQuiz }));
-      toast({
-        title: "Quiz Saved",
-        description: quiz.id ? "Quiz updated successfully." : "Quiz created successfully.",
-      });
-      if (!quiz.id) {
-        window.history.replaceState(null, '', `/enhanced-quiz-builder?id=${savedQuiz.id}`);
-      }
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to save quiz. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSaveQuiz = () => {
-    if (!quiz.title?.trim()) {
-      toast({
-        title: "Error",
-        description: "Quiz title is required.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    saveQuizMutation.mutate(quiz);
+      return newSet;
+    });
   };
 
-  // Add question mutation
-  const addQuestionMutation = useMutation({
-    mutationFn: async (questionData: Partial<Question>) => {
-      const response = await apiRequest("POST", "/api/questions", questionData);
-      return response.json();
+  const saveDraftMutation = useMutation({
+    mutationFn: async (draftData: Partial<Quiz>) => {
+      return apiRequest('/api/quizzes', {
+        method: 'POST',
+        body: JSON.stringify(draftData),
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/questions"] });
-      setShowAddQuestionDialog(false);
-      setNewQuestion({
-        questionText: '',
-        questionType: 'multiple_choice',
-        difficultyLevel: 5,
-        bloomsLevel: 'remember',
-        points: '1',
-        tags: [],
-        testbankId: ''
-      });
       toast({
-        title: "Question Added",
-        description: "Question created successfully.",
+        title: "Draft Saved",
+        description: "Your quiz draft has been saved successfully.",
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
+      console.error('Save draft error:', error);
       toast({
         title: "Error",
-        description: "Failed to create question. Please try again.",
+        description: "Failed to save draft. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const handleAddQuestion = () => {
-    if (!newQuestion.questionText?.trim()) {
-      toast({
-        title: "Error",
-        description: "Question text is required.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!newQuestion.testbankId) {
-      toast({
-        title: "Error",
-        description: "Please select an item bank.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    addQuestionMutation.mutate(newQuestion);
+  const handleSaveDraft = () => {
+    const draftData = {
+      ...quiz,
+      status: "draft" as const,
+      timeLimit: quiz.timeLimit || null,
+    };
+    saveDraftMutation.mutate(draftData);
   };
-
-  const handleAddQuestionGroup = async (groupData: Partial<QuestionGroup>) => {
-    // If quiz doesn't have an ID, save it first
-    if (!quiz.id) {
-      if (!quiz.title?.trim()) {
-        toast({
-          title: "Error",
-          description: "Quiz title is required before adding question groups.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      try {
-        await saveQuizMutation.mutateAsync(quiz);
-        // The quiz should now have an ID from the save operation
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to save quiz. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    createQuestionGroupMutation.mutate({
-      ...groupData,
-      quizId: quiz.id,
-    });
-  };
-
-  const handleUpdateQuestionGroup = (groupId: string, updates: Partial<QuestionGroup>) => {
-    setQuestionGroups(prev => 
-      prev.map(group => 
-        group.id === groupId ? { ...group, ...updates } : group
-      )
-    );
-  };
-
-  const handleDeleteQuestionGroup = (groupId: string) => {
-    setQuestionGroups(prev => prev.filter(group => group.id !== groupId));
-  };
-
-  const handleAssignQuestions = (groupId: string, questionIds: string[]) => {
-    // This would make API call to assign questions to group
-    toast({
-      title: "Questions Assigned",
-      description: `${questionIds.length} questions assigned to group.`,
-    });
-  };
-
-  const availableQuestions = questions
-    .filter((q: Question) => q.testbankId)
-    .filter((q: Question) => {
-      const matchesSearch = !searchTerm || 
-        q.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        q.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      const matchesTestbank = selectedTestbankFilter === "all" || q.testbankId === selectedTestbankFilter;
-      
-      return matchesSearch && matchesTestbank;
-    });
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-          {/* Breadcrumb */}
-          <Breadcrumb items={[{ label: "Enhanced Quiz Builder" }]} />
-
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                <BookOpen className="h-8 w-8 text-primary" />
-                Enhanced Quiz Builder
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Create sophisticated assessments with advanced features including question groups, CAT, and comprehensive proctoring
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm">
-                <Copy className="h-4 w-4 mr-2" />
-                Preview
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSaveQuiz} 
-                disabled={saveQuizMutation.isPending}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {saveQuizMutation.isPending ? "Saving..." : "Save Draft"}
-              </Button>
-              <Button onClick={handleCreateQuiz} disabled={createQuizMutation.isPending}>
-                <Play className="h-4 w-4 mr-2" />
-                {createQuizMutation.isPending ? "Creating..." : "Create Quiz"}
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Enhanced Quiz Builder</h1>
+            <p className="text-muted-foreground">Create comprehensive assessments with advanced features</p>
           </div>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={handleSaveDraft}
+              disabled={saveDraftMutation.isPending}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
+            </Button>
+            <Button>
+              <Eye className="h-4 w-4 mr-2" />
+              Preview Quiz
+            </Button>
+            <Button>
+              Publish Quiz
+            </Button>
+          </div>
+        </div>
 
-          {/* Quiz Builder Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="details" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Details
-              </TabsTrigger>
-              <TabsTrigger value="questions" className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Questions
-              </TabsTrigger>
-              <TabsTrigger value="groups" className="flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Groups
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Settings
-              </TabsTrigger>
-              <TabsTrigger value="proctoring" className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Proctoring
-              </TabsTrigger>
-              <TabsTrigger value="grading" className="flex items-center gap-2">
-                <Award className="h-4 w-4" />
-                Grading
-              </TabsTrigger>
-              <TabsTrigger value="navigation" className="flex items-center gap-2">
-                <Monitor className="h-4 w-4" />
-                Navigation
-              </TabsTrigger>
-            </TabsList>
+        {/* Main Content */}
+        <Tabs defaultValue="basic" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="basic">Basic Settings</TabsTrigger>
+            <TabsTrigger value="questions">Questions</TabsTrigger>
+            <TabsTrigger value="groups">Question Groups</TabsTrigger>
+            <TabsTrigger value="timing">Timing & Attempts</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            <TabsTrigger value="cat">CAT Settings</TabsTrigger>
+          </TabsList>
 
-            {/* Quiz Details Tab */}
-            <TabsContent value="details" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quiz Information</CardTitle>
-                  <CardDescription>
-                    Basic information about your quiz
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="title">Quiz Title *</Label>
-                      <Input
-                        id="title"
-                        value={quiz.title || ""}
-                        onChange={(e) => setQuiz(prev => ({ ...prev, title: e.target.value }))}
-                        placeholder="Enter quiz title..."
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="status">Status</Label>
-                      <Select 
-                        value={quiz.status || "draft"} 
-                        onValueChange={(value) => setQuiz(prev => ({ ...prev, status: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="published">Published</SelectItem>
-                          <SelectItem value="archived">Archived</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={quiz.description || ""}
-                      onChange={(e) => setQuiz(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Describe the purpose and scope of this quiz..."
-                      rows={3}
+          {/* Basic Settings Tab */}
+          <TabsContent value="basic">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Basic Quiz Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure the fundamental properties of your quiz
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Quiz Title *</Label>
+                    <Input
+                      id="title"
+                      placeholder="Enter quiz title"
+                      value={quiz.title || ""}
+                      onChange={(e) => setQuiz(prev => ({ ...prev, title: e.target.value }))}
                     />
                   </div>
-
-                  <div>
-                    <Label htmlFor="instructions">Student Instructions</Label>
-                    <Textarea
-                      id="instructions"
-                      value={quiz.instructions || ""}
-                      onChange={(e) => setQuiz(prev => ({ ...prev, instructions: e.target.value }))}
-                      placeholder="Instructions for students taking this quiz..."
-                      rows={4}
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select value={quiz.status || "draft"} onValueChange={(value) => setQuiz(prev => ({ ...prev, status: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
-                      <Input
-                        id="timeLimit"
-                        type="number"
-                        min="1"
-                        value={quiz.timeLimit || 60}
-                        onChange={(e) => setQuiz(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }))}
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe your quiz..."
+                    value={quiz.description || ""}
+                    onChange={(e) => setQuiz(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="instructions">Instructions for Students</Label>
+                  <Textarea
+                    id="instructions"
+                    placeholder="Provide instructions for taking this quiz..."
+                    value={quiz.instructions || ""}
+                    onChange={(e) => setQuiz(prev => ({ ...prev, instructions: e.target.value }))}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="untimed"
+                        checked={quiz.timeLimit === null}
+                        onCheckedChange={(checked) => setQuiz(prev => ({
+                          ...prev,
+                          timeLimit: checked ? null : 60
+                        }))}
                       />
+                      <Label htmlFor="untimed">Untimed Quiz</Label>
                     </div>
-                    <div>
-                      <Label htmlFor="passingGrade">Passing Grade (%)</Label>
-                      <Input
-                        id="passingGrade"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={quiz.passingGrade || 70}
-                        onChange={(e) => setQuiz(prev => ({ ...prev, passingGrade: parseInt(e.target.value) || 70 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="gradeToShow">Grade Display</Label>
-                      <Select 
-                        value={quiz.gradeToShow || "percentage"} 
-                        onValueChange={(value) => setQuiz(prev => ({ ...prev, gradeToShow: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="percentage">Percentage</SelectItem>
-                          <SelectItem value="points">Points</SelectItem>
-                          <SelectItem value="letter">Letter Grade</SelectItem>
-                          <SelectItem value="gpa">GPA Scale</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Availability Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Availability
-                  </CardTitle>
-                  <CardDescription>
-                    Control when students can access this quiz
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="availableFrom">Available From</Label>
-                      <Input
-                        id="availableFrom"
-                        type="datetime-local"
-                        value={quiz.availableFrom || ""}
-                        onChange={(e) => setQuiz(prev => ({ ...prev, availableFrom: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="availableUntil">Available Until</Label>
-                      <Input
-                        id="availableUntil"
-                        type="datetime-local"
-                        value={quiz.availableUntil || ""}
-                        onChange={(e) => setQuiz(prev => ({ ...prev, availableUntil: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-
-            </TabsContent>
-
-            {/* Questions Tab */}
-            <TabsContent value="questions" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <BookOpen className="h-5 w-5" />
-                        Question Bank Selection
-                      </CardTitle>
-                      <CardDescription>
-                        Select questions from your testbanks to include in this quiz
-                      </CardDescription>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setShowAddQuestionDialog(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Question
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {questionsLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-                    </div>
-                  ) : availableQuestions.length === 0 ? (
-                    <div className="text-center py-12">
-                      <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No Questions Available</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Create questions in your testbanks first, then return here to build your quiz.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4">
+                    
+                    {quiz.timeLimit !== null && (
+                      <div className="space-y-2">
+                        <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
                         <Input
-                          placeholder="Search questions..."
-                          className="max-w-sm"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
+                          id="timeLimit"
+                          type="number"
+                          value={quiz.timeLimit || 60}
+                          onChange={(e) => setQuiz(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }))}
                         />
-                        <Select value={selectedTestbankFilter} onValueChange={setSelectedTestbankFilter}>
-                          <SelectTrigger className="w-48">
-                            <SelectValue placeholder="Filter by testbank" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All testbanks</SelectItem>
-                            {testbanks.map((testbank: any) => (
-                              <SelectItem key={testbank.id} value={testbank.id}>
-                                {testbank.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          onClick={() => setIsAddQuestionDialogOpen(true)}
-                          className="flex items-center gap-2"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Add Question
-                        </Button>
                       </div>
-                      
-                      <div className="flex items-center justify-between">
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="passingGrade">Passing Grade (%)</Label>
+                    <Input
+                      id="passingGrade"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={quiz.passingGrade || 70}
+                      onChange={(e) => setQuiz(prev => ({ ...prev, passingGrade: parseInt(e.target.value) || 70 }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gradeToShow">Grade Display</Label>
+                  <Select value={quiz.gradeToShow || "percentage"} onValueChange={(value) => setQuiz(prev => ({ ...prev, gradeToShow: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percentage">Percentage</SelectItem>
+                      <SelectItem value="points">Points</SelectItem>
+                      <SelectItem value="letter">Letter Grade</SelectItem>
+                      <SelectItem value="gpa">GPA Scale</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="availableFrom">Available From</Label>
+                    <Input
+                      id="availableFrom"
+                      type="datetime-local"
+                      value={quiz.availableFrom || ""}
+                      onChange={(e) => setQuiz(prev => ({ ...prev, availableFrom: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="availableUntil">Available Until</Label>
+                    <Input
+                      id="availableUntil"
+                      type="datetime-local"
+                      value={quiz.availableUntil || ""}
+                      onChange={(e) => setQuiz(prev => ({ ...prev, availableUntil: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Questions Tab */}
+          <TabsContent value="questions">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Quiz Questions
+                    </CardTitle>
+                    <CardDescription>
+                      {viewingQuizQuestions 
+                        ? "Questions currently included in this quiz"
+                        : "Select questions from your testbanks to include in this quiz"
+                      }
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="toggle-view" className="text-sm">
+                      {viewingQuizQuestions ? "Show Item Bank Questions" : "Show Quiz Questions"}
+                    </Label>
+                    <Switch
+                      id="toggle-view"
+                      checked={viewingQuizQuestions}
+                      onCheckedChange={setViewingQuizQuestions}
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {viewingQuizQuestions ? (
+                  <div className="space-y-4">
+                    {selectedQuestions.length === 0 ? (
+                      <div className="text-center py-12">
+                        <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-medium mb-2">No Questions Added Yet</h3>
                         <p className="text-sm text-muted-foreground">
-                          {availableQuestions.length} question{availableQuestions.length === 1 ? '' : 's'} available
-                          {selectedQuestions.length > 0 && ` (${selectedQuestions.length} selected)`}
+                          Switch to "Show Item Bank Questions" to add questions to this quiz.
                         </p>
-                        {selectedQuestions.length > 0 && (
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {selectedQuestions.map((questionId) => {
+                          const question = availableQuestions.find(q => q.id === questionId);
+                          if (!question) return null;
+                          
+                          return (
+                            <div key={questionId} className="flex items-center justify-between p-4 border rounded-lg">
+                              <div className="flex-1">
+                                <div className="font-medium">{question.questionText}</div>
+                                <div className="text-sm text-muted-foreground mt-1">
+                                  {question.questionType} • Difficulty: {question.difficultyLevel}/10
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedQuestions(prev => prev.filter(id => id !== questionId));
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    {questionsLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                      </div>
+                    ) : availableQuestions.length === 0 ? (
+                      <div className="text-center py-12">
+                        <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-medium mb-2">No Questions Available</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Create questions in your testbanks first.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex gap-4 items-center">
+                          <div className="flex-1">
+                            <Input
+                              placeholder="Search questions..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="w-full"
+                            />
+                          </div>
+                          <div className="min-w-[200px]">
+                            <Select value={selectedTestbank} onValueChange={setSelectedTestbank}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="All Testbanks" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Testbanks</SelectItem>
+                                {Array.isArray(testbanks) && testbanks.map((testbank) => (
+                                  <SelectItem key={testbank.id} value={testbank.id}>
+                                    {testbank.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedQuestions([])}
+                            onClick={() => setIsAddQuestionDialogOpen(true)}
                           >
-                            Clear Selection
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Question
                           </Button>
+                        </div>
+
+                        {selectedQuestions.length > 0 && (
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <span className="text-sm font-medium">
+                              {selectedQuestions.length} question{selectedQuestions.length === 1 ? '' : 's'} selected
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedQuestions([])}
+                            >
+                              Clear Selection
+                            </Button>
+                          </div>
                         )}
-                      </div>
-                      
-                      <div className="grid gap-4">
-                        {availableQuestions.slice(0, 10).map((question: Question) => (
-                          <Card key={question.id} className="p-4">
-                            <div className="flex items-start gap-3">
-                              <Checkbox
+
+                        <div className="space-y-3">
+                          {filteredQuestions.map((question) => (
+                            <div
+                              key={question.id}
+                              className={cn(
+                                "flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-accent/50",
+                                selectedQuestions.includes(question.id) && "bg-accent border-primary"
+                              )}
+                              onClick={() => {
+                                setSelectedQuestions(prev => 
+                                  prev.includes(question.id) 
+                                    ? prev.filter(id => id !== question.id)
+                                    : [...prev, question.id]
+                                );
+                              }}
+                            >
+                              <Checkbox 
                                 checked={selectedQuestions.includes(question.id)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedQuestions(prev => [...prev, question.id]);
-                                  } else {
-                                    setSelectedQuestions(prev => prev.filter(id => id !== question.id));
-                                  }
-                                }}
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Badge variant="outline">
-                                    Difficulty {question.difficultyLevel}
-                                  </Badge>
-                                  <Badge variant="outline">
-                                    {question.bloomsLevel}
-                                  </Badge>
-                                  <Badge variant="outline">
-                                    {question.questionType}
-                                  </Badge>
-                                  <Badge variant="outline">
-                                    {question.points} pts
-                                  </Badge>
-                                </div>
-                                <p className="text-sm mb-2">
-                                  {question.questionText?.slice(0, 200)}...
-                                </p>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setPreviewQuestion(question)}
-                                  className="mt-2"
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Preview
-                                </Button>
-                              </div>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                      
-                      {selectedQuestions.length > 0 && (
-                        <div className="flex justify-end pt-4 border-t">
-                          <Button
-                            onClick={async () => {
-                              if (!quiz.id) {
-                                toast({
-                                  title: "Error",
-                                  description: "Please save the quiz first before adding questions.",
-                                  variant: "destructive",
-                                });
-                                return;
-                              }
-
-                              try {
-                                // Add selected questions to quiz
-                                const response = await apiRequest("POST", `/api/quizzes/${quiz.id}/questions`, {
-                                  questionIds: selectedQuestions
-                                });
-                                
-                                if (response.ok) {
-                                  toast({
-                                    title: "Questions Added",
-                                    description: `${selectedQuestions.length} questions added to quiz.`,
-                                  });
-                                  
-                                  // Clear selection
-                                  setSelectedQuestions([]);
-                                  
-                                  // Optionally refresh quiz data
-                                  queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
-                                } else {
-                                  throw new Error("Failed to add questions");
-                                }
-                              } catch (error) {
-                                toast({
-                                  title: "Error",
-                                  description: "Failed to add questions to quiz. Please try again.",
-                                  variant: "destructive",
-                                });
-                              }
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Add {selectedQuestions.length} Selected Question{selectedQuestions.length === 1 ? '' : 's'}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Question Groups Tab */}
-            <TabsContent value="groups" className="space-y-6">
-              <QuestionGroupBuilder
-                quizId={quiz.id}
-                questionGroups={questionGroups}
-                availableQuestions={availableQuestions}
-                onAddGroup={handleAddQuestionGroup}
-                onUpdateGroup={handleUpdateQuestionGroup}
-                onDeleteGroup={handleDeleteQuestionGroup}
-                onAssignQuestions={handleAssignQuestions}
-              />
-            </TabsContent>
-
-            {/* Settings Tab */}
-            <TabsContent value="settings" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Quiz Behavior
-                  </CardTitle>
-                  <CardDescription>
-                    Configure how the quiz behaves during student attempts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="shuffleQuestions">Shuffle Questions</Label>
-                          <p className="text-sm text-muted-foreground">Randomize question order for each student</p>
-                        </div>
-                        <Switch
-                          id="shuffleQuestions"
-                          checked={quiz.shuffleQuestions || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, shuffleQuestions: checked }))}
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="shuffleAnswers">Shuffle Answer Options</Label>
-                          <p className="text-sm text-muted-foreground">Randomize answer choices</p>
-                        </div>
-                        <Switch
-                          id="shuffleAnswers"
-                          checked={quiz.shuffleAnswers || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, shuffleAnswers: checked }))}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="adaptiveTesting">Computer Adaptive Testing (CAT)</Label>
-                          <p className="text-sm text-muted-foreground">Adjust difficulty based on performance</p>
-                        </div>
-                        <Switch
-                          id="adaptiveTesting"
-                          checked={quiz.adaptiveTesting || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, adaptiveTesting: checked }))}
-                        />
-                      </div>
-
-                      {quiz.adaptiveTesting && (
-                        <div className="ml-6 border-l-2 border-blue-200 pl-4 space-y-4 bg-blue-50/50 rounded-r-lg p-4">
-                          <h4 className="font-medium text-blue-900 flex items-center gap-2">
-                            <Brain className="h-4 w-4" />
-                            CAT Configuration
-                          </h4>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="catModel">CAT Model</Label>
-                              <Select 
-                                value={quiz.catModel || "rasch"} 
-                                onValueChange={(value) => setQuiz(prev => ({ ...prev, catModel: value }))}
-                              >
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="rasch">Rasch Model</SelectItem>
-                                  <SelectItem value="2pl">2-Parameter Logistic (2PL)</SelectItem>
-                                  <SelectItem value="3pl">3-Parameter Logistic (3PL)</SelectItem>
-                                  <SelectItem value="grm">Graded Response Model (GRM)</SelectItem>
-                                  <SelectItem value="gpcm">Generalized Partial Credit Model</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div>
-                              <Label htmlFor="terminationCriteria">Termination Criteria</Label>
-                              <Select 
-                                value={quiz.catSettings?.terminationCriteria || "fixed_sem"} 
-                                onValueChange={(value) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  catSettings: { ...prev.catSettings, terminationCriteria: value }
-                                }))}
-                              >
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="fixed_sem">Fixed Standard Error</SelectItem>
-                                  <SelectItem value="fixed_length">Fixed Test Length</SelectItem>
-                                  <SelectItem value="variable_length">Variable Length</SelectItem>
-                                  <SelectItem value="confidence_interval">Confidence Interval</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="minQuestions">Minimum Questions: {quiz.catSettings?.minQuestions || 5}</Label>
-                              <Slider
-                                value={[quiz.catSettings?.minQuestions || 5]}
-                                onValueChange={(value) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  catSettings: { ...prev.catSettings, minQuestions: value[0] }
-                                }))}
-                                max={20}
-                                min={1}
-                                step={1}
-                                className="mt-2"
-                              />
-                            </div>
-
-                            <div>
-                              <Label htmlFor="maxQuestions">Maximum Questions: {quiz.catSettings?.maxQuestions || 50}</Label>
-                              <Slider
-                                value={[quiz.catSettings?.maxQuestions || 50]}
-                                onValueChange={(value) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  catSettings: { ...prev.catSettings, maxQuestions: value[0] }
-                                }))}
-                                max={100}
-                                min={5}
-                                step={1}
-                                className="mt-2"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="targetSEM">Target Standard Error: {quiz.catSettings?.targetSEM || 0.32}</Label>
-                              <Slider
-                                value={[quiz.catSettings?.targetSEM || 0.32]}
-                                onValueChange={(value) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  catSettings: { ...prev.catSettings, targetSEM: value[0] }
-                                }))}
-                                max={1.0}
-                                min={0.1}
-                                step={0.01}
-                                className="mt-2"
-                              />
-                            </div>
-
-                            <div>
-                              <Label htmlFor="initialDifficulty">Initial Difficulty: {quiz.catSettings?.initialDifficulty || 0}</Label>
-                              <Slider
-                                value={[quiz.catSettings?.initialDifficulty || 0]}
-                                onValueChange={(value) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  catSettings: { ...prev.catSettings, initialDifficulty: value[0] }
-                                }))}
-                                max={3}
-                                min={-3}
-                                step={0.1}
-                                className="mt-2"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="allowCalculator">On-Screen Calculator</Label>
-                          <p className="text-sm text-muted-foreground">Provide a calculator during the exam</p>
-                        </div>
-                        <Switch
-                          id="allowCalculator"
-                          checked={quiz.allowCalculator || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, allowCalculator: checked }))}
-                        />
-                      </div>
-
-                      {quiz.allowCalculator && (
-                        <div className="ml-6 border-l-2 border-muted pl-4">
-                          <Label htmlFor="calculatorType">Calculator Type</Label>
-                          <Select 
-                            value={quiz.calculatorType || "basic"} 
-                            onValueChange={(value) => setQuiz(prev => ({ ...prev, calculatorType: value }))}
-                          >
-                            <SelectTrigger className="mt-2">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="basic">Basic Calculator</SelectItem>
-                              <SelectItem value="scientific">Scientific Calculator</SelectItem>
-                              <SelectItem value="graphing">Graphing Calculator</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="allowMultipleAttempts">Multiple Attempts</Label>
-                          <p className="text-sm text-muted-foreground">Allow students to retake the quiz</p>
-                        </div>
-                        <Switch
-                          id="allowMultipleAttempts"
-                          checked={quiz.allowMultipleAttempts || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, allowMultipleAttempts: checked }))}
-                        />
-                      </div>
-
-                      {quiz.allowMultipleAttempts && (
-                        <div className="ml-6 border-l-2 border-green-200 pl-4 space-y-4 bg-green-50/50 rounded-r-lg p-4">
-                          <h4 className="font-medium text-green-900 flex items-center gap-2">
-                            <Timer className="h-4 w-4" />
-                            Attempt Configuration
-                          </h4>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="maxAttempts">Maximum Attempts</Label>
-                              <Input
-                                id="maxAttempts"
-                                type="number"
-                                min="1"
-                                max="10"
-                                value={quiz.attemptSettings?.maxAttempts || 1}
-                                onChange={(e) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  attemptSettings: { 
-                                    ...prev.attemptSettings, 
-                                    maxAttempts: parseInt(e.target.value) || 1 
-                                  }
-                                }))}
                                 className="mt-1"
                               />
-                            </div>
-
-                            <div>
-                              <Label htmlFor="attemptGap">Gap Between Attempts</Label>
-                              <div className="flex gap-2 mt-1">
-                                <Input
-                                  id="attemptGap"
-                                  type="number"
-                                  min="0"
-                                  value={quiz.attemptSettings?.attemptGap || 0}
-                                  onChange={(e) => setQuiz(prev => ({ 
-                                    ...prev, 
-                                    attemptSettings: { 
-                                      ...prev.attemptSettings, 
-                                      attemptGap: parseInt(e.target.value) || 0 
-                                    }
-                                  }))}
-                                  className="flex-1"
-                                />
-                                <Select
-                                  value={quiz.attemptSettings?.attemptGapUnit || 'minutes'}
-                                  onValueChange={(value) => setQuiz(prev => ({ 
-                                    ...prev, 
-                                    attemptSettings: { 
-                                      ...prev.attemptSettings, 
-                                      attemptGapUnit: value as 'minutes' | 'hours' | 'days'
-                                    }
-                                  }))}
-                                >
-                                  <SelectTrigger className="w-24">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="minutes">Min</SelectItem>
-                                    <SelectItem value="hours">Hours</SelectItem>
-                                    <SelectItem value="days">Days</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <Label htmlFor="keepHighestScore">Keep Highest Score</Label>
-                                <p className="text-xs text-muted-foreground">Use the highest attempt score</p>
-                              </div>
-                              <Switch
-                                id="keepHighestScore"
-                                checked={quiz.attemptSettings?.keepHighestScore || true}
-                                onCheckedChange={(checked) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  attemptSettings: { 
-                                    ...prev.attemptSettings, 
-                                    keepHighestScore: checked 
-                                  }
-                                }))}
-                              />
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <Label htmlFor="allowReviewBetweenAttempts">Allow Review Between Attempts</Label>
-                                <p className="text-xs text-muted-foreground">Students can see results before retaking</p>
-                              </div>
-                              <Switch
-                                id="allowReviewBetweenAttempts"
-                                checked={quiz.attemptSettings?.allowReviewBetweenAttempts || false}
-                                onCheckedChange={(checked) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  attemptSettings: { 
-                                    ...prev.attemptSettings, 
-                                    allowReviewBetweenAttempts: checked 
-                                  }
-                                }))}
-                              />
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <Label htmlFor="timeExtensions">Time Extensions</Label>
-                                <p className="text-xs text-muted-foreground">Allow extra time for eligible students</p>
-                              </div>
-                              <Switch
-                                id="timeExtensions"
-                                checked={quiz.attemptSettings?.timeExtensions?.enabled || false}
-                                onCheckedChange={(checked) => setQuiz(prev => ({ 
-                                  ...prev, 
-                                  attemptSettings: { 
-                                    ...prev.attemptSettings, 
-                                    timeExtensions: {
-                                      ...prev.attemptSettings?.timeExtensions,
-                                      enabled: checked
-                                    }
-                                  }
-                                }))}
-                              />
-                            </div>
-
-                            {quiz.attemptSettings?.timeExtensions?.enabled && (
-                              <div className="ml-4 border-l-2 border-gray-200 pl-4">
-                                <div>
-                                  <Label htmlFor="timeExtensionPercentage">Additional Time (%): {quiz.attemptSettings?.timeExtensions?.percentage || 50}%</Label>
-                                  <Slider
-                                    value={[quiz.attemptSettings?.timeExtensions?.percentage || 50]}
-                                    onValueChange={(value) => setQuiz(prev => ({ 
-                                      ...prev, 
-                                      attemptSettings: { 
-                                        ...prev.attemptSettings, 
-                                        timeExtensions: {
-                                          ...prev.attemptSettings?.timeExtensions,
-                                          percentage: value[0]
-                                        }
-                                      }
-                                    }))}
-                                    max={200}
-                                    min={10}
-                                    step={10}
-                                    className="mt-2"
-                                  />
+                              <div className="flex-1">
+                                <div className="font-medium">{question.questionText}</div>
+                                <div className="text-sm text-muted-foreground mt-1">
+                                  {question.questionType} • Difficulty: {question.difficultyLevel}/10
                                 </div>
                               </div>
-                            )}
+                            </div>
+                          ))}
+                        </div>
+
+                        {selectedQuestions.length > 0 && (
+                          <div className="flex justify-end pt-4">
+                            <Button
+                              onClick={async () => {
+                                try {
+                                  toast({
+                                    title: "Success",
+                                    description: `Added ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'} to quiz`,
+                                  });
+                                  
+                                  setSelectedQuestions([]);
+                                  setViewingQuizQuestions(true);
+                                } catch (error) {
+                                  console.error('Error adding questions:', error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to add questions to quiz. Please try again.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              className="flex items-center gap-2"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add {selectedQuestions.length} Selected Question{selectedQuestions.length === 1 ? '' : 's'}
+                            </Button>
                           </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="showCorrectAnswers">Show Correct Answers</Label>
-                          <p className="text-sm text-muted-foreground">Display answers after completion</p>
-                        </div>
-                        <Switch
-                          id="showCorrectAnswers"
-                          checked={quiz.showCorrectAnswers || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, showCorrectAnswers: checked }))}
-                        />
+                        )}
                       </div>
-                    </div>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              {/* Security Settings */}
+          {/* Question Groups Tab */}
+          <TabsContent value="groups">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Question Groups
+                </CardTitle>
+                <CardDescription>
+                  Organize questions into groups for better assessment structure
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <QuestionGroupBuilder
+                  groups={[]}
+                  onAddGroup={async (groupData) => {
+                    console.log('Adding group:', groupData);
+                  }}
+                  onUpdateGroup={(groupId, updates) => {
+                    console.log('Updating group:', groupId, updates);
+                  }}
+                  onDeleteGroup={(groupId) => {
+                    console.log('Deleting group:', groupId);
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Timing & Attempts Tab */}
+          <TabsContent value="timing">
+            <div className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5" />
-                    Security Settings
+                    <Clock className="h-5 w-5" />
+                    Timing Settings
                   </CardTitle>
-                  <CardDescription>
-                    Additional security measures for quiz integrity
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="passwordProtected">Password Protection</Label>
-                          <p className="text-sm text-muted-foreground">Require password to access quiz</p>
-                        </div>
-                        <Switch
-                          id="passwordProtected"
-                          checked={quiz.passwordProtected || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, passwordProtected: checked }))}
-                        />
-                      </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="shuffle-questions"
+                      checked={quiz.shuffleQuestions || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, shuffleQuestions: checked }))}
+                    />
+                    <Label htmlFor="shuffle-questions">Shuffle Questions</Label>
+                  </div>
 
-                      {quiz.passwordProtected && (
-                        <div>
-                          <Label htmlFor="password">Quiz Password</Label>
-                          <Input
-                            id="password"
-                            type="password"
-                            value={quiz.password || ""}
-                            onChange={(e) => setQuiz(prev => ({ ...prev, password: e.target.value }))}
-                            placeholder="Enter quiz password..."
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="ipLocking">IP Address Locking</Label>
-                          <p className="text-sm text-muted-foreground">Restrict access by IP address</p>
-                        </div>
-                        <Switch
-                          id="ipLocking"
-                          checked={quiz.ipLocking || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, ipLocking: checked }))}
-                        />
-                      </div>
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="shuffle-answers"
+                      checked={quiz.shuffleAnswers || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, shuffleAnswers: checked }))}
+                    />
+                    <Label htmlFor="shuffle-answers">Shuffle Answer Options</Label>
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
 
-            {/* Proctoring Tab */}
-            <TabsContent value="proctoring" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Live Proctoring Settings
+                    <RotateCcw className="h-5 w-5" />
+                    Attempt Settings
                   </CardTitle>
-                  <CardDescription>
-                    Configure real-time monitoring and academic integrity measures
-                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <Label htmlFor="proctoring" className="text-base">Enable Live Proctoring</Label>
-                      <p className="text-sm text-muted-foreground">Monitor students during quiz attempts</p>
-                    </div>
-                    <Switch
-                      id="proctoring"
-                      checked={quiz.proctoring || false}
-                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, proctoring: checked }))}
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="max-attempts">Maximum Attempts</Label>
+                    <Input
+                      id="max-attempts"
+                      type="number"
+                      min="1"
+                      value={quiz.attemptSettings?.maxAttempts || 1}
+                      onChange={(e) => setQuiz(prev => ({
+                        ...prev,
+                        attemptSettings: {
+                          ...prev.attemptSettings,
+                          maxAttempts: parseInt(e.target.value) || 1,
+                          attemptGap: prev.attemptSettings?.attemptGap || 0,
+                          attemptGapUnit: prev.attemptSettings?.attemptGapUnit || "minutes",
+                          keepHighestScore: prev.attemptSettings?.keepHighestScore || true,
+                          allowReviewBetweenAttempts: prev.attemptSettings?.allowReviewBetweenAttempts || false,
+                          timeExtensions: prev.attemptSettings?.timeExtensions || {},
+                        }
+                      }))}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Advanced Tab */}
+          <TabsContent value="advanced">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  Advanced Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="show-correct-answers"
+                    checked={quiz.showCorrectAnswers || false}
+                    onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, showCorrectAnswers: checked }))}
+                  />
+                  <Label htmlFor="show-correct-answers">Show Correct Answers After Submission</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="allow-review"
+                    checked={quiz.allowReview || false}
+                    onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, allowReview: checked }))}
+                  />
+                  <Label htmlFor="allow-review">Allow Review Before Submission</Label>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* CAT Settings Tab */}
+          <TabsContent value="cat">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Computer Adaptive Testing (CAT)
+                </CardTitle>
+                <CardDescription>
+                  Configure adaptive testing parameters for personalized assessments
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="termination-criteria">Termination Criteria</Label>
+                  <Select 
+                    value={quiz.catSettings?.terminationCriteria || "sem"} 
+                    onValueChange={(value) => setQuiz(prev => ({
+                      ...prev,
+                      catSettings: {
+                        ...prev.catSettings,
+                        terminationCriteria: value,
+                        initialDifficulty: prev.catSettings?.initialDifficulty || 5,
+                        targetSEM: prev.catSettings?.targetSEM || 0.3,
+                        maxQuestions: prev.catSettings?.maxQuestions || 50,
+                        minQuestions: prev.catSettings?.minQuestions || 10,
+                      }
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sem">Standard Error of Measurement</SelectItem>
+                      <SelectItem value="fixed">Fixed Number of Items</SelectItem>
+                      <SelectItem value="confidence">Confidence Interval</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="min-questions">Minimum Questions</Label>
+                    <Input
+                      id="min-questions"
+                      type="number"
+                      min="1"
+                      value={quiz.catSettings?.minQuestions || 10}
+                      onChange={(e) => setQuiz(prev => ({
+                        ...prev,
+                        catSettings: {
+                          ...prev.catSettings,
+                          minQuestions: parseInt(e.target.value) || 10,
+                          initialDifficulty: prev.catSettings?.initialDifficulty || 5,
+                          targetSEM: prev.catSettings?.targetSEM || 0.3,
+                          maxQuestions: prev.catSettings?.maxQuestions || 50,
+                          terminationCriteria: prev.catSettings?.terminationCriteria || "sem",
+                        }
+                      }))}
                     />
                   </div>
 
-                  {quiz.proctoring && (
-                    <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
-                      <h4 className="font-medium">Proctoring Options</h4>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="requireCamera">Require Camera</Label>
-                            <p className="text-xs text-muted-foreground">Student must enable webcam</p>
-                          </div>
-                          <Switch
-                            id="requireCamera"
-                            checked={quiz.proctoringSettings?.requireCamera || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                proctoringSettings: {
-                                  ...prev.proctoringSettings,
-                                  requireCamera: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="requireMicrophone">Require Microphone</Label>
-                            <p className="text-xs text-muted-foreground">Student must enable microphone</p>
-                          </div>
-                          <Switch
-                            id="requireMicrophone"
-                            checked={quiz.proctoringSettings?.requireMicrophone || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                proctoringSettings: {
-                                  ...prev.proctoringSettings,
-                                  requireMicrophone: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="lockdownBrowser">Lockdown Browser</Label>
-                            <p className="text-xs text-muted-foreground">Restrict browser features</p>
-                          </div>
-                          <Switch
-                            id="lockdownBrowser"
-                            checked={quiz.proctoringSettings?.lockdownBrowser || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                proctoringSettings: {
-                                  ...prev.proctoringSettings,
-                                  lockdownBrowser: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="preventTabSwitching">Prevent Tab Switching</Label>
-                            <p className="text-xs text-muted-foreground">Detect when student leaves tab</p>
-                          </div>
-                          <Switch
-                            id="preventTabSwitching"
-                            checked={quiz.proctoringSettings?.preventTabSwitching || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                proctoringSettings: {
-                                  ...prev.proctoringSettings,
-                                  preventTabSwitching: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="recordSession">Record Session</Label>
-                            <p className="text-xs text-muted-foreground">Save video recording for review</p>
-                          </div>
-                          <Switch
-                            id="recordSession"
-                            checked={quiz.proctoringSettings?.recordSession || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                proctoringSettings: {
-                                  ...prev.proctoringSettings,
-                                  recordSession: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="flagSuspiciousActivity">Flag Suspicious Activity</Label>
-                            <p className="text-xs text-muted-foreground">Auto-detect cheating behaviors</p>
-                          </div>
-                          <Switch
-                            id="flagSuspiciousActivity"
-                            checked={quiz.proctoringSettings?.flagSuspiciousActivity || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                proctoringSettings: {
-                                  ...prev.proctoringSettings,
-                                  flagSuspiciousActivity: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      <Separator className="my-4" />
-                      
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-orange-900 flex items-center gap-2">
-                          <Eye className="h-4 w-4" />
-                          Advanced Monitoring
-                        </h4>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <Label htmlFor="faceDetection">Face Detection</Label>
-                              <p className="text-xs text-muted-foreground">Verify student presence</p>
-                            </div>
-                            <Switch
-                              id="faceDetection"
-                              checked={quiz.proctoringSettings?.faceDetection || false}
-                              onCheckedChange={(checked) => 
-                                setQuiz(prev => ({
-                                  ...prev,
-                                  proctoringSettings: {
-                                    ...prev.proctoringSettings,
-                                    faceDetection: checked
-                                  }
-                                }))
-                              }
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <Label htmlFor="eyeTracking">Eye Tracking</Label>
-                              <p className="text-xs text-muted-foreground">Monitor gaze patterns</p>
-                            </div>
-                            <Switch
-                              id="eyeTracking"
-                              checked={quiz.proctoringSettings?.eyeTracking || false}
-                              onCheckedChange={(checked) => 
-                                setQuiz(prev => ({
-                                  ...prev,
-                                  proctoringSettings: {
-                                    ...prev.proctoringSettings,
-                                    eyeTracking: checked
-                                  }
-                                }))
-                              }
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <Label htmlFor="roomScan">Room Scan</Label>
-                              <p className="text-xs text-muted-foreground">Require environment check</p>
-                            </div>
-                            <Switch
-                              id="roomScan"
-                              checked={quiz.proctoringSettings?.roomScan || false}
-                              onCheckedChange={(checked) => 
-                                setQuiz(prev => ({
-                                  ...prev,
-                                  proctoringSettings: {
-                                    ...prev.proctoringSettings,
-                                    roomScan: checked
-                                  }
-                                }))
-                              }
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <Label htmlFor="idVerification">ID Verification</Label>
-                              <p className="text-xs text-muted-foreground">Verify student identity</p>
-                            </div>
-                            <Switch
-                              id="idVerification"
-                              checked={quiz.proctoringSettings?.idVerification || false}
-                              onCheckedChange={(checked) => 
-                                setQuiz(prev => ({
-                                  ...prev,
-                                  proctoringSettings: {
-                                    ...prev.proctoringSettings,
-                                    idVerification: checked
-                                  }
-                                }))
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Grading Tab */}
-            <TabsContent value="grading" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Award className="h-5 w-5" />
-                    Grading & Feedback
-                  </CardTitle>
-                  <CardDescription>
-                    Configure how grades are calculated and displayed
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <Label htmlFor="pointsPerQuestion">Default Points per Question</Label>
-                      <Input
-                        id="pointsPerQuestion"
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={quiz.pointsPerQuestion || 1}
-                        onChange={(e) => setQuiz(prev => ({ ...prev, pointsPerQuestion: parseFloat(e.target.value) || 1 }))}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="gradeDisplay">Grade Display Format</Label>
-                      <Select 
-                        value={quiz.gradeToShow || "percentage"} 
-                        onValueChange={(value) => setQuiz(prev => ({ ...prev, gradeToShow: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="percentage">Percentage (90%)</SelectItem>
-                          <SelectItem value="points">Points (18/20)</SelectItem>
-                          <SelectItem value="letter">Letter Grade (A-)</SelectItem>
-                          <SelectItem value="gpa">GPA Scale (3.7)</SelectItem>
-                          <SelectItem value="complete">Complete/Incomplete</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="max-questions">Maximum Questions</Label>
+                    <Input
+                      id="max-questions"
+                      type="number"
+                      min="1"
+                      value={quiz.catSettings?.maxQuestions || 50}
+                      onChange={(e) => setQuiz(prev => ({
+                        ...prev,
+                        catSettings: {
+                          ...prev.catSettings,
+                          maxQuestions: parseInt(e.target.value) || 50,
+                          initialDifficulty: prev.catSettings?.initialDifficulty || 5,
+                          targetSEM: prev.catSettings?.targetSEM || 0.3,
+                          minQuestions: prev.catSettings?.minQuestions || 10,
+                          terminationCriteria: prev.catSettings?.terminationCriteria || "sem",
+                        }
+                      }))}
+                    />
                   </div>
 
-                  <Separator />
-
-                  <div>
-                    <h4 className="font-medium mb-4">Answer Feedback Settings</h4>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="showCorrectAnswers">Show Correct Answers</Label>
-                          <p className="text-sm text-muted-foreground">Display correct answers to students</p>
-                        </div>
-                        <Switch
-                          id="showCorrectAnswers"
-                          checked={quiz.showCorrectAnswers || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, showCorrectAnswers: checked }))}
-                        />
-                      </div>
-
-                      {quiz.showCorrectAnswers && (
-                        <div>
-                          <Label htmlFor="showCorrectAnswersAfter">Show Answers After</Label>
-                          <Select 
-                            value={quiz.showCorrectAnswersAfter || "immediately"} 
-                            onValueChange={(value) => setQuiz(prev => ({ ...prev, showCorrectAnswersAfter: value }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="immediately">Immediately</SelectItem>
-                              <SelectItem value="submission">After Submission</SelectItem>
-                              <SelectItem value="due_date">After Due Date</SelectItem>
-                              <SelectItem value="manual">Manual Release</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="target-sem">Target SEM</Label>
+                    <Input
+                      id="target-sem"
+                      type="number"
+                      step="0.01"
+                      min="0.1"
+                      max="1.0"
+                      value={quiz.catSettings?.targetSEM || 0.3}
+                      onChange={(e) => setQuiz(prev => ({
+                        ...prev,
+                        catSettings: {
+                          ...prev.catSettings,
+                          targetSEM: parseFloat(e.target.value) || 0.3,
+                          initialDifficulty: prev.catSettings?.initialDifficulty || 5,
+                          maxQuestions: prev.catSettings?.maxQuestions || 50,
+                          minQuestions: prev.catSettings?.minQuestions || 10,
+                          terminationCriteria: prev.catSettings?.terminationCriteria || "sem",
+                        }
+                      }))}
+                    />
                   </div>
 
-                  <Separator />
-
-                  <div>
-                    <h4 className="font-medium mb-4">AI-Powered Learning Features</h4>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="enableQuestionFeedback">Question Feedback</Label>
-                          <p className="text-sm text-muted-foreground">AI-generated explanations for each question</p>
-                        </div>
-                        <Switch
-                          id="enableQuestionFeedback"
-                          checked={quiz.enableQuestionFeedback || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableQuestionFeedback: checked }))}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="enableLearningPrescription">Learning Prescriptions</Label>
-                          <p className="text-sm text-muted-foreground">Personalized study recommendations after quiz completion</p>
-                        </div>
-                        <Switch
-                          id="enableLearningPrescription"
-                          checked={quiz.enableLearningPrescription || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableLearningPrescription: checked }))}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="showAnswerReasoning">Answer Reasoning</Label>
-                          <p className="text-sm text-muted-foreground">Show explanations for why each answer option is correct/incorrect</p>
-                        </div>
-                        <Switch
-                          id="showAnswerReasoning"
-                          checked={quiz.showAnswerReasoning || false}
-                          onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, showAnswerReasoning: checked }))}
-                        />
-                      </div>
-
-                      {quiz.enableLearningPrescription && (
-                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                          <p className="text-sm text-blue-800 dark:text-blue-200">
-                            <Brain className="h-4 w-4 inline mr-1" />
-                            Learning prescriptions will analyze student performance and provide detailed study recommendations based on their quiz results.
-                            The level of detail depends on whether correct answers are shown to students.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Navigation & Accessibility Tab */}
-            <TabsContent value="navigation" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Monitor className="h-5 w-5" />
-                    Navigation & Accessibility
-                  </CardTitle>
-                  <CardDescription>
-                    Configure exam navigation, display options, and accessibility features
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="font-medium mb-4 flex items-center gap-2">
-                        <ArrowUpDown className="h-4 w-4" />
-                        Navigation Controls
-                      </h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="allowBacktrack">Allow Backtracking</Label>
-                            <p className="text-xs text-muted-foreground">Students can go back to previous questions</p>
-                          </div>
-                          <Switch
-                            id="allowBacktrack"
-                            checked={quiz.navigationSettings?.allowBacktrack || true}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                navigationSettings: {
-                                  ...prev.navigationSettings,
-                                  allowBacktrack: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="oneQuestionPerPage">One Question Per Page</Label>
-                            <p className="text-xs text-muted-foreground">Display questions individually</p>
-                          </div>
-                          <Switch
-                            id="oneQuestionPerPage"
-                            checked={quiz.navigationSettings?.oneQuestionPerPage || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                navigationSettings: {
-                                  ...prev.navigationSettings,
-                                  oneQuestionPerPage: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="allowSaveAndContinue">Save & Continue Later</Label>
-                            <p className="text-xs text-muted-foreground">Allow pausing and resuming</p>
-                          </div>
-                          <Switch
-                            id="allowSaveAndContinue"
-                            checked={quiz.navigationSettings?.allowSaveAndContinue || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                navigationSettings: {
-                                  ...prev.navigationSettings,
-                                  allowSaveAndContinue: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h4 className="font-medium mb-4 flex items-center gap-2">
-                        <Info className="h-4 w-4" />
-                        Display Options
-                      </h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="showProgressBar">Progress Bar</Label>
-                            <p className="text-xs text-muted-foreground">Show completion progress</p>
-                          </div>
-                          <Switch
-                            id="showProgressBar"
-                            checked={quiz.navigationSettings?.showProgressBar || true}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                navigationSettings: {
-                                  ...prev.navigationSettings,
-                                  showProgressBar: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="showQuestionNumbers">Question Numbers</Label>
-                            <p className="text-xs text-muted-foreground">Display question numbering</p>
-                          </div>
-                          <Switch
-                            id="showQuestionNumbers"
-                            checked={quiz.navigationSettings?.showQuestionNumbers || true}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                navigationSettings: {
-                                  ...prev.navigationSettings,
-                                  showQuestionNumbers: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="showTimeRemaining">Time Remaining</Label>
-                            <p className="text-xs text-muted-foreground">Display countdown timer</p>
-                          </div>
-                          <Switch
-                            id="showTimeRemaining"
-                            checked={quiz.navigationSettings?.showTimeRemaining || true}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                navigationSettings: {
-                                  ...prev.navigationSettings,
-                                  showTimeRemaining: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h4 className="font-medium mb-4 flex items-center gap-2">
-                        <Keyboard className="h-4 w-4" />
-                        Accessibility Features
-                      </h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="allowScreenReader">Screen Reader Support</Label>
-                            <p className="text-xs text-muted-foreground">Optimize for assistive technology</p>
-                          </div>
-                          <Switch
-                            id="allowScreenReader"
-                            checked={quiz.accessibilitySettings?.allowScreenReader || true}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                accessibilitySettings: {
-                                  ...prev.accessibilitySettings,
-                                  allowScreenReader: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="keyboardNavigation">Keyboard Navigation</Label>
-                            <p className="text-xs text-muted-foreground">Full keyboard accessibility</p>
-                          </div>
-                          <Switch
-                            id="keyboardNavigation"
-                            checked={quiz.accessibilitySettings?.keyboardNavigation || true}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                accessibilitySettings: {
-                                  ...prev.accessibilitySettings,
-                                  keyboardNavigation: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="highContrast">High Contrast Mode</Label>
-                            <p className="text-xs text-muted-foreground">Enhanced visual contrast</p>
-                          </div>
-                          <Switch
-                            id="highContrast"
-                            checked={quiz.accessibilitySettings?.highContrast || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                accessibilitySettings: {
-                                  ...prev.accessibilitySettings,
-                                  highContrast: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="colorBlindSupport">Color Blind Support</Label>
-                            <p className="text-xs text-muted-foreground">Alternative visual indicators</p>
-                          </div>
-                          <Switch
-                            id="colorBlindSupport"
-                            checked={quiz.accessibilitySettings?.colorBlindSupport || false}
-                            onCheckedChange={(checked) => 
-                              setQuiz(prev => ({
-                                ...prev,
-                                accessibilitySettings: {
-                                  ...prev.accessibilitySettings,
-                                  colorBlindSupport: checked
-                                }
-                              }))
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <Label htmlFor="fontSize">Font Size</Label>
-                        <Select 
-                          value={quiz.accessibilitySettings?.fontSize || "normal"} 
-                          onValueChange={(value) => setQuiz(prev => ({ 
-                            ...prev, 
-                            accessibilitySettings: {
-                              ...prev.accessibilitySettings,
-                              fontSize: value
-                            }
-                          }))}
-                        >
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="small">Small</SelectItem>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="large">Large</SelectItem>
-                            <SelectItem value="extra-large">Extra Large</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          {/* Question Preview Dialog */}
-          <Dialog open={!!previewQuestion} onOpenChange={() => setPreviewQuestion(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Question Preview</DialogTitle>
-          </DialogHeader>
-          {previewQuestion && (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium">Question Text</Label>
-                <p className="mt-1 text-sm">{previewQuestion.questionText}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Type</Label>
-                  <p className="mt-1 text-sm capitalize">{previewQuestion.questionType.replace('_', ' ')}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Difficulty</Label>
-                  <p className="mt-1 text-sm">{previewQuestion.difficultyLevel}/10</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Bloom's Level</Label>
-                  <p className="mt-1 text-sm capitalize">{previewQuestion.bloomsLevel}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Points</Label>
-                  <p className="mt-1 text-sm">{previewQuestion.points}</p>
-                </div>
-              </div>
-              {previewQuestion.tags && previewQuestion.tags.length > 0 && (
-                <div>
-                  <Label className="text-sm font-medium">Tags</Label>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {previewQuestion.tags.map((tag, index) => (
-                      <Badge key={index} variant="outline">{tag}</Badge>
-                    ))}
+                  <div className="space-y-2">
+                    <Label htmlFor="initial-difficulty">Initial Difficulty (1-10)</Label>
+                    <Input
+                      id="initial-difficulty"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={quiz.catSettings?.initialDifficulty || 5}
+                      onChange={(e) => setQuiz(prev => ({
+                        ...prev,
+                        catSettings: {
+                          ...prev.catSettings,
+                          initialDifficulty: parseInt(e.target.value) || 5,
+                          targetSEM: prev.catSettings?.targetSEM || 0.3,
+                          maxQuestions: prev.catSettings?.maxQuestions || 50,
+                          minQuestions: prev.catSettings?.minQuestions || 10,
+                          terminationCriteria: prev.catSettings?.terminationCriteria || "sem",
+                        }
+                      }))}
+                    />
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Question Dialog */}
-      <Dialog open={showAddQuestionDialog} onOpenChange={setShowAddQuestionDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add New Question</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="questionText">Question Text *</Label>
-              <Textarea
-                id="questionText"
-                value={newQuestion.questionText || ''}
-                onChange={(e) => setNewQuestion(prev => ({ ...prev, questionText: e.target.value }))}
-                placeholder="Enter your question text..."
-                className="mt-1"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="questionType">Question Type</Label>
-                <Select 
-                  value={newQuestion.questionType} 
-                  onValueChange={(value) => setNewQuestion(prev => ({ ...prev, questionType: value }))}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                    <SelectItem value="multiple_response">Multiple Response</SelectItem>
-                    <SelectItem value="true_false">True/False</SelectItem>
-                    <SelectItem value="fill_blank">Fill in the Blank</SelectItem>
-                    <SelectItem value="essay">Essay</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="testbankId">Item Bank *</Label>
-                <Select 
-                  value={newQuestion.testbankId} 
-                  onValueChange={(value) => setNewQuestion(prev => ({ ...prev, testbankId: value }))}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select item bank" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {testbanks?.map((testbank) => (
-                      <SelectItem key={testbank.id} value={testbank.id}>
-                        {testbank.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="difficultyLevel">Difficulty (1-10)</Label>
-                <Input
-                  id="difficultyLevel"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={newQuestion.difficultyLevel || 5}
-                  onChange={(e) => setNewQuestion(prev => ({ ...prev, difficultyLevel: parseInt(e.target.value) || 5 }))}
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="bloomsLevel">Bloom's Level</Label>
-                <Select 
-                  value={newQuestion.bloomsLevel} 
-                  onValueChange={(value) => setNewQuestion(prev => ({ ...prev, bloomsLevel: value }))}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="remember">Remember</SelectItem>
-                    <SelectItem value="understand">Understand</SelectItem>
-                    <SelectItem value="apply">Apply</SelectItem>
-                    <SelectItem value="analyze">Analyze</SelectItem>
-                    <SelectItem value="evaluate">Evaluate</SelectItem>
-                    <SelectItem value="create">Create</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="points">Points</Label>
-                <Input
-                  id="points"
-                  value={newQuestion.points || '1'}
-                  onChange={(e) => setNewQuestion(prev => ({ ...prev, points: e.target.value }))}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowAddQuestionDialog(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleAddQuestion} 
-                disabled={addQuestionMutation.isPending}
-              >
-                {addQuestionMutation.isPending ? "Adding..." : "Add Question"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
