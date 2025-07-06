@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
@@ -81,6 +82,32 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  const getDefaultAnswerOptions = (questionType: string) => {
+    switch (questionType) {
+      case 'multiple_choice':
+        return [
+          { answerText: '', isCorrect: true, displayOrder: 0, feedback: '' },
+          { answerText: '', isCorrect: false, displayOrder: 1, feedback: '' },
+          { answerText: '', isCorrect: false, displayOrder: 2, feedback: '' },
+          { answerText: '', isCorrect: false, displayOrder: 3, feedback: '' }
+        ];
+      case 'multiple_response':
+        return [
+          { answerText: '', isCorrect: false, displayOrder: 0, feedback: '' },
+          { answerText: '', isCorrect: false, displayOrder: 1, feedback: '' },
+          { answerText: '', isCorrect: false, displayOrder: 2, feedback: '' },
+          { answerText: '', isCorrect: false, displayOrder: 3, feedback: '' }
+        ];
+      case 'true_false':
+        return [
+          { answerText: 'True', isCorrect: false, displayOrder: 0, feedback: '' },
+          { answerText: 'False', isCorrect: false, displayOrder: 1, feedback: '' }
+        ];
+      default:
+        return [];
+    }
+  };
+
   const [formData, setFormData] = useState<Question>({
     testbankId,
     questionText: question?.questionText || '',
@@ -88,12 +115,7 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
     difficultyScore: question?.difficultyScore || 5,
     tags: question?.tags || [],
     bloomsLevel: question?.bloomsLevel || 'remember',
-    answerOptions: question?.answerOptions || [
-      { answerText: '', isCorrect: true, displayOrder: 0 },
-      { answerText: '', isCorrect: false, displayOrder: 1 },
-      { answerText: '', isCorrect: false, displayOrder: 2 },
-      { answerText: '', isCorrect: false, displayOrder: 3 }
-    ]
+    answerOptions: question?.answerOptions || getDefaultAnswerOptions(question?.questionType || 'multiple_choice')
   });
 
   const [newTag, setNewTag] = useState('');
@@ -179,10 +201,33 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
   });
 
   const handleInputChange = (field: keyof Question, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // If question type changes, set appropriate default answer options
+      if (field === 'questionType') {
+        if (value === 'multiple_choice' || value === 'multiple_response') {
+          // Default to 4 options for multiple choice questions
+          updated.answerOptions = [
+            { answerText: '', isCorrect: false, displayOrder: 0 },
+            { answerText: '', isCorrect: false, displayOrder: 1 },
+            { answerText: '', isCorrect: false, displayOrder: 2 },
+            { answerText: '', isCorrect: false, displayOrder: 3 }
+          ];
+        } else if (value === 'true_false') {
+          // Default True/False options
+          updated.answerOptions = [
+            { answerText: 'True', isCorrect: false, displayOrder: 0 },
+            { answerText: 'False', isCorrect: false, displayOrder: 1 }
+          ];
+        } else {
+          // Remove answer options for other question types
+          updated.answerOptions = [];
+        }
+      }
+      
+      return updated;
+    });
   };
 
   const handleAnswerOptionChange = (index: number, field: keyof AnswerOption, value: any) => {
@@ -279,51 +324,71 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
           )}
         </div>
         
-        <div className="space-y-3">
+        <div className="space-y-4">
           {formData.answerOptions?.map((option, index) => (
-            <div key={index} className="flex items-center gap-3 p-3 border border-border rounded-lg">
-              <div className="flex items-center">
-                <GripVertical className="h-4 w-4 text-muted-foreground mr-2" />
-                <Checkbox
-                  checked={option.isCorrect}
-                  onCheckedChange={(checked) => 
-                    handleAnswerOptionChange(index, 'isCorrect', checked)
-                  }
-                />
-              </div>
-              
-              <Input
-                placeholder={`Option ${index + 1}`}
-                value={option.answerText}
-                onChange={(e) => 
-                  handleAnswerOptionChange(index, 'answerText', e.target.value)
-                }
-                className="flex-1"
-              />
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  // TODO: Implement media upload
-                  toast({
-                    title: "Media Upload",
-                    description: "Media upload functionality to be implemented",
-                  });
-                }}
-              >
-                <Image className="h-4 w-4" />
-              </Button>
-              
-              {formData.questionType !== 'true_false' && formData.answerOptions && formData.answerOptions.length > 2 && (
+            <div key={index} className="p-4 border border-border rounded-lg space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center">
+                  <GripVertical className="h-4 w-4 text-muted-foreground mr-2" />
+                  <Checkbox
+                    checked={option.isCorrect}
+                    onCheckedChange={(checked) => 
+                      handleAnswerOptionChange(index, 'isCorrect', checked)
+                    }
+                  />
+                  <Label className="ml-2 text-sm">
+                    {option.isCorrect ? 'Correct' : 'Incorrect'}
+                  </Label>
+                </div>
+                
+                <div className="flex-1">
+                  <Input
+                    placeholder={`Option ${String.fromCharCode(65 + index)}`}
+                    value={option.answerText}
+                    onChange={(e) => 
+                      handleAnswerOptionChange(index, 'answerText', e.target.value)
+                    }
+                  />
+                </div>
+                
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => removeAnswerOption(index)}
+                  onClick={() => {
+                    toast({
+                      title: "Media Upload",
+                      description: "Media upload functionality to be implemented",
+                    });
+                  }}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Image className="h-4 w-4" />
                 </Button>
-              )}
+                
+                {formData.questionType !== 'true_false' && formData.answerOptions && formData.answerOptions.length > 2 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeAnswerOption(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              
+              <div>
+                <Label className="text-sm text-muted-foreground">
+                  Response Feedback (optional)
+                </Label>
+                <Textarea
+                  placeholder="Feedback shown when this option is selected..."
+                  value={option.feedback || ''}
+                  onChange={(e) => 
+                    handleAnswerOptionChange(index, 'feedback', e.target.value)
+                  }
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -353,13 +418,12 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
           <TabsContent value="content" className="space-y-4">
             <div>
               <Label htmlFor="questionText">Question Text</Label>
-              <Textarea
-                id="questionText"
-                placeholder="Enter your question here..."
+              <RichTextEditor
                 value={formData.questionText}
-                onChange={(e) => handleInputChange('questionText', e.target.value)}
-                rows={4}
+                onChange={(value) => handleInputChange('questionText', value)}
+                placeholder="Enter your question here..."
                 className="mt-1"
+                allowMedia={true}
               />
             </div>
 
