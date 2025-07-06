@@ -61,6 +61,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth middleware - temporarily disabled for testing
   // await setupAuth(app);
+  
+  // Add session middleware for test login
+  const { getSession } = await import("./replitAuth");
+  app.use(getSession());
 
   // Mock auth for testing
   const mockUser = {
@@ -114,7 +118,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           role: "student"
         };
         
-        // Set session
+        // Initialize session if not exists and set user
+        if (!req.session) {
+          req.session = {};
+        }
         req.session.user = studentUser;
         res.json({ success: true, user: studentUser });
       } else {
