@@ -196,6 +196,8 @@ export default function EnhancedQuizBuilder() {
     availabilityStart: undefined,
     availabilityEnd: undefined,
     alwaysAvailable: true,
+    passingGrade: 70,
+    gradeToShow: "percentage",
   });
 
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
@@ -208,6 +210,7 @@ export default function EnhancedQuizBuilder() {
   const [isAddToGroupDialogOpen, setIsAddToGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedExistingGroupId, setSelectedExistingGroupId] = useState<string | null>(null);
   const [questionGroups, setQuestionGroups] = useState<EnhancedQuestionGroup[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [quizId, setQuizId] = useState<string | null>(null);
@@ -555,16 +558,24 @@ export default function EnhancedQuizBuilder() {
                       type="number"
                       min="0"
                       max="100"
-                      value="70"
+                      value={quiz.passingGrade || 70}
                       placeholder="70"
-                      disabled
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 70;
+                        setQuiz(prev => ({ ...prev, passingGrade: value }));
+                      }}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="gradeToShow">Grade Display</Label>
-                  <Select value="percentage" disabled>
+                  <Select 
+                    value={quiz.gradeToShow || "percentage"} 
+                    onValueChange={(value: "percentage" | "points" | "letter" | "gpa") => {
+                      setQuiz(prev => ({ ...prev, gradeToShow: value as "percentage" | "points" | "letter" | "gpa" }));
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -1269,13 +1280,16 @@ export default function EnhancedQuizBuilder() {
                   
                   {selectedGroupId === "select-existing" && (
                     <div className="ml-6">
-                      <Select>
+                      <Select value={selectedExistingGroupId || undefined} onValueChange={setSelectedExistingGroupId}>
                         <SelectTrigger>
                           <SelectValue placeholder="Choose existing group" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="group1">Group 1</SelectItem>
-                          <SelectItem value="group2">Group 2</SelectItem>
+                          {questionGroups.map((group) => (
+                            <SelectItem key={group.id} value={group.id}>
+                              {group.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>

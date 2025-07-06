@@ -233,6 +233,10 @@ export const quizzes = pgTable("quizzes", {
   showCorrectAnswersAt: varchar("show_correct_answers_at", { enum: ["immediately", "after_submission", "after_due_date"] }).default("after_submission"),
   showQuestionsAfterAttempt: boolean("show_questions_after_attempt").default(false),
   
+  // Grading options
+  passingGrade: integer("passing_grade").default(70),
+  gradeToShow: varchar("grade_to_show", { enum: ["percentage", "points", "letter", "gpa"] }).default("percentage"),
+  
   // Availability settings (replaces startTime/endTime)
   availabilityStart: timestamp("availability_start"),
   availabilityEnd: timestamp("availability_end"),
