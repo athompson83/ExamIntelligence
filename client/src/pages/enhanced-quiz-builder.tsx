@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -229,6 +229,84 @@ export default function EnhancedQuizBuilder() {
   );
 
   // Drag end handler for reordering questions and moving between groups
+  // Load Existing Quiz Dialog Component
+  const LoadExistingQuizDialog = () => {
+    const { data: existingQuizzes } = useQuery({
+      queryKey: ['/api/quizzes'],
+    });
+
+    const handleLoadQuiz = (selectedQuiz: any) => {
+      // Load only the basic properties that match our quiz state
+      setQuiz({
+        title: selectedQuiz.title || "",
+        description: selectedQuiz.description || "",
+        instructions: selectedQuiz.instructions || "",
+        timeLimit: selectedQuiz.timeLimit || 60,
+        shuffleQuestions: selectedQuiz.shuffleQuestions || false,
+        shuffleAnswers: selectedQuiz.shuffleAnswers || false,
+        maxAttempts: selectedQuiz.maxAttempts || 1,
+        passingGrade: selectedQuiz.passingGrade || 70,
+        gradeToShow: selectedQuiz.gradeToShow || "points",
+        showCorrectAnswers: selectedQuiz.showCorrectAnswers || false,
+      });
+      setQuizId(selectedQuiz.id);
+    };
+
+    if (!existingQuizzes) {
+      return <div>Loading existing quizzes...</div>;
+    }
+
+    const draftQuizzes = existingQuizzes.filter((q: any) => !q.publishedAt);
+    const publishedQuizzes = existingQuizzes.filter((q: any) => q.publishedAt);
+
+    return (
+      <div className="space-y-4">
+        <Tabs defaultValue="drafts">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="drafts">Draft Quizzes</TabsTrigger>
+            <TabsTrigger value="published">Published Quizzes</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="drafts" className="space-y-2">
+            {draftQuizzes.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No draft quizzes found</p>
+            ) : (
+              draftQuizzes.map((quiz: any) => (
+                <div key={quiz.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">{quiz.title || "Untitled Quiz"}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Last modified: {quiz.updatedAt ? new Date(quiz.updatedAt).toLocaleDateString() : 'Unknown'}
+                    </p>
+                  </div>
+                  <Button onClick={() => handleLoadQuiz(quiz)}>Load</Button>
+                </div>
+              ))
+            )}
+          </TabsContent>
+          
+          <TabsContent value="published" className="space-y-2">
+            {publishedQuizzes.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No published quizzes found</p>
+            ) : (
+              publishedQuizzes.map((quiz: any) => (
+                <div key={quiz.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">{quiz.title || "Untitled Quiz"}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Published: {quiz.publishedAt ? new Date(quiz.publishedAt).toLocaleDateString() : 'Unknown'}
+                    </p>
+                  </div>
+                  <Button onClick={() => handleLoadQuiz(quiz)}>Load</Button>
+                </div>
+              ))
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -306,45 +384,51 @@ export default function EnhancedQuizBuilder() {
   const availableQuestions = Array.isArray(questions) ? questions : [];
   
   // Autosave functionality - only save when quiz actually changes
-  const [previousQuizState, setPreviousQuizState] = useState<string>('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const previousQuizRef = useRef<string>('');
   
   useEffect(() => {
     const currentQuizState = JSON.stringify(quiz);
     
-    // Only autosave if quiz has changed and has a title
-    if (quiz.title && currentQuizState !== previousQuizState && previousQuizState !== '') {
-      const autoSave = async () => {
-        if (isAutoSaving) return;
-        
-        setIsAutoSaving(true);
-        try {
-          const response = await fetch(quizId ? `/api/quizzes/${quizId}` : '/api/quizzes', {
-            method: quizId ? 'PUT' : 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(quiz),
-          });
-          
-          if (response.ok) {
-            const savedQuiz = await response.json();
-            if (!quizId) {
-              setQuizId(savedQuiz.id);
-            }
-            setLastSaved(new Date());
-          }
-        } catch (error) {
-          console.error('Autosave error:', error);
-        } finally {
-          setIsAutoSaving(false);
-        }
-      };
-
-      const timeoutId = setTimeout(autoSave, 2000);
-      return () => clearTimeout(timeoutId);
+    // Check if quiz has actually changed
+    if (currentQuizState !== previousQuizRef.current && previousQuizRef.current !== '') {
+      setHasUnsavedChanges(true);
     }
     
-    // Update previous state
-    setPreviousQuizState(currentQuizState);
-  }, [quiz, quizId, isAutoSaving, previousQuizState]);
+    previousQuizRef.current = currentQuizState;
+  }, [quiz]);
+
+  // Separate effect for autosave with debouncing
+  useEffect(() => {
+    if (!hasUnsavedChanges || !quiz.title || isAutoSaving) return;
+
+    const autoSave = async () => {
+      setIsAutoSaving(true);
+      try {
+        const response = await fetch(quizId ? `/api/quizzes/${quizId}` : '/api/quizzes', {
+          method: quizId ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(quiz),
+        });
+        
+        if (response.ok) {
+          const savedQuiz = await response.json();
+          if (!quizId) {
+            setQuizId(savedQuiz.id);
+          }
+          setLastSaved(new Date());
+          setHasUnsavedChanges(false);
+        }
+      } catch (error) {
+        console.error('Autosave error:', error);
+      } finally {
+        setIsAutoSaving(false);
+      }
+    };
+
+    const timeoutId = setTimeout(autoSave, 3000); // Increased to 3 seconds for less frequent saves
+    return () => clearTimeout(timeoutId);
+  }, [hasUnsavedChanges, quiz.title, isAutoSaving, quizId]);
   
   // Get quiz question IDs for filtering
   const quizQuestionIds = quizQuestions.map(q => q.id);
@@ -468,6 +552,24 @@ export default function EnhancedQuizBuilder() {
             </div>
           </div>
           <div className="flex gap-3">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Load Existing Quiz
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>Load Existing Quiz</DialogTitle>
+                  <DialogDescription>
+                    Choose from your drafts or published quizzes to edit.
+                  </DialogDescription>
+                </DialogHeader>
+                <LoadExistingQuizDialog />
+              </DialogContent>
+            </Dialog>
+            
             <Button 
               variant="outline" 
               onClick={handleSaveDraft}
@@ -570,10 +672,6 @@ export default function EnhancedQuizBuilder() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-
-                  </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="passingGrade">Passing Grade (%)</Label>
                     <Input
@@ -589,26 +687,26 @@ export default function EnhancedQuizBuilder() {
                       }}
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="gradeToShow">Grade Display</Label>
-                  <Select 
-                    value={quiz.gradeToShow || "percentage"} 
-                    onValueChange={(value: "percentage" | "points" | "letter" | "gpa") => {
-                      setQuiz(prev => ({ ...prev, gradeToShow: value as "percentage" | "points" | "letter" | "gpa" }));
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="gradeToShow">Grade Display</Label>
+                    <Select 
+                      value={quiz.gradeToShow || "percentage"} 
+                      onValueChange={(value: "percentage" | "points" | "letter" | "gpa") => {
+                        setQuiz(prev => ({ ...prev, gradeToShow: value as "percentage" | "points" | "letter" | "gpa" }));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
                       <SelectItem value="percentage">Percentage</SelectItem>
                       <SelectItem value="points">Points</SelectItem>
                       <SelectItem value="letter">Letter Grade</SelectItem>
                       <SelectItem value="gpa">GPA Scale</SelectItem>
                     </SelectContent>
                   </Select>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
