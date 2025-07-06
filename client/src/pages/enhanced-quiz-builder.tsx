@@ -26,15 +26,13 @@ import {
   useSensor,
   useSensors,
   useDroppable,
+  DragEndEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
-
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -212,13 +210,13 @@ export default function EnhancedQuizBuilder() {
   );
 
   // Drag end handler for reordering questions and moving between groups
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (!over) return;
 
-    const activeId = active.id;
-    const overId = over.id;
+    const activeId = String(active.id);
+    const overId = String(over.id);
 
     // Handle dropping on a group
     if (overId.startsWith('group-')) {

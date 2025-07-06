@@ -17,7 +17,7 @@ import UserManagement from "@/pages/user-management";
 import ExamInterface from "@/pages/exam-interface";
 import AdminSettings from "@/pages/admin-settings";
 import ReferenceBanks from "@/pages/reference-banks";
-import EnhancedQuizBuilder from "@/pages/enhanced-quiz-builder-fixed";
+import EnhancedQuizBuilder from "@/pages/enhanced-quiz-builder";
 import StudyAids from "@/pages/study-aids";
 import MLAnalytics from "@/pages/MLAnalytics";
 import ComprehensiveAnalytics from "@/pages/ComprehensiveAnalytics";
