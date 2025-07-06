@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -9,11 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { Bell, LogOut, User } from "lucide-react";
+import { Bell, LogOut, User, GraduationCap } from "lucide-react";
 
 export function TopBar() {
   const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();
+  const [, navigate] = useLocation();
 
   if (!isAuthenticated) {
     return null;
@@ -23,6 +25,10 @@ export function TopBar() {
     window.location.href = '/api/logout';
   };
 
+  const handleStudentView = () => {
+    navigate('/student-dashboard');
+  };
+
   return (
     <header className="h-16 border-b bg-white flex items-center justify-between px-6">
       <div className="flex items-center space-x-4">
@@ -30,6 +36,12 @@ export function TopBar() {
       </div>
       
       <div className="flex items-center space-x-4">
+        {/* Student View Button */}
+        <Button variant="outline" size="sm" onClick={handleStudentView}>
+          <GraduationCap className="h-4 w-4 mr-2" />
+          Student View
+        </Button>
+        
         {/* Language Switcher */}
         <LanguageSwitcher variant="compact" />
         
