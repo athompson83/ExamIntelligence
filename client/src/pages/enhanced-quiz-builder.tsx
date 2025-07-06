@@ -18,6 +18,26 @@ import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   BookOpen, 
   Plus, 
@@ -59,6 +79,98 @@ const questionFormSchema = insertQuestionSchema.extend({
 
 type QuestionFormData = z.infer<typeof questionFormSchema>;
 
+// Enhanced interface for questions with group tracking
+interface QuizQuestion {
+  id: string;
+  questionText: string;
+  questionType: string;
+  difficulty: number;
+  bloomsLevel: string;
+  groupId?: string | null;
+  points: number;
+  displayOrder: number;
+  // Additional fields from the database
+  [key: string]: any;
+}
+
+// Enhanced interface for question groups
+interface EnhancedQuestionGroup {
+  id: string;
+  name: string;
+  description: string;
+  pickCount: number;
+  pointsPerQuestion: number;
+  displayOrder: number;
+  questions: QuizQuestion[];
+  // Additional fields from the database
+  [key: string]: any;
+}
+
+// Drag and drop item component
+interface DraggableQuestionProps {
+  question: QuizQuestion;
+  onRemove: (questionId: string) => void;
+}
+
+function DraggableQuestion({ question, onRemove }: DraggableQuestionProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: question.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex items-center justify-between p-3 border rounded-lg bg-background cursor-move hover:bg-accent/50"
+    >
+      <div className="flex-1">
+        <div className="font-medium">{question.questionText}</div>
+        <div className="text-sm text-muted-foreground mt-1">
+          {question.questionType} • Difficulty: {question.difficulty}/10 • Points: {question.points}
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove(question.id);
+        }}
+      >
+        Remove
+      </Button>
+    </div>
+  );
+}
+
+// Droppable component for groups
+function Droppable({ children, id }: { children: React.ReactNode; id: string }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "transition-colors",
+        isOver && "bg-primary/5 border-primary/20"
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function EnhancedQuizBuilder() {
   const { toast } = useToast();
   const [quiz, setQuiz] = useState<Partial<Quiz>>({
@@ -79,7 +191,7 @@ export default function EnhancedQuizBuilder() {
   });
 
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
-  const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [isAddQuestionDialogOpen, setIsAddQuestionDialogOpen] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,8 +200,81 @@ export default function EnhancedQuizBuilder() {
   const [isAddToGroupDialogOpen, setIsAddToGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [questionGroups, setQuestionGroups] = useState<QuestionGroup[]>([]);
+  const [questionGroups, setQuestionGroups] = useState<EnhancedQuestionGroup[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Drag end handler for reordering questions and moving between groups
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    // Handle dropping on a group
+    if (overId.startsWith('group-')) {
+      const groupId = overId.replace('group-', '');
+      moveQuestionToGroup(activeId, groupId);
+      return;
+    }
+
+    // Handle reordering within the same container
+    if (activeId !== overId) {
+      setQuizQuestions((items) => {
+        const oldIndex = items.findIndex((item) => item.id === activeId);
+        const newIndex = items.findIndex((item) => item.id === overId);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // Function to move question to a specific group
+  const moveQuestionToGroup = (questionId: string, groupId: string) => {
+    setQuizQuestions(prev => 
+      prev.map(q => 
+        q.id === questionId 
+          ? { ...q, groupId: groupId }
+          : q
+      )
+    );
+
+    // Update the question groups to include the question
+    setQuestionGroups(prev => 
+      prev.map(group => {
+        if (group.id === groupId) {
+          const question = quizQuestions.find(q => q.id === questionId);
+          if (question && !group.questions.find(q => q.id === questionId)) {
+            return {
+              ...group,
+              questions: [...group.questions, question]
+            };
+          }
+        } else {
+          // Remove question from other groups
+          return {
+            ...group,
+            questions: group.questions.filter(q => q.id !== questionId)
+          };
+        }
+        return group;
+      })
+    );
+
+    toast({
+      title: "Question Moved",
+      description: "Question has been moved to the selected group.",
+    });
+  };
 
   // Test questions query
   const { data: questions, isLoading: questionsLoading } = useQuery({
@@ -410,15 +595,12 @@ export default function EnhancedQuizBuilder() {
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {/* Question Groups */}
-                        {questionGroups.map((group) => {
+                      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                        <div className="space-y-4">
+                          {/* Question Groups */}
+                          {questionGroups.map((group) => {
                           // Get quiz questions that belong to this group
-                          const groupQuestions = quizQuestions.filter(q => {
-                            // We need to check if there's a quiz question relationship with this group
-                            // For now, we'll just show all questions since the relationship isn't properly set up
-                            return false; // TODO: Implement proper grouping
-                          });
+                          const groupQuestions = quizQuestions.filter(q => q.groupId === group.id);
                           const isExpanded = expandedGroups.has(group.id);
                           
                           return (
@@ -504,10 +686,7 @@ export default function EnhancedQuizBuilder() {
                         
                         {/* Ungrouped Questions */}
                         {(() => {
-                          const ungroupedQuestions = quizQuestions.filter(q => {
-                            // For now, show all questions as ungrouped since we need to implement proper grouping
-                            return true;
-                          });
+                          const ungroupedQuestions = quizQuestions.filter(q => !q.groupId);
                           if (ungroupedQuestions.length === 0) return null;
                           
                           return (
@@ -543,7 +722,8 @@ export default function EnhancedQuizBuilder() {
                             </div>
                           );
                         })()}
-                      </div>
+                        </div>
+                      </DndContext>
                     )}
                   </div>
                 ) : (
@@ -856,18 +1036,29 @@ export default function EnhancedQuizBuilder() {
                   const questionsToAdd = availableQuestions.filter(q => selectedQuestions.includes(q.id));
                   
                   if (selectedGroupId === "create-new" && newGroupName.trim()) {
-                    // Create new group and add questions
-                    const newGroup = {
-                      id: `group-${Date.now()}`,
+                    // Create new group and add questions with proper groupId
+                    const groupId = `group-${Date.now()}`;
+                    const newGroup: EnhancedQuestionGroup = {
+                      id: groupId,
                       name: newGroupName.trim(),
                       description: `Group with ${selectedQuestions.length} questions`,
-                      questions: questionsToAdd,
+                      questions: questionsToAdd.map(q => ({ ...q, groupId })),
                       pickCount: questionsToAdd.length,
-                      pointsPerQuestion: 1
+                      pointsPerQuestion: 1,
+                      displayOrder: questionGroups.length + 1
                     };
                     
                     setQuestionGroups(prev => [...prev, newGroup]);
-                    setQuizQuestions(prev => [...prev, ...questionsToAdd]);
+                    
+                    // Add questions to quiz with proper groupId
+                    const questionsWithGroupId = questionsToAdd.map(q => ({
+                      ...q,
+                      groupId: groupId,
+                      points: 1,
+                      displayOrder: quizQuestions.length + questionsToAdd.indexOf(q) + 1
+                    }));
+                    
+                    setQuizQuestions(prev => [...prev, ...questionsWithGroupId]);
                     
                     toast({
                       title: "Success",
@@ -875,14 +1066,28 @@ export default function EnhancedQuizBuilder() {
                     });
                   } else if (selectedGroupId === "select-existing") {
                     // Add to existing group (placeholder for now)
-                    setQuizQuestions(prev => [...prev, ...questionsToAdd]);
+                    const questionsWithoutGroup = questionsToAdd.map(q => ({
+                      ...q,
+                      groupId: null,
+                      points: 1,
+                      displayOrder: quizQuestions.length + questionsToAdd.indexOf(q) + 1
+                    }));
+                    
+                    setQuizQuestions(prev => [...prev, ...questionsWithoutGroup]);
                     toast({
                       title: "Success",
                       description: `Added ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'} to existing group`,
                     });
                   } else if (selectedGroupId === "ungrouped") {
                     // Add as ungrouped questions
-                    setQuizQuestions(prev => [...prev, ...questionsToAdd]);
+                    const ungroupedQuestions = questionsToAdd.map(q => ({
+                      ...q,
+                      groupId: null,
+                      points: 1,
+                      displayOrder: quizQuestions.length + questionsToAdd.indexOf(q) + 1
+                    }));
+                    
+                    setQuizQuestions(prev => [...prev, ...ungroupedQuestions]);
                     toast({
                       title: "Success",
                       description: `Added ${selectedQuestions.length} ungrouped question${selectedQuestions.length === 1 ? '' : 's'} to quiz`,
