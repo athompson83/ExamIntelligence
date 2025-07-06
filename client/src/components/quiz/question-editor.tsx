@@ -34,6 +34,8 @@ interface AnswerOption {
   isCorrect: boolean;
   mediaUrl?: string;
   displayOrder: number;
+  reasoning?: string;
+  feedback?: string;
 }
 
 interface Question {
@@ -47,6 +49,10 @@ interface Question {
   answerOptions?: AnswerOption[];
   aiFeedback?: string;
   lastValidatedAt?: string;
+  generalFeedback?: string;
+  correctFeedback?: string;
+  incorrectFeedback?: string;
+  neutralFeedback?: string;
 }
 
 interface QuestionEditorProps {
@@ -115,7 +121,11 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
     difficultyScore: question?.difficultyScore || 5,
     tags: question?.tags || [],
     bloomsLevel: question?.bloomsLevel || 'remember',
-    answerOptions: question?.answerOptions || getDefaultAnswerOptions(question?.questionType || 'multiple_choice')
+    answerOptions: question?.answerOptions || getDefaultAnswerOptions(question?.questionType || 'multiple_choice'),
+    generalFeedback: question?.generalFeedback || '',
+    correctFeedback: question?.correctFeedback || '',
+    incorrectFeedback: question?.incorrectFeedback || '',
+    neutralFeedback: question?.neutralFeedback || ''
   });
 
   const [newTag, setNewTag] = useState('');
@@ -408,9 +418,10 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
         </DialogHeader>
 
         <Tabs defaultValue="content" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="options">Answer Options</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
             <TabsTrigger value="metadata">Metadata</TabsTrigger>
             <TabsTrigger value="validation">AI Validation</TabsTrigger>
           </TabsList>
@@ -470,6 +481,59 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
                 <p>No answer options needed for {questionTypes.find(t => t.value === formData.questionType)?.label} questions</p>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="feedback" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Question Feedback</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="generalFeedback">General Feedback</Label>
+                  <RichTextEditor
+                    value={formData.generalFeedback || ''}
+                    onChange={(value) => handleInputChange('generalFeedback', value)}
+                    placeholder="Provide general feedback that appears regardless of student response..."
+                    className="mt-1"
+                    allowMedia={true}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="correctFeedback">Correct Answer Feedback</Label>
+                  <RichTextEditor
+                    value={formData.correctFeedback || ''}
+                    onChange={(value) => handleInputChange('correctFeedback', value)}
+                    placeholder="Feedback shown when student answers correctly..."
+                    className="mt-1"
+                    allowMedia={true}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="incorrectFeedback">Incorrect Answer Feedback</Label>
+                  <RichTextEditor
+                    value={formData.incorrectFeedback || ''}
+                    onChange={(value) => handleInputChange('incorrectFeedback', value)}
+                    placeholder="Feedback shown when student answers incorrectly..."
+                    className="mt-1"
+                    allowMedia={true}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="neutralFeedback">Neutral Feedback</Label>
+                  <RichTextEditor
+                    value={formData.neutralFeedback || ''}
+                    onChange={(value) => handleInputChange('neutralFeedback', value)}
+                    placeholder="Feedback shown for partial credit or neutral responses..."
+                    className="mt-1"
+                    allowMedia={true}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="metadata" className="space-y-4">

@@ -180,6 +180,7 @@ export const answerOptions = pgTable("answer_options", {
   mediaUrl: varchar("media_url"),
   displayOrder: integer("display_order").default(0),
   reasoning: text("reasoning"), // AI-generated explanation for why this answer is correct/incorrect
+  feedback: text("feedback"), // Feedback shown to students when this option is selected
 });
 
 // Quiz table - Enhanced with full Canvas LMS features
