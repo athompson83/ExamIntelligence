@@ -205,6 +205,11 @@ export const quizzes = pgTable("quizzes", {
   allowMultipleAttempts: boolean("allow_multiple_attempts").default(false),
   maxAttempts: integer("max_attempts").default(1),
   
+  // Multiple attempt behavior
+  scoreKeepingMethod: varchar("score_keeping_method", { enum: ["highest", "latest", "average"] }).default("highest"),
+  attemptRestrictionsEnabled: boolean("attempt_restrictions_enabled").default(false),
+  timeBetweenAttempts: integer("time_between_attempts").default(0), // in minutes
+  
   // Security features
   passwordProtected: boolean("password_protected").default(false),
   password: varchar("password"),
@@ -221,6 +226,16 @@ export const quizzes = pgTable("quizzes", {
   enableQuestionFeedback: boolean("enable_question_feedback").default(false),
   enableLearningPrescription: boolean("enable_learning_prescription").default(false),
   showAnswerReasoning: boolean("show_answer_reasoning").default(false),
+  
+  // Result display options
+  showCorrectAnswers: boolean("show_correct_answers").default(false),
+  showCorrectAnswersAt: varchar("show_correct_answers_at", { enum: ["immediately", "after_submission", "after_due_date"] }).default("after_submission"),
+  showQuestionsAfterAttempt: boolean("show_questions_after_attempt").default(false),
+  
+  // Availability settings (replaces startTime/endTime)
+  availabilityStart: timestamp("availability_start"),
+  availabilityEnd: timestamp("availability_end"),
+  alwaysAvailable: boolean("always_available").default(true),
   
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),

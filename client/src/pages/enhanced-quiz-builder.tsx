@@ -57,7 +57,8 @@ import {
   Target,
   Brain,
   TrendingUp,
-  RotateCcw
+  RotateCcw,
+  Lock
 } from "lucide-react";
 import type { Quiz, Question, QuestionGroup, Testbank, AnswerOption } from "@shared/schema";
 import { insertQuizSchema, insertQuestionSchema, insertQuestionGroupSchema, insertAnswerOptionSchema } from "@shared/schema";
@@ -185,7 +186,16 @@ export default function EnhancedQuizBuilder() {
     enableQuestionFeedback: false,
     enableLearningPrescription: false,
     passwordProtected: false,
+    password: "",
     ipLocking: false,
+    showCorrectAnswers: false,
+    showCorrectAnswersAt: "after_submission",
+    showQuestionsAfterAttempt: false,
+    scoreKeepingMethod: "highest",
+    timeBetweenAttempts: 0,
+    availabilityStart: undefined,
+    availabilityEnd: undefined,
+    alwaysAvailable: true,
   });
 
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
@@ -200,6 +210,9 @@ export default function EnhancedQuizBuilder() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [questionGroups, setQuestionGroups] = useState<EnhancedQuestionGroup[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [quizId, setQuizId] = useState<string | null>(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -285,6 +298,37 @@ export default function EnhancedQuizBuilder() {
   });
 
   const availableQuestions = Array.isArray(questions) ? questions : [];
+  
+  // Autosave functionality
+  useEffect(() => {
+    const autoSave = async () => {
+      if (!quiz.title || isAutoSaving) return;
+      
+      setIsAutoSaving(true);
+      try {
+        const response = await fetch(quizId ? `/api/quizzes/${quizId}` : '/api/quizzes', {
+          method: quizId ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(quiz),
+        });
+        
+        if (response.ok) {
+          const savedQuiz = await response.json();
+          if (!quizId) {
+            setQuizId(savedQuiz.id);
+          }
+          setLastSaved(new Date());
+        }
+      } catch (error) {
+        console.error('Autosave error:', error);
+      } finally {
+        setIsAutoSaving(false);
+      }
+    };
+
+    const timeoutId = setTimeout(autoSave, 2000); // Auto-save after 2 seconds of inactivity
+    return () => clearTimeout(timeoutId);
+  }, [quiz, quizId, isAutoSaving]);
   
   // Get quiz question IDs for filtering
   const quizQuestionIds = quizQuestions.map(q => q.id);
@@ -382,6 +426,21 @@ export default function EnhancedQuizBuilder() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Enhanced Quiz Builder</h1>
             <p className="text-muted-foreground">Create comprehensive assessments with advanced features</p>
+            {/* Autosave Status */}
+            <div className="flex items-center gap-2 mt-2">
+              {isAutoSaving && (
+                <span className="text-sm text-blue-600 flex items-center gap-1">
+                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-600 border-t-transparent"></div>
+                  Saving...
+                </span>
+              )}
+              {lastSaved && !isAutoSaving && (
+                <span className="text-sm text-green-600 flex items-center gap-1">
+                  <Save className="h-3 w-3" />
+                  Saved at {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex gap-3">
             <Button 
@@ -873,7 +932,181 @@ export default function EnhancedQuizBuilder() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
-                    Timing Settings
+                    Time Limit & Availability
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="time-limit">Time Limit (minutes)</Label>
+                    <Input
+                      id="time-limit"
+                      type="number"
+                      min="1"
+                      value={quiz.timeLimit || ""}
+                      onChange={(e) => setQuiz(prev => ({
+                        ...prev,
+                        timeLimit: parseInt(e.target.value) || 60
+                      }))}
+                      placeholder="Enter time limit in minutes"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="always-available"
+                      checked={quiz.alwaysAvailable ?? true}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, alwaysAvailable: checked }))}
+                    />
+                    <Label htmlFor="always-available">Always Available</Label>
+                  </div>
+
+                  {!quiz.alwaysAvailable && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="availability-start">Available From</Label>
+                        <Input
+                          id="availability-start"
+                          type="datetime-local"
+                          value={quiz.availabilityStart instanceof Date 
+                            ? quiz.availabilityStart.toISOString().slice(0, 16)
+                            : quiz.availabilityStart || ""}
+                          onChange={(e) => setQuiz(prev => ({
+                            ...prev,
+                            availabilityStart: new Date(e.target.value)
+                          }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="availability-end">Available Until</Label>
+                        <Input
+                          id="availability-end"
+                          type="datetime-local"
+                          value={quiz.availabilityEnd instanceof Date 
+                            ? quiz.availabilityEnd.toISOString().slice(0, 16)
+                            : quiz.availabilityEnd || ""}
+                          onChange={(e) => setQuiz(prev => ({
+                            ...prev,
+                            availabilityEnd: new Date(e.target.value)
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <RotateCcw className="h-5 w-5" />
+                    Attempt Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="allow-multiple-attempts"
+                      checked={quiz.allowMultipleAttempts || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, allowMultipleAttempts: checked }))}
+                    />
+                    <Label htmlFor="allow-multiple-attempts">Allow Multiple Attempts</Label>
+                  </div>
+
+                  {quiz.allowMultipleAttempts && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="max-attempts">Maximum Attempts</Label>
+                        <Input
+                          id="max-attempts"
+                          type="number"
+                          min="1"
+                          value={quiz.maxAttempts || 1}
+                          onChange={(e) => setQuiz(prev => ({
+                            ...prev,
+                            maxAttempts: parseInt(e.target.value) || 1
+                          }))}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="score-keeping">Score Keeping Method</Label>
+                        <Select
+                          value={quiz.scoreKeepingMethod || "highest"}
+                          onValueChange={(value: "highest" | "latest" | "average") => 
+                            setQuiz(prev => ({ ...prev, scoreKeepingMethod: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select score keeping method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="highest">Keep Highest Score</SelectItem>
+                            <SelectItem value="latest">Keep Latest Score</SelectItem>
+                            <SelectItem value="average">Average All Scores</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="time-between-attempts">Time Between Attempts (minutes)</Label>
+                        <Input
+                          id="time-between-attempts"
+                          type="number"
+                          min="0"
+                          value={quiz.timeBetweenAttempts || 0}
+                          onChange={(e) => setQuiz(prev => ({
+                            ...prev,
+                            timeBetweenAttempts: parseInt(e.target.value) || 0
+                          }))}
+                          placeholder="0 for no restriction"
+                        />
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lock className="h-5 w-5" />
+                    Security Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="password-protected"
+                      checked={quiz.passwordProtected || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, passwordProtected: checked }))}
+                    />
+                    <Label htmlFor="password-protected">Password Protection</Label>
+                  </div>
+
+                  {quiz.passwordProtected && (
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Quiz Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={quiz.password || ""}
+                        onChange={(e) => setQuiz(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Enter password for quiz access"
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Advanced Tab */}
+          <TabsContent value="advanced">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShuffleIcon className="h-5 w-5" />
+                    Question & Answer Settings
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -900,58 +1133,77 @@ export default function EnhancedQuizBuilder() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <RotateCcw className="h-5 w-5" />
-                    Attempt Settings
+                    <Eye className="h-5 w-5" />
+                    Post-Attempt Display Options
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="max-attempts">Maximum Attempts</Label>
-                    <Input
-                      id="max-attempts"
-                      type="number"
-                      min="1"
-                      value={quiz.maxAttempts || 1}
-                      onChange={(e) => setQuiz(prev => ({
-                        ...prev,
-                        maxAttempts: parseInt(e.target.value) || 1
-                      }))}
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="show-correct-answers"
+                      checked={quiz.showCorrectAnswers || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, showCorrectAnswers: checked }))}
                     />
+                    <Label htmlFor="show-correct-answers">Show Correct Answers After Submission</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="show-questions-after-attempt"
+                      checked={quiz.showQuestionsAfterAttempt || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, showQuestionsAfterAttempt: checked }))}
+                    />
+                    <Label htmlFor="show-questions-after-attempt">Show Questions After Attempt</Label>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5" />
+                    Learning Enhancement Features
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="enable-question-feedback"
+                      checked={quiz.enableQuestionFeedback || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableQuestionFeedback: checked }))}
+                    />
+                    <Label htmlFor="enable-question-feedback">Enable Question Feedback</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="enable-learning-prescription"
+                      checked={quiz.enableLearningPrescription || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableLearningPrescription: checked }))}
+                    />
+                    <Label htmlFor="enable-learning-prescription">Enable Learning Prescription</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="adaptive-testing"
+                      checked={quiz.adaptiveTesting || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, adaptiveTesting: checked }))}
+                    />
+                    <Label htmlFor="adaptive-testing">Adaptive Testing</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="proctoring"
+                      checked={quiz.proctoring || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, proctoring: checked }))}
+                    />
+                    <Label htmlFor="proctoring">Enable Proctoring</Label>
                   </div>
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-
-          {/* Advanced Tab */}
-          <TabsContent value="advanced">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
-                  Advanced Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="enable-question-feedback"
-                    checked={quiz.enableQuestionFeedback || false}
-                    onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableQuestionFeedback: checked }))}
-                  />
-                  <Label htmlFor="enable-question-feedback">Enable Question Feedback</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="enable-learning-prescription"
-                    checked={quiz.enableLearningPrescription || false}
-                    onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, enableLearningPrescription: checked }))}
-                  />
-                  <Label htmlFor="enable-learning-prescription">Enable Learning Prescription</Label>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
 
