@@ -27,28 +27,28 @@ import {
   Image,
   Upload
 } from "lucide-react";
+import { Question, AnswerOption } from "@/types";
 
-interface AnswerOption {
-  id?: string;
+// Form-specific types for the editor
+interface FormAnswerOption {
+  id?: number;
   answerText: string;
   isCorrect: boolean;
-  mediaUrl?: string;
   displayOrder: number;
-  reasoning?: string;
   feedback?: string;
+  mediaUrl?: string;
+  explanation?: string;
 }
 
-interface Question {
-  id?: string;
-  testbankId: string;
+interface FormQuestion {
+  id?: number;
+  testbankId: number;
   questionText: string;
-  questionType: string;
-  difficultyScore: number;
+  questionType: Question['questionType'];
+  difficultyScore: string;
   tags: string[];
   bloomsLevel: string;
-  answerOptions?: AnswerOption[];
-  aiFeedback?: string;
-  lastValidatedAt?: string;
+  answerOptions?: FormAnswerOption[];
   generalFeedback?: string;
   correctFeedback?: string;
   incorrectFeedback?: string;
@@ -56,7 +56,7 @@ interface Question {
 }
 
 interface QuestionEditorProps {
-  testbankId: string;
+  testbankId: number;
   question?: Question | null;
   isOpen: boolean;
   onClose: () => void;
@@ -114,14 +114,23 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
     }
   };
 
-  const [formData, setFormData] = useState<Question>({
+  const [formData, setFormData] = useState<FormQuestion>({
+    id: question?.id,
     testbankId,
     questionText: question?.questionText || '',
     questionType: question?.questionType || 'multiple_choice',
-    difficultyScore: question?.difficultyScore || 5,
+    difficultyScore: question?.difficultyScore || '5',
     tags: question?.tags || [],
     bloomsLevel: question?.bloomsLevel || 'remember',
-    answerOptions: question?.answerOptions || getDefaultAnswerOptions(question?.questionType || 'multiple_choice'),
+    answerOptions: question?.answerOptions?.map(opt => ({
+      id: opt.id,
+      answerText: opt.answerText,
+      isCorrect: opt.isCorrect,
+      displayOrder: opt.displayOrder,
+      feedback: opt.feedback || '',
+      mediaUrl: opt.mediaUrl || '',
+      explanation: opt.explanation || ''
+    })) || getDefaultAnswerOptions(question?.questionType || 'multiple_choice'),
     generalFeedback: question?.generalFeedback || '',
     correctFeedback: question?.correctFeedback || '',
     incorrectFeedback: question?.incorrectFeedback || '',
@@ -133,16 +142,23 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
   const [validationResult, setValidationResult] = useState<any>(null);
 
   const saveQuestionMutation = useMutation({
-    mutationFn: async (questionData: Question) => {
-      const endpoint = question?.id 
-        ? `/api/questions/${question.id}`
+    mutationFn: async (questionData: FormQuestion) => {
+      const endpoint = questionData.id 
+        ? `/api/questions/${questionData.id}`
         : '/api/questions';
-      const method = question?.id ? 'PUT' : 'POST';
+      const method = questionData.id ? 'PUT' : 'POST';
       
-      await apiRequest(method, endpoint, {
+      // Convert FormQuestion to API format
+      const apiData = {
         ...questionData,
-        answerOptions: formData.answerOptions
-      });
+        difficultyScore: questionData.difficultyScore,
+        answerOptions: questionData.answerOptions?.map(opt => ({
+          ...opt,
+          questionId: questionData.id || 0, // Will be set by server for new questions
+        }))
+      };
+      
+      await apiRequest(method, endpoint, apiData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/testbanks', testbankId, 'questions'] });
@@ -150,7 +166,25 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
         title: "Success",
         description: question?.id ? "Question updated successfully" : "Question created successfully",
       });
-      onSave?.(formData);
+      // Convert FormQuestion back to Question for the callback
+      const questionForCallback: Question = {
+        ...formData,
+        id: formData.id || 0,
+        testbankId: formData.testbankId,
+        difficultyScore: formData.difficultyScore,
+        createdAt: new Date(),
+        lastValidated: null,
+        aiFeedback: null,
+        additionalData: {},
+        points: 1,
+        timeLimit: null,
+        answerOptions: formData.answerOptions?.map(opt => ({
+          ...opt,
+          id: opt.id || 0,
+          questionId: formData.id || 0,
+        }))
+      };
+      onSave?.(questionForCallback);
       onClose();
     },
     onError: (error) => {

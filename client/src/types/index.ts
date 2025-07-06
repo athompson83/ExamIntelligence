@@ -36,6 +36,11 @@ export interface Question {
   timeLimit: number | null;
   bloomsLevel: string | null;
   answerOptions?: AnswerOption[];
+  // Canvas LMS-style feedback fields
+  generalFeedback?: string | null;
+  correctFeedback?: string | null;
+  incorrectFeedback?: string | null;
+  neutralFeedback?: string | null;
 }
 
 export interface AnswerOption {
@@ -46,6 +51,7 @@ export interface AnswerOption {
   displayOrder: number;
   mediaUrl: string | null;
   explanation: string | null;
+  feedback?: string | null; // Canvas LMS-style inline feedback
 }
 
 export interface Quiz {

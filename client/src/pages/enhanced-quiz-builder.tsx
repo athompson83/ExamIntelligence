@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { TopBar } from "@/components/layout/top-bar";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { QuestionGroupBuilder } from "@/components/quiz/QuestionGroupBuilder";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -533,11 +532,8 @@ export default function EnhancedQuizBuilder() {
     });
 
   return (
-    <div className="min-h-screen bg-background">
-      <TopBar />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6 space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
           {/* Breadcrumb */}
           <Breadcrumb items={[{ label: "Enhanced Quiz Builder" }]} />
 
@@ -2021,11 +2017,9 @@ export default function EnhancedQuizBuilder() {
               </Card>
             </TabsContent>
           </Tabs>
-        </main>
-      </div>
 
-      {/* Question Preview Dialog */}
-      <Dialog open={!!previewQuestion} onOpenChange={() => setPreviewQuestion(null)}>
+          {/* Question Preview Dialog */}
+          <Dialog open={!!previewQuestion} onOpenChange={() => setPreviewQuestion(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Question Preview</DialogTitle>
@@ -2186,6 +2180,7 @@ export default function EnhancedQuizBuilder() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

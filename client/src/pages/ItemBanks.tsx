@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TestbankList } from "@/components/testbank/TestbankList";
 import { TestbankEditor } from "@/components/testbank/TestbankEditor";
-import { QuestionEditor } from "@/components/testbank/QuestionEditor";
+import { QuestionEditor } from "@/components/quiz/question-editor";
 import { Testbank, Question } from "@/types";
 
 type ViewMode = "list" | "edit-testbank" | "view-testbank" | "edit-question";
