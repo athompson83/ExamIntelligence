@@ -10,12 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { Bell, LogOut, User, GraduationCap } from "lucide-react";
+import { Bell, LogOut, User, GraduationCap, BookOpen } from "lucide-react";
 
 export function TopBar() {
   const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
 
   if (!isAuthenticated) {
     return null;
@@ -25,8 +25,14 @@ export function TopBar() {
     window.location.href = '/api/logout';
   };
 
-  const handleStudentView = () => {
-    navigate('/student-dashboard');
+  const isStudentView = location.startsWith('/student');
+  
+  const handleViewToggle = () => {
+    if (isStudentView) {
+      navigate('/'); // Go to teacher dashboard
+    } else {
+      navigate('/student-dashboard'); // Go to student dashboard
+    }
   };
 
   return (
@@ -36,10 +42,19 @@ export function TopBar() {
       </div>
       
       <div className="flex items-center space-x-4">
-        {/* Student View Button */}
-        <Button variant="outline" size="sm" onClick={handleStudentView}>
-          <GraduationCap className="h-4 w-4 mr-2" />
-          Student View
+        {/* View Toggle Button */}
+        <Button variant="outline" size="sm" onClick={handleViewToggle}>
+          {isStudentView ? (
+            <>
+              <BookOpen className="h-4 w-4 mr-2" />
+              Teacher View
+            </>
+          ) : (
+            <>
+              <GraduationCap className="h-4 w-4 mr-2" />
+              Student View
+            </>
+          )}
         </Button>
         
         {/* Language Switcher */}

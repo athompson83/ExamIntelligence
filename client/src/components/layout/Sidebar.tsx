@@ -21,7 +21,7 @@ interface SidebarProps {
   className?: string;
 }
 
-const getNavigation = (t: any) => [
+const getTeacherNavigation = (t: any) => [
   { name: t('navigation.dashboard'), href: "/", icon: LayoutDashboard },
   { name: t('navigation.itemBanks'), href: "/item-banks", icon: FolderOpen },
   { name: t('navigation.quizBuilder'), href: "/quiz-builder", icon: Puzzle },
@@ -32,12 +32,21 @@ const getNavigation = (t: any) => [
   { name: t('navigation.settings'), href: "/settings", icon: Settings },
 ];
 
+const getStudentNavigation = (t: any) => [
+  { name: "Dashboard", href: "/student-dashboard", icon: LayoutDashboard },
+  { name: "My Quizzes", href: "/student-dashboard", icon: BookOpen },
+  { name: "Study Materials", href: "/student-dashboard", icon: Brain },
+  { name: "Settings", href: "/settings", icon: Settings },
+];
+
 export function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { t } = useTranslation();
   
-  const navigation = getNavigation(t);
+  // Determine if user is in student view
+  const isStudentView = location.startsWith('/student');
+  const navigation = isStudentView ? getStudentNavigation(t) : getTeacherNavigation(t);
 
   const toggleSidebar = () => {
     const newState = !isCollapsed;
