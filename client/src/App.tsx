@@ -31,6 +31,9 @@ import BadgesCertificates from "@/pages/badges-certificates";
 import AccessibilitySettings from "@/pages/accessibility-settings";
 import LearningFeedback from "@/pages/learning-feedback";
 import AIResources from "@/pages/AIResources";
+import StudentLogin from "@/pages/student-login";
+import StudentDashboard from "@/pages/student-dashboard";
+import StudentQuiz from "@/pages/student-quiz";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -49,6 +52,7 @@ function Router() {
         <>
           <Route path="/" component={Landing} />
           <Route path="/language-test" component={LanguageTest} />
+          <Route path="/student-login" component={StudentLogin} />
         </>
       ) : (
         <>
@@ -89,6 +93,8 @@ function Router() {
           <Route path="/exam/:id">
             {(params) => <ExamInterface examId={params.id} />}
           </Route>
+          <Route path="/student-dashboard" component={StudentDashboard} />
+          <Route path="/student/quiz/:quizId" component={StudentQuiz} />
         </>
       )}
       <Route component={NotFound} />

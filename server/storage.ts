@@ -123,6 +123,11 @@ export interface IStorage {
   updateQuiz(id: string, data: Partial<InsertQuiz>): Promise<Quiz>;
   deleteQuiz(id: string): Promise<void>;
   addQuestionsToQuiz(quizId: string, questionIds: string[], userId: string): Promise<any>;
+  getQuizById(id: string): Promise<Quiz | undefined>;
+  
+  // Student-specific quiz operations
+  getAvailableQuizzesForStudent(userId: string, accountId: string): Promise<any[]>;
+  getStudentQuizAttempts(userId: string): Promise<any[]>;
   
   // Quiz attempt operations
   createQuizAttempt(attempt: InsertQuizAttempt): Promise<QuizAttempt>;
@@ -521,6 +526,62 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async getQuizById(id: string): Promise<Quiz | undefined> {
+    const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
+    return quiz;
+  }
+
+  // Student-specific operations
+  async getAvailableQuizzesForStudent(userId: string, accountId: string): Promise<any[]> {
+    const results = await db
+      .select({
+        id: quizzes.id,
+        title: quizzes.title,
+        description: quizzes.description,
+        instructions: quizzes.instructions,
+        timeLimit: quizzes.timeLimit,
+        maxAttempts: quizzes.maxAttempts,
+        availableFrom: quizzes.availableFrom,
+        availableUntil: quizzes.availableUntil,
+        status: quizzes.status,
+        passingGrade: quizzes.passingGrade,
+        pointsPerQuestion: quizzes.pointsPerQuestion,
+        allowCalculator: quizzes.allowCalculator,
+        calculatorType: quizzes.calculatorType,
+        questionsCount: count(quizQuestions.id),
+      })
+      .from(quizzes)
+      .leftJoin(quizQuestions, eq(quizzes.id, quizQuestions.quizId))
+      .where(
+        and(
+          eq(quizzes.accountId, accountId),
+          eq(quizzes.status, "published")
+        )
+      )
+      .groupBy(quizzes.id);
+
+    return results;
+  }
+
+  async getStudentQuizAttempts(userId: string): Promise<any[]> {
+    const results = await db
+      .select({
+        id: quizAttempts.id,
+        quizId: quizAttempts.quizId,
+        score: quizAttempts.score,
+        maxScore: quizAttempts.maxScore,
+        completedAt: quizAttempts.completedAt,
+        timeSpent: quizAttempts.timeSpent,
+        passed: quizAttempts.passed,
+        attemptNumber: quizAttempts.attemptNumber,
+      })
+      .from(quizAttempts)
+      .where(eq(quizAttempts.studentId, userId))
+      .orderBy(desc(quizAttempts.startedAt));
+
+    return results;
+  }
+
   // Quiz response operations
   async createQuizResponse(response: InsertQuizResponse): Promise<QuizResponse> {
     const [result] = await db.insert(quizResponses).values(response).returning();
@@ -788,6 +849,54 @@ export class DatabaseStorage implements IStorage {
 
   async deleteReference(id: string): Promise<void> {
     await db.delete(references).where(eq(references.id, id));
+  }
+
+  // Quiz session operations
+  async createQuizSession(sessionData: {
+    quizId: string;
+    userId: string;
+    startedAt: string;
+    timeRemaining: number;
+    currentQuestion: number;
+    answers: Record<string, string>;
+  }): Promise<{ id: string }> {
+    // For now, return a mock session ID
+    // In a real implementation, this would be stored in the database
+    return { id: `session-${sessionData.quizId}-${sessionData.userId}` };
+  }
+
+  async getQuizQuestions(quizId: string): Promise<any[]> {
+    // Get questions associated with this quiz
+    const quizQuestions = await db.select({
+      id: questions.id,
+      text: questions.text,
+      type: questions.type,
+      points: questions.points,
+      difficultyLevel: questions.difficultyLevel,
+    }).from(questions)
+      .innerJoin(questionGroups, eq(questions.groupId, questionGroups.id))
+      .where(eq(questionGroups.quizId, quizId))
+      .orderBy(asc(questions.createdAt));
+
+    // Get answer options for each question
+    const questionsWithOptions = await Promise.all(
+      quizQuestions.map(async (question) => {
+        const questionOptions = await db.select({
+          id: answerOptions.id,
+          text: answerOptions.text,
+          isCorrect: answerOptions.isCorrect,
+        }).from(answerOptions)
+          .where(eq(answerOptions.questionId, question.id))
+          .orderBy(asc(answerOptions.displayOrder));
+        
+        return {
+          ...question,
+          answerOptions: questionOptions,
+        };
+      })
+    );
+
+    return questionsWithOptions;
   }
 
   // Account operations

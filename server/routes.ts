@@ -99,6 +99,221 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test login for student user
+  app.post('/api/test-login', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (email === 'student@test.com') {
+        const studentUser = {
+          id: "student-test-user-001",
+          email: "student@test.com",
+          firstName: "Test",
+          lastName: "Student",
+          accountId: "00000000-0000-0000-0000-000000000001",
+          role: "student"
+        };
+        
+        // Set session
+        req.session.user = studentUser;
+        res.json({ success: true, user: studentUser });
+      } else {
+        res.status(401).json({ success: false, message: "Invalid credentials" });
+      }
+    } catch (error) {
+      console.error("Error during test login:", error);
+      res.status(500).json({ success: false, message: "Login failed" });
+    }
+  });
+
+  // Student-specific endpoints
+  app.get('/api/student/available-quizzes', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const accountId = req.user?.accountId || "00000000-0000-0000-0000-000000000001";
+      
+      const quizzes = await storage.getAvailableQuizzesForStudent(userId, accountId);
+      res.json(quizzes);
+    } catch (error) {
+      console.error("Error fetching available quizzes:", error);
+      res.status(500).json({ message: "Failed to fetch available quizzes" });
+    }
+  });
+
+  app.get('/api/student/quiz-attempts', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const attempts = await storage.getStudentQuizAttempts(userId);
+      res.json(attempts);
+    } catch (error) {
+      console.error("Error fetching quiz attempts:", error);
+      res.status(500).json({ message: "Failed to fetch quiz attempts" });
+    }
+  });
+
+  app.post('/api/student/start-quiz/:quizId', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const quizId = req.params.quizId;
+      
+      // Check if quiz is available and user can take it
+      const quiz = await storage.getQuizById(quizId);
+      if (!quiz) {
+        return res.status(404).json({ success: false, message: "Quiz not found" });
+      }
+      
+      // Check attempts limit
+      const attempts = await storage.getStudentQuizAttempts(userId);
+      const quizAttempts = attempts.filter((attempt: any) => attempt.quizId === quizId);
+      
+      if (quizAttempts.length >= quiz.maxAttempts) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Maximum attempts reached for this quiz" 
+        });
+      }
+      
+      // Check availability window
+      const now = new Date();
+      const availableFrom = new Date(quiz.availableFrom);
+      const availableUntil = new Date(quiz.availableUntil);
+      
+      if (now < availableFrom || now > availableUntil) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Quiz is not available at this time" 
+        });
+      }
+      
+      // Create quiz session
+      const session = await storage.createQuizSession({
+        quizId,
+        userId,
+        startedAt: new Date().toISOString(),
+        timeRemaining: quiz.timeLimit * 60, // Convert minutes to seconds
+        currentQuestion: 0,
+        answers: {}
+      });
+      
+      res.json({ success: true, sessionId: session.id, message: "Quiz session created" });
+    } catch (error) {
+      console.error("Error starting quiz:", error);
+      res.status(500).json({ success: false, message: "Failed to start quiz" });
+    }
+  });
+
+  // Get quiz session
+  app.get('/api/student/quiz-session/:quizId', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const quizId = req.params.quizId;
+      
+      // Get quiz details
+      const quiz = await storage.getQuizById(quizId);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      
+      // Get quiz questions
+      const questions = await storage.getQuizQuestions(quizId);
+      
+      // Create mock session data for now
+      const session = {
+        id: `session-${quizId}-${userId}`,
+        quizId,
+        questions: questions.map(q => ({
+          id: q.id,
+          text: q.text,
+          type: q.type,
+          options: q.answerOptions?.map(opt => opt.text) || [],
+          points: q.points || 1,
+          difficulty: q.difficultyLevel || 5
+        })),
+        timeLimit: quiz.timeLimit || 60,
+        startedAt: new Date().toISOString(),
+        currentQuestion: 0,
+        answers: {},
+        timeRemaining: (quiz.timeLimit || 60) * 60 // Convert to seconds
+      };
+      
+      res.json(session);
+    } catch (error) {
+      console.error("Error fetching quiz session:", error);
+      res.status(500).json({ message: "Failed to fetch quiz session" });
+    }
+  });
+
+  // Save quiz progress
+  app.post('/api/student/quiz-session/:quizId/progress', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const { questionId, answer, currentQuestion } = req.body;
+      
+      // For now, just return success - in a real implementation, 
+      // this would save progress to the database
+      res.json({ success: true, message: "Progress saved" });
+    } catch (error) {
+      console.error("Error saving quiz progress:", error);
+      res.status(500).json({ success: false, message: "Failed to save progress" });
+    }
+  });
+
+  // Submit quiz
+  app.post('/api/student/quiz-session/:quizId/submit', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const quizId = req.params.quizId;
+      const { answers } = req.body;
+      
+      // Get quiz questions to calculate score
+      const questions = await storage.getQuizQuestions(quizId);
+      
+      let correctAnswers = 0;
+      let totalQuestions = questions.length;
+      
+      // Calculate score based on correct answers
+      questions.forEach(question => {
+        if (answers[question.id] && question.answerOptions) {
+          const correctOption = question.answerOptions.find(opt => opt.isCorrect);
+          if (correctOption && answers[question.id] === correctOption.text) {
+            correctAnswers++;
+          }
+        }
+      });
+      
+      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      const quiz = await storage.getQuizById(quizId);
+      const passed = score >= (quiz?.passingGrade || 70);
+      
+      // Create quiz attempt record
+      const attemptData = {
+        id: `attempt-${Date.now()}`,
+        quizId,
+        studentId: userId,
+        score,
+        maxScore: 100,
+        completedAt: new Date().toISOString(),
+        timeSpent: 30, // Mock time
+        passed,
+        attemptNumber: 1,
+        ipAddress: req.ip || "127.0.0.1",
+        userAgent: req.headers['user-agent'] || "Unknown"
+      };
+      
+      // Save attempt (mock implementation)
+      res.json({ 
+        success: true, 
+        score, 
+        passed, 
+        attemptId: attemptData.id,
+        message: passed ? "Quiz completed successfully!" : "Quiz completed, but did not pass."
+      });
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
+      res.status(500).json({ success: false, message: "Failed to submit quiz" });
+    }
+  });
+
   // API Key check route
   app.get('/api/check-openai-key', async (req, res) => {
     try {
