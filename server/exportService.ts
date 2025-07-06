@@ -210,30 +210,36 @@ export function generateCSVExport(testbank: ExportTestbank, questions: ExportQue
 
   const rows = questions.map(question => {
     const options = ['', '', '', '', '']; // 5 options max
-    question.answerOptions.forEach((opt, idx) => {
-      if (idx < 5) options[idx] = opt.optionText;
+    const answerOptions = question.answerOptions || [];
+    
+    answerOptions.forEach((opt, idx) => {
+      if (idx < 5 && opt && opt.optionText) {
+        options[idx] = opt.optionText;
+      }
     });
 
-    const correctAnswers = question.answerOptions
-      .map((opt, idx) => opt.isCorrect ? String.fromCharCode(65 + idx) : null)
+    const correctAnswers = answerOptions
+      .map((opt, idx) => (opt && opt.isCorrect) ? String.fromCharCode(65 + idx) : null)
       .filter(Boolean)
       .join(', ');
 
+    const safeReplace = (str: string) => (str || '').replace(/"/g, '""');
+
     return [
-      question.id,
-      `"${question.questionText.replace(/"/g, '""')}"`,
-      question.questionType,
+      question.id || '',
+      `"${safeReplace(question.questionText)}"`,
+      question.questionType || '',
       question.difficultyLevel || '',
       question.points || 1,
-      `"${options[0].replace(/"/g, '""')}"`,
-      `"${options[1].replace(/"/g, '""')}"`,
-      `"${options[2].replace(/"/g, '""')}"`,
-      `"${options[3].replace(/"/g, '""')}"`,
-      `"${options[4].replace(/"/g, '""')}"`,
+      `"${safeReplace(options[0])}"`,
+      `"${safeReplace(options[1])}"`,
+      `"${safeReplace(options[2])}"`,
+      `"${safeReplace(options[3])}"`,
+      `"${safeReplace(options[4])}"`,
       correctAnswers,
-      `"${(question.explanation || '').replace(/"/g, '""')}"`,
-      `"${(testbank.tags || []).join('; ')}"`,
-      `"${(testbank.learningObjectives || []).join('; ')}"`
+      `"${safeReplace(question.explanation)}"`,
+      `"${((testbank.tags as string[]) || []).join('; ')}"`,
+      `"${((testbank.learningObjectives as string[]) || []).join('; ')}"`
     ].join(',');
   });
 
