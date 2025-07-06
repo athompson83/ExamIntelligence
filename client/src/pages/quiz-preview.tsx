@@ -63,7 +63,9 @@ export default function QuizPreview() {
           >
             Edit Quiz
           </Button>
-          <Button>
+          <Button
+            onClick={() => setLocation(`/student/quiz/${quizId}`)}
+          >
             Take Quiz
           </Button>
         </div>

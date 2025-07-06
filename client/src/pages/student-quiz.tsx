@@ -1,203 +1,49 @@
-import { useState, useEffect } from "react";
-import { useParams, useLocation } from "wouter";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Clock, ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-interface Question {
-  id: string;
-  text: string;
-  type: string;
-  options?: string[];
-  correctAnswer?: string;
-  points: number;
-  difficulty: number;
-}
-
-interface QuizSession {
-  id: string;
-  quizId: string;
-  questions: Question[];
-  timeLimit: number;
-  startedAt: string;
-  currentQuestion: number;
-  answers: Record<string, string>;
-  timeRemaining: number;
-}
+import { ArrowLeft, Clock, PlayCircle } from "lucide-react";
+import { useLocation } from "wouter";
+import { useParams } from "wouter";
 
 export default function StudentQuiz() {
-  const { quizId } = useParams<{ quizId: string }>();
+  const params = useParams();
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const quizId = params.id;
+  const [quizStarted, setQuizStarted] = useState(false);
 
-  const { data: quizSession, isLoading } = useQuery<QuizSession>({
-    queryKey: [`/api/student/quiz-session/${quizId}`],
-    enabled: !!quizId,
+  const { data: quiz, isLoading, error } = useQuery({
+    queryKey: ['/api/quizzes', quizId],
   });
-
-  // Timer countdown
-  useEffect(() => {
-    if (!quizSession) return;
-    
-    setTimeRemaining(quizSession.timeRemaining);
-    
-    const timer = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
-          handleAutoSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [quizSession]);
-
-  // Load saved answers
-  useEffect(() => {
-    if (quizSession?.answers) {
-      setAnswers(quizSession.answers);
-      setCurrentQuestionIndex(quizSession.currentQuestion || 0);
-    }
-  }, [quizSession]);
-
-  const handleAutoSubmit = async () => {
-    if (isSubmitting) return;
-    
-    toast({
-      title: "Time's Up!",
-      description: "Quiz has been automatically submitted.",
-      variant: "destructive",
-    });
-    
-    await submitQuiz();
-  };
-
-  const handleAnswerChange = (questionId: string, answer: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
-    
-    // Auto-save answer
-    saveProgress(questionId, answer);
-  };
-
-  const saveProgress = async (questionId: string, answer: string) => {
-    try {
-      await fetch(`/api/student/quiz-session/${quizId}/progress`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          questionId,
-          answer,
-          currentQuestion: currentQuestionIndex
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to save progress:', error);
-    }
-  };
-
-  const submitQuiz = async () => {
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      const response = await fetch(`/api/student/quiz-session/${quizId}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        toast({
-          title: "Quiz Submitted!",
-          description: `Your score: ${data.score}%`,
-        });
-        
-        setLocation(`/student/results/${data.attemptId}`);
-      } else {
-        throw new Error(data.message || 'Submission failed');
-      }
-    } catch (error) {
-      toast({
-        title: "Submission Error",
-        description: "Failed to submit quiz. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const nextQuestion = () => {
-    if (currentQuestionIndex < (quizSession?.questions.length || 0) - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    }
-  };
-
-  const previousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getAnsweredCount = () => {
-    return Object.keys(answers).length;
-  };
-
-  const progress = quizSession ? (getAnsweredCount() / quizSession.questions.length) * 100 : 0;
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading quiz...</p>
-          </div>
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
         </div>
       </div>
     );
   }
 
-  if (!quizSession) {
+  if (error || !quiz) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="p-6">
         <Card>
-          <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Quiz Not Found</h2>
-            <p className="text-gray-600 mb-6">The quiz session could not be loaded.</p>
-            <Button onClick={() => setLocation('/student')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+          <CardContent className="p-6">
+            <h2 className="text-xl font-semibold text-red-600">Quiz Not Found</h2>
+            <p className="text-muted-foreground mt-2">
+              The requested quiz could not be found or you don't have permission to access it.
+            </p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => setLocation('/')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Return to Dashboard
             </Button>
           </CardContent>
         </Card>
@@ -205,129 +51,122 @@ export default function StudentQuiz() {
     );
   }
 
-  const currentQuestion = quizSession.questions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === quizSession.questions.length - 1;
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+  if (!quizStarted) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
           <Button 
-            variant="outline" 
-            onClick={() => setLocation('/student')}
-            className="flex items-center"
+            variant="ghost" 
+            size="sm" 
+            className="p-0 h-auto"
+            onClick={() => setLocation('/')}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Exit Quiz
+            Home
           </Button>
-          
-          <div className="flex items-center space-x-4">
-            <Badge variant="outline" className="px-4 py-2">
-              <Clock className="w-4 h-4 mr-2" />
-              {formatTime(timeRemaining)}
-            </Badge>
-            
-            <Badge variant="secondary" className="px-4 py-2">
-              Question {currentQuestionIndex + 1} of {quizSession.questions.length}
-            </Badge>
-          </div>
+          <span>/</span>
+          <span>Take Quiz</span>
         </div>
-        
-        <Progress value={progress} className="h-2" />
-        <p className="text-sm text-gray-600 mt-2">
-          {getAnsweredCount()} of {quizSession.questions.length} questions answered
-        </p>
-      </div>
 
-      {/* Question */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-xl">
-            {currentQuestion?.text}
-          </CardTitle>
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
-            <span>Points: {currentQuestion?.points}</span>
-            <span>Difficulty: {currentQuestion?.difficulty}/10</span>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          {currentQuestion?.type === 'multiple_choice' && currentQuestion.options && (
-            <RadioGroup
-              value={answers[currentQuestion.id] || ""}
-              onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
-            >
-              {currentQuestion.options.map((option, index) => (
-                <div key={index} className="flex items-center space-x-2 p-2 rounded hover:bg-gray-50">
-                  <RadioGroupItem value={option} id={`option-${index}`} />
-                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                    {option}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          )}
-        </CardContent>
-      </Card>
+        {/* Quiz Information */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl">{quiz?.title || 'Untitled Quiz'}</CardTitle>
+              <Badge variant="secondary">Ready to Start</Badge>
+            </div>
+            {quiz?.description && (
+              <CardDescription className="text-base">
+                {quiz.description}
+              </CardDescription>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Quiz Details */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">
+                  Time Limit: {quiz?.timeLimit ? `${quiz.timeLimit} minutes` : 'No time limit'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">
+                  Questions: {quiz?.questions?.length || 0}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">
+                  Attempts: {quiz?.maxAttempts || 1} allowed
+                </span>
+              </div>
+            </div>
 
-      {/* Navigation */}
-      <div className="flex justify-between items-center">
-        <Button
-          variant="outline"
-          onClick={previousQuestion}
-          disabled={currentQuestionIndex === 0}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Previous
-        </Button>
+            {/* Instructions */}
+            {quiz?.instructions && (
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-2">Instructions</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {quiz.instructions}
+                </p>
+              </div>
+            )}
 
-        <div className="flex space-x-4">
-          {!isLastQuestion ? (
-            <Button onClick={nextQuestion}>
-              Next
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={submitQuiz}
-              disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isSubmitting ? (
-                "Submitting..."
-              ) : (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  Submit Quiz
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Question Navigator */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Question Navigator</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-10 gap-2">
-            {quizSession.questions.map((question, index) => (
+            {/* Start Quiz Button */}
+            <div className="border-t pt-4 flex gap-3">
               <Button
-                key={question.id}
-                variant={index === currentQuestionIndex ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCurrentQuestionIndex(index)}
-                className={`relative ${answers[question.id] ? 'bg-green-100 border-green-300' : ''}`}
+                size="lg"
+                onClick={() => setQuizStarted(true)}
+                className="flex items-center gap-2"
               >
-                {index + 1}
-                {answers[question.id] && (
-                  <Check className="w-3 h-3 absolute top-0 right-0 text-green-600" />
-                )}
+                <PlayCircle className="h-5 w-5" />
+                Start Quiz
               </Button>
-            ))}
+              <Button
+                variant="outline"
+                onClick={() => setLocation(`/quiz/${quizId}`)}
+              >
+                Back to Preview
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Quiz interface when started
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>{quiz?.title || 'Quiz'}</span>
+            {quiz?.timeLimit && (
+              <Badge variant="outline">
+                <Clock className="h-4 w-4 mr-1" />
+                {quiz.timeLimit} min remaining
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Quiz taking interface would go here */}
+          <div className="text-center py-8">
+            <h3 className="text-lg font-medium mb-2">Quiz Interface</h3>
+            <p className="text-muted-foreground mb-4">
+              This is where the quiz questions would be displayed and answered.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              The full quiz-taking interface with questions, navigation, and submission would be implemented here.
+            </p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => setQuizStarted(false)}
+            >
+              Back to Quiz Info
+            </Button>
           </div>
         </CardContent>
       </Card>

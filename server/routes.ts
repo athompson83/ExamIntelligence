@@ -1644,7 +1644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/quizzes/:id',  async (req: any, res) => {
+  app.get('/api/quizzes/:id', mockAuth, async (req: any, res) => {
     try {
       const quiz = await storage.getQuiz(req.params.id);
       if (!quiz) {

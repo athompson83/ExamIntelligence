@@ -66,7 +66,7 @@ import type { Quiz, Question, QuestionGroup, Testbank, AnswerOption } from "@sha
 import { insertQuizSchema, insertQuestionSchema, insertQuestionGroupSchema, insertAnswerOptionSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { QuestionGroupBuilder } from "@/components/quiz/QuestionGroupBuilder";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 const quizFormSchema = insertQuizSchema.extend({
   availableFrom: z.string().optional(),
@@ -175,6 +175,7 @@ function Droppable({ children, id }: { children: React.ReactNode; id: string }) 
 
 export default function EnhancedQuizBuilder() {
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   const [quiz, setQuiz] = useState<Partial<Quiz>>({
     title: "",
     description: "",
@@ -397,6 +398,49 @@ export default function EnhancedQuizBuilder() {
     
     previousQuizRef.current = currentQuizState;
   }, [quiz]);
+
+  // Load existing quiz if id parameter is provided
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.split('?')[1] || '');
+    const existingQuizId = urlParams.get('id');
+    
+    if (existingQuizId && existingQuizId !== quizId) {
+      // Load the existing quiz data
+      fetch(`/api/quizzes/${existingQuizId}`)
+        .then(response => response.json())
+        .then(quizData => {
+          setQuiz({
+            title: quizData.title || "",
+            description: quizData.description || "",
+            instructions: quizData.instructions || "",
+            timeLimit: quizData.timeLimit || 60,
+            shuffleQuestions: quizData.shuffleQuestions || false,
+            shuffleAnswers: quizData.shuffleAnswers || false,
+            maxAttempts: quizData.maxAttempts || 1,
+            passingGrade: quizData.passingGrade || 70,
+            gradeToShow: quizData.gradeToShow || "percentage",
+            showCorrectAnswers: quizData.showCorrectAnswers || false,
+            availabilityStart: quizData.availabilityStart || undefined,
+            availabilityEnd: quizData.availabilityEnd || undefined,
+            alwaysAvailable: quizData.alwaysAvailable !== false,
+          });
+          setQuizId(existingQuizId);
+          
+          // Load questions if available
+          if (quizData.questions) {
+            setQuizQuestions(quizData.questions);
+          }
+        })
+        .catch(error => {
+          console.error('Error loading quiz:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load quiz data",
+            variant: "destructive",
+          });
+        });
+    }
+  }, [location, quizId, toast]);
 
   // Separate effect for autosave with debouncing
   useEffect(() => {
