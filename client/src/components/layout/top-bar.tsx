@@ -42,20 +42,7 @@ export function TopBar() {
       </div>
       
       <div className="flex items-center space-x-4">
-        {/* View Toggle Button */}
-        <Button variant="outline" size="sm" onClick={handleViewToggle}>
-          {isStudentView ? (
-            <>
-              <BookOpen className="h-4 w-4 mr-2" />
-              Teacher View
-            </>
-          ) : (
-            <>
-              <GraduationCap className="h-4 w-4 mr-2" />
-              Student View
-            </>
-          )}
-        </Button>
+
         
         {/* Language Switcher */}
         <LanguageSwitcher variant="compact" />
@@ -78,6 +65,19 @@ export function TopBar() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuItem onClick={handleViewToggle}>
+              {isStudentView ? (
+                <>
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  <span>Teacher View</span>
+                </>
+              ) : (
+                <>
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  <span>Student View</span>
+                </>
+              )}
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
               <span>{t('navigation.profile')}</span>
