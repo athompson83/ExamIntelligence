@@ -302,36 +302,46 @@ export default function EnhancedQuizBuilder() {
 
   const availableQuestions = Array.isArray(questions) ? questions : [];
   
-  // Autosave functionality
+  // Autosave functionality - only save when quiz actually changes
+  const [previousQuizState, setPreviousQuizState] = useState<string>('');
+  
   useEffect(() => {
-    const autoSave = async () => {
-      if (!quiz.title || isAutoSaving) return;
-      
-      setIsAutoSaving(true);
-      try {
-        const response = await fetch(quizId ? `/api/quizzes/${quizId}` : '/api/quizzes', {
-          method: quizId ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(quiz),
-        });
+    const currentQuizState = JSON.stringify(quiz);
+    
+    // Only autosave if quiz has changed and has a title
+    if (quiz.title && currentQuizState !== previousQuizState && previousQuizState !== '') {
+      const autoSave = async () => {
+        if (isAutoSaving) return;
         
-        if (response.ok) {
-          const savedQuiz = await response.json();
-          if (!quizId) {
-            setQuizId(savedQuiz.id);
+        setIsAutoSaving(true);
+        try {
+          const response = await fetch(quizId ? `/api/quizzes/${quizId}` : '/api/quizzes', {
+            method: quizId ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(quiz),
+          });
+          
+          if (response.ok) {
+            const savedQuiz = await response.json();
+            if (!quizId) {
+              setQuizId(savedQuiz.id);
+            }
+            setLastSaved(new Date());
           }
-          setLastSaved(new Date());
+        } catch (error) {
+          console.error('Autosave error:', error);
+        } finally {
+          setIsAutoSaving(false);
         }
-      } catch (error) {
-        console.error('Autosave error:', error);
-      } finally {
-        setIsAutoSaving(false);
-      }
-    };
+      };
 
-    const timeoutId = setTimeout(autoSave, 2000); // Auto-save after 2 seconds of inactivity
-    return () => clearTimeout(timeoutId);
-  }, [quiz, quizId, isAutoSaving]);
+      const timeoutId = setTimeout(autoSave, 2000);
+      return () => clearTimeout(timeoutId);
+    }
+    
+    // Update previous state
+    setPreviousQuizState(currentQuizState);
+  }, [quiz, quizId, isAutoSaving, previousQuizState]);
   
   // Get quiz question IDs for filtering
   const quizQuestionIds = quizQuestions.map(q => q.id);
@@ -943,7 +953,7 @@ export default function EnhancedQuizBuilder() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
-                    Time Limit & Availability
+                    Availability
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1214,23 +1224,7 @@ export default function EnhancedQuizBuilder() {
                     <Label htmlFor="enable-learning-prescription">Enable Learning Prescription</Label>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="adaptive-testing"
-                      checked={quiz.adaptiveTesting || false}
-                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, adaptiveTesting: checked }))}
-                    />
-                    <Label htmlFor="adaptive-testing">Adaptive Testing</Label>
-                  </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="proctoring"
-                      checked={quiz.proctoring || false}
-                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, proctoring: checked }))}
-                    />
-                    <Label htmlFor="proctoring">Enable Proctoring</Label>
-                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -1347,16 +1341,24 @@ export default function EnhancedQuizBuilder() {
                       title: "Success",
                       description: `Created new group "${newGroupName}" with ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'}`,
                     });
-                  } else if (selectedGroupId === "select-existing") {
-                    // Add to existing group (placeholder for now)
-                    const questionsWithoutGroup = questionsToAdd.map(q => ({
+                  } else if (selectedGroupId === "select-existing" && selectedExistingGroupId) {
+                    // Add to existing group
+                    const questionsWithGroupId = questionsToAdd.map(q => ({
                       ...q,
-                      groupId: null,
+                      groupId: selectedExistingGroupId,
                       points: 1,
                       displayOrder: quizQuestions.length + questionsToAdd.indexOf(q) + 1
                     }));
                     
-                    setQuizQuestions(prev => [...prev, ...questionsWithoutGroup]);
+                    setQuizQuestions(prev => [...prev, ...questionsWithGroupId]);
+                    
+                    // Update the group to include these questions
+                    setQuestionGroups(prev => prev.map(group => 
+                      group.id === selectedExistingGroupId 
+                        ? { ...group, questions: [...group.questions, ...questionsWithGroupId] }
+                        : group
+                    ));
+                    
                     toast({
                       title: "Success",
                       description: `Added ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'} to existing group`,
