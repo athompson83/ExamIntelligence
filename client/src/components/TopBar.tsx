@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +14,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Search, LogOut, User, Settings } from "lucide-react";
+import { Bell, Search, LogOut, User, Settings, GraduationCap, BookOpen } from "lucide-react";
 
 export default function TopBar() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [location, navigate] = useLocation();
 
   const { data: notifications } = useQuery({
     queryKey: ["/api/notifications"],
@@ -25,6 +27,17 @@ export default function TopBar() {
   });
 
   const unreadCount = notifications?.filter((n: any) => !n.read).length || 0;
+
+  const isStudentView = location.startsWith('/student');
+  
+  const handleViewToggle = () => {
+    console.log('View toggle clicked, current location:', location, 'isStudentView:', isStudentView);
+    if (isStudentView) {
+      navigate('/'); // Go to teacher dashboard
+    } else {
+      navigate('/student-dashboard'); // Go to student dashboard
+    }
+  };
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
@@ -109,6 +122,20 @@ export default function TopBar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleViewToggle}>
+              {isStudentView ? (
+                <>
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Switch to Teacher View
+                </>
+              ) : (
+                <>
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  Switch to Student View
+                </>
+              )}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
