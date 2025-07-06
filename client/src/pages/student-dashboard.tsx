@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, BookOpen, Users, Award, Home, LogOut } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Clock, BookOpen, Users, Award, Home, LogOut, Brain, FileText, Lightbulb, Target, TrendingUp, Download, Play, ArrowLeft, Shield } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 
 interface QuizForStudent {
@@ -36,9 +41,43 @@ interface UserAttempt {
   attemptNumber: number;
 }
 
+interface StudyAid {
+  id: string;
+  title: string;
+  type: 'summary' | 'flashcards' | 'practice_questions' | 'concept_map';
+  content: string;
+  quizId: string;
+  createdAt: string;
+  accessCount: number;
+}
+
+interface PerformanceData {
+  overallProgress: number;
+  averageScore: number;
+  weakSubjects: string[];
+  strongSubjects: string[];
+  improvementTrend: number;
+  studyTime: number;
+}
+
 export default function StudentDashboard() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedStudyType, setSelectedStudyType] = useState<string>('summary');
+  const [selectedQuizForStudy, setSelectedQuizForStudy] = useState<string>('');
+
+  // Check if user is admin/teacher viewing as student
+  const isAdminViewingAsStudent = user && ['super_admin', 'admin', 'teacher', 'manager'].includes(user.role || '');
+  
+  const handleSwitchBackToAdminView = () => {
+    navigate('/');
+    toast({
+      title: "Switched back to Admin View",
+      description: "You are now in the admin/teacher dashboard",
+    });
+  };
 
   // Fetch available quizzes for the student
   const { data: availableQuizzes, isLoading: quizzesLoading } = useQuery<QuizForStudent[]>({
@@ -48,6 +87,41 @@ export default function StudentDashboard() {
   // Fetch user's quiz attempts
   const { data: userAttempts, isLoading: attemptsLoading } = useQuery<UserAttempt[]>({
     queryKey: ['/api/student/quiz-attempts'],
+  });
+
+  // Fetch study aids
+  const { data: studyAids, isLoading: studyAidsLoading } = useQuery<StudyAid[]>({
+    queryKey: ['/api/student/study-aids'],
+  });
+
+  // Fetch performance data
+  const { data: performanceData, isLoading: performanceLoading } = useQuery<PerformanceData>({
+    queryKey: ['/api/student/performance'],
+  });
+
+  // Study aid generation mutation
+  const generateStudyAidMutation = useMutation({
+    mutationFn: async ({ quizId, studyType }: { quizId: string; studyType: string }) => {
+      const response = await apiRequest(`/api/student/generate-study-aid`, {
+        method: 'POST',
+        body: JSON.stringify({ quizId, studyType }),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/student/study-aids'] });
+      toast({
+        title: "Study Aid Generated",
+        description: "Your personalized study material is ready!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Failed to generate study aid",
+        variant: "destructive",
+      });
+    },
   });
 
   const startQuiz = async (quizId: string) => {
@@ -110,6 +184,27 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Admin View Alert */}
+      {isAdminViewingAsStudent && (
+        <Alert className="m-6 border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+          <Shield className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="flex items-center justify-between">
+            <span className="text-amber-800 dark:text-amber-200">
+              You are viewing as a student. Your actual role is: <strong>{user?.role}</strong>
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSwitchBackToAdminView}
+              className="ml-4 border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Admin View
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Navigation Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-6 py-4">
