@@ -17,6 +17,7 @@ import { z } from "zod";
 import { Plus, Edit, Trash2, Settings, Code, Bot, AlertTriangle, Save, RotateCcw, TestTube, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 // Types for backend prompts
 interface BackendPrompt {
@@ -271,6 +272,9 @@ export default function BackendPromptManagementPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb items={[{ label: "Backend Prompt Management" }]} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Backend Prompt Management</h1>

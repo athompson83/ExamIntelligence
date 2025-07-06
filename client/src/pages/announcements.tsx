@@ -16,6 +16,7 @@ import { z } from "zod";
 import { Plus, Edit, Trash2, Megaphone, Pin, Eye, EyeOff, Calendar, Users, Send, Globe, User, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 // Types for announcements
 interface Announcement {
@@ -288,6 +289,9 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb items={[{ label: "Announcements" }]} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Announcements</h1>

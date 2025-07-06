@@ -16,6 +16,7 @@ import { z } from "zod";
 import { Upload, Bug, AlertTriangle, Lightbulb, Plus, MessageSquare, Calendar, User, FileImage, Paperclip } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 // Types for bug reports
 interface BugReport {
@@ -265,6 +266,9 @@ export default function BugReportingPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb items={[{ label: "Bug Reporting & Feedback" }]} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Bug Reporting & Feedback</h1>

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Bot, User, Send, MessageSquare, Lightbulb, HelpCircle, Navigation, Settings, BookOpen, BarChart3, Users, AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 // Types for chatbot
 interface ChatMessage {
@@ -281,6 +282,9 @@ export default function AIChatbotPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb items={[{ label: "AI Assistant" }]} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">AI Assistant</h1>

@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Search, LogOut, User, Settings, GraduationCap, BookOpen } from "lucide-react";
+import { Bell, Search, LogOut, User, Settings, GraduationCap, BookOpen, Bot, Bug, Megaphone, Flag, MessageSquare } from "lucide-react";
 
 export default function TopBar() {
   const { user } = useAuth();

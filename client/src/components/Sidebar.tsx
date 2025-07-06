@@ -14,7 +14,15 @@ import {
   SettingsIcon,
   Heart,
   TrendingUp,
-  Shield
+  Shield,
+  Bell,
+  Bug,
+  Megaphone,
+  Flag,
+  Bot,
+  Code,
+  MessageSquare,
+  HelpCircle
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -29,14 +37,25 @@ export default function Sidebar() {
     { href: "/proctoring-security", label: "Proctoring Security", icon: Shield },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/ai-resources", label: "AI Resources", icon: Brain },
+    { href: "/ai-chatbot", label: "AI Assistant", icon: Bot },
     { href: "/difficulty-tracking", label: "Difficulty Tracking", icon: TrendingUp },
     { href: "/learning-feedback", label: "Learning Feedback", icon: Heart },
     { href: "/badges-certificates", label: "Badges & Certificates", icon: Award },
     { href: "/badge-system", label: "Badge System", icon: Award },
   ];
 
+  const supportItems = [
+    { href: "/announcements", label: "Announcements", icon: Megaphone },
+    { href: "/question-feedback", label: "Question Feedback", icon: MessageSquare },
+    { href: "/question-flagging", label: "Question Flagging", icon: Flag },
+    { href: "/bug-reporting", label: "Bug Reports", icon: Bug },
+    { href: "/notification-settings", label: "Notifications", icon: Bell },
+    { href: "/anonymous-quiz-access", label: "Anonymous Access", icon: HelpCircle },
+  ];
+
   const systemItems = [
     ...(user?.role === 'admin' ? [{ href: "/user-management", label: "User Management", icon: Users }] : []),
+    ...(user?.role === 'super_admin' ? [{ href: "/backend-prompt-management", label: "Prompt Management", icon: Code }] : []),
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/accessibility-settings", label: "Accessibility", icon: SettingsIcon },
   ];
@@ -66,6 +85,27 @@ export default function Sidebar() {
         
         <div className="space-y-1">
           {navigationItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
+              >
+                <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+        
+        {/* Support & Communication */}
+        <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6">
+          Support & Communication
+        </div>
+        
+        <div className="space-y-1">
+          {supportItems.map((item) => {
             const Icon = item.icon;
             return (
               <Link
