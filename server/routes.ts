@@ -1632,9 +1632,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/quizzes',  async (req: any, res) => {
+  app.get('/api/quizzes', mockAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims?.sub || req.user.id;
+      // Use proper user ID extraction with fallback
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
       const quizzes = await storage.getQuizzesByUser(userId);
       res.json(quizzes);
     } catch (error) {

@@ -47,6 +47,8 @@ import AIChatbot from "@/pages/ai-chatbot";
 import BackendPromptManagement from "@/pages/backend-prompt-management";
 import QuizTakerDemo from "@/pages/quiz-taker-demo";
 import QuizBuilderDemo from "@/pages/QuizBuilderDemo";
+import PublishedQuizzes from "@/pages/published-quizzes";
+import QuizPreview from "@/pages/quiz-preview";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -121,6 +123,8 @@ function Router() {
           <Route path="/student-dashboard" component={StudentDashboard} />
           <Route path="/student-quiz" component={StudentQuiz} />
           <Route path="/student/quiz/:quizId" component={StudentQuiz} />
+          <Route path="/quiz/:id" component={QuizPreview} />
+          <Route path="/published-quizzes" component={PublishedQuizzes} />
           <Route path="/quiz-taker-demo" component={QuizTakerDemo} />
           <Route path="/quiz-builder-demo" component={QuizBuilderDemo} />
         </>
