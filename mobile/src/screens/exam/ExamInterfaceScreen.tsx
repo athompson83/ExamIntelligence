@@ -16,6 +16,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootState, AppDispatch } from '@/store';
 import Calculator from '@/components/Calculator';
+import ExamProctoring from '@/components/ExamProctoring';
 
 interface ExamInterfaceScreenProps {
   route: {
@@ -38,6 +39,9 @@ export default function ExamInterfaceScreen({ route, navigation }: ExamInterface
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
   const [calculatorType, setCalculatorType] = useState<'basic' | 'scientific' | 'graphing'>('basic');
+  const [showProctoring, setShowProctoring] = useState(false);
+  const [violations, setViolations] = useState<string[]>([]);
+  const [securityEvents, setSecurityEvents] = useState<string[]>([]);
 
   // Mock quiz data with calculator settings
   const [quizSettings] = useState({
@@ -65,7 +69,21 @@ export default function ExamInterfaceScreen({ route, navigation }: ExamInterface
     if (quizSettings.allowCalculator) {
       setCalculatorType(quizSettings.calculatorType);
     }
+    // Start proctoring when exam begins
+    setShowProctoring(true);
   }, [quizSettings]);
+
+  const handleViolation = (violation: string) => {
+    setViolations(prev => [...prev, violation]);
+    console.log('Exam violation detected:', violation);
+    // Could send to backend for tracking
+  };
+
+  const handleSecurityEvent = (event: string) => {
+    setSecurityEvents(prev => [...prev, event]);
+    console.log('Security event:', event);
+    // Could send to backend for logging
+  };
 
   const handleAnswerSelect = (answerId: string) => {
     if (mockQuestion.questionType === 'multiple_choice') {
@@ -238,6 +256,16 @@ export default function ExamInterfaceScreen({ route, navigation }: ExamInterface
         onDismiss={() => setShowCalculator(false)}
         type={calculatorType}
       />
+
+      {/* Proctoring Component */}
+      {showProctoring && (
+        <ExamProctoring
+          examId={examId}
+          isActive={showProctoring}
+          onViolation={handleViolation}
+          onSecurityEvent={handleSecurityEvent}
+        />
+      )}
     </SafeAreaView>
   );
 }
