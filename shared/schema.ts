@@ -183,108 +183,46 @@ export const answerOptions = pgTable("answer_options", {
   feedback: text("feedback"), // Feedback shown to students when this option is selected
 });
 
-// Quiz table - Enhanced with full Canvas LMS features
+// Quiz table - Simplified to match actual database schema
 export const quizzes = pgTable("quizzes", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title").notNull(),
   description: text("description"),
-  instructions: text("instructions"), // Student instructions
+  instructions: text("instructions"),
   creatorId: varchar("creator_id").references(() => users.id).notNull(),
   accountId: uuid("account_id").references(() => accounts.id).notNull(),
   
-  // Canvas quiz types: graded_quiz, practice_quiz, graded_survey, ungraded_survey
-  // TODO: Add quizType field back after database migration
-  // quizType: varchar("quiz_type", {
-  //   enum: ["graded_quiz", "practice_quiz", "graded_survey", "ungraded_survey"]
-  // }).default("graded_quiz"),
-  
   // Timing and availability
-  timeLimit: integer("time_limit"), // in minutes
+  timeLimit: integer("time_limit"),
   startTime: timestamp("start_time"),
   endTime: timestamp("end_time"),
   
   // Question behavior
   shuffleAnswers: boolean("shuffle_answers").default(false),
   shuffleQuestions: boolean("shuffle_questions").default(false),
-  oneQuestionAtTime: boolean("one_question_at_time").default(false),
-  cantGoBack: boolean("cant_go_back").default(false),
   
   // Attempt settings
   allowMultipleAttempts: boolean("allow_multiple_attempts").default(false),
   maxAttempts: integer("max_attempts").default(1),
-  scoringPolicy: varchar("scoring_policy", {
-    enum: ["keep_highest", "keep_latest", "keep_average"]
-  }).default("keep_highest"),
   
   // Security features
   passwordProtected: boolean("password_protected").default(false),
   password: varchar("password"),
   ipLocking: boolean("ip_locking").default(false),
-  allowedIps: jsonb("allowed_ips").$type<string[]>().default([]),
-  accessCode: varchar("access_code"),
   
   // Proctoring and monitoring
   proctoring: boolean("proctoring").default(false),
-  proctoringSettings: jsonb("proctoring_settings").$type<{
-    requireCamera: boolean;
-    requireMicrophone: boolean;
-    lockdownBrowser: boolean;
-    preventTabSwitching: boolean;
-    requireFullscreen: boolean;
-    monitorKeystrokes: boolean;
-    recordSession: boolean;
-  }>(),
-  
-  // Grading and feedback
-  pointsPossible: numeric("points_possible", { precision: 10, scale: 2 }),
-  gradingType: varchar("grading_type", {
-    enum: ["percentage", "points", "letter_grade", "gpa_scale", "pass_fail"]
-  }).default("percentage"),
-  
-  // Answer visibility settings
-  showCorrectAnswers: boolean("show_correct_answers").default(true),
-  showCorrectAnswersAt: timestamp("show_correct_answers_at"),
-  hideCorrectAnswersAt: timestamp("hide_correct_answers_at"),
-  showCorrectAnswersLastAttempt: boolean("show_correct_answers_last_attempt").default(false),
-  
-  // AI-powered feedback and learning features
-  enableQuestionFeedback: boolean("enable_question_feedback").default(true),
-  enableLearningPrescription: boolean("enable_learning_prescription").default(true),
-  showAnswerReasoning: boolean("show_answer_reasoning").default(false),
-  
-  // Canvas-style result display
-  hideResults: boolean("hide_results").default(false),
-  onlyVisibleToOverrides: boolean("only_visible_to_overrides").default(false),
+  proctoringSettings: jsonb("proctoring_settings"),
   
   // Advanced features
   adaptiveTesting: boolean("adaptive_testing").default(false),
-  anonymousSubmissions: boolean("anonymous_submissions").default(false),
   
-  // Test-taking tools and aids
-  allowCalculator: boolean("allow_calculator").default(false),
-  calculatorType: varchar("calculator_type", {
-    enum: ["basic", "scientific", "graphing"]
-  }).default("basic"),
+  // AI-powered feedback and learning features
+  enableQuestionFeedback: boolean("enable_question_feedback").default(false),
+  enableLearningPrescription: boolean("enable_learning_prescription").default(false),
+  showAnswerReasoning: boolean("show_answer_reasoning").default(false),
   
-  // Publishing and status
-  published: boolean("published").default(false),
-  workflow_state: varchar("workflow_state", {
-    enum: ["unpublished", "published", "deleted"]
-  }).default("unpublished"),
-  
-  // Analytics and tracking
-  allowedAttempts: integer("allowed_attempts").default(1),
-  questionCount: integer("question_count").default(0),
-  
-  // Canvas integrations
-  assignmentId: uuid("assignment_id"), // Links to assignments if needed
-  assignmentGroupId: uuid("assignment_group_id"),
-  
-  // Metadata
-  hasAccessCode: boolean("has_access_code").default(false),
-  ipFilter: text("ip_filter"),
-  dueAt: timestamp("due_at"),
-  
+  // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
