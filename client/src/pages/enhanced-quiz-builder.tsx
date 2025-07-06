@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -237,7 +237,7 @@ export default function EnhancedQuizBuilder() {
     });
 
     const handleLoadQuiz = (selectedQuiz: any) => {
-      // Load only the basic properties that match our quiz state
+      // Load all quiz properties that match our quiz state
       setQuiz({
         title: selectedQuiz.title || "",
         description: selectedQuiz.description || "",
@@ -246,19 +246,41 @@ export default function EnhancedQuizBuilder() {
         shuffleQuestions: selectedQuiz.shuffleQuestions || false,
         shuffleAnswers: selectedQuiz.shuffleAnswers || false,
         maxAttempts: selectedQuiz.maxAttempts || 1,
-        passingGrade: selectedQuiz.passingGrade || 70,
-        gradeToShow: selectedQuiz.gradeToShow || "points",
+        allowMultipleAttempts: selectedQuiz.allowMultipleAttempts || false,
+        proctoring: selectedQuiz.proctoring || false,
+        adaptiveTesting: selectedQuiz.adaptiveTesting || false,
+        enableQuestionFeedback: selectedQuiz.enableQuestionFeedback || false,
+        enableLearningPrescription: selectedQuiz.enableLearningPrescription || false,
+        passwordProtected: selectedQuiz.passwordProtected || false,
+        password: selectedQuiz.password || "",
+        ipLocking: selectedQuiz.ipLocking || false,
         showCorrectAnswers: selectedQuiz.showCorrectAnswers || false,
+        showCorrectAnswersAt: selectedQuiz.showCorrectAnswersAt || "after_submission",
+        showQuestionsAfterAttempt: selectedQuiz.showQuestionsAfterAttempt || false,
+        scoreKeepingMethod: selectedQuiz.scoreKeepingMethod || "highest",
+        timeBetweenAttempts: selectedQuiz.timeBetweenAttempts || 0,
+        availabilityStart: selectedQuiz.availabilityStart || undefined,
+        availabilityEnd: selectedQuiz.availabilityEnd || undefined,
+        alwaysAvailable: selectedQuiz.alwaysAvailable ?? true,
+        passingGrade: selectedQuiz.passingGrade || 70,
+        gradeToShow: selectedQuiz.gradeToShow || "percentage",
       });
       setQuizId(selectedQuiz.id);
+      setHasUnsavedChanges(false);
+      setLastSaved(new Date());
+      lastSavedQuizRef.current = JSON.stringify(selectedQuiz);
+      
+      // Dialog will be closed by DialogClose component
     };
 
     if (!existingQuizzes) {
       return <div>Loading existing quizzes...</div>;
     }
 
-    const draftQuizzes = existingQuizzes.filter((q: any) => !q.publishedAt);
-    const publishedQuizzes = existingQuizzes.filter((q: any) => q.publishedAt);
+    // Ensure existingQuizzes is an array before filtering
+    const quizzesArray = Array.isArray(existingQuizzes) ? existingQuizzes : [];
+    const draftQuizzes = quizzesArray.filter((q: any) => !q.publishedAt);
+    const publishedQuizzes = quizzesArray.filter((q: any) => q.publishedAt);
 
     return (
       <div className="space-y-4">
@@ -280,7 +302,9 @@ export default function EnhancedQuizBuilder() {
                       Last modified: {quiz.updatedAt ? new Date(quiz.updatedAt).toLocaleDateString() : 'Unknown'}
                     </p>
                   </div>
-                  <Button onClick={() => handleLoadQuiz(quiz)}>Load</Button>
+                  <DialogClose asChild>
+                    <Button onClick={() => handleLoadQuiz(quiz)}>Load</Button>
+                  </DialogClose>
                 </div>
               ))
             )}
@@ -298,7 +322,9 @@ export default function EnhancedQuizBuilder() {
                       Published: {quiz.publishedAt ? new Date(quiz.publishedAt).toLocaleDateString() : 'Unknown'}
                     </p>
                   </div>
-                  <Button onClick={() => handleLoadQuiz(quiz)}>Load</Button>
+                  <DialogClose asChild>
+                    <Button onClick={() => handleLoadQuiz(quiz)}>Load</Button>
+                  </DialogClose>
                 </div>
               ))
             )}
@@ -450,9 +476,17 @@ export default function EnhancedQuizBuilder() {
     }
   }, [location, quizId, toast]);
 
+  // Reference to track last saved quiz state
+  const lastSavedQuizRef = useRef<string>('');
+
   // Separate effect for autosave with debouncing
   useEffect(() => {
-    if (!hasUnsavedChanges || !quiz.title || isAutoSaving) return;
+    if (!quiz.title || isAutoSaving) return;
+
+    const currentQuizString = JSON.stringify(quiz);
+    
+    // Only autosave if the quiz has actually changed
+    if (currentQuizString === lastSavedQuizRef.current) return;
 
     const autoSave = async () => {
       setIsAutoSaving(true);
@@ -470,6 +504,7 @@ export default function EnhancedQuizBuilder() {
           }
           setLastSaved(new Date());
           setHasUnsavedChanges(false);
+          lastSavedQuizRef.current = currentQuizString; // Update saved state reference
         }
       } catch (error) {
         console.error('Autosave error:', error);
@@ -478,9 +513,9 @@ export default function EnhancedQuizBuilder() {
       }
     };
 
-    const timeoutId = setTimeout(autoSave, 3000); // Increased to 3 seconds for less frequent saves
+    const timeoutId = setTimeout(autoSave, 5000); // 5 seconds debounce
     return () => clearTimeout(timeoutId);
-  }, [hasUnsavedChanges, quiz.title, isAutoSaving, quizId]);
+  }, [quiz, quizId, isAutoSaving]);
   
   // Get quiz question IDs for filtering
   const quizQuestionIds = quizQuestions.map(q => q.id);
