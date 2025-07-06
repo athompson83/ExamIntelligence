@@ -1047,18 +1047,37 @@ export default function EnhancedQuizBuilder() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="time-between-attempts">Time Between Attempts (minutes)</Label>
-                        <Input
-                          id="time-between-attempts"
-                          type="number"
-                          min="0"
-                          value={quiz.timeBetweenAttempts || 0}
-                          onChange={(e) => setQuiz(prev => ({
-                            ...prev,
-                            timeBetweenAttempts: parseInt(e.target.value) || 0
-                          }))}
-                          placeholder="0 for no restriction"
-                        />
+                        <Label htmlFor="time-between-attempts">Time Between Attempts</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="time-between-attempts"
+                            type="number"
+                            min="0"
+                            value={quiz.timeBetweenAttempts || 0}
+                            onChange={(e) => setQuiz(prev => ({
+                              ...prev,
+                              timeBetweenAttempts: parseInt(e.target.value) || 0
+                            }))}
+                            placeholder="0 for no restriction"
+                            className="flex-1"
+                          />
+                          <Select
+                            value={quiz.timeBetweenAttemptsUnit || "minutes"}
+                            onValueChange={(value) => setQuiz(prev => ({
+                              ...prev,
+                              timeBetweenAttemptsUnit: value as "minutes" | "hours" | "days"
+                            }))}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="minutes">Minutes</SelectItem>
+                              <SelectItem value="hours">Hours</SelectItem>
+                              <SelectItem value="days">Days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </>
                   )}

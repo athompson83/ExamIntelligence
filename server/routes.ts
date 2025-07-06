@@ -3297,6 +3297,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quiz Progress API Endpoints
+  
+  // Get quiz progress for an attempt
+  app.get("/api/quiz-progress/:attemptId", isAuthenticated, async (req, res) => {
+    try {
+      const { attemptId } = req.params;
+      const user = req.user;
+      
+      // Verify the user has access to this attempt
+      const attempt = await storage.getQuizAttempt(attemptId);
+      if (!attempt || attempt.studentId !== user.id) {
+        return res.status(404).json({ message: "Quiz attempt not found" });
+      }
+      
+      const progress = await storage.getQuizProgress(attemptId);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error getting quiz progress:", error);
+      res.status(500).json({ message: "Failed to get quiz progress" });
+    }
+  });
+
+  // Save/update quiz progress
+  app.put("/api/quiz-progress/:attemptId", isAuthenticated, async (req, res) => {
+    try {
+      const { attemptId } = req.params;
+      const user = req.user;
+      
+      // Verify the user has access to this attempt
+      const attempt = await storage.getQuizAttempt(attemptId);
+      if (!attempt || attempt.studentId !== user.id) {
+        return res.status(404).json({ message: "Quiz attempt not found" });
+      }
+      
+      const validatedData = insertQuizProgressSchema.parse(req.body);
+      const progress = await storage.saveQuizProgress(attemptId, validatedData);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error saving quiz progress:", error);
+      res.status(500).json({ message: "Failed to save quiz progress" });
+    }
+  });
+
+  // Delete quiz progress (when quiz is submitted)
+  app.delete("/api/quiz-progress/:attemptId", isAuthenticated, async (req, res) => {
+    try {
+      const { attemptId } = req.params;
+      const user = req.user;
+      
+      // Verify the user has access to this attempt
+      const attempt = await storage.getQuizAttempt(attemptId);
+      if (!attempt || attempt.studentId !== user.id) {
+        return res.status(404).json({ message: "Quiz attempt not found" });
+      }
+      
+      await storage.deleteQuizProgress(attemptId);
+      res.json({ message: "Quiz progress deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting quiz progress:", error);
+      res.status(500).json({ message: "Failed to delete quiz progress" });
+    }
+  });
+
   // Super Admin CRM Endpoints
   
   // Get all accounts (super admin only)

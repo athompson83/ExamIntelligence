@@ -208,7 +208,8 @@ export const quizzes = pgTable("quizzes", {
   // Multiple attempt behavior
   scoreKeepingMethod: varchar("score_keeping_method", { enum: ["highest", "latest", "average"] }).default("highest"),
   attemptRestrictionsEnabled: boolean("attempt_restrictions_enabled").default(false),
-  timeBetweenAttempts: integer("time_between_attempts").default(0), // in minutes
+  timeBetweenAttempts: integer("time_between_attempts").default(0), // in minutes for backward compatibility
+  timeBetweenAttemptsUnit: varchar("time_between_attempts_unit", { enum: ["minutes", "hours", "days"] }).default("minutes"),
   
   // Security features
   passwordProtected: boolean("password_protected").default(false),
@@ -304,6 +305,19 @@ export const quizResponses = pgTable("quiz_responses", {
   timeSpent: integer("time_spent"), // in seconds
   flagged: boolean("flagged").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Quiz Progress table - tracks user progress within a quiz session for persistence
+export const quizProgress = pgTable("quiz_progress", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  attemptId: uuid("attempt_id").references(() => quizAttempts.id).notNull(),
+  currentQuestionIndex: integer("current_question_index").default(0),
+  answeredQuestions: jsonb("answered_questions").$type<string[]>().default([]),
+  savedResponses: jsonb("saved_responses").$type<Record<string, any>>().default({}),
+  timeSpentPerQuestion: jsonb("time_spent_per_question").$type<Record<string, number>>().default({}),
+  lastSavedAt: timestamp("last_saved_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Proctoring logs
@@ -680,6 +694,10 @@ export const quizResponsesRelations = relations(quizResponses, ({ one }) => ({
   question: one(questions, { fields: [quizResponses.questionId], references: [questions.id] }),
 }));
 
+export const quizProgressRelations = relations(quizProgress, ({ one }) => ({
+  attempt: one(quizAttempts, { fields: [quizProgress.attemptId], references: [quizAttempts.id] }),
+}));
+
 export const proctoringLogsRelations = relations(proctoringLogs, ({ one }) => ({
   attempt: one(quizAttempts, { fields: [proctoringLogs.attemptId], references: [quizAttempts.id] }),
   resolver: one(users, { fields: [proctoringLogs.resolvedBy], references: [users.id] }),
@@ -981,6 +999,7 @@ export const insertQuestionGroupSchema = createInsertSchema(questionGroups).omit
 export const insertQuizQuestionSchema = createInsertSchema(quizQuestions).omit({ id: true });
 export const insertQuizAttemptSchema = createInsertSchema(quizAttempts).omit({ id: true });
 export const insertQuizResponseSchema = createInsertSchema(quizResponses).omit({ id: true, createdAt: true });
+export const insertQuizProgressSchema = createInsertSchema(quizProgress).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProctoringLogSchema = createInsertSchema(proctoringLogs).omit({ id: true, resolvedAt: true });
 export const insertValidationLogSchema = createInsertSchema(validationLogs).omit({ id: true, validatedAt: true });
 export const insertAiResourceSchema = createInsertSchema(aiResources).omit({ id: true, createdAt: true });
@@ -1023,6 +1042,8 @@ export type InsertQuizAttempt = z.infer<typeof insertQuizAttemptSchema>;
 export type QuizAttempt = typeof quizAttempts.$inferSelect;
 export type InsertQuizResponse = z.infer<typeof insertQuizResponseSchema>;
 export type QuizResponse = typeof quizResponses.$inferSelect;
+export type InsertQuizProgress = z.infer<typeof insertQuizProgressSchema>;
+export type QuizProgress = typeof quizProgress.$inferSelect;
 export type InsertProctoringLog = z.infer<typeof insertProctoringLogSchema>;
 export type ProctoringLog = typeof proctoringLogs.$inferSelect;
 export type InsertValidationLog = z.infer<typeof insertValidationLogSchema>;

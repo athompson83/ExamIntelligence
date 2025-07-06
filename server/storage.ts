@@ -165,6 +165,11 @@ export interface IStorage {
   createQuizResponse(response: InsertQuizResponse): Promise<QuizResponse>;
   getQuizResponsesByAttempt(attemptId: string): Promise<QuizResponse[]>;
   
+  // Quiz progress operations
+  getQuizProgress(attemptId: string): Promise<QuizProgress | undefined>;
+  saveQuizProgress(attemptId: string, progress: InsertQuizProgress): Promise<QuizProgress>;
+  deleteQuizProgress(attemptId: string): Promise<void>;
+  
   // Proctoring operations
   createProctoringLog(log: InsertProctoringLog): Promise<ProctoringLog>;
   getProctoringLogsByAttempt(attemptId: string): Promise<ProctoringLog[]>;
@@ -676,6 +681,44 @@ export class DatabaseStorage implements IStorage {
 
   async getQuizResponsesByAttempt(attemptId: string): Promise<QuizResponse[]> {
     return await db.select().from(quizResponses).where(eq(quizResponses.attemptId, attemptId));
+  }
+
+  // Quiz progress operations
+  async getQuizProgress(attemptId: string): Promise<QuizProgress | undefined> {
+    const [result] = await db.select().from(quizProgress).where(eq(quizProgress.attemptId, attemptId));
+    return result;
+  }
+
+  async saveQuizProgress(attemptId: string, progress: InsertQuizProgress): Promise<QuizProgress> {
+    // Check if progress already exists
+    const existing = await this.getQuizProgress(attemptId);
+    
+    if (existing) {
+      // Update existing progress
+      const [result] = await db
+        .update(quizProgress)
+        .set({
+          ...progress,
+          updatedAt: new Date()
+        })
+        .where(eq(quizProgress.attemptId, attemptId))
+        .returning();
+      return result;
+    } else {
+      // Create new progress record
+      const [result] = await db.insert(quizProgress).values({
+        ...progress,
+        attemptId,
+        id: `progress_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }).returning();
+      return result;
+    }
+  }
+
+  async deleteQuizProgress(attemptId: string): Promise<void> {
+    await db.delete(quizProgress).where(eq(quizProgress.attemptId, attemptId));
   }
 
   // Proctoring operations
