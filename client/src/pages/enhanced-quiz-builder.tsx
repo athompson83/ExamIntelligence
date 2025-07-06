@@ -102,6 +102,7 @@ export default function EnhancedQuizBuilder() {
   const [isAddToGroupDialogOpen, setIsAddToGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [questionGroups, setQuestionGroups] = useState<any[]>([]);
 
   // Test questions query
   const { data: questions, isLoading: questionsLoading } = useQuery({
@@ -505,13 +506,22 @@ export default function EnhancedQuizBuilder() {
                               </span>
                             </div>
                             {selectedQuestions.length > 0 && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedQuestions([])}
-                              >
-                                Clear Selection
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => setIsAddToGroupDialogOpen(true)}
+                                >
+                                  Add Selected Questions
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedQuestions([])}
+                                >
+                                  Clear Selection
+                                </Button>
+                              </div>
                             )}
                           </div>
                         )}
@@ -579,7 +589,8 @@ export default function EnhancedQuizBuilder() {
               </CardHeader>
               <CardContent>
                 <QuestionGroupBuilder
-                  groups={[]}
+                  questionGroups={[]}
+                  availableQuestions={availableQuestions}
                   onAddGroup={async (groupData) => {
                     console.log('Adding group:', groupData);
                   }}
@@ -588,6 +599,9 @@ export default function EnhancedQuizBuilder() {
                   }}
                   onDeleteGroup={(groupId) => {
                     console.log('Deleting group:', groupId);
+                  }}
+                  onAssignQuestions={(groupId, questionIds) => {
+                    console.log('Assigning questions to group:', groupId, questionIds);
                   }}
                 />
               </CardContent>
@@ -901,12 +915,25 @@ export default function EnhancedQuizBuilder() {
                   
                   if (selectedGroupId === "create-new" && newGroupName.trim()) {
                     // Create new group and add questions
+                    const newGroup = {
+                      id: `group-${Date.now()}`,
+                      name: newGroupName.trim(),
+                      description: `Group with ${selectedQuestions.length} questions`,
+                      questions: questionsToAdd,
+                      pickCount: questionsToAdd.length,
+                      pointsPerQuestion: 1
+                    };
+                    
+                    setQuestionGroups(prev => [...prev, newGroup]);
+                    setQuizQuestions(prev => [...prev, ...questionsToAdd]);
+                    
                     toast({
                       title: "Success",
                       description: `Created new group "${newGroupName}" with ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'}`,
                     });
                   } else if (selectedGroupId === "select-existing") {
-                    // Add to existing group
+                    // Add to existing group (placeholder for now)
+                    setQuizQuestions(prev => [...prev, ...questionsToAdd]);
                     toast({
                       title: "Success",
                       description: `Added ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'} to existing group`,
