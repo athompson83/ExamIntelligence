@@ -36,6 +36,7 @@ import StudentLogin from "@/pages/student-login";
 import StudentDashboard from "@/pages/student-dashboard";
 import StudentQuiz from "@/pages/student-quiz";
 import CATExamBuilder from "@/pages/CATExamBuilder";
+import ProctoringSecurity from "@/pages/proctoring-security";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -93,6 +94,7 @@ function Router() {
           <Route path="/difficulty-tracking" component={EnhancedDifficultyTracking} />
           <Route path="/enhanced-difficulty-tracking" component={EnhancedDifficultyTracking} />
           <Route path="/accessibility-settings" component={AccessibilitySettings} />
+          <Route path="/proctoring-security" component={ProctoringSecurity} />
           <Route path="/project-status" component={ProjectStatus} />
           <Route path="/exam/:id">
             {(params) => <ExamInterface examId={params.id} />}

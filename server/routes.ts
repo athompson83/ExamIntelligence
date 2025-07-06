@@ -31,6 +31,8 @@ import {
   insertPromptTemplateSchema,
   insertLlmProviderSchema,
   insertCustomInstructionSchema,
+  insertSecurityEventSchema,
+  insertProctorAlertSchema,
 } from "@shared/schema";
 import { 
   validateQuestion, 
@@ -4558,6 +4560,199 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error completing CAT exam session:", error);
       res.status(500).json({ message: "Failed to complete CAT exam session" });
+    }
+  });
+
+  // Security Event endpoints
+  app.post('/api/security-events', mockAuth, async (req: any, res) => {
+    try {
+      const eventData = insertSecurityEventSchema.parse(req.body);
+      const event = await storage.createSecurityEvent(eventData);
+      res.json(event);
+    } catch (error) {
+      console.error("Error creating security event:", error);
+      res.status(500).json({ message: "Failed to create security event" });
+    }
+  });
+
+  app.get('/api/security-events', mockAuth, async (req: any, res) => {
+    try {
+      const { userId, examId, sessionId, eventType, severity } = req.query;
+      
+      let events = [];
+      if (userId) {
+        events = await storage.getSecurityEventsByUser(userId as string);
+      } else if (examId) {
+        events = await storage.getSecurityEventsByExam(examId as string);
+      } else if (sessionId) {
+        events = await storage.getSecurityEventsBySession(sessionId as string);
+      } else if (eventType) {
+        events = await storage.getSecurityEventsByType(eventType as string);
+      } else if (severity === 'critical') {
+        events = await storage.getCriticalSecurityEvents();
+      } else {
+        events = await storage.getCriticalSecurityEvents(); // Default to critical events
+      }
+      
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching security events:", error);
+      res.status(500).json({ message: "Failed to fetch security events" });
+    }
+  });
+
+  app.get('/api/security-events/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const event = await storage.getSecurityEvent(id);
+      
+      if (!event) {
+        return res.status(404).json({ message: "Security event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching security event:", error);
+      res.status(500).json({ message: "Failed to fetch security event" });
+    }
+  });
+
+  // Proctor Alert endpoints
+  app.post('/api/proctor-alerts', mockAuth, async (req: any, res) => {
+    try {
+      const alertData = insertProctorAlertSchema.parse(req.body);
+      const alert = await storage.createProctorAlert(alertData);
+      res.json(alert);
+    } catch (error) {
+      console.error("Error creating proctor alert:", error);
+      res.status(500).json({ message: "Failed to create proctor alert" });
+    }
+  });
+
+  app.get('/api/proctor-alerts', mockAuth, async (req: any, res) => {
+    try {
+      const { studentId, examId, active } = req.query;
+      
+      let alerts = [];
+      if (studentId) {
+        alerts = await storage.getProctorAlertsByStudent(studentId as string);
+      } else if (examId) {
+        alerts = await storage.getProctorAlertsByExam(examId as string);
+      } else if (active === 'true') {
+        alerts = await storage.getActiveProctorAlerts();
+      } else {
+        alerts = await storage.getActiveProctorAlerts(); // Default to active alerts
+      }
+      
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching proctor alerts:", error);
+      res.status(500).json({ message: "Failed to fetch proctor alerts" });
+    }
+  });
+
+  app.get('/api/proctor-alerts/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const alert = await storage.getProctorAlert(id);
+      
+      if (!alert) {
+        return res.status(404).json({ message: "Proctor alert not found" });
+      }
+      
+      res.json(alert);
+    } catch (error) {
+      console.error("Error fetching proctor alert:", error);
+      res.status(500).json({ message: "Failed to fetch proctor alert" });
+    }
+  });
+
+  app.patch('/api/proctor-alerts/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const alert = await storage.updateProctorAlert(id, updates);
+      res.json(alert);
+    } catch (error) {
+      console.error("Error updating proctor alert:", error);
+      res.status(500).json({ message: "Failed to update proctor alert" });
+    }
+  });
+
+  app.post('/api/proctor-alerts/:id/resolve', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { resolution } = req.body;
+      const userId = req.user?.id || 'system';
+      
+      const alert = await storage.resolveProctorAlert(id, userId, resolution);
+      res.json(alert);
+    } catch (error) {
+      console.error("Error resolving proctor alert:", error);
+      res.status(500).json({ message: "Failed to resolve proctor alert" });
+    }
+  });
+
+  // Proctoring Dashboard API - Real-time monitoring statistics
+  app.get('/api/proctoring/dashboard', mockAuth, async (req: any, res) => {
+    try {
+      const activeAlerts = await storage.getActiveProctorAlerts();
+      const criticalEvents = await storage.getCriticalSecurityEvents();
+      
+      const dashboardData = {
+        activeSessions: 0, // Will be populated by WebSocket service
+        activeAlerts: activeAlerts.length,
+        criticalEvents: criticalEvents.length,
+        totalAlertsToday: activeAlerts.filter(alert => {
+          const today = new Date();
+          const alertDate = new Date(alert.createdAt);
+          return alertDate.toDateString() === today.toDateString();
+        }).length,
+        recentEvents: criticalEvents.slice(0, 10),
+        recentAlerts: activeAlerts.slice(0, 10)
+      };
+      
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching proctoring dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch proctoring dashboard" });
+    }
+  });
+
+  // Security Report for specific exam
+  app.get('/api/exams/:examId/security-report', mockAuth, async (req: any, res) => {
+    try {
+      const { examId } = req.params;
+      
+      const securityEvents = await storage.getSecurityEventsByExam(examId);
+      const proctorAlerts = await storage.getProctorAlertsByExam(examId);
+      
+      const report = {
+        examId,
+        totalSecurityEvents: securityEvents.length,
+        criticalEvents: securityEvents.filter(e => e.severity === 'critical').length,
+        highSeverityEvents: securityEvents.filter(e => e.severity === 'high').length,
+        totalAlerts: proctorAlerts.length,
+        resolvedAlerts: proctorAlerts.filter(a => a.resolved).length,
+        pendingAlerts: proctorAlerts.filter(a => !a.resolved).length,
+        eventsByType: securityEvents.reduce((acc: any, event) => {
+          acc[event.eventType] = (acc[event.eventType] || 0) + 1;
+          return acc;
+        }, {}),
+        alertsBySeverity: proctorAlerts.reduce((acc: any, alert) => {
+          acc[alert.severity] = (acc[alert.severity] || 0) + 1;
+          return acc;
+        }, {}),
+        timeline: [...securityEvents, ...proctorAlerts]
+          .sort((a, b) => new Date(b.timestamp || b.createdAt).getTime() - new Date(a.timestamp || a.createdAt).getTime())
+          .slice(0, 50)
+      };
+      
+      res.json(report);
+    } catch (error) {
+      console.error("Error generating security report:", error);
+      res.status(500).json({ message: "Failed to generate security report" });
     }
   });
 

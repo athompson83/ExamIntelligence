@@ -1240,3 +1240,61 @@ export const auditLogs = pgTable("audit_logs", {
 export const insertAuditLogSchema = createInsertSchema(auditLogs);
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
+
+// Security Events for proctoring system
+export const securityEvents = pgTable("security_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  examId: uuid("exam_id").references(() => quizzes.id).notNull(),
+  sessionId: varchar("session_id").notNull(),
+  
+  // Event details
+  eventType: varchar("event_type", {
+    enum: ["tab_switch", "window_blur", "copy_paste", "screenshot_attempt", 
+           "network_disconnect", "multiple_tabs", "unauthorized_software", 
+           "suspicious_timing", "biometric_fail", "fullscreen_exit"]
+  }).notNull(),
+  severity: varchar("severity", { enum: ["low", "medium", "high", "critical"] }).notNull(),
+  description: text("description").notNull(),
+  metadata: jsonb("metadata"),
+  
+  // Context
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  browserFingerprint: text("browser_fingerprint"),
+  
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// Proctor Alerts for monitoring
+export const proctorAlerts = pgTable("proctor_alerts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  examId: uuid("exam_id").references(() => quizzes.id).notNull(),
+  
+  // Alert details
+  alertType: varchar("alert_type").notNull(),
+  severity: varchar("severity", { enum: ["low", "medium", "high", "critical"] }).notNull(),
+  description: text("description").notNull(),
+  metadata: jsonb("metadata"),
+  
+  // Resolution
+  resolved: boolean("resolved").notNull().default(false),
+  resolvedBy: varchar("resolved_by").references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
+  resolution: text("resolution"),
+  
+  // Tracking
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Create insert schemas for new tables
+export const insertSecurityEventSchema = createInsertSchema(securityEvents);
+export const insertProctorAlertSchema = createInsertSchema(proctorAlerts);
+
+// Export types
+export type InsertSecurityEvent = z.infer<typeof insertSecurityEventSchema>;
+export type SecurityEvent = typeof securityEvents.$inferSelect;
+export type InsertProctorAlert = z.infer<typeof insertProctorAlertSchema>;
+export type ProctorAlert = typeof proctorAlerts.$inferSelect;

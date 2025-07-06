@@ -32,6 +32,8 @@ import {
   certificateTemplates,
   awardedBadges,
   issuedCertificates,
+  securityEvents,
+  proctorAlerts,
   type User,
   type UpsertUser,
   type Account,
@@ -92,6 +94,10 @@ import {
   type InsertBadgeTemplate,
   type CertificateTemplate,
   type InsertCertificateTemplate,
+  type SecurityEvent,
+  type InsertSecurityEvent,
+  type ProctorAlert,
+  type InsertProctorAlert,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, count, avg, like, inArray } from "drizzle-orm";
@@ -366,6 +372,26 @@ export interface IStorage {
   getNextCATQuestion(sessionId: string): Promise<any>;
   submitCATAnswer(sessionId: string, questionId: string, selectedAnswers: string[], timeSpent: number): Promise<any>;
   completeCATExamSession(sessionId: string): Promise<any>;
+
+  // Security Event operations
+  createSecurityEvent(event: InsertSecurityEvent): Promise<SecurityEvent>;
+  getSecurityEvent(id: string): Promise<SecurityEvent | undefined>;
+  getSecurityEventsByUser(userId: string): Promise<SecurityEvent[]>;
+  getSecurityEventsByExam(examId: string): Promise<SecurityEvent[]>;
+  getSecurityEventsBySession(sessionId: string): Promise<SecurityEvent[]>;
+  getSecurityEventsByType(eventType: string): Promise<SecurityEvent[]>;
+  getCriticalSecurityEvents(): Promise<SecurityEvent[]>;
+  deleteSecurityEvent(id: string): Promise<void>;
+
+  // Proctor Alert operations
+  createProctorAlert(alert: InsertProctorAlert): Promise<ProctorAlert>;
+  getProctorAlert(id: string): Promise<ProctorAlert | undefined>;
+  getProctorAlertsByStudent(studentId: string): Promise<ProctorAlert[]>;
+  getProctorAlertsByExam(examId: string): Promise<ProctorAlert[]>;
+  getActiveProctorAlerts(): Promise<ProctorAlert[]>;
+  updateProctorAlert(id: string, data: Partial<InsertProctorAlert>): Promise<ProctorAlert>;
+  resolveProctorAlert(id: string, resolvedBy: string, resolution: string): Promise<ProctorAlert>;
+  deleteProctorAlert(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1615,7 +1641,6 @@ export class DatabaseStorage implements IStorage {
   async awardBadge(award: InsertAwardedBadge): Promise<AwardedBadge> {
     const [awardedBadge] = await db.insert(awardedBadges).values({
       ...award,
-      id: `awarded_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       awardedAt: award.awardedAt || new Date()
     }).returning();
     return awardedBadge;
@@ -1642,22 +1667,22 @@ export class DatabaseStorage implements IStorage {
     return await db.select({
       id: awardedBadges.id,
       badgeId: awardedBadges.badgeId,
-      studentId: awardedBadges.studentId,
+      recipientId: awardedBadges.recipientId,
       awardedBy: awardedBadges.awardedBy,
       awardedAt: awardedBadges.awardedAt,
       reason: awardedBadges.reason,
-      verificationCode: awardedBadges.verificationCode,
       metadata: awardedBadges.metadata,
       badge: {
         id: badges.id,
         name: badges.name,
         description: badges.description,
-        iconUrl: badges.iconUrl,
-        badgeColor: badges.badgeColor,
-        textColor: badges.textColor,
+        iconType: badges.iconType,
+        iconValue: badges.iconValue,
+        color: badges.color,
+        backgroundColor: badges.backgroundColor,
         criteria: badges.criteria,
-        pointsValue: badges.pointsValue,
-        category: badges.category,
+        badgeType: badges.badgeType,
+        rarity: badges.rarity,
         isActive: badges.isActive,
         accountId: badges.accountId,
         createdBy: badges.createdBy,
@@ -1667,7 +1692,7 @@ export class DatabaseStorage implements IStorage {
     })
     .from(awardedBadges)
     .innerJoin(badges, eq(awardedBadges.badgeId, badges.id))
-    .where(eq(awardedBadges.studentId, studentId))
+    .where(eq(awardedBadges.recipientId, studentId))
     .orderBy(desc(awardedBadges.awardedAt));
   }
 
@@ -2303,6 +2328,121 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBadgeTemplate(id: string): Promise<void> {
     await db.delete(badgeTemplates).where(eq(badgeTemplates.id, id));
+  }
+
+  // Security Event operations
+  async createSecurityEvent(event: InsertSecurityEvent): Promise<SecurityEvent> {
+    const [newEvent] = await db.insert(securityEvents).values(event).returning();
+    return newEvent;
+  }
+
+  async getSecurityEvent(id: string): Promise<SecurityEvent | undefined> {
+    const [event] = await db.select().from(securityEvents).where(eq(securityEvents.id, id));
+    return event;
+  }
+
+  async getSecurityEventsByUser(userId: string): Promise<SecurityEvent[]> {
+    return await db.select()
+      .from(securityEvents)
+      .where(eq(securityEvents.userId, userId))
+      .orderBy(desc(securityEvents.timestamp));
+  }
+
+  async getSecurityEventsByExam(examId: string): Promise<SecurityEvent[]> {
+    return await db.select()
+      .from(securityEvents)
+      .where(eq(securityEvents.examId, examId))
+      .orderBy(desc(securityEvents.timestamp));
+  }
+
+  async getSecurityEventsBySession(sessionId: string): Promise<SecurityEvent[]> {
+    return await db.select()
+      .from(securityEvents)
+      .where(eq(securityEvents.sessionId, sessionId))
+      .orderBy(desc(securityEvents.timestamp));
+  }
+
+  async getSecurityEventsByType(eventType: string): Promise<SecurityEvent[]> {
+    return await db.select()
+      .from(securityEvents)
+      .where(eq(securityEvents.eventType, eventType))
+      .orderBy(desc(securityEvents.timestamp));
+  }
+
+  async getCriticalSecurityEvents(): Promise<SecurityEvent[]> {
+    const results = await db.execute(sql`
+      SELECT * FROM security_events 
+      WHERE severity = 'critical' 
+      ORDER BY timestamp DESC
+    `);
+    return results.rows as SecurityEvent[];
+  }
+
+  async deleteSecurityEvent(id: string): Promise<void> {
+    await db.delete(securityEvents).where(eq(securityEvents.id, id));
+  }
+
+  // Proctor Alert operations
+  async createProctorAlert(alert: InsertProctorAlert): Promise<ProctorAlert> {
+    const [newAlert] = await db.insert(proctorAlerts).values(alert).returning();
+    return newAlert;
+  }
+
+  async getProctorAlert(id: string): Promise<ProctorAlert | undefined> {
+    const [alert] = await db.select().from(proctorAlerts).where(eq(proctorAlerts.id, id));
+    return alert;
+  }
+
+  async getProctorAlertsByStudent(studentId: string): Promise<ProctorAlert[]> {
+    const results = await db.execute(sql`
+      SELECT * FROM proctor_alerts 
+      WHERE student_id = ${studentId} 
+      ORDER BY created_at DESC
+    `);
+    return results.rows as ProctorAlert[];
+  }
+
+  async getProctorAlertsByExam(examId: string): Promise<ProctorAlert[]> {
+    const results = await db.execute(sql`
+      SELECT * FROM proctor_alerts 
+      WHERE exam_id = ${examId} 
+      ORDER BY created_at DESC
+    `);
+    return results.rows as ProctorAlert[];
+  }
+
+  async getActiveProctorAlerts(): Promise<ProctorAlert[]> {
+    const results = await db.execute(sql`
+      SELECT * FROM proctor_alerts 
+      WHERE resolved = false 
+      ORDER BY created_at DESC
+    `);
+    return results.rows as ProctorAlert[];
+  }
+
+  async updateProctorAlert(id: string, data: Partial<InsertProctorAlert>): Promise<ProctorAlert> {
+    const [updatedAlert] = await db.update(proctorAlerts)
+      .set(data)
+      .where(eq(proctorAlerts.id, id))
+      .returning();
+    return updatedAlert;
+  }
+
+  async resolveProctorAlert(id: string, resolvedBy: string, resolution: string): Promise<ProctorAlert> {
+    const [resolvedAlert] = await db.update(proctorAlerts)
+      .set({
+        resolved: true,
+        resolvedBy,
+        resolvedAt: new Date(),
+        resolution
+      })
+      .where(eq(proctorAlerts.id, id))
+      .returning();
+    return resolvedAlert;
+  }
+
+  async deleteProctorAlert(id: string): Promise<void> {
+    await db.delete(proctorAlerts).where(eq(proctorAlerts.id, id));
   }
 
   // Initialize in-memory storage for CAT exams (temporary)

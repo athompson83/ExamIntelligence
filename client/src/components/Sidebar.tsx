@@ -13,7 +13,8 @@ import {
   Award,
   SettingsIcon,
   Heart,
-  TrendingUp
+  TrendingUp,
+  Shield
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -25,6 +26,7 @@ export default function Sidebar() {
     { href: "/item-banks", label: "Item Banks", icon: BookOpen },
     { href: "/quiz-builder", label: "Quiz Builder", icon: Puzzle },
     { href: "/live-exams", label: "Live Exams", icon: PlayCircle },
+    { href: "/proctoring-security", label: "Proctoring Security", icon: Shield },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/ai-resources", label: "AI Resources", icon: Brain },
     { href: "/difficulty-tracking", label: "Difficulty Tracking", icon: TrendingUp },
