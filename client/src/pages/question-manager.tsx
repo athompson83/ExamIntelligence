@@ -22,6 +22,7 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { 
   Plus, 
   Search, 
@@ -1401,12 +1402,12 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="questionText">Question Text</Label>
-                      <Textarea
-                        id="questionText"
+                      <RichTextEditor
                         value={questionForm.questionText}
-                        onChange={(e) => setQuestionForm(prev => ({ ...prev, questionText: e.target.value }))}
+                        onChange={(value) => setQuestionForm(prev => ({ ...prev, questionText: value }))}
                         placeholder="Enter your question here..."
-                        className="min-h-24"
+                        className="mt-1"
+                        allowMedia={true}
                       />
                     </div>
                     
@@ -1458,23 +1459,29 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                         <Label>Answer Options</Label>
                         <div className="space-y-2 mt-2">
                           {questionForm.answerOptions.map((option, index) => (
-                            <div key={index} className="flex items-center space-x-2">
+                            <div key={index} className="flex items-start space-x-2">
                               <Checkbox
                                 checked={option.isCorrect}
                                 onCheckedChange={(checked) => updateAnswerOption(index, 'isCorrect', checked)}
+                                className="mt-2"
                               />
-                              <Input
-                                value={option.answerText}
-                                onChange={(e) => updateAnswerOption(index, 'answerText', e.target.value)}
-                                placeholder={`Option ${index + 1}`}
-                                className="flex-1"
-                              />
+                              <div className="flex-1">
+                                <RichTextEditor
+                                  value={option.answerText}
+                                  onChange={(value) => updateAnswerOption(index, 'answerText', value)}
+                                  placeholder={`Option ${index + 1}`}
+                                  className="w-full"
+                                  compact={true}
+                                  allowMedia={true}
+                                />
+                              </div>
                               {questionForm.answerOptions.length > 2 && (
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="sm"
                                   onClick={() => removeAnswerOption(index)}
+                                  className="mt-2"
                                 >
                                   <X className="h-4 w-4" />
                                 </Button>
@@ -1493,6 +1500,67 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                         </div>
                       </div>
                     )}
+                    
+                    {/* Canvas LMS-style Feedback Fields */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Question Feedback</h3>
+                      
+                      <div>
+                        <Label htmlFor="correctFeedback">Correct Answer Feedback</Label>
+                        <p className="text-sm text-gray-600 mb-2">
+                          This feedback will be shown to students when they select the correct answer
+                        </p>
+                        <RichTextEditor
+                          value={questionForm.correctFeedback}
+                          onChange={(value) => setQuestionForm(prev => ({ ...prev, correctFeedback: value }))}
+                          placeholder="Enter feedback for correct answers..."
+                          className="mt-1"
+                          compact={true}
+                          allowMedia={true}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="incorrectFeedback">Incorrect Answer Feedback</Label>
+                        <p className="text-sm text-gray-600 mb-2">
+                          This feedback will be shown to students when they select an incorrect answer
+                        </p>
+                        <RichTextEditor
+                          value={questionForm.incorrectFeedback}
+                          onChange={(value) => setQuestionForm(prev => ({ ...prev, incorrectFeedback: value }))}
+                          placeholder="Enter feedback for incorrect answers..."
+                          className="mt-1"
+                          compact={true}
+                          allowMedia={true}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="generalFeedback">General Feedback</Label>
+                        <p className="text-sm text-gray-600 mb-2">
+                          This feedback will be shown to all students regardless of their answer
+                        </p>
+                        <RichTextEditor
+                          value={questionForm.generalFeedback}
+                          onChange={(value) => setQuestionForm(prev => ({ ...prev, generalFeedback: value }))}
+                          placeholder="Enter general feedback..."
+                          className="mt-1"
+                          compact={true}
+                          allowMedia={true}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="partialCredit"
+                          checked={questionForm.partialCredit}
+                          onCheckedChange={(checked) => setQuestionForm(prev => ({ ...prev, partialCredit: checked }))}
+                        />
+                        <Label htmlFor="partialCredit" className="text-sm">
+                          Allow partial credit for this question
+                        </Label>
+                      </div>
+                    </div>
                     
                     <div className="flex gap-2">
                       <Button 
