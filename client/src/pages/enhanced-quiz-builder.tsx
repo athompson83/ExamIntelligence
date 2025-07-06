@@ -29,6 +29,7 @@ import {
   Eye,
   Trash2,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Calendar,
   Timer,
@@ -87,7 +88,8 @@ export default function EnhancedQuizBuilder() {
   const [isAddToGroupDialogOpen, setIsAddToGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [questionGroups, setQuestionGroups] = useState<any[]>([]);
+  const [questionGroups, setQuestionGroups] = useState<QuestionGroup[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   // Test questions query
   const { data: questions, isLoading: questionsLoading } = useQuery({
@@ -119,6 +121,18 @@ export default function EnhancedQuizBuilder() {
         newSet.delete(questionId);
       } else {
         newSet.add(questionId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleGroupExpansion = (groupId: string) => {
+    setExpandedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
       }
       return newSet;
     });
@@ -207,10 +221,9 @@ export default function EnhancedQuizBuilder() {
 
         {/* Main Content */}
         <Tabs defaultValue="basic" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="basic">Basic Settings</TabsTrigger>
             <TabsTrigger value="questions">Questions</TabsTrigger>
-            <TabsTrigger value="groups">Question Groups</TabsTrigger>
             <TabsTrigger value="timing">Timing & Attempts</TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
@@ -388,7 +401,7 @@ export default function EnhancedQuizBuilder() {
               <CardContent>
                 {viewingQuizQuestions ? (
                   <div className="space-y-4">
-                    {quizQuestions.length === 0 ? (
+                    {quizQuestions.length === 0 && questionGroups.length === 0 ? (
                       <div className="text-center py-12">
                         <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                         <h3 className="text-lg font-medium mb-2">No Questions Added Yet</h3>
@@ -397,28 +410,139 @@ export default function EnhancedQuizBuilder() {
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        {quizQuestions.map((question) => {
+                      <div className="space-y-4">
+                        {/* Question Groups */}
+                        {questionGroups.map((group) => {
+                          // Get quiz questions that belong to this group
+                          const groupQuestions = quizQuestions.filter(q => {
+                            // We need to check if there's a quiz question relationship with this group
+                            // For now, we'll just show all questions since the relationship isn't properly set up
+                            return false; // TODO: Implement proper grouping
+                          });
+                          const isExpanded = expandedGroups.has(group.id);
+                          
                           return (
-                            <div key={question.id} className="flex items-center justify-between p-4 border rounded-lg">
-                              <div className="flex-1">
-                                <div className="font-medium">{question.questionText}</div>
-                                <div className="text-sm text-muted-foreground mt-1">
-                                  {question.questionType} • Difficulty: {question.difficulty}/10
+                            <div key={group.id} className="border rounded-lg">
+                              <div 
+                                className="flex items-center justify-between p-4 cursor-pointer bg-muted/50 hover:bg-muted/70 transition-colors"
+                                onClick={() => toggleGroupExpansion(group.id)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2">
+                                    {isExpanded ? (
+                                      <ChevronDown className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4" />
+                                    )}
+                                    <Target className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium">{group.name}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {groupQuestions.length} questions • Pick {group.pickCount || 'all'} • {group.pointsPerQuestion || 1} points each
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // TODO: Edit group functionality
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // TODO: Delete group functionality
+                                    }}
+                                  >
+                                    Delete
+                                  </Button>
                                 </div>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setQuizQuestions(prev => prev.filter(q => q.id !== question.id));
-                                }}
-                              >
-                                Remove
-                              </Button>
+                              
+                              {isExpanded && (
+                                <div className="border-t bg-background">
+                                  {groupQuestions.length === 0 ? (
+                                    <div className="p-4 text-center text-muted-foreground">
+                                      No questions in this group yet
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2 p-4">
+                                      {groupQuestions.map((question) => (
+                                        <div key={question.id} className="flex items-center justify-between p-3 border rounded-lg bg-background">
+                                          <div className="flex-1">
+                                            <div className="font-medium">{question.questionText}</div>
+                                            <div className="text-sm text-muted-foreground mt-1">
+                                              {question.questionType}
+                                            </div>
+                                          </div>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              setQuizQuestions(prev => prev.filter(q => q.id !== question.id));
+                                            }}
+                                          >
+                                            Remove
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
+                        
+                        {/* Ungrouped Questions */}
+                        {(() => {
+                          const ungroupedQuestions = quizQuestions.filter(q => {
+                            // For now, show all questions as ungrouped since we need to implement proper grouping
+                            return true;
+                          });
+                          if (ungroupedQuestions.length === 0) return null;
+                          
+                          return (
+                            <div className="border rounded-lg">
+                              <div className="p-4 bg-muted/30">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4" />
+                                  <h4 className="font-medium">Individual Questions</h4>
+                                  <Badge variant="secondary">{ungroupedQuestions.length}</Badge>
+                                </div>
+                              </div>
+                              <div className="space-y-2 p-4">
+                                {ungroupedQuestions.map((question) => (
+                                  <div key={question.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                    <div className="flex-1">
+                                      <div className="font-medium">{question.questionText}</div>
+                                      <div className="text-sm text-muted-foreground mt-1">
+                                        {question.questionType}
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setQuizQuestions(prev => prev.filter(q => q.id !== question.id));
+                                      }}
+                                    >
+                                      Remove
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
@@ -562,38 +686,7 @@ export default function EnhancedQuizBuilder() {
             </Card>
           </TabsContent>
 
-          {/* Question Groups Tab */}
-          <TabsContent value="groups">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Question Groups
-                </CardTitle>
-                <CardDescription>
-                  Organize questions into groups for better assessment structure
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <QuestionGroupBuilder
-                  questionGroups={[]}
-                  availableQuestions={availableQuestions}
-                  onAddGroup={async (groupData) => {
-                    console.log('Adding group:', groupData);
-                  }}
-                  onUpdateGroup={(groupId, updates) => {
-                    console.log('Updating group:', groupId, updates);
-                  }}
-                  onDeleteGroup={(groupId) => {
-                    console.log('Deleting group:', groupId);
-                  }}
-                  onAssignQuestions={(groupId, questionIds) => {
-                    console.log('Assigning questions to group:', groupId, questionIds);
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
+
 
           {/* Timing & Attempts Tab */}
           <TabsContent value="timing">
