@@ -58,8 +58,9 @@ interface FormQuestion {
 interface QuestionEditorProps {
   testbankId: number;
   question?: Question | null;
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onCancel?: () => void;
   onSave?: (question: Question) => void;
 }
 
@@ -84,7 +85,7 @@ const bloomsLevels = [
   { value: 'create', label: 'Create' }
 ];
 
-export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }: QuestionEditorProps) {
+export function QuestionEditor({ testbankId, question, isOpen, onClose, onCancel, onSave }: QuestionEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -428,16 +429,23 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
     );
   };
 
-  if (!isOpen) return null;
+  const handleCancel = () => {
+    if (onCancel) onCancel();
+    if (onClose) onClose();
+  };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {question?.id ? 'Edit Question' : 'Create New Question'}
-          </DialogTitle>
-        </DialogHeader>
+  const content = (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">
+          {question?.id ? 'Edit Question' : 'Create New Question'}
+        </h2>
+        {!isOpen && (
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
+        )}
+      </div>
 
         <Tabs defaultValue="content" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
@@ -734,26 +742,48 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onSave }
           </TabsContent>
         </Tabs>
 
-        <div className="flex gap-2 pt-4">
-          <Button 
-            onClick={handleSave} 
-            disabled={saveQuestionMutation.isPending}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {saveQuestionMutation.isPending ? 'Saving...' : 'Save Question'}
-          </Button>
-          
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          
-          <Button variant="outline">
-            <Eye className="mr-2 h-4 w-4" />
-            Preview
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <div className="flex gap-2 pt-4">
+        <Button 
+          onClick={handleSave} 
+          disabled={saveQuestionMutation.isPending}
+          className="bg-primary hover:bg-primary/90"
+        >
+          <Save className="mr-2 h-4 w-4" />
+          {saveQuestionMutation.isPending ? 'Saving...' : 'Save Question'}
+        </Button>
+        
+        <Button variant="outline" onClick={handleCancel}>
+          Cancel
+        </Button>
+        
+        <Button variant="outline">
+          <Eye className="mr-2 h-4 w-4" />
+          Preview
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Return modal version if isOpen is true
+  if (isOpen) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {question?.id ? 'Edit Question' : 'Create New Question'}
+            </DialogTitle>
+          </DialogHeader>
+          {content}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Return page version if isOpen is false/undefined
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      {content}
+    </div>
   );
 }
