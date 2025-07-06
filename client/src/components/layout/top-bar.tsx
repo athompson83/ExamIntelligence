@@ -28,6 +28,7 @@ export function TopBar() {
   const isStudentView = location.startsWith('/student');
   
   const handleViewToggle = () => {
+    console.log('View toggle clicked, current location:', location, 'isStudentView:', isStudentView);
     if (isStudentView) {
       navigate('/'); // Go to teacher dashboard
     } else {
@@ -69,22 +70,22 @@ export function TopBar() {
               {isStudentView ? (
                 <>
                   <BookOpen className="mr-2 h-4 w-4" />
-                  <span>Teacher View</span>
+                  <span>Switch to Teacher View</span>
                 </>
               ) : (
                 <>
                   <GraduationCap className="mr-2 h-4 w-4" />
-                  <span>Student View</span>
+                  <span>Switch to Student View</span>
                 </>
               )}
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
               <User className="mr-2 h-4 w-4" />
-              <span>{t('navigation.profile')}</span>
+              <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>{t('navigation.logout')}</span>
+              <span>Sign out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
