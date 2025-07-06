@@ -48,6 +48,8 @@ import {
   GraduationCap,
   BarChart3,
   Home,
+  Bookmark,
+  Download,
   ChevronRight,
   RefreshCw,
   Copy,
@@ -144,6 +146,16 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     customInstructions: ""
   });
 
+  // Custom Instructions State
+  const [customInstructionForm, setCustomInstructionForm] = useState({
+    name: "",
+    description: "",
+    category: "question_generation",
+    instructions: ""
+  });
+  const [showSaveInstructionDialog, setShowSaveInstructionDialog] = useState(false);
+  const [showLoadInstructionDialog, setShowLoadInstructionDialog] = useState(false);
+
   // Question Form State
   const [questionForm, setQuestionForm] = useState({
     questionText: "",
@@ -185,6 +197,12 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     enabled: isAuthenticated && !!effectiveTestbankId,
   });
 
+  // Fetch custom instructions
+  const { data: customInstructions, refetch: refetchCustomInstructions } = useQuery({
+    queryKey: ['/api/custom-instructions', { category: 'question_generation' }],
+    enabled: isAuthenticated,
+  });
+
   // Create question mutation
   const createQuestionMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -219,6 +237,34 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     },
   });
 
+  // Custom instruction mutations
+  const saveCustomInstructionMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/custom-instructions", data);
+    },
+    onSuccess: () => {
+      refetchCustomInstructions();
+      setShowSaveInstructionDialog(false);
+      setCustomInstructionForm({
+        name: "",
+        description: "",
+        category: "question_generation",
+        instructions: ""
+      });
+      toast({
+        title: "Success",
+        description: "Custom instruction saved successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save custom instruction",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Check API key availability
   const { data: apiKeyStatus } = useQuery({
     queryKey: ['/api/check-openai-key'],
@@ -234,6 +280,49 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     total: 0,
     percentage: 0
   });
+
+  // Custom instruction helper functions
+  const handleSaveCustomInstruction = () => {
+    if (!customInstructionForm.name.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter a name for the custom instruction.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!customInstructionForm.instructions.trim()) {
+      toast({
+        title: "Instructions Required",
+        description: "Please enter the instruction content.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    saveCustomInstructionMutation.mutate({
+      ...customInstructionForm,
+      instructions: aiForm.customInstructions // Use current instructions from the form
+    });
+  };
+
+  const handleLoadCustomInstruction = (instruction: any) => {
+    setAiForm(prev => ({ ...prev, customInstructions: instruction.instructions }));
+    setShowLoadInstructionDialog(false);
+    toast({
+      title: "Instructions Loaded",
+      description: `Loaded "${instruction.name}" into custom instructions field.`,
+    });
+  };
+
+  const handleSaveCurrentInstructions = () => {
+    setCustomInstructionForm(prev => ({ 
+      ...prev, 
+      instructions: aiForm.customInstructions 
+    }));
+    setShowSaveInstructionDialog(true);
+  };
 
   // AI Generation with real-time progress tracking
   const handleAIGeneration = async (data: any) => {
@@ -1085,7 +1174,29 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
 
                       
                       <div>
-                        <Label htmlFor="customInstructions">Custom Instructions</Label>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label htmlFor="customInstructions">Custom Instructions</Label>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowLoadInstructionDialog(true)}
+                              disabled={!customInstructions?.length}
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Load
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleSaveCurrentInstructions}
+                              disabled={!aiForm.customInstructions.trim()}
+                            >
+                              <Save className="h-4 w-4 mr-1" />
+                              Save
+                            </Button>
+                          </div>
+                        </div>
                         <Textarea
                           id="customInstructions"
                           value={aiForm.customInstructions}
@@ -1631,6 +1742,134 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
           </div>
         </main>
       </div>
+
+      {/* Save Custom Instruction Dialog */}
+      <Dialog open={showSaveInstructionDialog} onOpenChange={setShowSaveInstructionDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Save Custom Instruction</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="instructionName">Name</Label>
+              <Input
+                id="instructionName"
+                value={customInstructionForm.name}
+                onChange={(e) => setCustomInstructionForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter a name for this instruction template"
+              />
+            </div>
+            <div>
+              <Label htmlFor="instructionDescription">Description (Optional)</Label>
+              <Input
+                id="instructionDescription"
+                value={customInstructionForm.description}
+                onChange={(e) => setCustomInstructionForm(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Brief description of what this instruction does"
+              />
+            </div>
+            <div>
+              <Label htmlFor="instructionCategory">Category</Label>
+              <Select
+                value={customInstructionForm.category}
+                onValueChange={(value) => setCustomInstructionForm(prev => ({ ...prev, category: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="question_generation">Question Generation</SelectItem>
+                  <SelectItem value="validation">Validation</SelectItem>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="instructionPreview">Instructions to Save</Label>
+              <Textarea
+                id="instructionPreview"
+                value={aiForm.customInstructions}
+                readOnly
+                className="min-h-20 bg-gray-50"
+                placeholder="No instructions entered yet"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowSaveInstructionDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveCustomInstruction}
+              disabled={!customInstructionForm.name.trim() || !aiForm.customInstructions.trim()}
+            >
+              Save Instruction
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Load Custom Instruction Dialog */}
+      <Dialog open={showLoadInstructionDialog} onOpenChange={setShowLoadInstructionDialog}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Load Custom Instruction</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {customInstructions && customInstructions.length > 0 ? (
+              <div className="grid gap-3 max-h-96 overflow-y-auto">
+                {customInstructions.map((instruction: any) => (
+                  <Card key={instruction.id} className="cursor-pointer hover:bg-gray-50 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium">{instruction.name}</h4>
+                            <Badge variant="secondary" className="text-xs">
+                              {instruction.category}
+                            </Badge>
+                          </div>
+                          {instruction.description && (
+                            <p className="text-sm text-gray-600 mb-2">{instruction.description}</p>
+                          )}
+                          <p className="text-xs text-gray-500 line-clamp-2">
+                            {instruction.instructions}
+                          </p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            <span>Used {instruction.usageCount || 0} times</span>
+                            <span>Created {new Date(instruction.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleLoadCustomInstruction(instruction)}
+                          className="ml-4"
+                        >
+                          Load
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Saved Instructions</h3>
+                <p className="text-gray-600">
+                  You haven't saved any custom instructions yet. Create some instructions and save them for future use.
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setShowLoadInstructionDialog(false)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

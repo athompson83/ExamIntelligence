@@ -1026,11 +1026,13 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       
       // Validate question type specific requirements
       const validatedAnswerOptions = Array.isArray(question.answerOptions) ? 
-        question.answerOptions.map((option: any, optIndex: number) => ({
-          answerText: option.answerText || `Option ${optIndex + 1}`,
-          isCorrect: Boolean(option.isCorrect),
-          displayOrder: optIndex,
-        })) : [];
+        question.answerOptions
+          .filter((option: any) => option && (option.answerText || option.text)) // Filter out completely invalid options
+          .map((option: any, optIndex: number) => ({
+            answerText: (option.answerText || option.text || `Option ${optIndex + 1}`).trim(),
+            isCorrect: Boolean(option.isCorrect),
+            displayOrder: optIndex,
+          })) : [];
 
       // Ensure at least one correct answer for multiple choice
       if (question.questionType === 'multiple_choice' && validatedAnswerOptions.length > 0) {
