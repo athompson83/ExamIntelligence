@@ -80,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     email: "test@example.com",
     firstName: "Test",
     lastName: "User",
-    accountId: "default-account",
+    accountId: "00000000-0000-0000-0000-000000000001",
     role: "super_admin"
   };
 
