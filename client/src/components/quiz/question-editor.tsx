@@ -86,6 +86,7 @@ const bloomsLevels = [
 ];
 
 export function QuestionEditor({ testbankId, question, isOpen, onClose, onCancel, onSave }: QuestionEditorProps) {
+  console.log("QuestionEditor rendering with:", { testbankId, isOpen, hasQuestion: !!question });
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -764,8 +765,8 @@ export function QuestionEditor({ testbankId, question, isOpen, onClose, onCancel
     </div>
   );
 
-  // Return modal version if isOpen is true
-  if (isOpen) {
+  // Return modal version if isOpen is explicitly true
+  if (isOpen === true) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
