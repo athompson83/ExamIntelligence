@@ -3965,6 +3965,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== CAT EXAM ROUTES =====
+
+  // Create a new CAT exam
+  app.post("/api/cat-exams", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const catExamData = {
+        ...req.body,
+        accountId: user.accountId,
+        createdBy: user.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const catExam = await storage.createCATExam(catExamData);
+      res.json(catExam);
+    } catch (error) {
+      console.error("Error creating CAT exam:", error);
+      res.status(500).json({ message: "Failed to create CAT exam" });
+    }
+  });
+
+  // Get all CAT exams for account
+  app.get("/api/cat-exams", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user;
+      const catExams = await storage.getCATExamsByAccount(user.accountId);
+      res.json(catExams);
+    } catch (error) {
+      console.error("Error fetching CAT exams:", error);
+      res.status(500).json({ message: "Failed to fetch CAT exams" });
+    }
+  });
+
+  // Get specific CAT exam
+  app.get("/api/cat-exams/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const catExam = await storage.getCATExam(id);
+      
+      if (!catExam) {
+        return res.status(404).json({ message: "CAT exam not found" });
+      }
+      
+      res.json(catExam);
+    } catch (error) {
+      console.error("Error fetching CAT exam:", error);
+      res.status(500).json({ message: "Failed to fetch CAT exam" });
+    }
+  });
+
+  // Update CAT exam
+  app.put("/api/cat-exams/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = req.user;
+      
+      const updateData = {
+        ...req.body,
+        updatedAt: new Date()
+      };
+
+      const catExam = await storage.updateCATExam(id, updateData);
+      res.json(catExam);
+    } catch (error) {
+      console.error("Error updating CAT exam:", error);
+      res.status(500).json({ message: "Failed to update CAT exam" });
+    }
+  });
+
+  // Delete CAT exam
+  app.delete("/api/cat-exams/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCATExam(id);
+      res.json({ message: "CAT exam deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting CAT exam:", error);
+      res.status(500).json({ message: "Failed to delete CAT exam" });
+    }
+  });
+
+  // Start CAT exam session
+  app.post("/api/cat-exams/:id/start", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = req.user;
+      
+      const session = await storage.startCATExamSession(id, user.id);
+      res.json(session);
+    } catch (error) {
+      console.error("Error starting CAT exam session:", error);
+      res.status(500).json({ message: "Failed to start CAT exam session" });
+    }
+  });
+
+  // Get next question in CAT exam
+  app.get("/api/cat-sessions/:sessionId/next-question", isAuthenticated, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const nextQuestion = await storage.getNextCATQuestion(sessionId);
+      res.json(nextQuestion);
+    } catch (error) {
+      console.error("Error getting next CAT question:", error);
+      res.status(500).json({ message: "Failed to get next question" });
+    }
+  });
+
+  // Submit answer for CAT exam
+  app.post("/api/cat-sessions/:sessionId/submit-answer", isAuthenticated, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { questionId, selectedAnswers, timeSpent } = req.body;
+      
+      const result = await storage.submitCATAnswer(sessionId, questionId, selectedAnswers, timeSpent);
+      res.json(result);
+    } catch (error) {
+      console.error("Error submitting CAT answer:", error);
+      res.status(500).json({ message: "Failed to submit answer" });
+    }
+  });
+
+  // Complete CAT exam session
+  app.post("/api/cat-sessions/:sessionId/complete", isAuthenticated, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const result = await storage.completeCATExamSession(sessionId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error completing CAT exam session:", error);
+      res.status(500).json({ message: "Failed to complete CAT exam session" });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 

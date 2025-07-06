@@ -34,6 +34,7 @@ import AIResources from "@/pages/AIResources";
 import StudentLogin from "@/pages/student-login";
 import StudentDashboard from "@/pages/student-dashboard";
 import StudentQuiz from "@/pages/student-quiz";
+import CATExamBuilder from "@/pages/CATExamBuilder";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -66,6 +67,7 @@ function Router() {
           </Route>
           <Route path="/quiz-builder" component={EnhancedQuizBuilder} />
           <Route path="/enhanced-quiz-builder" component={EnhancedQuizBuilder} />
+          <Route path="/cat-exam-builder" component={CATExamBuilder} />
           <Route path="/live-exams" component={LiveExams} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/analytics-dashboard" component={AnalyticsDashboard} />

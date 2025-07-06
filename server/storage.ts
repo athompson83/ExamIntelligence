@@ -311,6 +311,17 @@ export interface IStorage {
   // Accessibility Settings operations
   getUserAccessibilitySettings(userId: string): Promise<any>;
   updateUserAccessibilitySettings(userId: string, settings: any): Promise<void>;
+
+  // CAT Exam operations
+  createCATExam(catExam: any): Promise<any>;
+  getCATExam(id: string): Promise<any | undefined>;
+  getCATExamsByAccount(accountId: string): Promise<any[]>;
+  updateCATExam(id: string, data: any): Promise<any>;
+  deleteCATExam(id: string): Promise<void>;
+  startCATExamSession(catExamId: string, userId: string): Promise<any>;
+  getNextCATQuestion(sessionId: string): Promise<any>;
+  submitCATAnswer(sessionId: string, questionId: string, selectedAnswers: string[], timeSpent: number): Promise<any>;
+  completeCATExamSession(sessionId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1859,6 +1870,189 @@ export class DatabaseStorage implements IStorage {
     await db.delete(difficultyEntries)
       .where(eq(difficultyEntries.id, id));
   }
+
+  // CAT Exam operations
+  async createCATExam(catExam: any): Promise<any> {
+    // For now, store as a simplified object structure
+    const catExamData = {
+      id: catExam.id || crypto.randomUUID(),
+      title: catExam.title,
+      description: catExam.description,
+      instructions: catExam.instructions,
+      itemBanks: JSON.stringify(catExam.itemBanks || []),
+      adaptiveSettings: JSON.stringify(catExam.adaptiveSettings || {}),
+      scoringSettings: JSON.stringify(catExam.scoringSettings || {}),
+      securitySettings: JSON.stringify(catExam.securitySettings || {}),
+      accessSettings: JSON.stringify(catExam.accessSettings || {}),
+      accountId: catExam.accountId,
+      createdBy: catExam.createdBy,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    // Store in memory for now (will be replaced with proper table later)
+    if (!this.catExams) {
+      this.catExams = [];
+    }
+    this.catExams.push(catExamData);
+    return catExamData;
+  }
+
+  async getCATExam(id: string): Promise<any | undefined> {
+    if (!this.catExams) {
+      return undefined;
+    }
+    return this.catExams.find(exam => exam.id === id);
+  }
+
+  async getCATExamsByAccount(accountId: string): Promise<any[]> {
+    if (!this.catExams) {
+      return [];
+    }
+    return this.catExams.filter(exam => exam.accountId === accountId);
+  }
+
+  async updateCATExam(id: string, data: any): Promise<any> {
+    if (!this.catExams) {
+      throw new Error('CAT exam not found');
+    }
+    
+    const index = this.catExams.findIndex(exam => exam.id === id);
+    if (index === -1) {
+      throw new Error('CAT exam not found');
+    }
+    
+    this.catExams[index] = {
+      ...this.catExams[index],
+      ...data,
+      updatedAt: new Date()
+    };
+    
+    return this.catExams[index];
+  }
+
+  async deleteCATExam(id: string): Promise<void> {
+    if (!this.catExams) {
+      return;
+    }
+    
+    const index = this.catExams.findIndex(exam => exam.id === id);
+    if (index !== -1) {
+      this.catExams.splice(index, 1);
+    }
+  }
+
+  async startCATExamSession(catExamId: string, userId: string): Promise<any> {
+    // Create a new CAT exam session
+    const sessionData = {
+      id: crypto.randomUUID(),
+      catExamId,
+      userId,
+      startedAt: new Date(),
+      currentQuestionIndex: 0,
+      currentDifficulty: 5, // Start at medium difficulty
+      answers: [],
+      status: 'active'
+    };
+    
+    if (!this.catSessions) {
+      this.catSessions = [];
+    }
+    this.catSessions.push(sessionData);
+    return sessionData;
+  }
+
+  async getNextCATQuestion(sessionId: string): Promise<any> {
+    if (!this.catSessions) {
+      throw new Error('Session not found');
+    }
+    
+    const session = this.catSessions.find(s => s.id === sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+    
+    // For now, return a mock question
+    // In a real implementation, this would select questions based on difficulty and content
+    return {
+      id: crypto.randomUUID(),
+      text: `CAT Question ${session.currentQuestionIndex + 1}`,
+      difficulty: session.currentDifficulty,
+      answerOptions: [
+        { id: '1', text: 'Option A', isCorrect: false },
+        { id: '2', text: 'Option B', isCorrect: true },
+        { id: '3', text: 'Option C', isCorrect: false },
+        { id: '4', text: 'Option D', isCorrect: false }
+      ]
+    };
+  }
+
+  async submitCATAnswer(sessionId: string, questionId: string, selectedAnswers: string[], timeSpent: number): Promise<any> {
+    if (!this.catSessions) {
+      throw new Error('Session not found');
+    }
+    
+    const session = this.catSessions.find(s => s.id === sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+    
+    // Record the answer
+    session.answers.push({
+      questionId,
+      selectedAnswers,
+      timeSpent,
+      timestamp: new Date()
+    });
+    
+    // Update difficulty based on answer correctness (simplified)
+    const isCorrect = selectedAnswers.includes('2'); // Mock correct answer
+    if (isCorrect) {
+      session.currentDifficulty = Math.min(10, session.currentDifficulty + 1);
+    } else {
+      session.currentDifficulty = Math.max(1, session.currentDifficulty - 1);
+    }
+    
+    session.currentQuestionIndex++;
+    
+    return {
+      isCorrect,
+      newDifficulty: session.currentDifficulty,
+      continue: session.currentQuestionIndex < 20 // Continue for up to 20 questions
+    };
+  }
+
+  async completeCATExamSession(sessionId: string): Promise<any> {
+    if (!this.catSessions) {
+      throw new Error('Session not found');
+    }
+    
+    const session = this.catSessions.find(s => s.id === sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+    
+    session.status = 'completed';
+    session.completedAt = new Date();
+    
+    // Calculate final score (simplified)
+    const correctAnswers = session.answers.filter(answer => answer.selectedAnswers.includes('2')).length;
+    const totalQuestions = session.answers.length;
+    const score = (correctAnswers / totalQuestions) * 100;
+    
+    return {
+      sessionId,
+      score,
+      totalQuestions,
+      correctAnswers,
+      finalDifficulty: session.currentDifficulty,
+      timeSpent: session.completedAt.getTime() - session.startedAt.getTime()
+    };
+  }
+
+  // Initialize in-memory storage for CAT exams (temporary)
+  private catExams: any[] = [];
+  private catSessions: any[] = [];
 }
 
 export const storage = new DatabaseStorage();
