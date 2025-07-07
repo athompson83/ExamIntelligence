@@ -440,12 +440,15 @@ export default function EnhancedQuizBuilder() {
     const windowUrlParams = new URLSearchParams(window.location.search);
     const existingQuizId = urlParams.get('id') || windowUrlParams.get('id');
     
+    console.log('=== Quiz Loading Debug ===');
     console.log('URL location:', location);
+    console.log('Window location href:', window.location.href);
     console.log('Window location search:', window.location.search);
     console.log('URL params:', urlParams.toString());
     console.log('Window URL params:', windowUrlParams.toString());
     console.log('Existing quiz ID from URL:', existingQuizId);
     console.log('Current quiz ID:', quizId);
+    console.log('========================');
     
     if (existingQuizId && existingQuizId !== quizId) {
       // Load the existing quiz data
@@ -521,6 +524,82 @@ export default function EnhancedQuizBuilder() {
         });
     }
   }, [location, quizId, toast]);
+
+  // Alternative quiz loading from URL parameters (fallback)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const idFromParams = params.get('id');
+    
+    if (idFromParams && !quizId && !quiz.title) {
+      console.log('Fallback: Loading quiz from window URL params:', idFromParams);
+      fetch(`/api/quizzes/${idFromParams}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(quizData => {
+          console.log('Fallback: Quiz data loaded successfully:', quizData);
+          setQuiz({
+            title: quizData.title || "",
+            description: quizData.description || "",
+            instructions: quizData.instructions || "",
+            timeLimit: quizData.timeLimit || 60,
+            shuffleQuestions: quizData.shuffleQuestions || false,
+            shuffleAnswers: quizData.shuffleAnswers || false,
+            maxAttempts: quizData.maxAttempts || 1,
+            allowMultipleAttempts: quizData.allowMultipleAttempts || false,
+            passingGrade: quizData.passingGrade || 70,
+            gradeToShow: quizData.gradeToShow || "percentage",
+            showCorrectAnswers: quizData.showCorrectAnswers || false,
+            showCorrectAnswersAt: quizData.showCorrectAnswersAt || "after_submission",
+            showQuestionsAfterAttempt: quizData.showQuestionsAfterAttempt || false,
+            scoreKeepingMethod: quizData.scoreKeepingMethod || "highest",
+            timeBetweenAttempts: quizData.timeBetweenAttempts || 0,
+            availabilityStart: quizData.availabilityStart || undefined,
+            availabilityEnd: quizData.availabilityEnd || undefined,
+            alwaysAvailable: quizData.alwaysAvailable !== false,
+            proctoring: quizData.proctoring || false,
+            adaptiveTesting: quizData.adaptiveTesting || false,
+            enableQuestionFeedback: quizData.enableQuestionFeedback || false,
+            enableLearningPrescription: quizData.enableLearningPrescription || false,
+            passwordProtected: quizData.passwordProtected || false,
+            password: quizData.password || "",
+            ipLocking: quizData.ipLocking || false,
+            oneQuestionAtATime: quizData.oneQuestionAtATime !== false,
+          });
+          setQuizId(idFromParams);
+          
+          // Load questions if available
+          if (quizData.questions && Array.isArray(quizData.questions)) {
+            console.log(`Fallback: Loading ${quizData.questions.length} questions for quiz ${idFromParams}`);
+            const formattedQuestions = quizData.questions.map((q: any) => ({
+              id: q.id,
+              questionText: q.questionText,
+              questionType: q.questionType,
+              difficulty: q.difficulty || 5,
+              bloomsLevel: q.bloomsLevel || "Remember",
+              groupId: q.groupId || null,
+              points: q.points || 1,
+              displayOrder: q.displayOrder || 0,
+              answerOptions: q.answerOptions || [],
+            }));
+            setQuizQuestions(formattedQuestions);
+            console.log('Fallback: Loaded quiz questions:', formattedQuestions);
+          }
+          
+          // Load question groups if available  
+          if (quizData.groups && Array.isArray(quizData.groups)) {
+            setQuestionGroups(quizData.groups);
+            console.log('Fallback: Loaded question groups:', quizData.groups);
+          }
+        })
+        .catch(error => {
+          console.error('Fallback: Error loading quiz:', error);
+        });
+    }
+  }, []);
 
   // Reference to track last saved quiz state
   const lastSavedQuizRef = useRef<string>('');
