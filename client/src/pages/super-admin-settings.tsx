@@ -292,26 +292,33 @@ export default function SuperAdminSettings() {
   const generateMobileAppQRCode = async () => {
     try {
       setMobileAppStatus("starting");
-      const expoUrl = `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`;
-      const qrUrl = await QRCode.toDataURL(expoUrl, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
-      setQrCodeUrl(qrUrl);
-      setMobileAppStatus("running");
-      toast({
-        title: "QR Code Generated",
-        description: "Mobile app QR code is ready for scanning",
-      });
+      // Start the Expo server first
+      const startResponse = await apiRequest("POST", "/api/super-admin/mobile-app/start", {});
+      
+      if (startResponse.success) {
+        const expoUrl = startResponse.expoUrl || `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`;
+        const qrUrl = await QRCode.toDataURL(expoUrl, {
+          width: 256,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        });
+        setQrCodeUrl(qrUrl);
+        setMobileAppStatus("running");
+        toast({
+          title: "QR Code Generated",
+          description: "Mobile app server started and QR code is ready for scanning",
+        });
+      } else {
+        throw new Error("Failed to start mobile app server");
+      }
     } catch (error) {
       setMobileAppStatus("stopped");
       toast({
         title: "Error",
-        description: "Failed to generate QR code",
+        description: "Failed to start mobile app server. Please try again.",
         variant: "destructive",
       });
     }

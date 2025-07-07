@@ -1,62 +1,43 @@
-# 📱 Mobile App QR Code Setup Guide
+# Mobile App QR Code Setup
 
-## ✅ Status: QR Code Server Starting (Almost Ready!)
+The mobile app is now integrated into the Super Admin settings with a complete QR code generator.
 
-### Current Status
-The Expo development server is currently starting up and installing dependencies. This typically takes 2-3 minutes.
+## How to Access
 
-### Active Command
-The QR code server is running with:
-```bash
-cd /home/runner/workspace/mobile-app-final
-npx expo@53.0.17 start --tunnel
-```
+1. **Navigate to Settings**
+   - Click the Settings link in the top navigation bar
+   - Click the "Mobile App" tab in the settings interface
 
-### Expected Output
-Once setup completes, you'll see:
-```
-Metro waiting on exp://192.168.1.xxx:8081
+2. **Generate QR Code**
+   - Click the "Generate QR Code" button
+   - The system will start the Expo development server automatically
+   - A QR code will appear that you can scan with your iPhone
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                                                             │
-│   To run the app with live reloading, choose one of:                       │
-│   • Scan the QR code above with Expo Go (Android) or Camera app (iOS)      │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+3. **Scan with iPhone**
+   - Install "Expo Go" app from the App Store
+   - Use your iPhone camera or the Expo Go app to scan the QR code
+   - The mobile app will load in Expo Go
 
-### Custom Mobile App Code
-The mobile app is already created with these features:
-- **Login Screen**: Uses test@example.com credentials
-- **Quiz List**: Shows real quizzes from your backend
-- **Material Design**: Clean mobile interface
-- **Live Data**: Connects to your ProficiencyAI backend
+## Mobile App Features
 
-### QR Code Generation
-Once you run the setup commands, you'll see:
-```
-Metro waiting on exp://192.168.1.xxx:19000
+- Login with test@example.com
+- View real quiz data from your backend
+- Material Design interface optimized for touch
+- Native mobile experience
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                                                             │
-│   To run the app with live reloading, choose one of:                       │
-│   • Scan the QR code above with Expo Go (Android) or Camera app (iOS)      │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+## Technical Details
 
-### Mobile App Features
-- **Authentication**: Login with test@example.com
-- **Quiz Management**: View available quizzes
-- **Real Data**: Shows your actual quiz data
-- **Responsive Design**: Optimized for mobile devices
+- **Backend API**: Connected to your live ProficiencyAI backend
+- **Framework**: React Native with Expo
+- **UI**: Material Design components
+- **Data**: Real-time data from your quiz system
 
-### Files Created
-- `mobile-app/App.js` - Complete mobile application
-- `mobile-app/app.json` - Expo configuration
-- `mobile-app/package.json` - Dependencies
+## Troubleshooting
 
-### Next Steps
-1. Run the setup commands above
-2. Scan the QR code with Expo Go app
-3. Test the mobile app with your quiz data
+If the mobile app times out:
+1. Check that the Expo server is running
+2. Ensure your device is connected to the internet
+3. Try regenerating the QR code
+4. Verify the Replit domain is accessible
+
+The QR code generator is now fully integrated into your web application for seamless mobile testing.

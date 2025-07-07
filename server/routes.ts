@@ -3440,6 +3440,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mobile App Routes
+  app.post('/api/super-admin/mobile-app/start', mockAuth, async (req, res) => {
+    try {
+      // Start the Expo development server
+      const { spawn } = require('child_process');
+      const path = require('path');
+      
+      const expoProcess = spawn('npx', ['expo', 'start', '--tunnel', '--non-interactive'], {
+        cwd: path.join(__dirname, '../mobile-app-final'),
+        detached: true,
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
+      
+      // Give the server time to start
+      setTimeout(() => {
+        res.json({
+          success: true,
+          message: "Mobile app server starting...",
+          expoUrl: `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`,
+          pid: expoProcess.pid
+        });
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Failed to start mobile app server:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to start mobile app server'
+      });
+    }
+  });
+
+  app.get('/api/super-admin/mobile-app/status', mockAuth, async (req, res) => {
+    try {
+      // Check if Expo server is running
+      const { exec } = require('child_process');
+      exec('ps aux | grep expo', (error, stdout, stderr) => {
+        const isRunning = stdout.includes('expo start');
+        res.json({
+          running: isRunning,
+          status: isRunning ? 'running' : 'stopped'
+        });
+      });
+    } catch (error) {
+      res.status(500).json({
+        running: false,
+        status: 'error'
+      });
+    }
+  });
+
   // Super Admin CRM Endpoints
   
   // Get all accounts (super admin only)
