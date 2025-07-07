@@ -66,9 +66,9 @@ export default function Sidebar() {
   };
 
   return (
-    <nav className="sidebar-white w-64 fixed inset-y-0 left-0 z-50 shadow-sm border-r border-gray-200 dark:border-gray-700">
+    <nav className="sidebar-white w-64 fixed inset-y-0 left-0 z-50 shadow-sm border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
-      <div className="flex items-center justify-center h-16 bg-primary px-4">
+      <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
         <div className="flex items-center">
           <div className="bg-white rounded-lg p-2 mr-3">
             <ClipboardCheck className="h-6 w-6 text-primary" />
@@ -77,8 +77,8 @@ export default function Sidebar() {
         </div>
       </div>
       
-      {/* Navigation */}
-      <div className="flex flex-col mt-6">
+      {/* Navigation - Scrollable */}
+      <div className="flex flex-col mt-6 overflow-y-auto flex-1 pb-4">
         <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
           Main Menu
         </div>
