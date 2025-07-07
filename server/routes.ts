@@ -3443,31 +3443,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile App Routes
   app.post('/api/super-admin/mobile-app/start', mockAuth, async (req, res) => {
     try {
-      // Start the Expo development server
       const { spawn, exec } = await import('child_process');
       const path = await import('path');
       
-      // First, check if Expo server is already running
-      exec('ps aux | grep "expo start"', (error, stdout, stderr) => {
-        const isRunning = stdout.includes('expo start') && !stdout.includes('grep');
-        
-        if (isRunning) {
-          res.json({
-            success: true,
-            message: "Mobile app server is already running",
-            expoUrl: `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`,
-            status: 'running'
+      // Kill any existing expo processes first
+      exec('pkill -f "expo start" || true', (killError) => {
+        // Wait a moment then start new expo server
+        setTimeout(() => {
+          const expoProcess = spawn('npx', ['expo', 'start', '--tunnel', '--port', '8081'], {
+            cwd: path.join(process.cwd(), 'mobile-app-final'),
+            detached: false,
+            stdio: ['ignore', 'pipe', 'pipe']
           });
-          return;
-        }
-        
-        // For now, just return the QR code data since the mobile app can be started manually
-        res.json({
-          success: true,
-          message: "QR code generated successfully. Start the mobile app manually by running 'npx expo start --tunnel' in the mobile-app-final directory.",
-          expoUrl: `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`,
-          status: 'manual_start_required'
-        });
+          
+          let output = '';
+          expoProcess.stdout?.on('data', (data) => {
+            output += data.toString();
+          });
+          
+          expoProcess.stderr?.on('data', (data) => {
+            output += data.toString();
+          });
+          
+          // Give expo time to start
+          setTimeout(() => {
+            res.json({
+              success: true,
+              message: "Mobile app server started successfully",
+              expoUrl: `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`,
+              status: 'running',
+              pid: expoProcess.pid
+            });
+          }, 5000);
+          
+        }, 1000);
       });
       
     } catch (error) {

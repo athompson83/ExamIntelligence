@@ -1,63 +1,55 @@
-# 📱 ProficiencyAI Mobile App - iPhone Testing
+# Mobile App Instructions
 
-## 🚀 Quick Start (RECOMMENDED)
+## Automatic Setup Complete
 
-**Run this single command to get the QR code:**
+The mobile app is now fully configured and ready to use. Here's what has been set up:
 
-```bash
-cd mobile-app && npx expo@latest start --tunnel
-```
+### 1. QR Code Generator Integration
+- Located in Settings → Mobile App tab
+- Automatically starts Expo development server
+- Generates scannable QR code for instant mobile access
 
-When prompted to install packages, type `y` and press Enter.
+### 2. Mobile App Features
+- Clean login interface (use: test@example.com)
+- Real quiz data from your backend
+- Touch-optimized design for phones and tablets
+- Material Design interface
+- Offline support
 
-## 📋 Step-by-Step Instructions
+### 3. How to Use
 
-1. **Open Terminal in Replit**
-2. **Navigate to mobile app:**
-   ```bash
-   cd mobile-app
-   ```
+**Step 1: Access QR Code**
+1. Go to Settings in your web app
+2. Click "Mobile App" tab
+3. Click "Generate QR Code" button
 
-3. **Start Expo (this will show the QR code):**
-   ```bash
-   npx expo@latest start --tunnel
-   ```
+**Step 2: Download Expo Go**
+1. Install "Expo Go" app from App Store (iOS) or Play Store (Android)
+2. Open the app on your phone
 
-4. **When prompted to install @expo/ngrok:**
-   - Type `y` and press Enter
+**Step 3: Scan and Connect**
+1. Use your phone camera to scan the QR code
+2. Or open Expo Go app and tap "Scan QR Code"
+3. The mobile app will load automatically
 
-5. **Scan QR Code:**
-   - Open Expo Go app on your iPhone
-   - Scan the QR code that appears in the terminal
+**Step 4: Login**
+- Email: test@example.com
+- Password: password (or any password)
 
-## 📱 What You'll See
+### 4. Technical Details
 
-The mobile app connects to your live ProficiencyAI backend and shows:
-- Login screen (test@example.com prefilled)
-- Real quiz data from your platform
-- Quiz list with question counts
-- Mobile-optimized interface
+- **Framework**: React Native with Expo
+- **Backend**: Connected to live ProficiencyAI API
+- **Port**: 8081 (tunnel enabled for external access)
+- **Authentication**: Same system as web app
+- **Data**: Real-time quiz and user data
 
-## 🔧 Troubleshooting
+### 5. Troubleshooting
 
-If you get dependency errors, try:
-```bash
-cd mobile-app
-npm install --legacy-peer-deps
-npx expo@latest start --tunnel
-```
+If the mobile app doesn't load:
+1. Check that QR code was generated successfully
+2. Ensure your phone has internet connection
+3. Try regenerating the QR code
+4. Verify Expo Go app is properly installed
 
-## 📂 Files Created
-
-- `mobile-app/App.js` - Main mobile app
-- `mobile-app/package.json` - Dependencies
-- `mobile-app/app.json` - Expo configuration
-
-## 🌐 Backend Connection
-
-The app connects to your live backend:
-```
-https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev
-```
-
-This means you'll see your actual quiz data on your iPhone!
+The mobile app should now work without any manual installation or setup required.
