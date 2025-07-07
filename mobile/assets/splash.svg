@@ -1,0 +1,8 @@
+<svg width="1284" height="2778" viewBox="0 0 1284 2778" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1284" height="2778" fill="white"/>
+  <rect x="400" y="1150" width="484" height="484" rx="80" fill="#2563EB"/>
+  <path d="M550 1350h184v48H550v-48zm0 96h184v48H550v-48zm0 96h144v48H550v-48z" fill="white"/>
+  <circle cx="734" y="1438" r="60" fill="white"/>
+  <path d="M734 1408v60l30-30-30-30z" fill="#2563EB"/>
+  <text x="642" y="1750" text-anchor="middle" font-family="system-ui" font-size="32" font-weight="600" fill="#2563EB">ProficiencyAI</text>
+</svg>
