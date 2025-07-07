@@ -74,6 +74,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/item-banks" component={ItemBanks} />
           <Route path="/question-manager">
             {() => <QuestionManager />}
