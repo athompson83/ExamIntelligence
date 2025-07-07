@@ -2,8 +2,6 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
 import React, { useState } from 'react';
 
-const API_BASE_URL = 'https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev';
-
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState('test@example.com');
@@ -12,7 +10,7 @@ export default function App() {
   const handleLogin = () => {
     if (email && password) {
       setIsLoggedIn(true);
-      Alert.alert('Success', 'Logged in successfully!');
+      Alert.alert('Success', 'Connected to ProficiencyAI!');
     } else {
       Alert.alert('Error', 'Please enter email and password');
     }
@@ -22,8 +20,8 @@ export default function App() {
     return (
       <View style={styles.container}>
         <View style={styles.loginContainer}>
-          <Text style={styles.title}>ProficiencyAI Mobile</Text>
-          <Text style={styles.subtitle}>Educational Assessment Platform</Text>
+          <Text style={styles.title}>ProficiencyAI</Text>
+          <Text style={styles.subtitle}>Mobile Assessment Platform</Text>
           
           <TextInput
             style={styles.input}
@@ -42,12 +40,11 @@ export default function App() {
             secureTextEntry
           />
           
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={handleLogin}
-          >
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
+          
+          <Text style={styles.hintText}>Demo: test@example.com</Text>
         </View>
         <StatusBar style="auto" />
       </View>
@@ -57,30 +54,30 @@ export default function App() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Welcome to ProficiencyAI</Text>
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={() => setIsLoggedIn(false)}
-        >
+        <Text style={styles.headerTitle}>ProficiencyAI Mobile</Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={() => setIsLoggedIn(false)}>
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
       
       <ScrollView style={styles.content}>
-        <View style={styles.successCard}>
-          <Text style={styles.successTitle}>Login Successful!</Text>
-          <Text style={styles.successText}>
-            You have successfully connected to the ProficiencyAI mobile app.
+        <View style={styles.welcomeCard}>
+          <Text style={styles.welcomeTitle}>Welcome!</Text>
+          <Text style={styles.welcomeText}>
+            Successfully connected to ProficiencyAI platform
           </Text>
-          <Text style={styles.featuresTitle}>Available Features:</Text>
-          <Text style={styles.featureText}>• Quiz Management</Text>
-          <Text style={styles.featureText}>• Real-time Assessment</Text>
-          <Text style={styles.featureText}>• Progress Tracking</Text>
-          <Text style={styles.featureText}>• Study Materials</Text>
         </View>
         
-        <TouchableOpacity style={styles.demoButton}>
-          <Text style={styles.demoButtonText}>Explore Demo Features</Text>
+        <View style={styles.featuresCard}>
+          <Text style={styles.featuresTitle}>Available Features</Text>
+          <Text style={styles.featureItem}>• Take Assessments</Text>
+          <Text style={styles.featureItem}>• View Results</Text>
+          <Text style={styles.featureItem}>• Study Materials</Text>
+          <Text style={styles.featureItem}>• Progress Tracking</Text>
+        </View>
+        
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>Start Assessment</Text>
         </TouchableOpacity>
       </ScrollView>
       <StatusBar style="auto" />
@@ -108,10 +105,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
     color: '#2563eb',
   },
   subtitle: {
@@ -138,8 +135,14 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+  },
+  hintText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 15,
+    color: '#888',
   },
   header: {
     flexDirection: 'row',
@@ -166,7 +169,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  successCard: {
+  welcomeCard: {
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 12,
@@ -177,38 +180,49 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  successTitle: {
+  welcomeTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#16a34a',
-    marginBottom: 10,
+    marginBottom: 8,
     textAlign: 'center',
   },
-  successText: {
+  welcomeText: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 20,
     textAlign: 'center',
+  },
+  featuresCard: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   featuresTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
+    marginBottom: 15,
   },
-  featureText: {
+  featureItem: {
     fontSize: 16,
     color: '#666',
     marginBottom: 8,
     paddingLeft: 10,
   },
-  demoButton: {
+  actionButton: {
     backgroundColor: '#2563eb',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 10,
   },
-  demoButtonText: {
+  actionButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
