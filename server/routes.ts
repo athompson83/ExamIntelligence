@@ -3444,30 +3444,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/super-admin/mobile-app/start', mockAuth, async (req, res) => {
     try {
       // Start the Expo development server
-      const { spawn } = require('child_process');
-      const path = require('path');
+      const { spawn, exec } = await import('child_process');
+      const path = await import('path');
       
-      const expoProcess = spawn('npx', ['expo', 'start', '--tunnel', '--non-interactive'], {
-        cwd: path.join(__dirname, '../mobile-app-final'),
-        detached: true,
-        stdio: ['ignore', 'pipe', 'pipe']
-      });
-      
-      // Give the server time to start
-      setTimeout(() => {
+      // First, check if Expo server is already running
+      exec('ps aux | grep "expo start"', (error, stdout, stderr) => {
+        const isRunning = stdout.includes('expo start') && !stdout.includes('grep');
+        
+        if (isRunning) {
+          res.json({
+            success: true,
+            message: "Mobile app server is already running",
+            expoUrl: `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`,
+            status: 'running'
+          });
+          return;
+        }
+        
+        // For now, just return the QR code data since the mobile app can be started manually
         res.json({
           success: true,
-          message: "Mobile app server starting...",
+          message: "QR code generated successfully. Start the mobile app manually by running 'npx expo start --tunnel' in the mobile-app-final directory.",
           expoUrl: `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`,
-          pid: expoProcess.pid
+          status: 'manual_start_required'
         });
-      }, 2000);
+      });
       
     } catch (error) {
       console.error('Failed to start mobile app server:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to start mobile app server'
+        message: 'Failed to start mobile app server: ' + error.message
       });
     }
   });
@@ -3475,9 +3482,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/super-admin/mobile-app/status', mockAuth, async (req, res) => {
     try {
       // Check if Expo server is running
-      const { exec } = require('child_process');
-      exec('ps aux | grep expo', (error, stdout, stderr) => {
-        const isRunning = stdout.includes('expo start');
+      const { exec } = await import('child_process');
+      exec('ps aux | grep "expo start"', (error, stdout, stderr) => {
+        const isRunning = stdout.includes('expo start') && !stdout.includes('grep');
         res.json({
           running: isRunning,
           status: isRunning ? 'running' : 'stopped'
