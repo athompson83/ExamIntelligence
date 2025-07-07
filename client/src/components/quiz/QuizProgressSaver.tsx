@@ -39,13 +39,7 @@ export default function QuizProgressSaver({
   // Save progress mutation
   const saveProgressMutation = useMutation({
     mutationFn: (progressData: any) => 
-      apiRequest(`/api/quiz-progress/${attemptId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(progressData)
-      }),
+      apiRequest(`/api/quiz-progress/${attemptId}`, 'PUT', progressData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quiz-progress', attemptId] });
     }
@@ -54,11 +48,12 @@ export default function QuizProgressSaver({
   // Load saved progress when it becomes available
   useEffect(() => {
     if (savedProgress && onProgressLoaded) {
+      const progress = savedProgress as any;
       onProgressLoaded({
-        currentQuestionIndex: savedProgress.currentQuestionIndex || 0,
-        answeredQuestions: savedProgress.answeredQuestions || [],
-        savedResponses: savedProgress.savedResponses || {},
-        timeSpentPerQuestion: savedProgress.timeSpentPerQuestion || {}
+        currentQuestionIndex: progress.currentQuestionIndex || 0,
+        answeredQuestions: progress.answeredQuestions || [],
+        savedResponses: progress.savedResponses || {},
+        timeSpentPerQuestion: progress.timeSpentPerQuestion || {}
       });
     }
   }, [savedProgress, onProgressLoaded]);

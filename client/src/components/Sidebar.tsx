@@ -32,7 +32,7 @@ export default function Sidebar() {
   const navigationItems = [
     { href: "/", label: "Dashboard", icon: BarChart3 },
     { href: "/item-banks", label: "Item Banks", icon: BookOpen },
-    { href: "/quiz-builder", label: "Quiz Builder", icon: Puzzle },
+    { href: "/quiz-manager", label: "Quiz Manager", icon: Puzzle },
     { href: "/live-exams", label: "Live Exams", icon: PlayCircle },
     { href: "/proctoring-security", label: "Proctoring Security", icon: Shield },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },

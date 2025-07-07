@@ -461,8 +461,26 @@ export default function EnhancedQuizBuilder() {
           setQuizId(existingQuizId);
           
           // Load questions if available
-          if (quizData.questions) {
-            setQuizQuestions(quizData.questions);
+          if (quizData.questions && Array.isArray(quizData.questions)) {
+            const formattedQuestions = quizData.questions.map((q: any) => ({
+              id: q.id,
+              questionText: q.questionText,
+              questionType: q.questionType,
+              difficulty: q.difficulty || 1,
+              bloomsLevel: q.bloomsLevel || 'remember',
+              groupId: q.groupId || null,
+              points: q.points || 1,
+              displayOrder: q.displayOrder || 0,
+              ...q // Include any other properties
+            }));
+            setQuizQuestions(formattedQuestions);
+            console.log('Loaded quiz questions:', formattedQuestions);
+          }
+          
+          // Load question groups if available  
+          if (quizData.groups && Array.isArray(quizData.groups)) {
+            setQuestionGroups(quizData.groups);
+            console.log('Loaded question groups:', quizData.groups);
           }
         })
         .catch(error => {
@@ -672,8 +690,12 @@ export default function EnhancedQuizBuilder() {
                   alert("Please add questions to preview the quiz.");
                   return;
                 }
+                if (!quiz.id) {
+                  alert("Please save the quiz first before previewing.");
+                  return;
+                }
                 // Open preview in a new tab
-                window.open(`/quiz/${quiz.id || 'preview'}`, '_blank');
+                window.open(`/quiz/${quiz.id}`, '_blank');
               }}
             >
               <Eye className="h-4 w-4 mr-2" />
