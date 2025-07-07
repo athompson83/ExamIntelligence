@@ -39,9 +39,14 @@ import {
   Building,
   CreditCard,
   Activity,
-  BarChart
+  BarChart,
+  Smartphone,
+  RefreshCw,
+  Copy,
+  ExternalLink
 } from "lucide-react";
 import { useForm } from "react-hook-form";
+import QRCode from 'qrcode';
 
 interface Account {
   id: string;
@@ -103,6 +108,8 @@ export default function SuperAdminSettings() {
   const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
+  const [mobileAppStatus, setMobileAppStatus] = useState<"stopped" | "starting" | "running">("stopped");
 
   // Check if user is super admin
   useEffect(() => {
@@ -281,6 +288,74 @@ export default function SuperAdminSettings() {
     }
   };
 
+  // Mobile App QR Code functions
+  const generateMobileAppQRCode = async () => {
+    try {
+      setMobileAppStatus("starting");
+      const expoUrl = `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`;
+      const qrUrl = await QRCode.toDataURL(expoUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeUrl(qrUrl);
+      setMobileAppStatus("running");
+      toast({
+        title: "QR Code Generated",
+        description: "Mobile app QR code is ready for scanning",
+      });
+    } catch (error) {
+      setMobileAppStatus("stopped");
+      toast({
+        title: "Error",
+        description: "Failed to generate QR code",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startMobileApp = async () => {
+    try {
+      setMobileAppStatus("starting");
+      // This would trigger the Expo server start
+      const response = await apiRequest("POST", "/api/super-admin/mobile-app/start", {});
+      if (response.qrCode) {
+        setQrCodeUrl(response.qrCode);
+        setMobileAppStatus("running");
+        toast({
+          title: "Mobile App Started",
+          description: "Expo development server is running",
+        });
+      }
+    } catch (error) {
+      setMobileAppStatus("stopped");
+      toast({
+        title: "Error", 
+        description: "Failed to start mobile app server",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied",
+        description: "Copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Edit handlers
   const handleEditAccount = (account: Account) => {
     setSelectedAccount(account);
@@ -396,7 +471,7 @@ export default function SuperAdminSettings() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="accounts">
               <Building2 className="h-4 w-4 mr-2" />
               Accounts
@@ -416,6 +491,10 @@ export default function SuperAdminSettings() {
             <TabsTrigger value="system">
               <Cog className="h-4 w-4 mr-2" />
               System
+            </TabsTrigger>
+            <TabsTrigger value="mobile">
+              <Smartphone className="h-4 w-4 mr-2" />
+              Mobile App
             </TabsTrigger>
           </TabsList>
 
@@ -718,6 +797,169 @@ export default function SuperAdminSettings() {
                       <span>Memory Usage</span>
                       <Badge variant="outline">67%</Badge>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Mobile App Tab */}
+          <TabsContent value="mobile">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* QR Code Display */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Smartphone className="h-5 w-5" />
+                    Mobile App QR Code
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Scan this QR code with your iPhone using the Expo Go app to test the mobile application
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-center items-center">
+                    {qrCodeUrl ? (
+                      <div className="text-center space-y-4">
+                        <img 
+                          src={qrCodeUrl} 
+                          alt="Mobile App QR Code" 
+                          className="mx-auto border rounded-lg shadow-sm"
+                        />
+                        <div className="space-y-2">
+                          <Badge 
+                            variant={mobileAppStatus === "running" ? "default" : "secondary"}
+                            className="text-sm"
+                          >
+                            {mobileAppStatus === "running" ? "✓ Ready to Scan" : "⚠ Server Stopped"}
+                          </Badge>
+                          <p className="text-xs text-gray-500">
+                            Expo URL: exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 space-y-4">
+                        <Smartphone className="h-12 w-12 mx-auto text-gray-400" />
+                        <p className="text-gray-500">No QR code generated yet</p>
+                        <p className="text-sm text-gray-400">
+                          Click "Generate QR Code" to create a scannable code for mobile testing
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={generateMobileAppQRCode}
+                      disabled={mobileAppStatus === "starting"}
+                      className="w-full"
+                    >
+                      {mobileAppStatus === "starting" ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Generate QR Code
+                        </>
+                      )}
+                    </Button>
+                    
+                    {qrCodeUrl && (
+                      <Button 
+                        variant="outline" 
+                        onClick={() => copyToClipboard("exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081")}
+                        className="w-full"
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Expo URL
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Mobile App Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ExternalLink className="h-5 w-5" />
+                    Mobile App Setup Guide
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
+                        1
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Download Expo Go</h4>
+                        <p className="text-sm text-gray-600">
+                          Install the "Expo Go" app from the App Store on your iPhone
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
+                        2
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Generate QR Code</h4>
+                        <p className="text-sm text-gray-600">
+                          Click "Generate QR Code" to create a scannable code
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
+                        3
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Scan & Test</h4>
+                        <p className="text-sm text-gray-600">
+                          Use your iPhone camera or Expo Go app to scan the QR code
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
+                        4
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Test Features</h4>
+                        <p className="text-sm text-gray-600">
+                          Login with test@example.com and explore the mobile interface
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Mobile App Features</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Login with existing credentials</li>
+                      <li>• View available quizzes</li>
+                      <li>• Material Design interface</li>
+                      <li>• Real-time data from backend</li>
+                      <li>• Touch-optimized UI</li>
+                    </ul>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> The mobile app connects to your live ProficiencyAI backend and displays real quiz data.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
