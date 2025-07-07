@@ -999,6 +999,152 @@ export default function SuperAdminSettings() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Alternative Testing Options */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Alternative Testing Options
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Multiple ways to test the mobile app if QR code scanning isn't working
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Option 1: Working Mobile Interface */}
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        Option 1: Working Mobile Interface (Recommended)
+                      </h4>
+                      <p className="text-sm text-green-700 mb-3">
+                        Professional mobile-optimized interface that works immediately without dependency issues.
+                      </p>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => window.open('/mobile', '_blank')}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                          size="sm"
+                        >
+                          <Smartphone className="h-4 w-4 mr-2" />
+                          Open Mobile Interface
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => copyToClipboard(window.location.origin + '/mobile')}
+                          className="w-full"
+                          size="sm"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy Mobile URL
+                        </Button>
+                      </div>
+                      <div className="mt-3 text-xs text-green-600 space-y-1">
+                        <p>✓ Touch-optimized interface</p>
+                        <p>✓ Full backend connectivity</p>
+                        <p>✓ Works on any mobile device</p>
+                        <p>✓ No app installation required</p>
+                      </div>
+                    </div>
+
+                    {/* Option 2: Manual URL Entry */}
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4" />
+                        Option 2: Manual URL Entry in Expo Go
+                      </h4>
+                      <p className="text-sm text-blue-700 mb-3">
+                        Enter the Expo URL directly in the Expo Go app instead of scanning.
+                      </p>
+                      <div className="space-y-2">
+                        <div className="bg-blue-100 p-2 rounded text-xs font-mono text-blue-800">
+                          exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => copyToClipboard("exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081")}
+                          className="w-full"
+                          size="sm"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy Expo URL
+                        </Button>
+                      </div>
+                      <div className="mt-3 text-xs text-blue-600 space-y-1">
+                        <p>1. Open Expo Go app on your phone</p>
+                        <p>2. Tap "Enter URL manually"</p>
+                        <p>3. Paste the URL above</p>
+                        <p>4. Tap "Connect"</p>
+                      </div>
+                    </div>
+
+                    {/* Option 3: Direct Links */}
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                        <Link className="h-4 w-4" />
+                        Option 3: Direct Access Links
+                      </h4>
+                      <p className="text-sm text-purple-700 mb-3">
+                        Direct links to mobile interfaces and required apps.
+                      </p>
+                      <div className="space-y-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open('/mobile', '_blank')}
+                          className="w-full justify-start"
+                          size="sm"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Mobile Web Interface
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open('https://expo.dev/client', '_blank')}
+                          className="w-full justify-start"
+                          size="sm"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Download Expo Go App
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open('https://apps.apple.com/app/expo-go/id982107779', '_blank')}
+                          className="w-full justify-start"
+                          size="sm"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Expo Go on App Store
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Option 4: Local Development */}
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Option 4: Local Development Setup
+                      </h4>
+                      <p className="text-sm text-gray-700 mb-3">
+                        Download and run the React Native app locally for full native testing.
+                      </p>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <p><strong>Requirements:</strong></p>
+                        <p>• Node.js 18+ installed locally</p>
+                        <p>• Run: npm install -g @expo/cli</p>
+                        <p>• Expo Go app on mobile device</p>
+                        <p>• Download mobile-app-final source code</p>
+                        <p><strong>Setup:</strong></p>
+                        <p>1. Extract downloaded files</p>
+                        <p>2. Run: npm install --legacy-peer-deps</p>
+                        <p>3. Run: npx expo start --tunnel</p>
+                        <p>4. Scan QR code with Expo Go app</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
