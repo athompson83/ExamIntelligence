@@ -296,9 +296,9 @@ export default function SuperAdminSettings() {
       // Start the mobile app server automatically
       const startResponse = await apiRequest("POST", "/api/super-admin/mobile-app/start", {});
       
-      // Generate QR code
-      const expoUrl = `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`;
-      const qrUrl = await QRCode.toDataURL(expoUrl, {
+      // Generate QR code for mobile app
+      const mobileUrl = `https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile`;
+      const qrUrl = await QRCode.toDataURL(mobileUrl, {
         width: 256,
         margin: 2,
         color: {
@@ -861,10 +861,10 @@ export default function SuperAdminSettings() {
                             {mobileAppStatus === "running" ? "✓ Ready to Scan" : "⚠ Server Stopped"}
                           </Badge>
                           <p className="text-xs text-gray-500">
-                            Expo URL: exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081
+                            Mobile URL: https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile
                           </p>
                           <p className="text-xs text-blue-600">
-                            ✓ Ready to scan with Expo Go app
+                            ✓ Ready to scan or open in browser
                           </p>
                           <p className="text-xs text-gray-400">
                             Login: test@example.com | Auto-connects to backend
