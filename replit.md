@@ -504,6 +504,7 @@ To access super admin features for prompt management:
 
 ## Changelog
 
+- July 07, 2025. **MOBILE APP QR CODE SETUP**: Created simplified React Native mobile app using Expo, fixed sidebar scrolling issue to allow viewing all menu options, and fixed Settings navigation in user dropdown. Mobile app connects to live backend and displays real quiz data with Material Design UI.
 - July 07, 2025. **NAVIGATION ENHANCEMENTS**: Added comprehensive breadcrumb navigation to Quiz Manager and Enhanced Quiz Preview pages, implemented consistent navigation hierarchy (Dashboard → Quiz Manager → Quiz Preview), and unified routing to ensure all quiz preview URLs use the enhanced component with full functionality
 - July 07, 2025. **QUIZ FUNCTIONALITY FIXES**: Fixed critical quiz builder issues including question loading for existing quizzes, preview quiz functionality working properly, question counts displaying correctly in Quiz Manager, unlimited attempts option added, and proper quiz saving with questions and groups
 - July 06, 2025. **QUIZ BUILDER IMPROVEMENTS**: Enhanced quiz builder with breadcrumb navigation, removed duplicate time limit settings (now only in Availability section), improved untimed quiz options, and functional Preview/Publish buttons with validation
