@@ -435,11 +435,15 @@ export default function EnhancedQuizBuilder() {
 
   // Load existing quiz if id parameter is provided
   useEffect(() => {
+    // Check both location and window.location for URL parameters
     const urlParams = new URLSearchParams(location.split('?')[1] || '');
-    const existingQuizId = urlParams.get('id');
+    const windowUrlParams = new URLSearchParams(window.location.search);
+    const existingQuizId = urlParams.get('id') || windowUrlParams.get('id');
     
     console.log('URL location:', location);
+    console.log('Window location search:', window.location.search);
     console.log('URL params:', urlParams.toString());
+    console.log('Window URL params:', windowUrlParams.toString());
     console.log('Existing quiz ID from URL:', existingQuizId);
     console.log('Current quiz ID:', quizId);
     
