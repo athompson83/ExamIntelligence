@@ -591,8 +591,26 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getQuizzesByUser(userId: string): Promise<Quiz[]> {
-    return await db.select().from(quizzes).where(eq(quizzes.creatorId, userId)).orderBy(desc(quizzes.createdAt));
+  async getQuizzesByUser(userId: string): Promise<any[]> {
+    const quizList = await db.select().from(quizzes).where(eq(quizzes.creatorId, userId)).orderBy(desc(quizzes.createdAt));
+    
+    // Add question count for each quiz
+    const quizzesWithCounts = await Promise.all(
+      quizList.map(async (quiz) => {
+        const questionCount = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(quizQuestions)
+          .where(eq(quizQuestions.quizId, quiz.id));
+          
+        return {
+          ...quiz,
+          questionCount: questionCount[0]?.count || 0,
+          questions: [] // Include empty questions array for compatibility
+        };
+      })
+    );
+    
+    return quizzesWithCounts;
   }
 
   async updateQuiz(id: string, data: Partial<InsertQuiz>): Promise<Quiz> {
@@ -651,7 +669,7 @@ export class DatabaseStorage implements IStorage {
       const groupsData = groups.map((group, index) => ({
         id: group.id,
         quizId,
-        name: group.name,
+        title: group.name || group.title,
         description: group.description || '',
         pickCount: group.pickCount || 1,
         pointsPerQuestion: group.pointsPerQuestion || '1',

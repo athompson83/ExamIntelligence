@@ -571,9 +571,12 @@ export default function EnhancedQuizBuilder() {
   };
 
   const saveDraftMutation = useMutation({
-    mutationFn: async (draftData: Partial<Quiz>) => {
-      const response = await fetch('/api/quizzes', {
-        method: 'POST',
+    mutationFn: async (draftData: any) => {
+      const method = draftData.id ? 'PUT' : 'POST';
+      const url = draftData.id ? `/api/quizzes/${draftData.id}` : '/api/quizzes';
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -586,7 +589,9 @@ export default function EnhancedQuizBuilder() {
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (savedQuiz) => {
+      setQuizId(savedQuiz.id);
+      setHasUnsavedChanges(false);
       toast({
         title: "Draft Saved",
         description: "Your quiz draft has been saved successfully.",
@@ -603,8 +608,9 @@ export default function EnhancedQuizBuilder() {
     },
   });
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     const draftData = {
+      id: quizId,
       title: quiz.title || "Untitled Quiz",
       description: quiz.description || null,
       instructions: quiz.instructions || null,
@@ -619,8 +625,21 @@ export default function EnhancedQuizBuilder() {
       enableLearningPrescription: quiz.enableLearningPrescription || false,
       passwordProtected: quiz.passwordProtected || false,
       ipLocking: quiz.ipLocking || false,
+      // Include questions and groups
+      questions: quizQuestions,
+      groups: questionGroups,
     };
-    saveDraftMutation.mutate(draftData);
+    
+    return new Promise((resolve, reject) => {
+      saveDraftMutation.mutate(draftData, {
+        onSuccess: (savedQuiz) => {
+          resolve(savedQuiz);
+        },
+        onError: (error) => {
+          reject(error);
+        }
+      });
+    });
   };
 
   return (
@@ -685,17 +704,27 @@ export default function EnhancedQuizBuilder() {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => {
+              onClick={async () => {
                 if (quizQuestions.length === 0) {
                   alert("Please add questions to preview the quiz.");
                   return;
                 }
-                if (!quiz.id) {
-                  alert("Please save the quiz first before previewing.");
-                  return;
+                
+                // Ensure quiz is saved before preview
+                let previewQuizId = quizId;
+                if (!previewQuizId || hasUnsavedChanges) {
+                  try {
+                    const savedQuiz = await handleSaveDraft();
+                    previewQuizId = savedQuiz?.id || quizId;
+                  } catch (error) {
+                    console.error('Failed to save quiz:', error);
+                    alert("Failed to save quiz. Please try again.");
+                    return;
+                  }
                 }
+                
                 // Open preview in a new tab
-                window.open(`/quiz/${quiz.id}`, '_blank');
+                window.open(`/quiz/${previewQuizId}`, '_blank');
               }}
             >
               <Eye className="h-4 w-4 mr-2" />
@@ -1263,16 +1292,25 @@ export default function EnhancedQuizBuilder() {
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="max-attempts">Maximum Attempts</Label>
-                        <Input
-                          id="max-attempts"
-                          type="number"
-                          min="1"
-                          value={quiz.maxAttempts || 1}
-                          onChange={(e) => setQuiz(prev => ({
+                        <Select
+                          value={quiz.maxAttempts === -1 ? "unlimited" : String(quiz.maxAttempts || 1)}
+                          onValueChange={(value) => setQuiz(prev => ({
                             ...prev,
-                            maxAttempts: parseInt(e.target.value) || 1
+                            maxAttempts: value === "unlimited" ? -1 : parseInt(value) || 1
                           }))}
-                        />
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select maximum attempts" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 attempt</SelectItem>
+                            <SelectItem value="2">2 attempts</SelectItem>
+                            <SelectItem value="3">3 attempts</SelectItem>
+                            <SelectItem value="5">5 attempts</SelectItem>
+                            <SelectItem value="10">10 attempts</SelectItem>
+                            <SelectItem value="unlimited">Unlimited attempts</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-2">

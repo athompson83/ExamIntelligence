@@ -105,7 +105,7 @@ export default function QuizManager() {
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
-              <span>{quiz.questions?.length || 0} questions</span>
+              <span>{quiz.questionCount || quiz.questions?.length || 0} questions</span>
             </div>
             {quiz.timeLimit && (
               <div className="flex items-center gap-1">
@@ -116,7 +116,7 @@ export default function QuizManager() {
             {quiz.maxAttempts && (
               <div className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                <span>{quiz.maxAttempts} attempts</span>
+                <span>{quiz.maxAttempts === -1 ? "Unlimited" : quiz.maxAttempts} attempts</span>
               </div>
             )}
           </div>
