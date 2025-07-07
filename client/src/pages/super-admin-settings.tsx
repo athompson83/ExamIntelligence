@@ -296,9 +296,9 @@ export default function SuperAdminSettings() {
       // Start the mobile app server automatically
       const startResponse = await apiRequest("POST", "/api/super-admin/mobile-app/start", {});
       
-      // Generate QR code for mobile app (use working /mobile route)
-      const mobileUrl = `https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile`;
-      const qrUrl = await QRCode.toDataURL(mobileUrl, {
+      // Generate QR code for native mobile app (Expo URL)
+      const expoUrl = `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`;
+      const qrUrl = await QRCode.toDataURL(expoUrl, {
         width: 256,
         margin: 2,
         color: {
@@ -311,7 +311,7 @@ export default function SuperAdminSettings() {
       
       toast({
         title: "Mobile App Ready",
-        description: "QR code generated for mobile web interface. Scan with your phone to test!",
+        description: "Native React Native app ready! Download Expo Go and scan the QR code for native iOS experience.",
       });
       
     } catch (error) {
@@ -861,16 +861,16 @@ export default function SuperAdminSettings() {
                             {mobileAppStatus === "running" ? "✓ Ready to Scan" : "⚠ Server Stopped"}
                           </Badge>
                           <p className="text-xs text-gray-500">
-                            Mobile URL: https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile
+                            Expo URL: exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081
                           </p>
                           <p className="text-xs text-blue-600">
-                            ✓ Ready to scan or open in browser
+                            ✓ Ready to scan with Expo Go app
                           </p>
                           <p className="text-xs text-gray-400">
-                            Login: test@example.com | Auto-connects to backend
+                            Native React Native app with full iOS support
                           </p>
                           <p className="text-xs text-green-600">
-                            ✅ Mobile app served via main server (no timeouts)
+                            ✅ Native mobile app with camera, notifications, offline mode
                           </p>
                         </div>
                       </div>
@@ -907,11 +907,11 @@ export default function SuperAdminSettings() {
                     {qrCodeUrl && (
                       <Button 
                         variant="outline" 
-                        onClick={() => copyToClipboard("https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile")}
+                        onClick={() => copyToClipboard("exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081")}
                         className="w-full"
                       >
                         <Copy className="h-4 w-4 mr-2" />
-                        Copy Mobile URL
+                        Copy Expo URL
                       </Button>
                     )}
                   </div>
