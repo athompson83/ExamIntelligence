@@ -13,7 +13,9 @@ import {
   Users, 
   FileText,
   Calendar,
-  BarChart3
+  BarChart3,
+  Home,
+  ChevronRight
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -156,6 +158,15 @@ export default function QuizManager() {
 
   return (
     <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center space-x-1 text-sm text-muted-foreground mb-6">
+        <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard')}>
+          <Home className="h-4 w-4" />
+        </Button>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground">Quiz Manager</span>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

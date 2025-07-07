@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, FileText, Users, CheckCircle, XCircle, Flag, AlertCircle } from "lucide-react";
+import { ArrowLeft, Clock, FileText, Users, CheckCircle, XCircle, Flag, AlertCircle, Home, ChevronRight } from "lucide-react";
 import { useLocation } from "wouter";
 import { useParams } from "wouter";
 import { useState, useEffect } from "react";
@@ -390,6 +390,19 @@ export default function EnhancedQuizPreview() {
     // One question at a time layout
     return (
       <div className="p-6 max-w-4xl mx-auto">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center space-x-1 text-sm text-muted-foreground mb-6">
+          <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard')}>
+            <Home className="h-4 w-4" />
+          </Button>
+          <ChevronRight className="h-4 w-4" />
+          <Button variant="ghost" size="sm" onClick={() => setLocation('/quiz-manager')}>
+            Quiz Manager
+          </Button>
+          <ChevronRight className="h-4 w-4" />
+          <span className="text-foreground">Quiz Preview</span>
+        </div>
+
         {/* Header with timer and progress */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -618,6 +631,19 @@ export default function EnhancedQuizPreview() {
   // Landing page (before starting quiz) - Hide questions
   return (
     <div className="p-6 max-w-4xl mx-auto">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center space-x-1 text-sm text-muted-foreground mb-6">
+        <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard')}>
+          <Home className="h-4 w-4" />
+        </Button>
+        <ChevronRight className="h-4 w-4" />
+        <Button variant="ghost" size="sm" onClick={() => setLocation('/quiz-manager')}>
+          Quiz Manager
+        </Button>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground">Quiz Preview</span>
+      </div>
+
       <div className="mb-6">
         <Button
           variant="outline"
