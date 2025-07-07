@@ -1,85 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  ScrollView, 
+  TouchableOpacity, 
+  TextInput, 
+  Alert,
+  Dimensions,
+  SafeAreaView
+} from 'react-native';
 
-// API Configuration
-const API_BASE_URL = 'https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev';
-
-// Get screen dimensions
 const { width, height } = Dimensions.get('window');
-
-// Simple UI components to replace React Native Paper
-const Card = ({ children, style }) => (
-  <View style={[styles.card, style]}>{children}</View>
-);
-
-const Button = ({ children, onPress, style, disabled, variant = 'contained' }) => (
-  <TouchableOpacity 
-    style={[
-      variant === 'contained' ? styles.buttonContained : styles.buttonOutlined,
-      disabled && styles.buttonDisabled,
-      style
-    ]} 
-    onPress={onPress}
-    disabled={disabled}
-  >
-    <Text style={[
-      variant === 'contained' ? styles.buttonTextContained : styles.buttonTextOutlined,
-      disabled && styles.buttonTextDisabled
-    ]}>
-      {children}
-    </Text>
-  </TouchableOpacity>
-);
-
-const TextInput = ({ value, onChangeText, placeholder, secureTextEntry, style }) => (
-  <View style={styles.inputContainer}>
-    <Text style={styles.inputLabel}>{placeholder}</Text>
-    <View style={[styles.textInput, style]}>
-      <Text style={styles.inputText}>{value}</Text>
-    </View>
-  </View>
-);
+const API_BASE_URL = 'https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('test@example.com');
   const [password, setPassword] = useState('password');
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [quizzes, setQuizzes] = useState([]);
-  const [userStats, setUserStats] = useState(null);
 
-  // Test backend connection
+  useEffect(() => {
+    testConnection();
+    loadSampleData();
+  }, []);
+
   const testConnection = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/user`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
+      const response = await fetch(`${API_BASE_URL}/api/auth/user`);
       if (response.ok) {
-        const data = await response.json();
         setConnectionStatus('connected');
-        showSnackbar('✅ Connected to ProficiencyAI Backend');
-        return true;
+        Alert.alert('Success', 'Connected to ProficiencyAI Backend!');
       } else {
-        setConnectionStatus('error');
-        showSnackbar('⚠️ Connection failed - Using demo mode');
-        return false;
+        setConnectionStatus('demo');
+        Alert.alert('Demo Mode', 'Running in demo mode - backend connection failed');
       }
     } catch (error) {
-      setConnectionStatus('error');
-      showSnackbar('📱 Running in demo mode');
-      return false;
+      setConnectionStatus('demo');
+      Alert.alert('Demo Mode', 'Running in demo mode for testing');
     }
   };
 
-  // Load sample data
   const loadSampleData = () => {
     setQuizzes([
       {
@@ -88,17 +52,15 @@ export default function App() {
         description: 'Basic algebra and geometry',
         questions: 25,
         duration: '45 minutes',
-        difficulty: 'Medium',
-        completed: false
+        difficulty: 'Medium'
       },
       {
         id: 2,
         title: 'Science Quiz',
-        description: 'Physics and chemistry fundamentals',
+        description: 'Physics and chemistry',
         questions: 20,
         duration: '30 minutes',
-        difficulty: 'Easy',
-        completed: true
+        difficulty: 'Easy'
       },
       {
         id: 3,
@@ -106,141 +68,117 @@ export default function App() {
         description: 'Classical literature analysis',
         questions: 15,
         duration: '60 minutes',
-        difficulty: 'Hard',
-        completed: false
+        difficulty: 'Hard'
       }
     ]);
-
-    setUserStats({
-      completedQuizzes: 12,
-      totalQuizzes: 25,
-      averageScore: 87,
-      studyTime: '24 hours',
-      rank: 'Advanced'
-    });
   };
 
-  // Initialize app
-  useEffect(() => {
-    const initialize = async () => {
-      await testConnection();
-      loadSampleData();
-    };
-    initialize();
-  }, []);
-
-  const showSnackbar = (message) => {
-    setSnackbarMessage(message);
-    setSnackbarVisible(true);
-  };
-
-  const handleLogin = async () => {
+  const handleLogin = () => {
     setLoading(true);
-    
-    // Simulate login process
     setTimeout(() => {
       setIsLoggedIn(true);
       setLoading(false);
-      showSnackbar('🎉 Login successful! Welcome to ProficiencyAI');
+      Alert.alert('Welcome!', 'Login successful! Welcome to ProficiencyAI Native App');
     }, 1500);
   };
 
   const handleTakeQuiz = (quiz) => {
     Alert.alert(
       'Start Quiz',
-      `Are you ready to take "${quiz.title}"?\\n\\nQuestions: ${quiz.questions}\\nDuration: ${quiz.duration}`,
+      `Ready to take "${quiz.title}"?\n\nQuestions: ${quiz.questions}\nDuration: ${quiz.duration}`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
           text: 'Start Quiz', 
-          onPress: () => {
-            showSnackbar(`Starting ${quiz.title}...`);
-            // Here you would navigate to the quiz interface
-          }
+          onPress: () => Alert.alert('Quiz Started', `Starting ${quiz.title}...`)
         }
       ]
     );
   };
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'Easy': return '#10b981';
-      case 'Medium': return '#f59e0b';
-      case 'Hard': return '#ef4444';
-      default: return '#6b7280';
-    }
+  const testNativeFeature = (feature) => {
+    Alert.alert(
+      `Native ${feature}`,
+      `This demonstrates native ${feature} capability in React Native app. In production, this would access device ${feature}.`,
+      [{ text: 'OK' }]
+    );
   };
 
-  // Login Screen
   if (!isLoggedIn) {
     return (
-      <View style={styles.container}>
-        <StatusBar style="light" />
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="light" backgroundColor="#667eea" />
         <ScrollView contentContainerStyle={styles.loginContainer}>
+          {/* Logo */}
           <View style={styles.logoContainer}>
             <View style={styles.logo}>
               <Text style={styles.logoText}>P</Text>
             </View>
             <Text style={styles.title}>ProficiencyAI</Text>
-            <Text style={styles.subtitle}>Native Mobile Assessment Platform</Text>
+            <Text style={styles.subtitle}>Native iOS Mobile App</Text>
           </View>
 
-          <Card style={styles.loginCard}>
-            <View style={styles.connectionStatus}>
-              <View style={[
-                styles.statusChip,
-                { backgroundColor: connectionStatus === 'connected' ? '#dcfce7' : '#fef3c7' }
-              ]}>
-                <Text style={styles.statusText}>
-                  {connectionStatus === 'connected' ? '✅ Backend Connected' : '📱 Demo Mode'}
-                </Text>
-              </View>
-            </View>
+          {/* Connection Status */}
+          <View style={[styles.statusCard, {
+            backgroundColor: connectionStatus === 'connected' ? '#dcfce7' : '#fef3c7'
+          }]}>
+            <Text style={styles.statusText}>
+              {connectionStatus === 'connected' ? '✅ Backend Connected' : '📱 Demo Mode Active'}
+            </Text>
+          </View>
 
+          {/* Login Form */}
+          <View style={styles.loginCard}>
+            <Text style={styles.formTitle}>Sign In</Text>
+            
+            <Text style={styles.inputLabel}>Email</Text>
             <TextInput
-              placeholder="Email"
+              style={styles.textInput}
               value={email}
               onChangeText={setEmail}
-              style={styles.input}
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
             
+            <Text style={styles.inputLabel}>Password</Text>
             <TextInput
-              placeholder="Password"
+              style={styles.textInput}
               value={password}
               onChangeText={setPassword}
+              placeholder="Enter your password"
               secureTextEntry
-              style={styles.input}
             />
 
-            <Button
+            <TouchableOpacity 
+              style={[styles.loginButton, loading && styles.buttonDisabled]}
               onPress={handleLogin}
-              style={styles.loginButton}
               disabled={loading}
             >
-              {loading ? 'Signing In...' : 'Sign In to Mobile App'}
-            </Button>
-          </Card>
+              <Text style={styles.loginButtonText}>
+                {loading ? 'Signing In...' : 'Sign In to Native App'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          <View style={styles.features}>
-            <Text style={styles.featuresTitle}>Native Mobile Features</Text>
-            <View style={styles.featuresList}>
-              <Text style={styles.feature}>📱 True Native iOS Experience</Text>
-              <Text style={styles.feature}>🔒 Secure Authentication</Text>
-              <Text style={styles.feature}>📊 Real-time Analytics</Text>
-              <Text style={styles.feature}>🎯 Adaptive Testing</Text>
-              <Text style={styles.feature}>📷 Camera & Microphone Access</Text>
-              <Text style={styles.feature}>🔔 Push Notifications</Text>
-            </View>
+          {/* Features */}
+          <View style={styles.featuresContainer}>
+            <Text style={styles.featuresTitle}>Native iOS Features</Text>
+            <Text style={styles.feature}>📱 True React Native App</Text>
+            <Text style={styles.feature}>🔒 Secure Authentication</Text>
+            <Text style={styles.feature}>📊 Real-time Backend</Text>
+            <Text style={styles.feature}>🎯 Native Performance</Text>
+            <Text style={styles.feature}>📷 Camera Access</Text>
+            <Text style={styles.feature}>🔔 Push Notifications</Text>
           </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  // Main App Dashboard
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="light" backgroundColor="#2563eb" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -248,7 +186,7 @@ export default function App() {
           <View style={styles.headerAvatar}>
             <Text style={styles.headerAvatarText}>P</Text>
           </View>
-          <View style={styles.headerText}>
+          <View>
             <Text style={styles.headerTitle}>Welcome Back!</Text>
             <Text style={styles.headerSubtitle}>{email}</Text>
           </View>
@@ -257,42 +195,27 @@ export default function App() {
 
       <ScrollView style={styles.content}>
         {/* Connection Status */}
-        <Card style={styles.statusCard}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>App Status</Text>
           <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>Backend Connection:</Text>
-            <Text style={[
-              styles.statusValue,
-              { color: connectionStatus === 'connected' ? '#10b981' : '#f59e0b' }
-            ]}>
+            <Text style={styles.statusLabel}>Backend:</Text>
+            <Text style={[styles.statusValue, {
+              color: connectionStatus === 'connected' ? '#10b981' : '#f59e0b'
+            }]}>
               {connectionStatus === 'connected' ? 'Connected ✅' : 'Demo Mode 📱'}
             </Text>
           </View>
-        </Card>
-
-        {/* Stats Overview */}
-        {userStats && (
-          <Card style={styles.statsCard}>
-            <Text style={styles.sectionTitle}>Your Progress</Text>
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{userStats.completedQuizzes}</Text>
-                <Text style={styles.statLabel}>Completed</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{userStats.averageScore}%</Text>
-                <Text style={styles.statLabel}>Average Score</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{userStats.studyTime}</Text>
-                <Text style={styles.statLabel}>Study Time</Text>
-              </View>
-            </View>
-          </Card>
-        )}
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>App Type:</Text>
+            <Text style={[styles.statusValue, { color: '#2563eb' }]}>
+              Native React Native ⚡
+            </Text>
+          </View>
+        </View>
 
         {/* Available Quizzes */}
-        <Card style={styles.quizzesCard}>
-          <Text style={styles.sectionTitle}>Available Assessments</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Available Assessments</Text>
           {quizzes.map((quiz) => (
             <View key={quiz.id} style={styles.quizItem}>
               <View style={styles.quizInfo}>
@@ -300,73 +223,65 @@ export default function App() {
                 <Text style={styles.quizDescription}>
                   {quiz.questions} questions • {quiz.duration}
                 </Text>
-                <View style={[
-                  styles.difficultyBadge,
-                  { backgroundColor: getDifficultyColor(quiz.difficulty) + '20' }
-                ]}>
-                  <Text style={[
-                    styles.difficultyText,
-                    { color: getDifficultyColor(quiz.difficulty) }
-                  ]}>
-                    {quiz.difficulty}
-                  </Text>
+                <View style={styles.difficultyBadge}>
+                  <Text style={styles.difficultyText}>{quiz.difficulty}</Text>
                 </View>
               </View>
-              <Button
+              <TouchableOpacity
+                style={styles.quizButton}
                 onPress={() => handleTakeQuiz(quiz)}
-                disabled={quiz.completed}
-                style={styles.takeQuizButton}
-                variant={quiz.completed ? 'outlined' : 'contained'}
               >
-                {quiz.completed ? 'Completed ✓' : 'Take Quiz'}
-              </Button>
+                <Text style={styles.quizButtonText}>Take Quiz</Text>
+              </TouchableOpacity>
             </View>
           ))}
-        </Card>
+        </View>
 
         {/* Native Features Demo */}
-        <Card style={styles.featuresCard}>
-          <Text style={styles.sectionTitle}>Native Features Test</Text>
-          <View style={styles.nativeFeatures}>
-            <Button 
-              variant="outlined"
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Test Native Features</Text>
+          <View style={styles.featuresGrid}>
+            <TouchableOpacity 
               style={styles.featureButton}
-              onPress={() => Alert.alert('Camera Access', 'Native camera permission ready for proctoring features')}
+              onPress={() => testNativeFeature('Camera')}
             >
-              📷 Camera Access
-            </Button>
-            <Button 
-              variant="outlined"
+              <Text style={styles.featureButtonText}>📷 Camera</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
               style={styles.featureButton}
-              onPress={() => Alert.alert('Microphone', 'Native microphone ready for audio recording')}
+              onPress={() => testNativeFeature('Microphone')}
             >
-              🎤 Audio Recording
-            </Button>
-            <Button 
-              variant="outlined"
+              <Text style={styles.featureButtonText}>🎤 Microphone</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
               style={styles.featureButton}
-              onPress={() => Alert.alert('Notifications', 'Push notifications configured and ready')}
+              onPress={() => testNativeFeature('Notifications')}
             >
-              🔔 Notifications
-            </Button>
-            <Button 
-              variant="outlined"
+              <Text style={styles.featureButtonText}>🔔 Notifications</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
               style={styles.featureButton}
-              onPress={() => Alert.alert('Offline Mode', 'Offline capability available for assessments')}
+              onPress={() => testNativeFeature('Storage')}
             >
-              📱 Offline Mode
-            </Button>
+              <Text style={styles.featureButtonText}>💾 Storage</Text>
+            </TouchableOpacity>
           </View>
-        </Card>
+        </View>
 
-        {/* Success Message */}
-        {snackbarVisible && (
-          <Card style={styles.snackbar}>
-            <Text style={styles.snackbarText}>{snackbarMessage}</Text>
-          </Card>
-        )}
+        {/* App Info */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>App Information</Text>
+          <Text style={styles.infoText}>• Running on React Native</Text>
+          <Text style={styles.infoText}>• Native iOS components</Text>
+          <Text style={styles.infoText}>• Connected to ProficiencyAI backend</Text>
+          <Text style={styles.infoText}>• Full touch and gesture support</Text>
+          <Text style={styles.infoText}>• Native performance and feel</Text>
+        </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -409,101 +324,68 @@ const styles = StyleSheet.create({
     color: '#e0e7ff',
     textAlign: 'center',
   },
-  card: {
+  statusCard: {
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  loginCard: {
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 20,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  loginCard: {
     marginBottom: 30,
   },
-  connectionStatus: {
-    alignItems: 'center',
+  formTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
     marginBottom: 20,
-  },
-  statusChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginBottom: 10,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  inputContainer: {
-    marginBottom: 15,
+    textAlign: 'center',
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#374151',
-    marginBottom: 5,
+    marginBottom: 8,
     fontWeight: '500',
   },
   textInput: {
     borderWidth: 2,
     borderColor: '#e5e7eb',
     borderRadius: 12,
-    padding: 12,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
     backgroundColor: '#f9fafb',
   },
-  inputText: {
-    fontSize: 16,
-    color: '#1f2937',
-  },
-  buttonContained: {
+  loginButton: {
     backgroundColor: '#2563eb',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: 15,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
   },
-  buttonOutlined: {
-    borderWidth: 2,
-    borderColor: '#2563eb',
-    backgroundColor: 'transparent',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    margin: 5,
-  },
-  buttonDisabled: {
-    backgroundColor: '#d1d5db',
-    borderColor: '#d1d5db',
-  },
-  buttonTextContained: {
+  loginButtonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonTextOutlined: {
-    color: '#2563eb',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  buttonTextDisabled: {
-    color: '#9ca3af',
-  },
-  features: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  featuresTitle: {
     fontSize: 18,
     fontWeight: '600',
+  },
+  buttonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  featuresContainer: {
+    alignItems: 'center',
+  },
+  featuresTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: 'white',
     marginBottom: 15,
-  },
-  featuresList: {
-    alignItems: 'center',
   },
   feature: {
     fontSize: 16,
@@ -521,27 +403,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerAvatar: {
-    width: 40,
-    height: 40,
+    width: 50,
+    height: 50,
     backgroundColor: '#1d4ed8',
-    borderRadius: 20,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
   },
   headerAvatarText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-  },
-  headerText: {
-    flex: 1,
   },
   headerTitle: {
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 2,
   },
   headerSubtitle: {
     color: '#bfdbfe',
@@ -549,55 +427,39 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 15,
     backgroundColor: '#f8fafc',
+    padding: 15,
   },
-  statusCard: {
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
     marginBottom: 15,
   },
   statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 8,
   },
   statusLabel: {
     fontSize: 16,
     color: '#374151',
-    fontWeight: '500',
   },
   statusValue: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  statsCard: {
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 15,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 15,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2563eb',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 5,
-  },
-  quizzesCard: {
-    marginBottom: 15,
   },
   quizItem: {
     flexDirection: 'row',
@@ -624,37 +486,51 @@ const styles = StyleSheet.create({
   },
   difficultyBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
   difficultyText: {
     fontSize: 12,
+    color: '#2563eb',
     fontWeight: '600',
   },
-  takeQuizButton: {
-    minWidth: 100,
+  quizButton: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
-  featuresCard: {
-    marginBottom: 20,
+  quizButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  nativeFeatures: {
+  featuresGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   featureButton: {
     width: '48%',
+    backgroundColor: '#eff6ff',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    alignItems: 'center',
     marginBottom: 10,
+    borderWidth: 2,
+    borderColor: '#2563eb',
   },
-  snackbar: {
-    backgroundColor: '#10b981',
-    marginTop: 20,
+  featureButtonText: {
+    color: '#2563eb',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  snackbarText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
+  infoText: {
+    fontSize: 14,
+    color: '#4b5563',
+    marginBottom: 6,
   },
 });

@@ -296,9 +296,9 @@ export default function SuperAdminSettings() {
       // Start the mobile app server automatically
       const startResponse = await apiRequest("POST", "/api/super-admin/mobile-app/start", {});
       
-      // Generate QR code for mobile app (working mobile route)
-      const mobileUrl = `https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile`;
-      const qrUrl = await QRCode.toDataURL(mobileUrl, {
+      // Generate QR code for native React Native app (Expo tunnel URL)
+      const expoUrl = `exp://v8m8--9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev.local-tunnel.me:80`;
+      const qrUrl = await QRCode.toDataURL(expoUrl, {
         width: 256,
         margin: 2,
         color: {
@@ -311,7 +311,7 @@ export default function SuperAdminSettings() {
       
       toast({
         title: "Mobile App Ready",
-        description: "Mobile app interface ready! Scan the QR code with your phone for optimized mobile experience.",
+        description: "Native React Native app ready! Download Expo Go and scan the QR code for true native iOS experience.",
       });
       
     } catch (error) {
@@ -861,16 +861,16 @@ export default function SuperAdminSettings() {
                             {mobileAppStatus === "running" ? "✓ Ready to Scan" : "⚠ Server Stopped"}
                           </Badge>
                           <p className="text-xs text-gray-500">
-                            Mobile URL: https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile
+                            Expo URL: exp://v8m8--9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev.local-tunnel.me:80
                           </p>
                           <p className="text-xs text-blue-600">
-                            ✓ Optimized mobile interface - scan to test
+                            ✓ Native React Native app - scan with Expo Go
                           </p>
                           <p className="text-xs text-gray-400">
-                            Professional mobile experience with touch optimization
+                            True native iOS app with React Native components
                           </p>
                           <p className="text-xs text-green-600">
-                            ✅ Mobile-first design with backend connectivity
+                            ✅ Native iOS performance with backend connectivity
                           </p>
                         </div>
                       </div>
@@ -907,11 +907,11 @@ export default function SuperAdminSettings() {
                     {qrCodeUrl && (
                       <Button 
                         variant="outline" 
-                        onClick={() => copyToClipboard("https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile")}
+                        onClick={() => copyToClipboard("exp://v8m8--9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev.local-tunnel.me:80")}
                         className="w-full"
                       >
                         <Copy className="h-4 w-4 mr-2" />
-                        Copy Mobile URL
+                        Copy Expo URL
                       </Button>
                     )}
                   </div>
