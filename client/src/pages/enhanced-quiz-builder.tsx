@@ -342,10 +342,10 @@ export default function EnhancedQuizBuilder() {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    // Handle dropping on a group
-    if (overId.startsWith('group-')) {
-      const groupId = overId.replace('group-', '');
-      moveQuestionToGroup(activeId, groupId);
+    // Handle dropping on a group (check if overId is a group ID)
+    const isGroupId = questionGroups.some(group => group.id === overId);
+    if (isGroupId) {
+      moveQuestionToGroup(activeId, overId);
       return;
     }
 
@@ -1601,7 +1601,15 @@ export default function EnhancedQuizBuilder() {
                   
                   if (selectedGroupId === "create-new" && newGroupName.trim()) {
                     // Create new group and add questions with proper groupId
-                    const groupId = `group-${Date.now()}`;
+                    // Generate proper UUID for the group
+                    const generateUUID = () => {
+                      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        const r = Math.random() * 16 | 0;
+                        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                      });
+                    };
+                    const groupId = generateUUID();
                     const newGroup: EnhancedQuestionGroup = {
                       id: groupId,
                       name: newGroupName.trim(),
