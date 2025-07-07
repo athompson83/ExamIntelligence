@@ -296,8 +296,8 @@ export default function SuperAdminSettings() {
       // Start the mobile app server automatically
       const startResponse = await apiRequest("POST", "/api/super-admin/mobile-app/start", {});
       
-      // Generate QR code for native React Native app (Expo tunnel URL)
-      const expoUrl = `exp://v8m8--9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev.local-tunnel.me:80`;
+      // Generate QR code for native React Native app (Direct server URL)
+      const expoUrl = `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`;
       const qrUrl = await QRCode.toDataURL(expoUrl, {
         width: 256,
         margin: 2,
@@ -861,7 +861,7 @@ export default function SuperAdminSettings() {
                             {mobileAppStatus === "running" ? "✓ Ready to Scan" : "⚠ Server Stopped"}
                           </Badge>
                           <p className="text-xs text-gray-500">
-                            Expo URL: exp://v8m8--9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev.local-tunnel.me:80
+                            Expo URL: exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081
                           </p>
                           <p className="text-xs text-blue-600">
                             ✓ Native React Native app - scan with Expo Go
@@ -907,7 +907,7 @@ export default function SuperAdminSettings() {
                     {qrCodeUrl && (
                       <Button 
                         variant="outline" 
-                        onClick={() => copyToClipboard("exp://v8m8--9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev.local-tunnel.me:80")}
+                        onClick={() => copyToClipboard("exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081")}
                         className="w-full"
                       >
                         <Copy className="h-4 w-4 mr-2" />
