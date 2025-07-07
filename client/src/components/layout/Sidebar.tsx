@@ -24,7 +24,7 @@ interface SidebarProps {
 const getTeacherNavigation = (t: any) => [
   { name: t('navigation.dashboard'), href: "/", icon: LayoutDashboard },
   { name: t('navigation.itemBanks'), href: "/item-banks", icon: FolderOpen },
-  { name: t('navigation.quizBuilder'), href: "/quiz-builder", icon: Puzzle },
+  { name: t('navigation.quizBuilder'), href: "/quiz-manager", icon: Puzzle },
   { name: "CAT Exams", href: "/cat-exam-builder", icon: Brain },
   { name: t('navigation.liveExams'), href: "/live-exams", icon: Play },
   { name: t('navigation.analytics'), href: "/analytics", icon: BarChart3 },

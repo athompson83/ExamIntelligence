@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -25,6 +25,8 @@ export default function QuizProgressSaver({
   onProgressLoaded
 }: QuizProgressSaverProps) {
   const queryClient = useQueryClient();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSaveRef = useRef<string>('');
 
   // Load existing progress on component mount
   const { data: savedProgress } = useQuery({
@@ -61,7 +63,7 @@ export default function QuizProgressSaver({
     }
   }, [savedProgress, onProgressLoaded]);
 
-  // Auto-save progress whenever state changes
+  // Auto-save progress whenever state changes with proper debouncing
   const saveProgress = useCallback(() => {
     if (!attemptId) return;
 
@@ -73,17 +75,35 @@ export default function QuizProgressSaver({
       timeSpentPerQuestion
     };
 
-    saveProgressMutation.mutate(progressData);
+    // Create a hash of the current state to compare with last save
+    const currentStateHash = JSON.stringify(progressData);
+    
+    // Only save if state has actually changed
+    if (currentStateHash !== lastSaveRef.current) {
+      lastSaveRef.current = currentStateHash;
+      saveProgressMutation.mutate(progressData);
+    }
   }, [attemptId, currentQuestionIndex, answeredQuestions, savedResponses, timeSpentPerQuestion, saveProgressMutation]);
 
-  // Auto-save every 10 seconds or when state changes
+  // Debounced auto-save - only trigger when state changes
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      saveProgress();
-    }, 2000); // Save after 2 seconds of inactivity
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-    return () => clearTimeout(timeoutId);
-  }, [saveProgress]);
+    // Set new timeout for saving after inactivity
+    timeoutRef.current = setTimeout(() => {
+      saveProgress();
+    }, 5000); // Save after 5 seconds of inactivity
+
+    // Cleanup function
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [attemptId, currentQuestionIndex, answeredQuestions, savedResponses, timeSpentPerQuestion, saveProgress]);
 
   // Save on page unload
   useEffect(() => {

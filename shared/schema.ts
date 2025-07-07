@@ -251,7 +251,7 @@ export const quizzes = pgTable("quizzes", {
 export const questionGroups = pgTable("question_groups", {
   id: uuid("id").primaryKey().defaultRandom(),
   quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
-  name: varchar("name").notNull(),
+  title: varchar("title").notNull(),
   description: text("description"),
   pickCount: integer("pick_count").default(1), // Number of questions to randomly select
   totalQuestions: integer("total_questions").default(0), // Total questions in this group
