@@ -1,79 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  TextInput,
-  Alert,
-  SafeAreaView
-} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
+import React, { useState } from 'react';
 
 const API_BASE_URL = 'https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [quizzes, setQuizzes] = useState([]);
-  const [username, setUsername] = useState('test@example.com');
+  const [email, setEmail] = useState('test@example.com');
   const [password, setPassword] = useState('password');
-  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    setLoading(true);
-    try {
-      // For demo purposes, simulate login
+  const handleLogin = () => {
+    if (email && password) {
       setIsLoggedIn(true);
-      await fetchQuizzes();
-    } catch (error) {
-      Alert.alert('Login Error', 'Failed to login');
-    } finally {
-      setLoading(false);
+      Alert.alert('Success', 'Logged in successfully!');
+    } else {
+      Alert.alert('Error', 'Please enter email and password');
     }
-  };
-
-  const fetchQuizzes = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/quizzes`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setQuizzes(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch quizzes:', error);
-    }
-  };
-
-  const handleTakeQuiz = (quiz) => {
-    Alert.alert(
-      'Take Quiz',
-      `Starting quiz: ${quiz.title}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Start', onPress: () => console.log('Starting quiz:', quiz.id) }
-      ]
-    );
   };
 
   if (!isLoggedIn) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loginContainer}>
-          <Text style={styles.title}>ProficiencyAI</Text>
+          <Text style={styles.title}>ProficiencyAI Mobile</Text>
           <Text style={styles.subtitle}>Educational Assessment Platform</Text>
           
           <TextInput
             style={styles.input}
             placeholder="Email"
-            value={username}
-            onChangeText={setUsername}
+            value={email}
+            onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
           />
@@ -89,22 +45,19 @@ export default function App() {
           <TouchableOpacity
             style={styles.loginButton}
             onPress={handleLogin}
-            disabled={loading}
           >
-            <Text style={styles.loginButtonText}>
-              {loading ? 'Logging in...' : 'Login'}
-            </Text>
+            <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
         </View>
         <StatusBar style="auto" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Available Quizzes</Text>
+        <Text style={styles.headerTitle}>Welcome to ProficiencyAI</Text>
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => setIsLoggedIn(false)}
@@ -113,40 +66,25 @@ export default function App() {
         </TouchableOpacity>
       </View>
       
-      <ScrollView style={styles.quizList}>
-        {quizzes.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No quizzes available</Text>
-            <TouchableOpacity
-              style={styles.refreshButton}
-              onPress={fetchQuizzes}
-            >
-              <Text style={styles.refreshButtonText}>Refresh</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          quizzes.map((quiz) => (
-            <TouchableOpacity
-              key={quiz.id}
-              style={styles.quizCard}
-              onPress={() => handleTakeQuiz(quiz)}
-            >
-              <Text style={styles.quizTitle}>{quiz.title}</Text>
-              <Text style={styles.quizDescription}>{quiz.description}</Text>
-              <View style={styles.quizMeta}>
-                <Text style={styles.quizMetaText}>
-                  {quiz.questions?.length || 0} questions
-                </Text>
-                <Text style={styles.quizMetaText}>
-                  {quiz.timeLimit || 'No time limit'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))
-        )}
+      <ScrollView style={styles.content}>
+        <View style={styles.successCard}>
+          <Text style={styles.successTitle}>Login Successful!</Text>
+          <Text style={styles.successText}>
+            You have successfully connected to the ProficiencyAI mobile app.
+          </Text>
+          <Text style={styles.featuresTitle}>Available Features:</Text>
+          <Text style={styles.featureText}>• Quiz Management</Text>
+          <Text style={styles.featureText}>• Real-time Assessment</Text>
+          <Text style={styles.featureText}>• Progress Tracking</Text>
+          <Text style={styles.featureText}>• Study Materials</Text>
+        </View>
+        
+        <TouchableOpacity style={styles.demoButton}>
+          <Text style={styles.demoButtonText}>Explore Demo Features</Text>
+        </TouchableOpacity>
       </ScrollView>
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -154,15 +92,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    paddingTop: 50,
   },
   loginContainer: {
     flex: 1,
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#fff',
+    margin: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
@@ -216,58 +162,55 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontSize: 16,
   },
-  quizList: {
+  content: {
     flex: 1,
     padding: 20,
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyStateText: {
-    fontSize: 18,
-    color: '#666',
-    marginBottom: 20,
-  },
-  refreshButton: {
-    backgroundColor: '#2563eb',
-    padding: 12,
-    borderRadius: 8,
-  },
-  refreshButtonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  quizCard: {
+  successCard: {
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 12,
-    marginBottom: 15,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  quizTitle: {
+  successTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#16a34a',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  successText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  featuresTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
     color: '#333',
-  },
-  quizDescription: {
-    fontSize: 14,
-    color: '#666',
     marginBottom: 10,
   },
-  quizMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  featureText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+    paddingLeft: 10,
   },
-  quizMetaText: {
-    fontSize: 12,
-    color: '#999',
+  demoButton: {
+    backgroundColor: '#2563eb',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  demoButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

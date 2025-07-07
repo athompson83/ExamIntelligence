@@ -870,7 +870,7 @@ export default function SuperAdminSettings() {
                             Login: test@example.com | Auto-connects to backend
                           </p>
                           <p className="text-xs text-green-600">
-                            🔄 Server auto-starting in background
+                            ✅ Expo server running on port 8081
                           </p>
                         </div>
                       </div>
