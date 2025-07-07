@@ -438,11 +438,21 @@ export default function EnhancedQuizBuilder() {
     const urlParams = new URLSearchParams(location.split('?')[1] || '');
     const existingQuizId = urlParams.get('id');
     
+    console.log('URL location:', location);
+    console.log('URL params:', urlParams.toString());
+    console.log('Existing quiz ID from URL:', existingQuizId);
+    console.log('Current quiz ID:', quizId);
+    
     if (existingQuizId && existingQuizId !== quizId) {
       // Load the existing quiz data
+      console.log('Loading quiz data for ID:', existingQuizId);
       fetch(`/api/quizzes/${existingQuizId}`)
-        .then(response => response.json())
+        .then(response => {
+          console.log('Quiz fetch response status:', response.status);
+          return response.json();
+        })
         .then(quizData => {
+          console.log('Quiz data received:', quizData);
           setQuiz({
             title: quizData.title || "",
             description: quizData.description || "",

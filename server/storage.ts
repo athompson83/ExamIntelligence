@@ -582,7 +582,7 @@ export class DatabaseStorage implements IStorage {
     // Get answer options for all questions
     const questionsWithOptions = await Promise.all(
       quizQuestionsData.map(async (q) => {
-        const answerOptions = await db
+        const questionAnswerOptions = await db
           .select()
           .from(answerOptions)
           .where(eq(answerOptions.questionId, q.question.id))
@@ -593,7 +593,7 @@ export class DatabaseStorage implements IStorage {
           points: q.quizQuestion.points,
           displayOrder: q.quizQuestion.displayOrder,
           groupId: q.quizQuestion.groupId,
-          answerOptions: answerOptions || []
+          answerOptions: questionAnswerOptions || []
         };
       })
     );
