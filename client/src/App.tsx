@@ -126,7 +126,7 @@ function Router() {
           <Route path="/student-dashboard" component={StudentDashboard} />
           <Route path="/student-quiz" component={StudentQuiz} />
           <Route path="/student/quiz/:quizId" component={StudentQuiz} />
-          <Route path="/quiz/:id" component={QuizPreview} />
+          <Route path="/quiz/:id" component={EnhancedQuizPreview} />
           <Route path="/quiz-preview/:id" component={EnhancedQuizPreview} />
           <Route path="/enhanced-quiz-preview/:id" component={EnhancedQuizPreview} />
           <Route path="/published-quizzes" component={PublishedQuizzes} />

@@ -59,6 +59,25 @@ export default function EnhancedQuizPreview() {
     }));
   };
 
+  const toggleQuestionFlag = (questionId: string) => {
+    setFlaggedQuestions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId);
+      } else {
+        newSet.add(questionId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleNavigateToQuestion = (index: number) => {
+    setCurrentQuestionIndex(index);
+    if (oneQuestionAtATime) {
+      setShowNavigation(false);
+    }
+  };
+
   const handleQuestionNavigation = (index: number) => {
     setCurrentQuestionIndex(index);
     setShowNavigation(false);
@@ -390,6 +409,13 @@ export default function EnhancedQuizPreview() {
               >
                 Question Navigation
               </Button>
+              <Button
+                variant={flaggedQuestions.has(currentQuestion.id) ? "default" : "outline"}
+                onClick={() => toggleQuestionFlag(currentQuestion.id)}
+              >
+                <Flag className="h-4 w-4 mr-2" />
+                {flaggedQuestions.has(currentQuestion.id) ? "Unflag" : "Flag"}
+              </Button>
             </div>
           </div>
           
@@ -435,7 +461,7 @@ export default function EnhancedQuizPreview() {
                     size="sm"
                     onClick={() => setFilterMode('flagged')}
                   >
-                    Flagged
+                    Flagged ({flaggedQuestions.size})
                   </Button>
                 </div>
               </div>

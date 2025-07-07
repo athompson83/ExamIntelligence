@@ -238,7 +238,7 @@ export default function QuizPreview() {
                     <div key={option.id} className="flex items-center space-x-2">
                       <RadioGroupItem value={option.id} id={option.id} />
                       <Label htmlFor={option.id} className="flex-1 cursor-pointer">
-                        {option.text}
+                        {option.answerText || option.text || "No answer text"}
                       </Label>
                     </div>
                   ))}
@@ -262,7 +262,7 @@ export default function QuizPreview() {
                         }}
                       />
                       <Label htmlFor={option.id} className="flex-1 cursor-pointer">
-                        {option.text}
+                        {option.answerText || option.text || "No answer text"}
                       </Label>
                     </div>
                   ))}
