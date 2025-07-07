@@ -1,9 +1,9 @@
 {
-  "name": "mobile-app-final",
+  "name": "temp-app",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "expo start --tunnel --port 8081",
+    "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"
