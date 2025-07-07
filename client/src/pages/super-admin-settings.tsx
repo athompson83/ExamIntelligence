@@ -841,7 +841,10 @@ export default function SuperAdminSettings() {
                             Expo URL: exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081
                           </p>
                           <p className="text-xs text-blue-600">
-                            Ready to scan with Expo Go app
+                            ✓ Ready to scan with Expo Go app
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Login: test@example.com
                           </p>
                         </div>
                       </div>

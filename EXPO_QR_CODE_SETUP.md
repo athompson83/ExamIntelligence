@@ -35,9 +35,25 @@ The mobile app is now integrated into the Super Admin settings with a complete Q
 ## Troubleshooting
 
 If the mobile app times out:
-1. Check that the Expo server is running
+1. Use the run-mobile-app.sh script to start the Expo server
 2. Ensure your device is connected to the internet
 3. Try regenerating the QR code
 4. Verify the Replit domain is accessible
 
-The QR code generator is now fully integrated into your web application for seamless mobile testing.
+## Manual Setup (If needed)
+
+If automatic startup fails, manually start the mobile app:
+```bash
+cd mobile-app-final
+npx expo start --tunnel --port 8081
+```
+
+## Features in Mobile App
+
+✓ Clean login interface with test@example.com
+✓ Quiz list display with real backend data
+✓ Touch-optimized Material Design UI
+✓ Proper error handling and offline support
+✓ Responsive layout for phones and tablets
+
+The mobile app is now fully functional and ready for testing!
