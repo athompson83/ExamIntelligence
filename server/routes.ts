@@ -3443,30 +3443,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile App Routes
   app.post('/api/super-admin/mobile-app/start', mockAuth, async (req, res) => {
     try {
-      // Start the native React Native Expo server
-      const { spawn } = await import('child_process');
-      const path = await import('path');
-      
-      // Start Expo server in mobile-app-final directory
-      const mobileAppPath = path.join(process.cwd(), 'mobile-app-final');
-      const expo = spawn('node', ['start-mobile-server.js'], {
-        cwd: mobileAppPath,
-        detached: true,
-        stdio: 'ignore'
-      });
-      
-      expo.unref();
-      
-      // Wait for server to start
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      
+      // Mobile app is served through optimized /mobile route
       res.json({
         success: true,
-        message: "Native mobile app server started successfully",
-        expoUrl: `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`,
+        message: "Mobile app interface ready - optimized for mobile devices",
         mobileUrl: `https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile`,
         status: 'running',
-        type: 'react_native'
+        type: 'mobile_web'
       });
       
     } catch (error) {

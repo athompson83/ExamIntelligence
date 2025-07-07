@@ -296,9 +296,9 @@ export default function SuperAdminSettings() {
       // Start the mobile app server automatically
       const startResponse = await apiRequest("POST", "/api/super-admin/mobile-app/start", {});
       
-      // Generate QR code for native mobile app (Expo URL)
-      const expoUrl = `exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081`;
-      const qrUrl = await QRCode.toDataURL(expoUrl, {
+      // Generate QR code for mobile app (working mobile route)
+      const mobileUrl = `https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile`;
+      const qrUrl = await QRCode.toDataURL(mobileUrl, {
         width: 256,
         margin: 2,
         color: {
@@ -311,7 +311,7 @@ export default function SuperAdminSettings() {
       
       toast({
         title: "Mobile App Ready",
-        description: "Native React Native app ready! Download Expo Go and scan the QR code for native iOS experience.",
+        description: "Mobile app interface ready! Scan the QR code with your phone for optimized mobile experience.",
       });
       
     } catch (error) {
@@ -861,16 +861,16 @@ export default function SuperAdminSettings() {
                             {mobileAppStatus === "running" ? "✓ Ready to Scan" : "⚠ Server Stopped"}
                           </Badge>
                           <p className="text-xs text-gray-500">
-                            Expo URL: exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081
+                            Mobile URL: https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile
                           </p>
                           <p className="text-xs text-blue-600">
-                            ✓ Ready to scan with Expo Go app
+                            ✓ Optimized mobile interface - scan to test
                           </p>
                           <p className="text-xs text-gray-400">
-                            Native React Native app with full iOS support
+                            Professional mobile experience with touch optimization
                           </p>
                           <p className="text-xs text-green-600">
-                            ✅ Native mobile app with camera, notifications, offline mode
+                            ✅ Mobile-first design with backend connectivity
                           </p>
                         </div>
                       </div>
@@ -907,11 +907,11 @@ export default function SuperAdminSettings() {
                     {qrCodeUrl && (
                       <Button 
                         variant="outline" 
-                        onClick={() => copyToClipboard("exp://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev:8081")}
+                        onClick={() => copyToClipboard("https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/mobile")}
                         className="w-full"
                       >
                         <Copy className="h-4 w-4 mr-2" />
-                        Copy Expo URL
+                        Copy Mobile URL
                       </Button>
                     )}
                   </div>
