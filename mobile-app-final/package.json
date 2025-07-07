@@ -1,23 +1,11 @@
 {
-  "name": "proficiencyai-mobile",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "proficiencyai-mobile-web",
+  "version": "1.0.0", 
+  "description": "Mobile web interface for ProficiencyAI",
+  "main": "index.html",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android", 
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start": "echo 'Mobile interface served at /mobile route'"
   },
-  "dependencies": {
-    "expo": "^51.0.31",
-    "expo-status-bar": "^1.12.1",
-    "react": "18.2.0",
-    "react-native": "^0.74.5",
-    "@expo/vector-icons": "^14.0.0"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.25.0",
-    "babel-preset-expo": "^11.0.0"
-  },
+  "dependencies": {},
   "private": true
 }

@@ -1,41 +1,38 @@
-const { spawn, exec } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
-console.log('🚀 Starting mobile app server automatically...');
+console.log('Starting ProficiencyAI Mobile Server...');
 
-// Kill any existing expo processes
-exec('pkill -f "expo start" || true', (killError) => {
-  console.log('Cleaned up existing Expo processes');
-  
-  // Wait a moment then start expo
-  setTimeout(() => {
-    const expoPath = path.join(__dirname, 'mobile-app-final');
-    console.log(`Starting Expo in: ${expoPath}`);
-    
-    const expo = spawn('npx', ['expo', 'start', '--tunnel', '--port', '8081'], {
-      cwd: expoPath,
-      stdio: 'inherit',
-      env: { ...process.env, CI: '1' }
-    });
-    
-    expo.on('error', (error) => {
-      console.error('Failed to start Expo:', error);
-    });
-    
-    expo.on('exit', (code) => {
-      console.log(`Expo server exited with code ${code}`);
-    });
-    
-    console.log('✅ Mobile app server is starting...');
-    console.log('📱 QR code will be available shortly at port 8081');
-    
-  }, 2000);
+// Ensure mobile-app-final directory exists
+const mobileAppPath = path.join(__dirname, 'mobile-app-final');
+if (!fs.existsSync(mobileAppPath)) {
+  console.error('Mobile app directory not found:', mobileAppPath);
+  process.exit(1);
+}
+
+// Change to mobile app directory
+process.chdir(mobileAppPath);
+
+// Start Expo server
+const expo = spawn('npx', ['expo', 'start', '--tunnel'], {
+  stdio: 'inherit',
+  shell: true
 });
 
-// Keep the process running
+expo.on('close', (code) => {
+  console.log(`Expo server exited with code ${code}`);
+});
+
+expo.on('error', (error) => {
+  console.error('Failed to start Expo server:', error);
+});
+
+// Keep the process alive
 process.on('SIGINT', () => {
   console.log('Shutting down mobile server...');
-  exec('pkill -f "expo start"', () => {
-    process.exit(0);
-  });
+  expo.kill();
+  process.exit(0);
 });
+
+console.log('Mobile server started. Use Ctrl+C to stop.');
