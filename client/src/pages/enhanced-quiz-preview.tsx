@@ -313,7 +313,7 @@ export default function EnhancedQuizPreview() {
                           <div key={option.id} className="flex items-center space-x-2">
                             <RadioGroupItem value={option.id} id={`${question.id}-${option.id}`} />
                             <Label htmlFor={`${question.id}-${option.id}`} className="flex-1 cursor-pointer">
-                              {option.text}
+                              {option.answerText || option.text || "No answer text"}
                             </Label>
                           </div>
                         ))}
@@ -337,7 +337,7 @@ export default function EnhancedQuizPreview() {
                               }}
                             />
                             <Label htmlFor={`${question.id}-${option.id}`} className="flex-1 cursor-pointer">
-                              {option.text}
+                              {option.answerText || option.text || "No answer text"}
                             </Label>
                           </div>
                         ))}
@@ -520,7 +520,7 @@ export default function EnhancedQuizPreview() {
                     <div key={option.id} className="flex items-center space-x-2">
                       <RadioGroupItem value={option.id} id={option.id} />
                       <Label htmlFor={option.id} className="flex-1 cursor-pointer">
-                        {option.text}
+                        {option.answerText || option.text || "No answer text"}
                       </Label>
                     </div>
                   ))}
@@ -544,7 +544,7 @@ export default function EnhancedQuizPreview() {
                         }}
                       />
                       <Label htmlFor={option.id} className="flex-1 cursor-pointer">
-                        {option.text}
+                        {option.answerText || option.text || "No answer text"}
                       </Label>
                     </div>
                   ))}
