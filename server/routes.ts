@@ -1609,22 +1609,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Remove any unknown fields that might cause database errors
       const {
+        id, // Remove id to prevent duplicates
         quiz_type, // Remove this field if present
         catSettings, // Remove CAT settings
         useCAT, // Remove useCAT
+        questions, // Handle separately
+        groups, // Handle separately
         ...cleanBody
       } = req.body;
 
-      const quizData = insertQuizSchema.parse({
+      const quizData = {
         title: req.body.title || "Untitled Quiz",
         description: req.body.description || null,
         instructions: req.body.instructions || null,
         creatorId: userId,
         accountId: user.accountId,
         timeLimit: req.body.timeLimit || null,
-      });
+        shuffleQuestions: req.body.shuffleQuestions || false,
+        shuffleAnswers: req.body.shuffleAnswers || false,
+        maxAttempts: req.body.maxAttempts || 1,
+        allowMultipleAttempts: req.body.allowMultipleAttempts || false,
+        passingGrade: req.body.passingGrade || 70,
+        gradeToShow: req.body.gradeToShow || "percentage",
+        showCorrectAnswers: req.body.showCorrectAnswers || false,
+        showCorrectAnswersAt: req.body.showCorrectAnswersAt || "after_submission",
+        showQuestionsAfterAttempt: req.body.showQuestionsAfterAttempt || false,
+        scoreKeepingMethod: req.body.scoreKeepingMethod || "highest",
+        timeBetweenAttempts: req.body.timeBetweenAttempts || 0,
+        availabilityStart: req.body.availabilityStart || null,
+        availabilityEnd: req.body.availabilityEnd || null,
+        alwaysAvailable: req.body.alwaysAvailable !== false,
+        proctoring: req.body.proctoring || false,
+        adaptiveTesting: req.body.adaptiveTesting || false,
+        enableQuestionFeedback: req.body.enableQuestionFeedback || false,
+        enableLearningPrescription: req.body.enableLearningPrescription || false,
+        passwordProtected: req.body.passwordProtected || false,
+        password: req.body.password || "",
+        ipLocking: req.body.ipLocking || false,
+      };
+      
+      console.log(`Creating new quiz with ${questions?.length || 0} questions and ${groups?.length || 0} groups`);
       
       const quiz = await storage.createQuiz(quizData);
+
+      // Handle questions if they're included
+      if (questions && Array.isArray(questions) && questions.length > 0) {
+        console.log(`Adding ${questions.length} questions to new quiz ${quiz.id}`);
+        await storage.updateQuizQuestions(quiz.id, questions);
+      }
+
+      // Handle groups if they're included
+      if (groups && Array.isArray(groups) && groups.length > 0) {
+        console.log(`Adding ${groups.length} groups to new quiz ${quiz.id}`);
+        await storage.updateQuizGroups(quiz.id, groups);
+      }
+      
       res.json(quiz);
     } catch (error) {
       console.error("Error creating quiz:", error);
@@ -1675,12 +1714,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle questions if they're included
       if (quizData.questions && Array.isArray(quizData.questions)) {
+        console.log(`Updating quiz ${quizId} with ${quizData.questions.length} questions`);
         await storage.updateQuizQuestions(quizId, quizData.questions);
+      } else {
+        console.log(`No questions to update for quiz ${quizId}`);
       }
 
       // Handle groups if they're included
       if (quizData.groups && Array.isArray(quizData.groups)) {
+        console.log(`Updating quiz ${quizId} with ${quizData.groups.length} groups`);
         await storage.updateQuizGroups(quizId, quizData.groups);
+      } else {
+        console.log(`No groups to update for quiz ${quizId}`);
       }
 
       res.json(updatedQuiz);
