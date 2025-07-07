@@ -579,14 +579,28 @@ export class DatabaseStorage implements IStorage {
       .where(eq(questionGroups.quizId, id))
       .orderBy(questionGroups.displayOrder);
 
+    // Get answer options for all questions
+    const questionsWithOptions = await Promise.all(
+      quizQuestionsData.map(async (q) => {
+        const answerOptions = await db
+          .select()
+          .from(answerOptions)
+          .where(eq(answerOptions.questionId, q.question.id))
+          .orderBy(answerOptions.displayOrder);
+        
+        return {
+          ...q.question,
+          points: q.quizQuestion.points,
+          displayOrder: q.quizQuestion.displayOrder,
+          groupId: q.quizQuestion.groupId,
+          answerOptions: answerOptions || []
+        };
+      })
+    );
+
     return {
       ...result,
-      questions: quizQuestionsData.map(q => ({
-        ...q.question,
-        points: q.quizQuestion.points,
-        displayOrder: q.quizQuestion.displayOrder,
-        groupId: q.quizQuestion.groupId,
-      })),
+      questions: questionsWithOptions,
       groups: groups || [],
     };
   }

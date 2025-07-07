@@ -469,11 +469,13 @@ export default function EnhancedQuizBuilder() {
             passwordProtected: quizData.passwordProtected || false,
             password: quizData.password || "",
             ipLocking: quizData.ipLocking || false,
+            oneQuestionAtATime: quizData.oneQuestionAtATime !== false,
           });
           setQuizId(existingQuizId);
           
           // Load questions if available
           if (quizData.questions && Array.isArray(quizData.questions)) {
+            console.log(`Loading ${quizData.questions.length} questions for quiz ${existingQuizId}`);
             const formattedQuestions = quizData.questions.map((q: any) => ({
               id: q.id,
               questionText: q.questionText,
@@ -648,6 +650,7 @@ export default function EnhancedQuizBuilder() {
       passwordProtected: quiz.passwordProtected || false,
       password: quiz.password || "",
       ipLocking: quiz.ipLocking || false,
+      oneQuestionAtATime: quiz.oneQuestionAtATime !== false,
       // Include questions and groups
       questions: quizQuestions,
       groups: questionGroups,
@@ -1453,6 +1456,15 @@ export default function EnhancedQuizBuilder() {
                       onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, shuffleAnswers: checked }))}
                     />
                     <Label htmlFor="shuffle-answers">Shuffle Answer Options</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="one-question-at-time"
+                      checked={quiz.oneQuestionAtATime !== false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, oneQuestionAtATime: checked }))}
+                    />
+                    <Label htmlFor="one-question-at-time">Show One Question at a Time</Label>
                   </div>
                 </CardContent>
               </Card>
