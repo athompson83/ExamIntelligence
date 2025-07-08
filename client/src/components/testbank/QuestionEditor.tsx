@@ -95,10 +95,10 @@ export function QuestionEditor({ testbankId, question, onSave, onCancel }: Quest
 
   const createQuestionMutation = useMutation({
     mutationFn: async (data: QuestionFormData) => {
-      const response = await apiRequest("POST", "/api/questions", {
+      const response = await apiRequest("/api/questions", { method: "POST", body: JSON.stringify({
         ...data,
         testbankId,
-      });
+      }) });
       return response.json();
     },
     onSuccess: (newQuestion) => {
@@ -120,7 +120,7 @@ export function QuestionEditor({ testbankId, question, onSave, onCancel }: Quest
 
   const updateQuestionMutation = useMutation({
     mutationFn: async (data: QuestionFormData) => {
-      const response = await apiRequest("PUT", `/api/questions/${question!.id}`, data);
+      const response = await apiRequest(`/api/questions/${question!.id}`, { method: "PUT", body: JSON.stringify(data) });
       return response.json();
     },
     onSuccess: (updatedQuestion) => {

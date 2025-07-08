@@ -59,7 +59,7 @@ export function TestbankEditor({ testbank, onSave, onCancel }: TestbankEditorPro
 
   const createTestbankMutation = useMutation({
     mutationFn: async (data: TestbankFormData) => {
-      const response = await apiRequest("POST", "/api/testbanks", data);
+      const response = await apiRequest("/api/testbanks", { method: "POST", body: JSON.stringify(data) });
       return response.json();
     },
     onSuccess: (newTestbank) => {
@@ -81,7 +81,7 @@ export function TestbankEditor({ testbank, onSave, onCancel }: TestbankEditorPro
 
   const updateTestbankMutation = useMutation({
     mutationFn: async (data: TestbankFormData) => {
-      const response = await apiRequest("PUT", `/api/testbanks/${testbank!.id}`, data);
+      const response = await apiRequest(`/api/testbanks/${testbank!.id}`, { method: "PUT", body: JSON.stringify(data) });
       return response.json();
     },
     onSuccess: (updatedTestbank) => {

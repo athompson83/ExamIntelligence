@@ -39,7 +39,7 @@ export default function QuizProgressSaver({
   // Save progress mutation
   const saveProgressMutation = useMutation({
     mutationFn: (progressData: any) => 
-      apiRequest(`/api/quiz-progress/${attemptId}`, 'PUT', progressData),
+      apiRequest(`/api/quiz-progress/${attemptId}`, { method: 'PUT', body: JSON.stringify(progressData) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quiz-progress', attemptId] });
     }

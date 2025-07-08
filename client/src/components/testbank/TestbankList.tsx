@@ -27,7 +27,7 @@ export function TestbankList({ onCreateNew, onEdit, onView }: TestbankListProps)
 
   const deleteTestbankMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/testbanks/${id}`);
+      await apiRequest(`/api/testbanks/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/testbanks"] });
@@ -47,7 +47,7 @@ export function TestbankList({ onCreateNew, onEdit, onView }: TestbankListProps)
 
   const revalidateTestbankMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("POST", `/api/testbanks/${id}/revalidate`);
+      await apiRequest(`/api/testbanks/${id}/revalidate`, { method: "POST" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/testbanks"] });

@@ -92,9 +92,9 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
       };
 
       if (questionId) {
-        await apiRequest("PUT", `/api/questions/${questionId}`, formattedData);
+        await apiRequest(`/api/questions/${questionId}`, { method: "PUT", body: JSON.stringify(formattedData) });
       } else {
-        await apiRequest("POST", "/api/questions", formattedData);
+        await apiRequest("/api/questions", { method: "POST", body: JSON.stringify(formattedData) });
       }
     },
     onSuccess: () => {
@@ -119,7 +119,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
       if (!questionId) {
         throw new Error("Question must be saved before validation");
       }
-      const response = await apiRequest("POST", `/api/questions/${questionId}/validate`);
+      const response = await apiRequest(`/api/questions/${questionId}/validate`, { method: "POST" });
       return await response.json();
     },
     onSuccess: (data) => {

@@ -43,7 +43,7 @@ export default function TestbankCard({ testbank, onGenerateQuestions, isGenerati
 
   const deleteTestbankMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/testbanks/${id}`);
+      await apiRequest(`/api/testbanks/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       toast({

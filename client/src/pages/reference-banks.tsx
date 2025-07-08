@@ -44,7 +44,7 @@ export default function ReferenceBanks() {
   // Bank mutations
   const createBankMutation = useMutation({
     mutationFn: async (data: { title: string; description: string; tags: string[] }) => {
-      return apiRequest("POST", "/api/reference-banks", data);
+      return apiRequest("/api/reference-banks", { method: "POST", body: JSON.stringify(data) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reference-banks"] });
@@ -58,7 +58,7 @@ export default function ReferenceBanks() {
 
   const updateBankMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<ReferenceBank> }) => {
-      return apiRequest("PATCH", `/api/reference-banks/${id}`, data);
+      return apiRequest(`/api/reference-banks/${id}`, { method: "PATCH", body: JSON.stringify(data) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reference-banks"] });
@@ -72,7 +72,7 @@ export default function ReferenceBanks() {
 
   const deleteBankMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest("DELETE", `/api/reference-banks/${id}`);
+      return apiRequest(`/api/reference-banks/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reference-banks"] });
@@ -89,7 +89,7 @@ export default function ReferenceBanks() {
   // Reference mutations
   const createReferenceMutation = useMutation({
     mutationFn: async (data: { title: string; type: string; content: string; url?: string; tags: string[] }) => {
-      return apiRequest("POST", `/api/reference-banks/${selectedBank}/references`, data);
+      return apiRequest(`/api/reference-banks/${selectedBank}/references`, { method: "POST", body: JSON.stringify(data) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reference-banks", selectedBank, "references"] });
@@ -103,7 +103,7 @@ export default function ReferenceBanks() {
 
   const updateReferenceMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Reference> }) => {
-      return apiRequest("PATCH", `/api/references/${id}`, data);
+      return apiRequest(`/api/references/${id}`, { method: "PATCH", body: JSON.stringify(data) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reference-banks", selectedBank, "references"] });
@@ -117,7 +117,7 @@ export default function ReferenceBanks() {
 
   const deleteReferenceMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest("DELETE", `/api/references/${id}`);
+      return apiRequest(`/api/references/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reference-banks", selectedBank, "references"] });

@@ -79,7 +79,7 @@ export default function StudyAids() {
       title: string; 
       customPrompt?: string;
     }) => {
-      return apiRequest('POST', '/api/study-aids/generate', data);
+      return apiRequest('/api/study-aids/generate', { method: 'POST', body: JSON.stringify(data) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/study-aids'] });
@@ -104,7 +104,7 @@ export default function StudyAids() {
 
   const deleteStudyAidMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest('DELETE', `/api/study-aids/${id}`);
+      return apiRequest(`/api/study-aids/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/study-aids'] });

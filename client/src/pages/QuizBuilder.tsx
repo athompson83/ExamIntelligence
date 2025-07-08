@@ -106,12 +106,12 @@ export default function QuizBuilder() {
       if (selectedQuestions.length > 0) {
         await Promise.all(
           selectedQuestions.map((questionId, index) =>
-            apiRequest("POST", "/api/quiz-questions", {
+            apiRequest("/api/quiz-questions", { method: "POST", body: JSON.stringify({
               quizId: quiz.id,
               questionId,
               order: index + 1,
               points: 1,
-            })
+            }) }
           )
         );
       }
