@@ -22,7 +22,8 @@ import {
   Bot,
   Code,
   MessageSquare,
-  HelpCircle
+  HelpCircle,
+  Smartphone
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -33,6 +34,7 @@ export default function Sidebar() {
     { href: "/", label: "Dashboard", icon: BarChart3 },
     { href: "/item-banks", label: "Item Banks", icon: BookOpen },
     { href: "/quiz-manager", label: "Quiz Manager", icon: Puzzle },
+    { href: "/mobile", label: "Mobile App", icon: Smartphone },
     { href: "/live-exams", label: "Live Exams", icon: PlayCircle },
     { href: "/proctoring-security", label: "Proctoring Security", icon: Shield },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
