@@ -27,7 +27,14 @@ const OnboardingTour: React.FC = () => {
   const [run, setRun] = useState(false);
 
   useEffect(() => {
-    setRun(isOnboardingActive);
+    if (isOnboardingActive) {
+      // Add a small delay to ensure DOM elements are mounted
+      setTimeout(() => {
+        setRun(true);
+      }, 500);
+    } else {
+      setRun(false);
+    }
   }, [isOnboardingActive]);
 
   // Define tour steps based on user role
