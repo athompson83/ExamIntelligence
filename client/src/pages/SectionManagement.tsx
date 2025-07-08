@@ -25,6 +25,7 @@ import {
   Home,
   ChevronRight
 } from 'lucide-react';
+import { Link } from 'wouter';
 
 interface Section {
   id: string;
@@ -256,7 +257,9 @@ export default function SectionManagement() {
     <div className="container mx-auto p-6 space-y-6">
       {/* Breadcrumb */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Home className="h-4 w-4" />
+        <Link href="/" className="flex items-center hover:text-foreground transition-colors">
+          <Home className="h-4 w-4" />
+        </Link>
         <ChevronRight className="h-4 w-4" />
         <span className="font-medium text-foreground">Section Management</span>
       </nav>

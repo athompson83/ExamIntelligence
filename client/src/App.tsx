@@ -56,6 +56,8 @@ import QuizManager from "@/pages/quiz-manager";
 import SectionManagement from "@/pages/SectionManagement";
 import Assignments from "@/pages/Assignments";
 import MobileApp from "@/pages/MobileAppFixed";
+import SystemTest from "@/pages/SystemTest";
+import Test from "@/pages/Test";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -141,6 +143,8 @@ function Router() {
           <Route path="/quiz-taker-demo" component={QuizTakerDemo} />
           <Route path="/quiz-builder-demo" component={QuizBuilderDemo} />
           <Route path="/section-management" component={SectionManagement} />
+          <Route path="/test" component={Test} />
+          <Route path="/system-test" component={SystemTest} />
         </>
       )}
       <Route component={NotFound} />

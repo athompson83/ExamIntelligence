@@ -2817,17 +2817,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/sections', mockAuth, async (req, res) => {
     try {
       const { name, description } = req.body;
-      const userId = req.user.id;
+      const userId = req.user?.id || 'test-user';
       const section = await storage.createSection({
         name,
         description,
         creatorId: userId,
-        accountId: 'default-account',
+        accountId: '00000000-0000-0000-0000-000000000001',
       });
       res.json(section);
     } catch (error) {
       console.error('Error creating section:', error);
-      res.status(500).json({ message: 'Failed to create section' });
+      res.status(500).json({ message: 'Failed to create section', error: error.message });
     }
   });
 
