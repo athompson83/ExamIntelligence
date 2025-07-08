@@ -58,6 +58,7 @@ import Assignments from "@/pages/Assignments";
 import MobileApp from "@/pages/MobileAppFixed";
 import SystemTest from "@/pages/SystemTest";
 import ComprehensiveTest from "@/pages/ComprehensiveTest";
+import SectionManagementTest from "@/pages/SectionManagementTest";
 import Test from "@/pages/Test";
 
 function Router() {
@@ -147,6 +148,7 @@ function Router() {
           <Route path="/test" component={Test} />
           <Route path="/system-test" component={SystemTest} />
           <Route path="/comprehensive-test" component={ComprehensiveTest} />
+          <Route path="/section-management-test" component={SectionManagementTest} />
         </>
       )}
       <Route component={NotFound} />

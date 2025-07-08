@@ -2803,6 +2803,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Users API route for section management
+  app.get('/api/users', mockAuth, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
   // Section Management API routes
   app.get('/api/sections', mockAuth, async (req, res) => {
     try {

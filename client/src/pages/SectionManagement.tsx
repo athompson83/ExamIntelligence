@@ -578,9 +578,9 @@ export default function SectionManagement() {
               <div className="space-y-2">
                 <h3 className="font-medium">Current Members</h3>
                 <div className="space-y-2">
-                  {sectionMembers.map((member: any) => (
-                    <div key={member.studentId} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span>{member.studentName}</span>
+                  {sectionMembers.map((member: any, index: number) => (
+                    <div key={member.studentId || `member-${index}`} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span>{member.studentName || `${member.firstName} ${member.lastName}`}</span>
                       <Button variant="outline" size="sm">
                         Remove
                       </Button>
