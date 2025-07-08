@@ -2735,6 +2735,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Section Management API routes
+  app.get('/api/sections', mockAuth, async (req, res) => {
+    try {
+      const sections = await storage.getSections();
+      res.json(sections);
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+      res.status(500).json({ message: 'Failed to fetch sections' });
+    }
+  });
+
+  app.post('/api/sections', mockAuth, async (req, res) => {
+    try {
+      const { name, description } = req.body;
+      const userId = req.user.id;
+      const section = await storage.createSection({
+        name,
+        description,
+        creatorId: userId,
+        accountId: 'default-account',
+      });
+      res.json(section);
+    } catch (error) {
+      console.error('Error creating section:', error);
+      res.status(500).json({ message: 'Failed to create section' });
+    }
+  });
+
+  app.get('/api/sections/:sectionId/members', mockAuth, async (req, res) => {
+    try {
+      const { sectionId } = req.params;
+      const members = await storage.getSectionMembers(sectionId);
+      res.json(members);
+    } catch (error) {
+      console.error('Error fetching section members:', error);
+      res.status(500).json({ message: 'Failed to fetch section members' });
+    }
+  });
+
+  app.post('/api/sections/:sectionId/members', mockAuth, async (req, res) => {
+    try {
+      const { sectionId } = req.params;
+      const { studentIds } = req.body;
+      await storage.addStudentsToSection(sectionId, studentIds);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error adding students to section:', error);
+      res.status(500).json({ message: 'Failed to add students to section' });
+    }
+  });
+
+  app.get('/api/quiz-assignments', mockAuth, async (req, res) => {
+    try {
+      const assignments = await storage.getQuizAssignments();
+      res.json(assignments);
+    } catch (error) {
+      console.error('Error fetching quiz assignments:', error);
+      res.status(500).json({ message: 'Failed to fetch quiz assignments' });
+    }
+  });
+
+  app.post('/api/quiz-assignments', mockAuth, async (req, res) => {
+    try {
+      const { quizId, assignedToUserId, assignedToSectionId, dueDate, maxAttempts, timeLimit } = req.body;
+      const userId = req.user.id;
+      const assignment = await storage.createQuizAssignment({
+        quizId,
+        assignedToUserId,
+        assignedToSectionId,
+        assignedById: userId,
+        accountId: 'default-account',
+        dueDate,
+        maxAttempts,
+        timeLimit,
+      });
+      res.json(assignment);
+    } catch (error) {
+      console.error('Error creating quiz assignment:', error);
+      res.status(500).json({ message: 'Failed to create quiz assignment' });
+    }
+  });
+
   app.get('/api/quizzes/completed',  async (req: any, res) => {
     try {
       const userId = req.user.claims?.sub || req.user.id;

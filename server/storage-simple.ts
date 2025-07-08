@@ -7,6 +7,9 @@ import {
   quizAttempts,
   quizResponses,
   accounts,
+  sections,
+  sectionMemberships,
+  quizAssignments,
   type User,
   type UpsertUser,
   type Testbank,
@@ -454,6 +457,123 @@ export class DatabaseStorage implements IStorage {
 
   async getActiveExamSessions(userId: string): Promise<any[]> {
     return [];
+  }
+
+  // Section Management Methods
+  async getSections(): Promise<any[]> {
+    try {
+      const sectionsList = await db.select().from(sections);
+      
+      // Add member count for each section
+      const sectionsWithCounts = await Promise.all(
+        sectionsList.map(async (section) => {
+          const members = await db
+            .select()
+            .from(sectionMemberships)
+            .where(eq(sectionMemberships.sectionId, section.id));
+          
+          return {
+            ...section,
+            memberCount: members.length,
+          };
+        })
+      );
+      
+      return sectionsWithCounts;
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+      return [];
+    }
+  }
+
+  async createSection(sectionData: any): Promise<any> {
+    try {
+      const [section] = await db
+        .insert(sections)
+        .values(sectionData)
+        .returning();
+      return section;
+    } catch (error) {
+      console.error('Error creating section:', error);
+      throw error;
+    }
+  }
+
+  async getSectionMembers(sectionId: string): Promise<any[]> {
+    try {
+      const members = await db
+        .select({
+          studentId: sectionMemberships.studentId,
+          studentName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+          studentEmail: users.email,
+          joinedAt: sectionMemberships.joinedAt,
+        })
+        .from(sectionMemberships)
+        .leftJoin(users, eq(sectionMemberships.studentId, users.id))
+        .where(eq(sectionMemberships.sectionId, sectionId));
+      
+      return members;
+    } catch (error) {
+      console.error('Error fetching section members:', error);
+      return [];
+    }
+  }
+
+  async addStudentsToSection(sectionId: string, studentIds: string[]): Promise<void> {
+    try {
+      const memberships = studentIds.map(studentId => ({
+        sectionId,
+        studentId,
+      }));
+      
+      await db.insert(sectionMemberships).values(memberships);
+    } catch (error) {
+      console.error('Error adding students to section:', error);
+      throw error;
+    }
+  }
+
+  async getQuizAssignments(): Promise<any[]> {
+    try {
+      const assignments = await db
+        .select({
+          id: quizAssignments.id,
+          quizId: quizAssignments.quizId,
+          quizTitle: quizzes.title,
+          assignedToUserId: quizAssignments.assignedToUserId,
+          assignedToSectionId: quizAssignments.assignedToSectionId,
+          assignedToSectionName: sections.name,
+          assignedToUserName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+          assignedById: quizAssignments.assignedById,
+          dueDate: quizAssignments.dueDate,
+          maxAttempts: quizAssignments.maxAttempts,
+          timeLimit: quizAssignments.timeLimit,
+          isActive: quizAssignments.isActive,
+          createdAt: quizAssignments.createdAt,
+        })
+        .from(quizAssignments)
+        .leftJoin(quizzes, eq(quizAssignments.quizId, quizzes.id))
+        .leftJoin(sections, eq(quizAssignments.assignedToSectionId, sections.id))
+        .leftJoin(users, eq(quizAssignments.assignedToUserId, users.id));
+      
+      return assignments;
+    } catch (error) {
+      console.error('Error fetching quiz assignments:', error);
+      return [];
+    }
+  }
+
+  async createQuizAssignment(assignmentData: any): Promise<any> {
+    try {
+      const [assignment] = await db
+        .insert(quizAssignments)
+        .values(assignmentData)
+        .returning();
+      return assignment;
+    } catch (error) {
+      console.error('Error creating quiz assignment:', error);
+      throw error;
+    }
   }
 }
 

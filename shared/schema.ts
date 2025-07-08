@@ -620,6 +620,57 @@ export const difficultyEntries = pgTable("difficulty_entries", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Student Sections for organizing students
+export const sections = pgTable("sections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  creatorId: varchar("creator_id").references(() => users.id),
+  accountId: uuid("account_id").references(() => accounts.id),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Student Section Memberships
+export const sectionMemberships = pgTable("section_memberships", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sectionId: uuid("section_id").references(() => sections.id),
+  studentId: varchar("student_id").references(() => users.id),
+  joinedAt: timestamp("joined_at").defaultNow(),
+}, (table) => ({
+  primaryKey: primaryKey({ columns: [table.sectionId, table.studentId] }),
+}));
+
+// Quiz Assignments (to users or sections)
+export const quizAssignments = pgTable("quiz_assignments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  quizId: uuid("quiz_id").references(() => quizzes.id),
+  
+  // Assignment can be to individual user or section
+  assignedToUserId: varchar("assigned_to_user_id").references(() => users.id),
+  assignedToSectionId: uuid("assigned_to_section_id").references(() => sections.id),
+  
+  // Assignment metadata
+  assignedById: varchar("assigned_by_id").references(() => users.id),
+  accountId: uuid("account_id").references(() => accounts.id),
+  
+  // Availability settings
+  availableFrom: timestamp("available_from"),
+  availableUntil: timestamp("available_until"),
+  dueDate: timestamp("due_date"),
+  
+  // Assignment settings
+  maxAttempts: integer("max_attempts").default(1),
+  timeLimit: integer("time_limit"), // in minutes
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const accountsRelations = relations(accounts, ({ many }) => ({
   users: many(users),
@@ -646,6 +697,10 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   userBadges: many(userBadges),
   learningMilestones: many(learningMilestones),
   socialShares: many(socialShares),
+  createdSections: many(sections),
+  sectionMemberships: many(sectionMemberships),
+  quizAssignments: many(quizAssignments),
+  assignedQuizzes: many(quizAssignments),
 }));
 
 export const testbanksRelations = relations(testbanks, ({ one, many }) => ({
@@ -991,6 +1046,26 @@ export const socialSharesRelations = relations(socialShares, ({ one }) => ({
   attempt: one(quizAttempts, { fields: [socialShares.attemptId], references: [quizAttempts.id] }),
 }));
 
+export const sectionsRelations = relations(sections, ({ one, many }) => ({
+  creator: one(users, { fields: [sections.creatorId], references: [users.id] }),
+  account: one(accounts, { fields: [sections.accountId], references: [accounts.id] }),
+  memberships: many(sectionMemberships),
+  assignments: many(quizAssignments),
+}));
+
+export const sectionMembershipsRelations = relations(sectionMemberships, ({ one }) => ({
+  section: one(sections, { fields: [sectionMemberships.sectionId], references: [sections.id] }),
+  student: one(users, { fields: [sectionMemberships.studentId], references: [users.id] }),
+}));
+
+export const quizAssignmentsRelations = relations(quizAssignments, ({ one }) => ({
+  quiz: one(quizzes, { fields: [quizAssignments.quizId], references: [quizzes.id] }),
+  assignedToUser: one(users, { fields: [quizAssignments.assignedToUserId], references: [users.id] }),
+  assignedToSection: one(sections, { fields: [quizAssignments.assignedToSectionId], references: [sections.id] }),
+  assignedBy: one(users, { fields: [quizAssignments.assignedById], references: [users.id] }),
+  account: one(accounts, { fields: [quizAssignments.accountId], references: [accounts.id] }),
+}));
+
 // certificateTemplatesRelations moved to NEW FEATURES section
 
 // Insert schemas
@@ -1025,7 +1100,9 @@ export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({ id: t
 export const insertLearningMilestoneSchema = createInsertSchema(learningMilestones).omit({ id: true, createdAt: true });
 export const insertSocialShareSchema = createInsertSchema(socialShares).omit({ id: true, sharedAt: true });
 export const insertBadgeTemplateSchema = createInsertSchema(badgeTemplates).omit({ id: true, createdAt: true });
-// Removed duplicate - using NEW FEATURES version
+export const insertSectionSchema = createInsertSchema(sections).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSectionMembershipSchema = createInsertSchema(sectionMemberships).omit({ id: true, joinedAt: true });
+export const insertQuizAssignmentSchema = createInsertSchema(quizAssignments).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -1090,7 +1167,12 @@ export type InsertSocialShare = z.infer<typeof insertSocialShareSchema>;
 export type SocialShare = typeof socialShares.$inferSelect;
 export type InsertBadgeTemplate = z.infer<typeof insertBadgeTemplateSchema>;
 export type BadgeTemplate = typeof badgeTemplates.$inferSelect;
-// Removed duplicate certificate types - using NEW FEATURES versions
+export type InsertSection = z.infer<typeof insertSectionSchema>;
+export type Section = typeof sections.$inferSelect;
+export type InsertSectionMembership = z.infer<typeof insertSectionMembershipSchema>;
+export type SectionMembership = typeof sectionMemberships.$inferSelect;
+export type InsertQuizAssignment = z.infer<typeof insertQuizAssignmentSchema>;
+export type QuizAssignment = typeof quizAssignments.$inferSelect;
 
 // Additional tables for badge and certificate system
 export const awardedBadges = pgTable("awarded_badges", {

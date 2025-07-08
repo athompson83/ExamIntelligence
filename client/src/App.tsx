@@ -53,6 +53,7 @@ import PublishedQuizzes from "@/pages/published-quizzes";
 import QuizPreview from "@/pages/quiz-preview";
 import EnhancedQuizPreview from "@/pages/enhanced-quiz-preview";
 import QuizManager from "@/pages/quiz-manager";
+import SectionManagement from "@/pages/SectionManagement";
 import MobileApp from "@/pages/MobileApp";
 
 function Router() {
@@ -137,6 +138,7 @@ function Router() {
           <Route path="/published-quizzes" component={PublishedQuizzes} />
           <Route path="/quiz-taker-demo" component={QuizTakerDemo} />
           <Route path="/quiz-builder-demo" component={QuizBuilderDemo} />
+          <Route path="/section-management" component={SectionManagement} />
         </>
       )}
       <Route component={NotFound} />

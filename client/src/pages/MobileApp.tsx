@@ -1321,7 +1321,7 @@ export default function MobileApp() {
       </div>
 
       {/* Main Content */}
-      <div className="px-4 py-6">
+      <div className="px-4 py-6 pb-20 overflow-y-auto" style={{ height: 'calc(100vh - 120px)' }}>
         {currentView === 'dashboard' && renderDashboard()}
         {currentView === 'quizzes' && renderQuizzes()}
         {currentView === 'exam' && renderExam()}
