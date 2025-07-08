@@ -27,6 +27,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ProgressBar } from 'react-native-progress';
 import axios from 'axios';
+import ExamLockdown from './components/ExamLockdown';
 
 // Create navigation instances
 const Tab = createBottomTabNavigator();

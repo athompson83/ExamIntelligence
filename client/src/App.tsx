@@ -54,7 +54,7 @@ import QuizPreview from "@/pages/quiz-preview";
 import EnhancedQuizPreview from "@/pages/enhanced-quiz-preview";
 import QuizManager from "@/pages/quiz-manager";
 import SectionManagement from "@/pages/SectionManagement";
-import MobileApp from "@/pages/MobileApp";
+import MobileApp from "@/pages/MobileAppFixed";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
