@@ -43,7 +43,10 @@ import {
   Smartphone,
   RefreshCw,
   Copy,
-  ExternalLink
+  ExternalLink,
+  CheckCircle,
+  Link,
+  Download
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import QRCode from 'qrcode';
