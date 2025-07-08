@@ -14,10 +14,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, Settings, Code, Bot, AlertTriangle, Save, RotateCcw, TestTube, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2, Settings, Code, Bot, AlertTriangle, Save, RotateCcw, TestTube, CheckCircle, Sparkles, Brain, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import DragDropVariableBuilder from "@/components/DragDropVariableBuilder";
+import PromptOptimizer from "@/components/PromptOptimizer";
 
 // Types for backend prompts
 interface BackendPrompt {
@@ -81,6 +83,12 @@ export default function BackendPromptManagementPage() {
   const [selectedPrompt, setSelectedPrompt] = useState<BackendPrompt | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   
+  // Drag-and-drop variable management
+  const [dragDropVariables, setDragDropVariables] = useState<any[]>([]);
+  const [currentPromptContent, setCurrentPromptContent] = useState("");
+  const [showVariableBuilder, setShowVariableBuilder] = useState(false);
+  const [showPromptOptimizer, setShowPromptOptimizer] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -127,6 +135,10 @@ export default function BackendPromptManagementPage() {
       setIsCreateDialogOpen(false);
       setEditingPrompt(null);
       form.reset();
+      setDragDropVariables([]);
+      setCurrentPromptContent("");
+      setShowVariableBuilder(false);
+      setShowPromptOptimizer(false);
       toast({
         title: "Prompt Created",
         description: "Backend prompt has been created successfully",
@@ -150,6 +162,10 @@ export default function BackendPromptManagementPage() {
       setIsCreateDialogOpen(false);
       setEditingPrompt(null);
       form.reset();
+      setDragDropVariables([]);
+      setCurrentPromptContent("");
+      setShowVariableBuilder(false);
+      setShowPromptOptimizer(false);
       toast({
         title: "Prompt Updated",
         description: "Backend prompt has been updated successfully",
@@ -197,10 +213,22 @@ export default function BackendPromptManagementPage() {
   });
 
   const handleSubmit = (data: PromptForm) => {
+    // Extract variables from the drag-and-drop builder
+    const extractedVariables = dragDropVariables.map(v => v.name);
+    
+    // Merge with any additional variables from the form
+    const allVariables = Array.from(new Set([...extractedVariables, ...data.variables]));
+    
+    const submissionData = {
+      ...data,
+      variables: allVariables,
+      content: currentPromptContent || data.content,
+    };
+    
     if (editingPrompt) {
-      updatePromptMutation.mutate({ id: editingPrompt.id, data });
+      updatePromptMutation.mutate({ id: editingPrompt.id, data: submissionData });
     } else {
-      createPromptMutation.mutate(data);
+      createPromptMutation.mutate(submissionData);
     }
   };
 
@@ -212,6 +240,10 @@ export default function BackendPromptManagementPage() {
   const openCreateDialog = () => {
     setEditingPrompt(null);
     form.reset();
+    setDragDropVariables([]);
+    setCurrentPromptContent("");
+    setShowVariableBuilder(false);
+    setShowPromptOptimizer(false);
     setIsCreateDialogOpen(true);
   };
 
@@ -227,6 +259,22 @@ export default function BackendPromptManagementPage() {
       isActive: prompt.isActive,
       version: prompt.version,
     });
+    
+    // Initialize drag-and-drop variables from the existing prompt
+    const existingVariables = prompt.variables.map((varName, index) => ({
+      id: `var-${index}`,
+      name: varName,
+      type: 'text' as const,
+      description: `Variable: ${varName}`,
+      defaultValue: '',
+      isRequired: true,
+      category: 'quiz_data' as const,
+    }));
+    
+    setDragDropVariables(existingVariables);
+    setCurrentPromptContent(prompt.content);
+    setShowVariableBuilder(false);
+    setShowPromptOptimizer(false);
     setIsCreateDialogOpen(true);
   };
 
@@ -648,26 +696,83 @@ export default function BackendPromptManagementPage() {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prompt Content</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Enter the AI prompt content here. Use {{variable}} syntax for dynamic variables."
-                        className="min-h-[200px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Use double curly braces for variables: {`{{topic}}, {{difficulty}}, {{questionType}}`}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
+              {/* Enhanced Prompt Building Interface */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowVariableBuilder(!showVariableBuilder)}
+                    className="flex items-center gap-2"
+                  >
+                    <Database className="h-4 w-4" />
+                    {showVariableBuilder ? 'Hide' : 'Show'} Variable Builder
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowPromptOptimizer(!showPromptOptimizer)}
+                    className="flex items-center gap-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {showPromptOptimizer ? 'Hide' : 'Show'} AI Optimizer
+                  </Button>
+                </div>
+
+                {showVariableBuilder && (
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <DragDropVariableBuilder
+                      variables={dragDropVariables}
+                      onVariablesChange={setDragDropVariables}
+                      promptContent={currentPromptContent || form.watch('content') || ''}
+                      onPromptContentChange={(content) => {
+                        setCurrentPromptContent(content);
+                        form.setValue('content', content);
+                      }}
+                      category={form.watch('category') || 'question_generation'}
+                    />
+                  </div>
                 )}
-              />
+
+                {showPromptOptimizer && (
+                  <div className="border rounded-lg p-4 bg-blue-50">
+                    <PromptOptimizer
+                      originalPrompt={form.watch('content') || ''}
+                      category={form.watch('category') || 'question_generation'}
+                      variables={dragDropVariables.map(v => v.name) || []}
+                      onOptimizedPrompt={(optimizedPrompt) => {
+                        form.setValue('content', optimizedPrompt);
+                        setCurrentPromptContent(optimizedPrompt);
+                      }}
+                    />
+                  </div>
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prompt Content</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Enter the AI prompt content here. Use {variable} syntax for dynamic variables."
+                          className="min-h-[300px] font-mono"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setCurrentPromptContent(e.target.value);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Use single curly braces for variables: {`{topic}, {difficulty}, {questionType}`}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}

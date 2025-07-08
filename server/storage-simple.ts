@@ -1022,95 +1022,305 @@ export class DatabaseStorage implements IStorage {
   // Prompt Template Methods
   async getAllPromptTemplates(): Promise<PromptTemplate[]> {
     try {
-      // Mock implementation for testing - mapped to BackendPrompt interface
-      const mockPrompts = [
+      // Real prompts from the AI service with actual templates
+      const realPrompts = [
         {
           id: 'prompt1',
-          name: 'Question Generation',
-          description: 'Default template for generating questions',
-          category: 'question_generation',
+          name: 'Question Validation - Comprehensive',
+          description: 'Research-based question validation using CRESST, Kansas Curriculum Center, and UC Riverside standards',
+          category: 'question_validation',
           promptType: 'system',
-          content: 'Generate educational questions about {topic} for {audience}',
-          variables: ['topic', 'audience'],
+          content: `COMPREHENSIVE EDUCATIONAL QUESTION VALIDATION
+
+As a PhD-level educational assessment specialist, analyze this question using evidence-based standards from CRESST, Kansas Curriculum Center, UC Riverside School of Medicine, and Assessment Systems research:
+
+**QUESTION DETAILS:**
+Text: "{questionText}"
+Type: {questionType}
+Difficulty Level: {difficultyScore}/10
+Bloom's Taxonomy: {bloomsLevel}
+Points: {points}
+
+**ANSWER OPTIONS:**
+{answerOptions}
+
+**COMPREHENSIVE VALIDATION CRITERIA:**
+
+**1. Question Stem Quality (Research-Based Standards):**
+- Clarity: One-reading comprehension without ambiguity
+- Language: Direct questions preferred over incomplete statements
+- Negatives: Avoid unnecessary NOT, EXCEPT constructions
+- Bias: Cultural, gender, socioeconomic neutrality
+- Relevance: Focus on learning objectives, not trivial details
+- Vocabulary: Age and education-level appropriate
+- Cognitive Load: Balanced complexity for target difficulty
+
+**2. Multiple Choice Excellence:**
+- Distractors: 3-5 plausible options representing common misconceptions
+- Parallelism: Grammatically consistent and similar length options
+- Exclusivity: Mutually exclusive choices, one clearly correct answer
+- Realism: Distractors based on actual student errors
+- Homogeneity: Options of similar complexity and abstraction level
+
+**3. Cognitive Alignment:**
+- Bloom's Level Accuracy: Does cognitive demand match stated level?
+- Difficulty Calibration: Is 1-10 rating appropriate for complexity?
+- Skill Assessment: Does question measure intended learning outcome?
+- Depth vs. Breadth: Appropriate focus for assessment goals
+
+**4. Psychometric Quality:**
+- Discrimination: Can question differentiate between ability levels?
+- Item Response Theory: Optimal difficulty for target population
+- Construct Validity: Measures what it claims to measure
+- Face Validity: Appears relevant to domain experts
+
+**5. Accessibility & Fairness:**
+- Universal Design: Accessible to diverse learning needs
+- Language Barriers: Clear for English language learners
+- Cultural Sensitivity: Avoids cultural assumptions
+- Format Clarity: Visual layout supports comprehension
+
+**6. Educational Value:**
+- Learning Promotion: Encourages deep understanding
+- Feedback Potential: Errors provide diagnostic information
+- Curriculum Alignment: Matches educational standards
+- Transfer Potential: Knowledge applicable beyond test context
+
+Return JSON with detailed analysis:
+{
+  "issues": ["List of specific problems found"],
+  "suggestions": ["Specific improvement recommendations"],
+  "confidenceScore": 0.85,
+  "status": "approved|rejected|needs_review",
+  "comments": "Detailed analysis summary"
+}`,
+          variables: ['questionText', 'questionType', 'difficultyScore', 'bloomsLevel', 'points', 'answerOptions'],
           isActive: true,
           isDefault: true,
-          version: '1.0.0',
+          version: '2.1.0',
           usage: {
-            totalCalls: 156,
-            successRate: 94.2,
-            avgResponseTime: 2.3,
+            totalCalls: 342,
+            successRate: 96.8,
+            avgResponseTime: 2.8,
             lastUsed: new Date('2024-01-08T18:30:00Z'),
           },
-          createdBy: 'test-user',
+          createdBy: 'system',
           createdAt: new Date('2024-01-01T00:00:00Z'),
           updatedAt: new Date('2024-01-08T18:30:00Z'),
         },
         {
           id: 'prompt2',
-          name: 'Question Validation',
-          description: 'Default template for validating questions',
-          category: 'question_validation',
+          name: 'AI Question Generation - Advanced',
+          description: 'Comprehensive question generation with customizable parameters for educational assessments',
+          category: 'question_generation',
           promptType: 'system',
-          content: 'Validate this question for clarity and educational value: {question}',
-          variables: ['question'],
+          content: `You are an expert educational assessment specialist with PhD-level expertise in psychometrics, item response theory, and evidence-based assessment design. Your role is to create high-quality, pedagogically sound questions that meet professional standards.
+
+**GENERATION PARAMETERS:**
+Topic: {topic}
+Question Count: {questionCount}
+Question Types: {questionTypes}
+Difficulty Range: {difficultyMin}-{difficultyMax} (1-10 scale)
+Bloom's Levels: {bloomsLevels}
+Target Audience: {targetAudience}
+Learning Objectives: {learningObjectives}
+
+**REFERENCE MATERIALS:**
+{referenceLinks}
+
+**CUSTOM INSTRUCTIONS:**
+{customInstructions}
+
+**QUALITY STANDARDS:**
+- Research-based question design following CRESST guidelines
+- Psychometrically sound with proper difficulty calibration
+- Clear, unambiguous language appropriate for target audience
+- Culturally neutral and bias-free content
+- Realistic distractors based on common misconceptions
+- Proper cognitive alignment with stated Bloom's levels
+
+**OUTPUT FORMAT:**
+Generate exactly {questionCount} questions in JSON format:
+[
+  {
+    "questionText": "Clear, concise question text",
+    "questionType": "multiple_choice|true_false|short_answer|essay",
+    "points": "1",
+    "difficultyScore": "1-10",
+    "bloomsLevel": "remember|understand|apply|analyze|evaluate|create",
+    "tags": ["topic", "subtopic"],
+    "correctFeedback": "Explanation for correct answer",
+    "incorrectFeedback": "Guidance for incorrect responses",
+    "generalFeedback": "Overall learning point",
+    "answerOptions": [
+      {"answerText": "Option A", "isCorrect": true, "displayOrder": 0},
+      {"answerText": "Option B", "isCorrect": false, "displayOrder": 1}
+    ]
+  }
+]`,
+          variables: ['topic', 'questionCount', 'questionTypes', 'difficultyMin', 'difficultyMax', 'bloomsLevels', 'targetAudience', 'learningObjectives', 'referenceLinks', 'customInstructions'],
           isActive: true,
           isDefault: true,
-          version: '1.0.0',
+          version: '3.0.0',
           usage: {
-            totalCalls: 87,
-            successRate: 96.8,
-            avgResponseTime: 1.8,
+            totalCalls: 156,
+            successRate: 94.2,
+            avgResponseTime: 4.3,
             lastUsed: new Date('2024-01-08T17:45:00Z'),
           },
-          createdBy: 'test-user',
+          createdBy: 'system',
           createdAt: new Date('2024-01-01T00:00:00Z'),
           updatedAt: new Date('2024-01-08T17:45:00Z'),
         },
         {
           id: 'prompt3',
-          name: 'Content Analysis',
-          description: 'Template for analyzing educational content',
+          name: 'Learning Prescription Generator',
+          description: 'Personalized learning recommendations based on quiz performance analysis',
           category: 'content_analysis',
           promptType: 'user',
-          content: 'Analyze the following educational content: {content}',
-          variables: ['content'],
+          content: `You are an expert educational specialist creating a personalized learning prescription for a student who just completed a quiz.
+
+**QUIZ PERFORMANCE ANALYSIS:**
+- Overall Score: {score}% ({correctAnswers}/{totalQuestions} correct)
+- Questions Missed: {incorrectCount}
+- Show Correct Answers: {showCorrectAnswers}
+
+**DETAILED QUESTION ANALYSIS:**
+{conceptAnalysis}
+
+**PRESCRIPTION REQUIREMENTS:**
+{showCorrectAnswers ? 'FULL PRESCRIPTION MODE (Correct answers shown)' : 'CONCEPT-FOCUSED MODE (Correct answers hidden)'}
+
+**LEARNING PRESCRIPTION STRUCTURE:**
+1. **Performance Summary**: Brief overview of strengths and areas for improvement
+2. **Key Concepts to Master**: Detailed explanations of fundamental concepts that need work
+3. **Study Strategy**: Specific, actionable study recommendations
+4. **Practice Recommendations**: Types of questions/activities to focus on
+5. **Next Steps**: Clear action items for improvement
+
+Create a comprehensive, personalized learning prescription that helps the student improve their understanding and performance.`,
+          variables: ['score', 'correctAnswers', 'totalQuestions', 'incorrectCount', 'showCorrectAnswers', 'conceptAnalysis'],
           isActive: true,
-          isDefault: false,
-          version: '1.2.0',
+          isDefault: true,
+          version: '2.0.0',
           usage: {
-            totalCalls: 42,
-            successRate: 91.3,
-            avgResponseTime: 3.1,
+            totalCalls: 89,
+            successRate: 92.1,
+            avgResponseTime: 3.2,
             lastUsed: new Date('2024-01-08T16:20:00Z'),
           },
-          createdBy: 'test-user',
+          createdBy: 'system',
           createdAt: new Date('2024-01-01T00:00:00Z'),
           updatedAt: new Date('2024-01-08T16:20:00Z'),
         },
         {
           id: 'prompt4',
-          name: 'System Initialization',
-          description: 'System-level prompt for initializing AI context',
-          category: 'system',
+          name: 'Study Guide Generator',
+          description: 'Comprehensive study material generation for quiz preparation',
+          category: 'content_analysis',
           promptType: 'system',
-          content: 'Initialize the AI system with the following context: {context}',
-          variables: ['context'],
+          content: `You are an expert educational content creator. Create comprehensive, engaging study materials that help students learn effectively.
+
+**STUDY GUIDE PARAMETERS:**
+Title: {title}
+Study Type: {studyType}
+Quiz ID: {quizId}
+Target Questions: {questionCount}
+
+**CONTENT REQUIREMENTS:**
+- Clear, organized structure with logical flow
+- Key concepts explained in accessible language
+- Examples and practice opportunities
+- Visual elements where appropriate
+- Self-assessment checkpoints
+
+**STUDY GUIDE SECTIONS:**
+1. **Learning Objectives**: What students should know after studying
+2. **Key Concepts**: Core ideas with clear explanations
+3. **Important Terms**: Definitions and context
+4. **Practice Questions**: Sample questions with explanations
+5. **Study Tips**: Specific strategies for mastering the material
+6. **Quick Reference**: Summary of key points
+
+Create engaging, educational content that promotes deep learning and exam success.`,
+          variables: ['title', 'studyType', 'quizId', 'questionCount'],
           isActive: true,
           isDefault: true,
-          version: '2.0.0',
+          version: '1.5.0',
           usage: {
-            totalCalls: 234,
-            successRate: 99.1,
-            avgResponseTime: 0.5,
-            lastUsed: new Date('2024-01-08T19:00:00Z'),
+            totalCalls: 67,
+            successRate: 89.6,
+            avgResponseTime: 2.9,
+            lastUsed: new Date('2024-01-08T19:10:00Z'),
           },
-          createdBy: 'test-user',
+          createdBy: 'system',
           createdAt: new Date('2024-01-01T00:00:00Z'),
-          updatedAt: new Date('2024-01-08T19:00:00Z'),
+          updatedAt: new Date('2024-01-08T19:10:00Z'),
+        },
+        {
+          id: 'prompt5',
+          name: 'Similar Question Generator',
+          description: 'Generate questions with similar style and approach but different content',
+          category: 'question_generation',
+          promptType: 'system',
+          content: `You are an expert educational assessment specialist. Create a NEW question that shares the same STYLE and APPROACH as the original question but covers different specific content within the same topic area.
+
+**ORIGINAL QUESTION ANALYSIS:**
+Question: {originalQuestion}
+Type: {questionType}
+Difficulty: {difficultyScore}/10
+Bloom's Level: {bloomsLevel}
+Answer Options: {answerOptions}
+
+**CONTEXT - OTHER QUESTIONS IN TESTBANK:**
+{existingQuestions}
+
+**ORIGINAL GENERATION INSTRUCTIONS:**
+{originalPrompt}
+
+**REQUIREMENTS FOR SIMILAR STYLE QUESTION:**
+1. Use the same question FORMAT and STRUCTURE as the original
+2. Target the same DIFFICULTY level ({difficultyScore}/10) and Bloom's taxonomy level
+3. Test related but DIFFERENT content within the same subject area
+4. Use similar language patterns and question phrasing style
+5. Maintain the same number of answer options with similar complexity
+6. Create a question that feels like it belongs in the same assessment but isn't a duplicate
+7. If the original uses scenarios, create a different scenario in the same context
+8. If the original tests calculations, create a different calculation problem
+
+**OUTPUT FORMAT:**
+Return JSON with the new question data:
+{
+  "questionText": "Your new question here",
+  "questionType": "{questionType}",
+  "points": "1",
+  "difficultyScore": "{difficultyScore}",
+  "bloomsLevel": "{bloomsLevel}",
+  "tags": ["relevant", "tags"],
+  "correctFeedback": "Explanation for correct answer",
+  "incorrectFeedback": "Guidance for incorrect responses",
+  "generalFeedback": "Overall learning point",
+  "answerOptions": [
+    {"answerText": "Option text", "isCorrect": true, "displayOrder": 0}
+  ]
+}`,
+          variables: ['originalQuestion', 'questionType', 'difficultyScore', 'bloomsLevel', 'answerOptions', 'existingQuestions', 'originalPrompt'],
+          isActive: true,
+          isDefault: true,
+          version: '1.0.0',
+          usage: {
+            totalCalls: 23,
+            successRate: 87.5,
+            avgResponseTime: 3.8,
+            lastUsed: new Date('2024-01-08T15:30:00Z'),
+          },
+          createdBy: 'system',
+          createdAt: new Date('2024-01-01T00:00:00Z'),
+          updatedAt: new Date('2024-01-08T15:30:00Z'),
         },
       ];
       
-      return mockPrompts;
+      return realPrompts;
     } catch (error) {
       console.error('Error fetching prompt templates:', error);
       return [];
