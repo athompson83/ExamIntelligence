@@ -52,14 +52,39 @@ export default function Test() {
         body: JSON.stringify({
           name: 'Test Section',
           description: 'A test section for development',
-          creatorId: 'test@example.com',
-          accountId: 'default-account',
-          isActive: true,
         }),
       });
       setTestResults(prev => [...prev, { action: 'Create Test Section', result }]);
     } catch (error) {
       setTestResults(prev => [...prev, { action: 'Create Test Section', error: error.message }]);
+    }
+  };
+
+  const addStudentsToSection = async () => {
+    try {
+      if (!sections || sections.length === 0) {
+        setTestResults(prev => [...prev, { action: 'Add Students to Section', error: 'No sections available' }]);
+        return;
+      }
+      
+      const studentUsers = users?.filter(user => user.role === 'student') || [];
+      if (studentUsers.length === 0) {
+        setTestResults(prev => [...prev, { action: 'Add Students to Section', error: 'No students available' }]);
+        return;
+      }
+
+      const result = await apiRequest(`/api/sections/${sections[0].id}/members`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentIds: studentUsers.slice(0, 2).map(u => u.id), // Add first 2 students
+        }),
+      });
+      setTestResults(prev => [...prev, { action: 'Add Students to Section', result }]);
+    } catch (error) {
+      setTestResults(prev => [...prev, { action: 'Add Students to Section', error: error.message }]);
     }
   };
 
@@ -119,6 +144,9 @@ export default function Test() {
             </Button>
             <Button onClick={createTestSection} className="w-full">
               Create Test Section
+            </Button>
+            <Button onClick={addStudentsToSection} className="w-full">
+              Add Students to Section
             </Button>
             <Button onClick={createTestAssignment} className="w-full">
               Create Test Assignment

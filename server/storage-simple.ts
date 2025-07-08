@@ -718,6 +718,45 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Section Membership Methods
+  async getSectionMembers(sectionId: string): Promise<any[]> {
+    try {
+      const members = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          role: users.role,
+          joinedAt: sectionMemberships.joinedAt,
+          isActive: sectionMemberships.isActive,
+        })
+        .from(sectionMemberships)
+        .innerJoin(users, eq(sectionMemberships.studentId, users.id))
+        .where(eq(sectionMemberships.sectionId, sectionId));
+      return members;
+    } catch (error) {
+      console.error('Error fetching section members:', error);
+      return [];
+    }
+  }
+
+  async addStudentsToSection(sectionId: string, studentIds: string[]): Promise<void> {
+    try {
+      const memberships = studentIds.map(studentId => ({
+        sectionId,
+        studentId,
+        joinedAt: new Date(),
+        isActive: true,
+      }));
+      
+      await db.insert(sectionMemberships).values(memberships);
+    } catch (error) {
+      console.error('Error adding students to section:', error);
+      throw error;
+    }
+  }
+
   // Quiz Assignment Methods
   async getQuizAssignments(): Promise<any[]> {
     try {
