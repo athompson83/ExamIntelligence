@@ -5475,6 +5475,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mobile API endpoints
+  app.get('/api/mobile/dashboard', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const stats = await storage.getDashboardStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching mobile dashboard:', error);
+      res.status(500).json({ message: 'Failed to fetch dashboard stats' });
+    }
+  });
+
+  app.get('/api/mobile/assignments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const assignments = await storage.getMobileAssignments(userId);
+      res.json(assignments);
+    } catch (error) {
+      console.error('Error fetching mobile assignments:', error);
+      res.status(500).json({ message: 'Failed to fetch assignments' });
+    }
+  });
+
+  app.get('/api/mobile/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const profile = await storage.getMobileStudentProfile(userId);
+      res.json(profile);
+    } catch (error) {
+      console.error('Error fetching mobile profile:', error);
+      res.status(500).json({ message: 'Failed to fetch profile' });
+    }
+  });
+
+  app.post('/api/mobile/assignments/:assignmentId/start', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const { assignmentId } = req.params;
+      const session = await storage.startMobileAssignment(userId, assignmentId);
+      res.json(session);
+    } catch (error) {
+      console.error('Error starting mobile assignment:', error);
+      res.status(500).json({ message: 'Failed to start assignment' });
+    }
+  });
+
+  app.post('/api/mobile/sessions/:sessionId/submit', isAuthenticated, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { responses, timeSpent } = req.body;
+      const result = await storage.submitMobileSession(sessionId, responses, timeSpent);
+      res.json(result);
+    } catch (error) {
+      console.error('Error submitting mobile session:', error);
+      res.status(500).json({ message: 'Failed to submit session' });
+    }
+  });
+
+  app.get('/api/mobile/assignments/:assignmentId/questions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { assignmentId } = req.params;
+      const questions = await storage.getAssignmentQuestions(assignmentId);
+      res.json(questions);
+    } catch (error) {
+      console.error('Error fetching assignment questions:', error);
+      res.status(500).json({ message: 'Failed to fetch questions' });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 

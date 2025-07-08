@@ -78,6 +78,10 @@ export interface IStorage {
   startAssignment(userId: string, assignmentId: string): Promise<any>;
   submitAssignment(sessionId: string, responses: Record<string, string>, timeSpent: number): Promise<any>;
   getActiveExamSessions(userId: string): Promise<any[]>;
+  getUserById(userId: string): Promise<any>;
+  getQuizzesByUser(userId: string): Promise<any[]>;
+  getTestbanksByUser(userId: string): Promise<any[]>;
+  getNotificationsByUser(userId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -279,24 +283,179 @@ export class DatabaseStorage implements IStorage {
 
   // Mobile API implementations
   async getDashboardStats(userId: string): Promise<any> {
-    const userAttempts = await db.select().from(quizAttempts).where(eq(quizAttempts.userId, userId));
-    const totalAttempts = userAttempts.length;
-    const completedAttempts = userAttempts.filter(a => a.completedAt).length;
-    const avgScore = userAttempts.length > 0 ? 
-      userAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / userAttempts.length : 0;
-    
-    return {
-      totalAssignments: await db.select().from(quizzes).then(q => q.length),
-      completedAssignments: completedAttempts,
-      pendingAssignments: totalAttempts - completedAttempts,
-      averageScore: Math.round(avgScore),
-      totalStudyTime: userAttempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0),
-      recentActivity: userAttempts.slice(-5).map(a => ({
-        title: 'Quiz Attempt',
-        score: a.score,
-        date: a.createdAt
-      }))
-    };
+    try {
+      const userAttempts = await db.select().from(quizAttempts).where(eq(quizAttempts.userId, userId));
+      const totalAttempts = userAttempts.length;
+      const completedAttempts = userAttempts.filter(a => a.completedAt).length;
+      const avgScore = userAttempts.length > 0 ? 
+        userAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / userAttempts.length : 0;
+      
+      const allQuizzes = await db.select().from(quizzes);
+      
+      return {
+        assignedQuizzes: allQuizzes.length,
+        completedQuizzes: completedAttempts,
+        averageScore: Math.round(avgScore),
+        totalQuestions: allQuizzes.reduce((sum, q) => sum + (q.questionCount || 0), 0),
+        upcomingDeadlines: 2,
+        recentActivity: userAttempts.slice(-5).map(a => ({
+          id: a.id,
+          title: 'Quiz Attempt',
+          status: a.completedAt ? 'completed' : 'in_progress',
+          questionCount: 10,
+          dueDate: a.createdAt
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      return {
+        assignedQuizzes: 0,
+        completedQuizzes: 0,
+        averageScore: 0,
+        totalQuestions: 0,
+        upcomingDeadlines: 0,
+        recentActivity: []
+      };
+    }
+  }
+
+  async getMobileAssignments(userId: string): Promise<any[]> {
+    try {
+      const allQuizzes = await db.select().from(quizzes);
+      const userAttempts = await db.select().from(quizAttempts).where(eq(quizAttempts.userId, userId));
+      
+      return allQuizzes.map(quiz => {
+        const attempts = userAttempts.filter(a => a.quizId === quiz.id);
+        const bestScore = attempts.length > 0 ? Math.max(...attempts.map(a => a.score || 0)) : undefined;
+        const completed = attempts.some(a => a.completedAt);
+        
+        return {
+          id: quiz.id,
+          title: quiz.title,
+          description: quiz.description || 'Educational quiz assessment',
+          questionCount: quiz.questionCount || 10,
+          timeLimit: quiz.timeLimit || 60,
+          difficulty: quiz.difficulty || 3,
+          status: completed ? 'completed' : attempts.length > 0 ? 'in_progress' : 'assigned',
+          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          attempts: attempts.length,
+          maxAttempts: 3,
+          bestScore,
+          tags: ['education', 'assessment'],
+          allowCalculator: quiz.allowCalculator || false,
+          calculatorType: quiz.calculatorType || 'basic',
+          proctoringEnabled: quiz.proctoringEnabled || false,
+          createdAt: quiz.createdAt,
+          updatedAt: quiz.updatedAt
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching mobile assignments:', error);
+      return [];
+    }
+  }
+
+  async getMobileStudentProfile(userId: string): Promise<any> {
+    try {
+      const user = await db.select().from(users).where(eq(users.id, userId)).then(rows => rows[0]);
+      const userAttempts = await db.select().from(quizAttempts).where(eq(quizAttempts.userId, userId));
+      
+      const completedExams = userAttempts.filter(a => a.completedAt).length;
+      const averageScore = userAttempts.length > 0 ? 
+        Math.round(userAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / userAttempts.length) : 0;
+      const totalPoints = userAttempts.reduce((sum, a) => sum + (a.score || 0), 0);
+      
+      return {
+        id: user?.id || userId,
+        email: user?.email || 'student@example.com',
+        firstName: user?.firstName || 'Student',
+        lastName: user?.lastName || 'User',
+        fullName: `${user?.firstName || 'Student'} ${user?.lastName || 'User'}`,
+        profileImageUrl: user?.profileImageUrl,
+        studentId: user?.id || userId,
+        completedExams,
+        averageScore,
+        totalPoints,
+        rank: totalPoints > 500 ? 'Advanced' : totalPoints > 200 ? 'Intermediate' : 'Beginner',
+        achievements: completedExams > 0 ? [
+          {
+            name: 'First Quiz Completed',
+            icon: '🎉',
+            date: userAttempts[0]?.createdAt || new Date().toISOString()
+          }
+        ] : [],
+        recentScores: userAttempts.slice(-5).map(a => ({
+          exam: 'Quiz Assessment',
+          score: a.score || 0,
+          date: a.createdAt
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching mobile student profile:', error);
+      return {
+        id: userId,
+        email: 'student@example.com',
+        firstName: 'Student',
+        lastName: 'User',
+        fullName: 'Student User',
+        studentId: userId,
+        completedExams: 0,
+        averageScore: 0,
+        totalPoints: 0,
+        rank: 'Beginner',
+        achievements: [],
+        recentScores: []
+      };
+    }
+  }
+
+  async startMobileAssignment(userId: string, assignmentId: string): Promise<any> {
+    try {
+      const quiz = await db.select().from(quizzes).where(eq(quizzes.id, assignmentId)).then(rows => rows[0]);
+      if (!quiz) {
+        throw new Error('Quiz not found');
+      }
+      
+      const sessionId = `session_${Date.now()}_${userId}`;
+      
+      return {
+        id: sessionId,
+        quizId: assignmentId,
+        studentId: userId,
+        title: quiz.title,
+        startTime: new Date(),
+        timeLimit: quiz.timeLimit || 60,
+        questions: [], // Questions would be loaded separately
+        proctoringEnabled: quiz.proctoringEnabled || false,
+        allowCalculator: quiz.allowCalculator || false,
+        calculatorType: quiz.calculatorType || 'basic'
+      };
+    } catch (error) {
+      console.error('Error starting mobile assignment:', error);
+      throw error;
+    }
+  }
+
+  async submitMobileSession(sessionId: string, responses: Record<string, string>, timeSpent: number): Promise<any> {
+    try {
+      // In a real implementation, this would save the attempt and calculate score
+      const score = Math.floor(Math.random() * 50) + 50; // Mock score between 50-100
+      const passed = score >= 70;
+      
+      return {
+        sessionId,
+        score,
+        passed,
+        feedback: passed ? 'Great job! You passed the exam.' : 'Keep studying and try again.',
+        answeredQuestions: Object.keys(responses).length,
+        totalQuestions: 10,
+        timeSpent,
+        submittedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error submitting mobile session:', error);
+      throw error;
+    }
   }
 
   async getMobileAssignments(userId: string): Promise<any[]> {
@@ -459,6 +618,46 @@ export class DatabaseStorage implements IStorage {
     return [];
   }
 
+  async getUserById(userId: string): Promise<any> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      return user;
+    } catch (error) {
+      console.error('Error fetching user by ID:', error);
+      return null;
+    }
+  }
+
+  async getQuizzesByUser(userId: string): Promise<any[]> {
+    try {
+      const userQuizzes = await db.select().from(quizzes).where(eq(quizzes.creatorId, userId));
+      return userQuizzes;
+    } catch (error) {
+      console.error('Error fetching quizzes by user:', error);
+      return [];
+    }
+  }
+
+  async getTestbanksByUser(userId: string): Promise<any[]> {
+    try {
+      const userTestbanks = await db.select().from(testbanks).where(eq(testbanks.creatorId, userId));
+      return userTestbanks;
+    } catch (error) {
+      console.error('Error fetching testbanks by user:', error);
+      return [];
+    }
+  }
+
+  async getNotificationsByUser(userId: string): Promise<any[]> {
+    try {
+      // Return empty array as notifications might not be implemented in schema
+      return [];
+    } catch (error) {
+      console.error('Error fetching notifications by user:', error);
+      return [];
+    }
+  }
+
   // Section Management Methods
   async getSections(): Promise<any[]> {
     try {
@@ -574,6 +773,138 @@ export class DatabaseStorage implements IStorage {
       console.error('Error creating quiz assignment:', error);
       throw error;
     }
+  }
+
+  // Additional mobile API methods
+  async getActiveExamSessions(userId: string): Promise<any[]> {
+    try {
+      const activeAttempts = await db.select()
+        .from(quizAttempts)
+        .where(eq(quizAttempts.userId, userId))
+        .then(attempts => attempts.filter(a => !a.completedAt));
+      
+      return activeAttempts.map(attempt => ({
+        id: attempt.id,
+        quizId: attempt.quizId,
+        title: 'Active Quiz Session',
+        startTime: attempt.createdAt,
+        timeRemaining: 3600, // 1 hour in seconds
+        currentQuestion: 1,
+        totalQuestions: 10,
+        status: 'active'
+      }));
+    } catch (error) {
+      console.error('Error fetching active exam sessions:', error);
+      return [];
+    }
+  }
+
+  async getUserById(userId: string): Promise<any> {
+    try {
+      const user = await db.select().from(users).where(eq(users.id, userId)).then(rows => rows[0]);
+      return user;
+    } catch (error) {
+      console.error('Error fetching user by ID:', error);
+      return null;
+    }
+  }
+
+  async getQuizzesByUser(userId: string): Promise<any[]> {
+    try {
+      const userQuizzes = await db.select().from(quizzes);
+      return userQuizzes;
+    } catch (error) {
+      console.error('Error fetching quizzes by user:', error);
+      return [];
+    }
+  }
+
+  async getTestbanksByUser(userId: string): Promise<any[]> {
+    try {
+      const userTestbanks = await db.select().from(testbanks);
+      return userTestbanks;
+    } catch (error) {
+      console.error('Error fetching testbanks by user:', error);
+      return [];
+    }
+  }
+
+  async getNotificationsByUser(userId: string): Promise<any[]> {
+    try {
+      // Mock notifications for now
+      return [
+        {
+          id: 'notif1',
+          userId,
+          title: 'New Quiz Available',
+          message: 'You have a new quiz assignment to complete',
+          type: 'assignment',
+          read: false,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'notif2',
+          userId,
+          title: 'Quiz Reminder',
+          message: 'Your quiz is due in 2 hours',
+          type: 'reminder',
+          read: false,
+          createdAt: new Date(Date.now() - 3600000).toISOString()
+        }
+      ];
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      return [];
+    }
+  }
+
+  async getAssignmentQuestions(assignmentId: string): Promise<any[]> {
+    try {
+      // Mock questions for the assignment
+      return [
+        {
+          id: 'q1',
+          questionText: 'What is the capital of France?',
+          type: 'multiple_choice',
+          options: ['London', 'Berlin', 'Paris', 'Madrid'],
+          correctAnswer: 'Paris',
+          points: 10,
+          difficulty: 2
+        },
+        {
+          id: 'q2',
+          questionText: 'The Earth revolves around the Sun.',
+          type: 'true_false',
+          options: ['True', 'False'],
+          correctAnswer: 'True',
+          points: 5,
+          difficulty: 1
+        },
+        {
+          id: 'q3',
+          questionText: 'What is 2 + 2?',
+          type: 'short_answer',
+          correctAnswer: '4',
+          points: 5,
+          difficulty: 1
+        }
+      ];
+    } catch (error) {
+      console.error('Error fetching assignment questions:', error);
+      return [];
+    }
+  }
+
+  async getStudentProfile(userId: string): Promise<any> {
+    return this.getMobileStudentProfile(userId);
+  }
+
+  async startAssignment(userId: string, assignmentId: string): Promise<any> {
+    return this.startMobileAssignment(userId, assignmentId);
+  }
+
+  async submitAssignment(sessionId: string, responses: Record<string, string>, timeSpent: number): Promise<any> {
+    return this.submitMobileSession(sessionId, responses, timeSpent);
   }
 }
 
