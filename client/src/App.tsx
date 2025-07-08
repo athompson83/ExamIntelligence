@@ -54,6 +54,7 @@ import QuizPreview from "@/pages/quiz-preview";
 import EnhancedQuizPreview from "@/pages/enhanced-quiz-preview";
 import QuizManager from "@/pages/quiz-manager";
 import SectionManagement from "@/pages/SectionManagement";
+import Assignments from "@/pages/Assignments";
 import MobileApp from "@/pages/MobileAppFixed";
 
 function Router() {
@@ -87,6 +88,7 @@ function Router() {
             {(params) => <QuestionManager testbankId={params.id} />}
           </Route>
           <Route path="/quiz-manager" component={QuizManager} />
+          <Route path="/assignments" component={Assignments} />
           <Route path="/mobile" component={MobileApp} />
           <Route path="/quiz-builder" component={EnhancedQuizBuilder} />
           <Route path="/enhanced-quiz-builder" component={EnhancedQuizBuilder} />

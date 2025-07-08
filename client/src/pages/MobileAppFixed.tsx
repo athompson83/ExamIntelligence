@@ -962,46 +962,46 @@ export default function MobileAppFixed() {
 
   // Bottom navigation
   const renderBottomNav = () => (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50">
-      <div className="flex justify-around">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-50">
+      <div className="flex justify-around items-center">
         <Button
           variant={currentView === 'dashboard' ? 'default' : 'ghost'}
           size="sm"
           onClick={() => setCurrentView('dashboard')}
-          className="flex flex-col items-center space-y-1"
+          className="flex flex-col items-center justify-center p-2 h-16 min-h-16 w-full"
         >
-          <Home className="h-4 w-4" />
-          <span className="text-xs">Dashboard</span>
+          <Home className="h-5 w-5 mb-1" />
+          <span className="text-xs font-medium">Dashboard</span>
         </Button>
         
         <Button
           variant={currentView === 'assignments' ? 'default' : 'ghost'}
           size="sm"
           onClick={() => setCurrentView('assignments')}
-          className="flex flex-col items-center space-y-1"
+          className="flex flex-col items-center justify-center p-2 h-16 min-h-16 w-full"
         >
-          <BookOpen className="h-4 w-4" />
-          <span className="text-xs">Assignments</span>
+          <BookOpen className="h-5 w-5 mb-1" />
+          <span className="text-xs font-medium">Assignments</span>
         </Button>
         
         <Button
           variant={currentView === 'profile' ? 'default' : 'ghost'}
           size="sm"
           onClick={() => setCurrentView('profile')}
-          className="flex flex-col items-center space-y-1"
+          className="flex flex-col items-center justify-center p-2 h-16 min-h-16 w-full"
         >
-          <User className="h-4 w-4" />
-          <span className="text-xs">Profile</span>
+          <User className="h-5 w-5 mb-1" />
+          <span className="text-xs font-medium">Profile</span>
         </Button>
         
         <Button
           variant={currentView === 'settings' ? 'default' : 'ghost'}
           size="sm"
           onClick={() => setCurrentView('settings')}
-          className="flex flex-col items-center space-y-1"
+          className="flex flex-col items-center justify-center p-2 h-16 min-h-16 w-full"
         >
-          <Settings className="h-4 w-4" />
-          <span className="text-xs">Settings</span>
+          <Settings className="h-5 w-5 mb-1" />
+          <span className="text-xs font-medium">Settings</span>
         </Button>
       </div>
     </div>
@@ -1063,13 +1063,15 @@ export default function MobileAppFixed() {
 
   // Main render
   return (
-    <div className="mobile-app">
-      {currentView === 'dashboard' && renderDashboard()}
-      {currentView === 'assignments' && renderAssignments()}
-      {currentView === 'exam' && renderExam()}
-      {currentView === 'results' && renderResults()}
-      {currentView === 'profile' && renderProfile()}
-      {currentView === 'settings' && renderSettings()}
+    <div className="mobile-app h-screen overflow-hidden">
+      <div className="h-full pb-20 overflow-y-auto">
+        {currentView === 'dashboard' && renderDashboard()}
+        {currentView === 'assignments' && renderAssignments()}
+        {currentView === 'exam' && renderExam()}
+        {currentView === 'results' && renderResults()}
+        {currentView === 'profile' && renderProfile()}
+        {currentView === 'settings' && renderSettings()}
+      </div>
       {renderCalculator()}
       {renderBottomNav()}
     </div>

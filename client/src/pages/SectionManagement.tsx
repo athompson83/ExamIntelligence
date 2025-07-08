@@ -21,7 +21,9 @@ import {
   Send, 
   BookOpen,
   Calendar,
-  Clock
+  Clock,
+  Home,
+  ChevronRight
 } from 'lucide-react';
 
 interface Section {
@@ -252,6 +254,13 @@ export default function SectionManagement() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Breadcrumb */}
+      <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <Home className="h-4 w-4" />
+        <ChevronRight className="h-4 w-4" />
+        <span className="font-medium text-foreground">Section Management</span>
+      </nav>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Section Management</h1>

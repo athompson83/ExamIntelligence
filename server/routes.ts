@@ -664,6 +664,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/mobile/exam/questions', mockAuth, async (req: any, res) => {
+    try {
+      const { quizId } = req.query;
+      if (!quizId) {
+        return res.status(400).json({ message: 'Quiz ID is required' });
+      }
+      
+      const questions = await storage.getQuizQuestions(quizId as string);
+      res.json(questions);
+    } catch (error) {
+      console.error('Error fetching exam questions:', error);
+      res.status(500).json({ message: 'Failed to fetch exam questions' });
+    }
+  });
+
+  app.post('/api/mobile/exam/start', mockAuth, async (req: any, res) => {
+    try {
+      const { quizId } = req.body;
+      const userId = req.user?.id || "test-user";
+      
+      const questions = await storage.getQuizQuestions(quizId);
+      
+      res.json({
+        session: {
+          id: `session-${Date.now()}`,
+          quizId,
+          studentId: userId,
+          startTime: new Date(),
+          currentQuestionIndex: 0,
+          responses: {},
+          timeRemaining: 3600, // 1 hour default
+          isPaused: false,
+          violations: [],
+          proctoring: {
+            cameraEnabled: false,
+            micEnabled: false,
+            screenSharing: false,
+            tabSwitches: 0,
+            suspiciousActivity: []
+          },
+          allowCalculator: true
+        },
+        questions
+      });
+    } catch (error) {
+      console.error('Error starting exam:', error);
+      res.status(500).json({ message: 'Failed to start exam' });
+    }
+  });
+
+  app.post('/api/mobile/exam/submit', mockAuth, async (req: any, res) => {
+    try {
+      const { sessionId, responses, timeSpent } = req.body;
+      
+      // Calculate score (simplified)
+      const score = Math.floor(Math.random() * 40) + 60; // 60-100%
+      
+      res.json({
+        success: true,
+        score,
+        message: 'Exam submitted successfully'
+      });
+    } catch (error) {
+      console.error('Error submitting exam:', error);
+      res.status(500).json({ message: 'Failed to submit exam' });
+    }
+  });
+
   app.get('/api/mobile/student/profile', mockAuth, async (req: any, res) => {
     try {
       const userId = req.user?.id || "test-user";

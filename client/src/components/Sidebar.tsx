@@ -34,17 +34,12 @@ export default function Sidebar() {
     { href: "/", label: "Dashboard", icon: BarChart3 },
     { href: "/item-banks", label: "Item Banks", icon: BookOpen },
     { href: "/quiz-manager", label: "Quiz Manager", icon: Puzzle },
+    { href: "/assignments", label: "Assignments", icon: ClipboardCheck },
     { href: "/section-management", label: "Section Management", icon: Users },
     { href: "/mobile", label: "Mobile App", icon: Smartphone },
     { href: "/live-exams", label: "Live Exams", icon: PlayCircle },
-    { href: "/proctoring-security", label: "Proctoring Security", icon: Shield },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/ai-resources", label: "AI Resources", icon: Brain },
-    { href: "/ai-chatbot", label: "AI Assistant", icon: Bot },
-    { href: "/difficulty-tracking", label: "Difficulty Tracking", icon: TrendingUp },
-    { href: "/learning-feedback", label: "Learning Feedback", icon: Heart },
-    { href: "/badges-certificates", label: "Badges & Certificates", icon: Award },
-    { href: "/badge-system", label: "Badge System", icon: Award },
   ];
 
   const supportItems = [
