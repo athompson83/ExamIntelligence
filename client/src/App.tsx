@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TooltipProvider as CustomTooltipProvider } from "@/components/TooltipProvider";
-import { AIAssistant } from "@/components/AIAssistant";
+
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
@@ -149,7 +149,6 @@ function App() {
         <CustomTooltipProvider>
           <Toaster />
           <Router />
-          <AIAssistant />
         </CustomTooltipProvider>
       </TooltipProvider>
     </QueryClientProvider>
