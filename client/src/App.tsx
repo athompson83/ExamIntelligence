@@ -53,7 +53,7 @@ import PublishedQuizzes from "@/pages/published-quizzes";
 import QuizPreview from "@/pages/quiz-preview";
 import EnhancedQuizPreview from "@/pages/enhanced-quiz-preview";
 import QuizManager from "@/pages/quiz-manager";
-import MobileApp from "@/pages/mobile-simple";
+import MobileApp from "@/pages/MobileApp";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();

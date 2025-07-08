@@ -484,6 +484,224 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mobile API endpoints
+  app.get('/api/mobile/dashboard/stats', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const testbanks = await storage.getTestbanksByUser(userId);
+      const quizzes = await storage.getQuizzesByUser(userId);
+      
+      // Calculate mobile-specific stats
+      const stats = {
+        assignedQuizzes: quizzes.filter(q => q.status === 'published').length,
+        completedQuizzes: 0, // This would be calculated from actual attempts
+        averageScore: 87, // This would be calculated from actual scores
+        totalQuestions: testbanks.reduce((sum, tb) => sum + (tb.questionCount || 0), 0),
+        upcomingDeadlines: quizzes.filter(q => q.dueDate && new Date(q.dueDate) > new Date()).length,
+        recentActivity: quizzes.slice(0, 3).map(quiz => ({
+          id: quiz.id,
+          title: quiz.title,
+          status: quiz.status,
+          questionCount: quiz.questionCount || 0,
+          dueDate: quiz.dueDate
+        }))
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching mobile dashboard stats:", error);
+      res.status(500).json({ message: "Failed to fetch mobile dashboard stats" });
+    }
+  });
+
+  app.get('/api/mobile/assignments', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const testbanks = await storage.getTestbanksByUser(userId);
+      
+      // Transform testbanks to mobile-friendly quiz format
+      const assignments = testbanks.map(testbank => ({
+        id: testbank.id,
+        title: testbank.title,
+        description: testbank.description,
+        questionCount: testbank.questionCount || 0,
+        timeLimit: 60, // Default time limit
+        difficulty: Math.floor(Math.random() * 3) + 2, // Random difficulty 2-4
+        status: 'assigned', // Default status
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+        attempts: 0,
+        maxAttempts: 3,
+        tags: testbank.tags || [],
+        allowCalculator: true,
+        calculatorType: 'basic' as const,
+        proctoringEnabled: true,
+        createdAt: testbank.createdAt,
+        updatedAt: testbank.updatedAt
+      }));
+      
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching mobile assignments:", error);
+      res.status(500).json({ message: "Failed to fetch mobile assignments" });
+    }
+  });
+
+  app.get('/api/mobile/assignment/:id', mockAuth, async (req: any, res) => {
+    try {
+      const assignmentId = req.params.id;
+      const testbank = await storage.getTestbankById(assignmentId);
+      
+      if (!testbank) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+      
+      const assignment = {
+        id: testbank.id,
+        title: testbank.title,
+        description: testbank.description,
+        questionCount: testbank.questionCount || 0,
+        timeLimit: 60,
+        difficulty: Math.floor(Math.random() * 3) + 2,
+        status: 'assigned',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        attempts: 0,
+        maxAttempts: 3,
+        tags: testbank.tags || [],
+        allowCalculator: true,
+        calculatorType: 'basic' as const,
+        proctoringEnabled: true,
+        createdAt: testbank.createdAt,
+        updatedAt: testbank.updatedAt
+      };
+      
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error fetching mobile assignment:", error);
+      res.status(500).json({ message: "Failed to fetch mobile assignment" });
+    }
+  });
+
+  app.get('/api/mobile/assignment/:id/questions', mockAuth, async (req: any, res) => {
+    try {
+      const assignmentId = req.params.id;
+      const questions = await storage.getQuestionsByTestbank(assignmentId);
+      
+      const mobileQuestions = questions.map(question => ({
+        id: question.id,
+        questionText: question.questionText,
+        type: question.type,
+        options: question.answerOptions?.map(opt => opt.text) || [],
+        correctAnswer: question.answerOptions?.find(opt => opt.isCorrect)?.text || '',
+        points: question.points || 1,
+        difficulty: question.difficulty || 2,
+        timeLimit: question.timeLimit
+      }));
+      
+      res.json(mobileQuestions);
+    } catch (error) {
+      console.error("Error fetching mobile assignment questions:", error);
+      res.status(500).json({ message: "Failed to fetch mobile assignment questions" });
+    }
+  });
+
+  app.post('/api/mobile/assignment/:id/start', mockAuth, async (req: any, res) => {
+    try {
+      const assignmentId = req.params.id;
+      const userId = req.user?.id || "test-user";
+      
+      const session = {
+        id: `mobile-session-${Date.now()}`,
+        assignmentId,
+        userId,
+        startTime: new Date().toISOString(),
+        timeRemaining: 60 * 60, // 60 minutes in seconds
+        currentQuestionIndex: 0,
+        responses: {},
+        isPaused: false,
+        proctoring: {
+          cameraEnabled: true,
+          micEnabled: true,
+          screenSharing: true,
+          tabSwitches: 0,
+          suspiciousActivity: []
+        }
+      };
+      
+      res.json(session);
+    } catch (error) {
+      console.error("Error starting mobile assignment:", error);
+      res.status(500).json({ message: "Failed to start mobile assignment" });
+    }
+  });
+
+  app.post('/api/mobile/session/:sessionId/submit', mockAuth, async (req: any, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const { responses, timeSpent } = req.body;
+      
+      // Calculate score (simplified for demo)
+      const totalQuestions = Object.keys(responses).length;
+      const score = Math.floor(Math.random() * 30) + 70; // Random score 70-100
+      
+      const result = {
+        sessionId,
+        score,
+        passed: score >= 70,
+        totalQuestions,
+        answeredQuestions: totalQuestions,
+        timeSpent,
+        submittedAt: new Date().toISOString(),
+        feedback: score >= 90 ? "Excellent work!" : 
+                 score >= 80 ? "Good job!" : 
+                 score >= 70 ? "Satisfactory performance" : 
+                 "Needs improvement"
+      };
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error submitting mobile session:", error);
+      res.status(500).json({ message: "Failed to submit mobile session" });
+    }
+  });
+
+  app.get('/api/mobile/student/profile', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUserById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const profile = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        profileImageUrl: user.profileImageUrl,
+        studentId: `EMT-2025-${user.id.slice(-3)}`,
+        completedExams: 2,
+        averageScore: 87,
+        totalPoints: 245,
+        rank: 'Advanced',
+        achievements: [
+          { name: 'First Exam', icon: '🎯', date: '2025-07-01' },
+          { name: 'High Scorer', icon: '⭐', date: '2025-07-05' }
+        ],
+        recentScores: [
+          { exam: 'Toxicology', score: 92, date: '2025-07-05' },
+          { exam: 'Airway Management', score: 82, date: '2025-07-03' }
+        ]
+      };
+      
+      res.json(profile);
+    } catch (error) {
+      console.error("Error fetching mobile student profile:", error);
+      res.status(500).json({ message: "Failed to fetch mobile student profile" });
+    }
+  });
+
   // Dashboard routes
   app.get('/api/dashboard/stats', mockAuth, async (req: any, res) => {
     try {

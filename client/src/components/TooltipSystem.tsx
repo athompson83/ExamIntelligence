@@ -270,10 +270,30 @@ export const TooltipSystem: React.FC = () => {
   const [dismissedTooltips, setDismissedTooltips] = useState<Set<string>>(new Set());
   const [isTooltipSystemMuted, setIsTooltipSystemMuted] = useState(false);
 
-  // Check if tooltip system is muted on mount
+  // Check if tooltip system is muted on mount and cleanup old dismissed tooltips
   useEffect(() => {
     const isMuted = localStorage.getItem('tooltipSystemMuted') === 'true';
     setIsTooltipSystemMuted(isMuted);
+    
+    // Clean up old dismissed tooltips from previous sessions (older than 24 hours)
+    const currentTime = Date.now();
+    const keysToRemove: string[] = [];
+    
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('dismissed_')) {
+        const sessionValue = localStorage.getItem(key);
+        if (sessionValue && sessionValue.startsWith('session_')) {
+          const sessionTime = parseInt(sessionValue.replace('session_', ''));
+          // Remove if older than 24 hours (next login session)
+          if (currentTime - sessionTime > 24 * 60 * 60 * 1000) {
+            keysToRemove.push(key);
+          }
+        }
+      }
+    }
+    
+    keysToRemove.forEach(key => localStorage.removeItem(key));
   }, []);
 
   // Save mute state to localStorage
@@ -330,9 +350,13 @@ export const TooltipSystem: React.FC = () => {
   useEffect(() => {
     // Initialize tooltip queue with non-dismissed tooltips only if not muted
     if (!isTooltipSystemMuted) {
-      const availableTooltips = tooltipData.filter(
-        tooltip => !dismissedTooltips.has(tooltip.id)
-      );
+      const availableTooltips = tooltipData.filter(tooltip => {
+        // Check if dismissed in current session
+        const dismissedKey = `dismissed_${tooltip.id}`;
+        const isDismissedThisSession = localStorage.getItem(dismissedKey) !== null;
+        
+        return !dismissedTooltips.has(tooltip.id) && !isDismissedThisSession;
+      });
       setTooltipQueue(availableTooltips);
     } else {
       setTooltipQueue([]);
@@ -370,6 +394,12 @@ export const TooltipSystem: React.FC = () => {
     console.log('Tooltip interaction:', action, activeTooltip?.id);
     
     if (action === 'dismissed') {
+      // Mark this specific tooltip as dismissed until next login
+      if (activeTooltip?.id) {
+        const currentSession = `session_${Date.now()}`;
+        const dismissedKey = `dismissed_${activeTooltip.id}`;
+        localStorage.setItem(dismissedKey, currentSession);
+      }
       handleTooltipClose();
     }
     
