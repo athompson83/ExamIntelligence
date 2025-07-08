@@ -521,7 +521,7 @@ export default function BackendPromptManagementPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {prompts?.reduce((sum: number, p: BackendPrompt) => sum + p.usage.totalCalls, 0) || 0}
+                  {Array.isArray(prompts) ? prompts.reduce((sum: number, p: BackendPrompt) => sum + (p.usage?.totalCalls || 0), 0) : 0}
                 </div>
               </CardContent>
             </Card>
@@ -532,8 +532,8 @@ export default function BackendPromptManagementPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {prompts?.length > 0 
-                    ? Math.round(prompts.reduce((sum: number, p: BackendPrompt) => sum + p.usage.successRate, 0) / prompts.length)
+                  {Array.isArray(prompts) && prompts.length > 0 
+                    ? Math.round(prompts.reduce((sum: number, p: BackendPrompt) => sum + (p.usage?.successRate || 0), 0) / prompts.length)
                     : 0}%
                 </div>
               </CardContent>
