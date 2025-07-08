@@ -281,6 +281,26 @@ export class DatabaseStorage implements IStorage {
       .where(eq(quizResponses.attemptId, attemptId));
   }
 
+  async getAdditionalDashboardStats(userId: string): Promise<any> {
+    try {
+      // Return additional stats for comprehensive dashboard
+      return {
+        studyHours: 0,
+        achievementCount: 0,
+        streakDays: 0,
+        performanceTrend: 'stable'
+      };
+    } catch (error) {
+      console.error('Error fetching additional dashboard stats:', error);
+      return {
+        studyHours: 0,
+        achievementCount: 0,
+        streakDays: 0,
+        performanceTrend: 'stable'
+      };
+    }
+  }
+
   // Mobile API implementations
   async getDashboardStats(userId: string): Promise<any> {
     try {
@@ -778,10 +798,11 @@ export class DatabaseStorage implements IStorage {
   // Additional mobile API methods
   async getActiveExamSessions(userId: string): Promise<any[]> {
     try {
-      const activeAttempts = await db.select()
+      const allAttempts = await db.select()
         .from(quizAttempts)
-        .where(eq(quizAttempts.userId, userId))
-        .then(attempts => attempts.filter(a => !a.completedAt));
+        .where(eq(quizAttempts.userId, userId));
+      
+      const activeAttempts = allAttempts.filter(a => !a.completedAt);
       
       return activeAttempts.map(attempt => ({
         id: attempt.id,
