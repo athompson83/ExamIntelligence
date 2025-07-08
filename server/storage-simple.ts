@@ -36,6 +36,7 @@ export interface IStorage {
   createTestbank(testbank: InsertTestbank): Promise<Testbank>;
   getTestbank(id: string): Promise<Testbank | undefined>;
   getTestbanksByAccount(accountId: string): Promise<Testbank[]>;
+  getTestbanksByUser(userId: string): Promise<Testbank[]>;
   updateTestbank(id: string, testbank: Partial<InsertTestbank>): Promise<Testbank | undefined>;
   deleteTestbank(id: string): Promise<boolean>;
   
@@ -112,6 +113,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(testbanks)
       .where(eq(testbanks.accountId, accountId))
+      .orderBy(desc(testbanks.createdAt));
+  }
+
+  async getTestbanksByUser(userId: string): Promise<Testbank[]> {
+    return await db
+      .select()
+      .from(testbanks)
+      .where(eq(testbanks.creatorId, userId))
       .orderBy(desc(testbanks.createdAt));
   }
 

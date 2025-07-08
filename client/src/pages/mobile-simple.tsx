@@ -125,7 +125,7 @@ const mockQuestions: Question[] = [
 ];
 
 // Calculator Component
-const Calculator: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+const CalculatorModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [display, setDisplay] = useState('0');
   const [previousValue, setPreviousValue] = useState<number | null>(null);
   const [operation, setOperation] = useState<string | null>(null);
@@ -826,7 +826,7 @@ const MobileApp: React.FC = () => {
 
         {/* Calculator Modal */}
         {showCalculator && (
-          <Calculator onClose={() => setShowCalculator(false)} />
+          <CalculatorModal onClose={() => setShowCalculator(false)} />
         )}
 
         {/* Bottom Navigation */}
