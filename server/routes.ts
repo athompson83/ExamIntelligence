@@ -3180,6 +3180,166 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   */
 
+  // Create dummy users endpoint
+  app.post('/api/create-dummy-users', async (req, res) => {
+    try {
+      const dummyUsers = [
+        {
+          id: 'student1',
+          email: 'student1@example.com',
+          firstName: 'Alice',
+          lastName: 'Johnson',
+          role: 'student',
+          accountId: 'default-account',
+          isActive: true,
+        },
+        {
+          id: 'student2',
+          email: 'student2@example.com',
+          firstName: 'Bob',
+          lastName: 'Smith',
+          role: 'student',
+          accountId: 'default-account',
+          isActive: true,
+        },
+        {
+          id: 'student3',
+          email: 'student3@example.com',
+          firstName: 'Charlie',
+          lastName: 'Brown',
+          role: 'student',
+          accountId: 'default-account',
+          isActive: true,
+        },
+        {
+          id: 'student4',
+          email: 'student4@example.com',
+          firstName: 'Emma',
+          lastName: 'Garcia',
+          role: 'student',
+          accountId: 'default-account',
+          isActive: true,
+        },
+        {
+          id: 'student5',
+          email: 'student5@example.com',
+          firstName: 'David',
+          lastName: 'Martinez',
+          role: 'student',
+          accountId: 'default-account',
+          isActive: true,
+        },
+        {
+          id: 'teacher1',
+          email: 'teacher1@example.com',
+          firstName: 'Diana',
+          lastName: 'Wilson',
+          role: 'teacher',
+          accountId: 'default-account',
+          isActive: true,
+        },
+        {
+          id: 'teacher2',
+          email: 'teacher2@example.com',
+          firstName: 'Eric',
+          lastName: 'Davis',
+          role: 'teacher',
+          accountId: 'default-account',
+          isActive: true,
+        },
+      ];
+
+      const createdUsers = [];
+      for (const user of dummyUsers) {
+        try {
+          const created = await storage.upsertUser(user);
+          createdUsers.push(created);
+        } catch (error) {
+          console.error('Error creating user:', user.id, error);
+        }
+      }
+
+      res.json(createdUsers);
+    } catch (error) {
+      console.error('Error creating dummy users:', error);
+      res.status(500).json({ error: 'Failed to create dummy users' });
+    }
+  });
+
+  // ========== QUIZ ASSIGNMENTS ENDPOINTS ==========
+  
+  // Get all quiz assignments
+  app.get('/api/quiz-assignments', async (req, res) => {
+    try {
+      const assignments = await storage.getQuizAssignments();
+      res.json(assignments);
+    } catch (error) {
+      console.error('Error fetching quiz assignments:', error);
+      res.status(500).json({ error: 'Failed to fetch quiz assignments' });
+    }
+  });
+
+  // Create quiz assignment
+  app.post('/api/quiz-assignments', async (req, res) => {
+    try {
+      const assignmentData = req.body;
+      const assignment = await storage.createQuizAssignment(assignmentData);
+      res.json(assignment);
+    } catch (error) {
+      console.error('Error creating quiz assignment:', error);
+      res.status(500).json({ error: 'Failed to create quiz assignment' });
+    }
+  });
+
+  // Update quiz assignment
+  app.put('/api/quiz-assignments/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const assignment = await storage.updateQuizAssignment(id, updateData);
+      res.json(assignment);
+    } catch (error) {
+      console.error('Error updating quiz assignment:', error);
+      res.status(500).json({ error: 'Failed to update quiz assignment' });
+    }
+  });
+
+  // Delete quiz assignment
+  app.delete('/api/quiz-assignments/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteQuizAssignment(id);
+      res.json({ message: 'Quiz assignment deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting quiz assignment:', error);
+      res.status(500).json({ error: 'Failed to delete quiz assignment' });
+    }
+  });
+
+  // Publish quiz assignment
+  app.post('/api/quiz-assignments/:id/publish', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const assignment = await storage.updateQuizAssignment(id, { status: 'published' });
+      res.json(assignment);
+    } catch (error) {
+      console.error('Error publishing quiz assignment:', error);
+      res.status(500).json({ error: 'Failed to publish quiz assignment' });
+    }
+  });
+
+  // Archive quiz assignment
+  app.post('/api/quiz-assignments/:id/archive', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const assignment = await storage.updateQuizAssignment(id, { status: 'archived' });
+      res.json(assignment);
+    } catch (error) {
+      console.error('Error archiving quiz assignment:', error);
+      res.status(500).json({ error: 'Failed to archive quiz assignment' });
+    }
+  });
+
   // ========== COMPREHENSIVE ANALYTICS ENDPOINTS ==========
   
   // Import Analytics Services

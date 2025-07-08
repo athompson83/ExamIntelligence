@@ -156,12 +156,7 @@ const ContextualTooltip: React.FC<{
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.8, y: 20 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed z-50 max-w-sm"
-      style={{
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)'
-      }}
+      className="fixed bottom-20 right-4 z-50 max-w-sm"
     >
       <Card className="shadow-xl border-2 border-blue-200 bg-white">
         <CardContent className="p-0">

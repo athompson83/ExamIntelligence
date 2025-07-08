@@ -718,6 +718,55 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Quiz Assignment Methods
+  async getQuizAssignments(): Promise<any[]> {
+    try {
+      const assignments = await db.select().from(quizAssignments);
+      return assignments;
+    } catch (error) {
+      console.error('Error fetching quiz assignments:', error);
+      return [];
+    }
+  }
+
+  async createQuizAssignment(assignmentData: any): Promise<any> {
+    try {
+      const [assignment] = await db
+        .insert(quizAssignments)
+        .values(assignmentData)
+        .returning();
+      return assignment;
+    } catch (error) {
+      console.error('Error creating quiz assignment:', error);
+      throw error;
+    }
+  }
+
+  async updateQuizAssignment(id: string, updateData: any): Promise<any> {
+    try {
+      const [assignment] = await db
+        .update(quizAssignments)
+        .set(updateData)
+        .where(eq(quizAssignments.id, id))
+        .returning();
+      return assignment;
+    } catch (error) {
+      console.error('Error updating quiz assignment:', error);
+      throw error;
+    }
+  }
+
+  async deleteQuizAssignment(id: string): Promise<void> {
+    try {
+      await db
+        .delete(quizAssignments)
+        .where(eq(quizAssignments.id, id));
+    } catch (error) {
+      console.error('Error deleting quiz assignment:', error);
+      throw error;
+    }
+  }
+
   async getSectionMembers(sectionId: string): Promise<any[]> {
     try {
       const members = await db
