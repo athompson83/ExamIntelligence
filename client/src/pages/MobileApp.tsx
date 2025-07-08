@@ -11,6 +11,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
+import { Textarea } from '@/components/ui/textarea';
+import { format } from 'date-fns';
 import { 
   Home, 
   BookOpen, 
@@ -46,6 +49,12 @@ import {
   Wifi,
   WifiOff,
   Battery,
+  XCircle,
+  AlertTriangle,
+  Shield,
+  Timer,
+  Flag,
+  HelpCircle,
   X,
   Plus,
   Minus,
@@ -273,6 +282,7 @@ const CalculatorModal: React.FC<{ onClose: () => void; type: 'basic' | 'scientif
 };
 
 export default function MobileApp() {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [currentView, setCurrentView] = useState<'dashboard' | 'quizzes' | 'exam' | 'results' | 'profile' | 'settings'>('dashboard');
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -283,12 +293,55 @@ export default function MobileApp() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [examResult, setExamResult] = useState<any>(null);
   const [proctoring, setProctoring] = useState({
     cameraEnabled: false,
     micEnabled: false,
     screenSharing: false,
     violations: []
   });
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <BookOpen className="h-8 w-8 text-blue-600" />
+            </div>
+            <CardTitle className="text-2xl">Welcome to Mobile Learning</CardTitle>
+            <CardDescription>
+              Please log in to access your assignments and take exams
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button 
+              onClick={() => window.location.href = '/api/login'} 
+              className="w-full"
+            >
+              Log In
+            </Button>
+            <p className="text-center text-sm text-gray-600">
+              Use your student credentials to access the platform
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // API Data
   const { data: dashboardStats, isLoading: statsLoading } = useMobileDashboardStats();
@@ -297,6 +350,50 @@ export default function MobileApp() {
   const { data: questions, isLoading: questionsLoading } = useAssignmentQuestions(selectedQuiz?.id || '');
   
   const queryClient = useQueryClient();
+
+  // Authentication redirect
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="h-8 w-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-gray-900">ProficiencyAI Mobile</CardTitle>
+            <CardDescription>
+              Access your assignments and take exams securely
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <Shield className="h-4 w-4" />
+              <AlertDescription>
+                This is a secure, proctored exam platform. Please log in to access your assignments.
+              </AlertDescription>
+            </Alert>
+            <Button 
+              onClick={() => window.location.href = '/api/login'} 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              Log In to Continue
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Mutations
   const startAssignmentMutation = useMutation({
@@ -319,6 +416,7 @@ export default function MobileApp() {
       });
     },
     onSuccess: (data) => {
+      setExamResult(data);
       setCurrentView('results');
       queryClient.invalidateQueries({ queryKey: ['/api/mobile/assignments'] });
       queryClient.invalidateQueries({ queryKey: ['/api/mobile/dashboard/stats'] });
@@ -378,6 +476,93 @@ export default function MobileApp() {
     return Array.from({ length: 5 }, (_, i) => (
       <Star key={i} className={`h-4 w-4 ${i < difficulty ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
     ));
+  };
+
+  // Timer effect
+  useEffect(() => {
+    if (timeRemaining > 0 && examSession && !examSession.isPaused) {
+      const timer = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            handleExamSubmit();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [timeRemaining, examSession]);
+
+  // Proctoring setup
+  useEffect(() => {
+    if (currentView === 'exam' && selectedQuiz?.proctoringEnabled) {
+      initializeProctoring();
+    }
+    return () => {
+      if (proctoring.cameraEnabled) {
+        stopProctoring();
+      }
+    };
+  }, [currentView, selectedQuiz]);
+
+  // Network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const initializeProctoring = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      
+      setProctoring(prev => ({
+        ...prev,
+        cameraEnabled: true,
+        micEnabled: true
+      }));
+
+      // Monitor for window focus/blur
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          setProctoring(prev => ({
+            ...prev,
+            violations: [...prev.violations, {
+              type: 'tab_switch',
+              timestamp: new Date().toISOString()
+            }]
+          }));
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        stream.getTracks().forEach(track => track.stop());
+      };
+    } catch (error) {
+      console.error('Failed to initialize proctoring:', error);
+    }
+  };
+
+  const stopProctoring = () => {
+    setProctoring(prev => ({
+      ...prev,
+      cameraEnabled: false,
+      micEnabled: false
+    }));
   };
 
   const startExam = (quiz: Quiz) => {
