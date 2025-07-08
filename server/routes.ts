@@ -2814,6 +2814,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Backend Prompts API routes
+  app.get('/api/backend-prompts', mockAuth, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const prompts = await storage.getAllPromptTemplates();
+      res.json(prompts);
+    } catch (error) {
+      console.error('Error fetching backend prompts:', error);
+      res.status(500).json({ message: 'Failed to fetch prompts' });
+    }
+  });
+
+  app.post('/api/backend-prompts', mockAuth, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const prompt = await storage.createPromptTemplate(req.body);
+      res.json(prompt);
+    } catch (error) {
+      console.error('Error creating backend prompt:', error);
+      res.status(500).json({ message: 'Failed to create prompt' });
+    }
+  });
+
+  app.patch('/api/backend-prompts/:id', mockAuth, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const { id } = req.params;
+      const prompt = await storage.updatePromptTemplate(id, req.body);
+      res.json(prompt);
+    } catch (error) {
+      console.error('Error updating backend prompt:', error);
+      res.status(500).json({ message: 'Failed to update prompt' });
+    }
+  });
+
+  app.delete('/api/backend-prompts/:id', mockAuth, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const { id } = req.params;
+      await storage.deletePromptTemplate(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting backend prompt:', error);
+      res.status(500).json({ message: 'Failed to delete prompt' });
+    }
+  });
+
   // Section Management API routes
   app.get('/api/sections', mockAuth, async (req, res) => {
     try {

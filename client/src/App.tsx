@@ -47,6 +47,7 @@ import Announcements from "@/pages/announcements";
 import QuestionFlagging from "@/pages/question-flagging";
 import AIChatbot from "@/pages/ai-chatbot";
 import BackendPromptManagement from "@/pages/backend-prompt-management";
+import BackendPromptTestPage from "@/pages/backend-prompt-test";
 import QuizTakerDemo from "@/pages/quiz-taker-demo";
 import QuizBuilderDemo from "@/pages/QuizBuilderDemo";
 import PublishedQuizzes from "@/pages/published-quizzes";
@@ -131,6 +132,7 @@ function Router() {
           <Route path="/question-flagging" component={QuestionFlagging} />
           <Route path="/ai-chatbot" component={AIChatbot} />
           <Route path="/backend-prompt-management" component={BackendPromptManagement} />
+          <Route path="/backend-prompt-test" component={BackendPromptTestPage} />
           <Route path="/exam/:id">
             {(params) => <ExamInterface examId={params.id} />}
           </Route>

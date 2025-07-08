@@ -10,6 +10,7 @@ import {
   sections,
   sectionMemberships,
   quizAssignments,
+  promptTemplates,
   type User,
   type UpsertUser,
   type Testbank,
@@ -24,6 +25,8 @@ import {
   type InsertQuizAttempt,
   type QuizResponse,
   type InsertQuizResponse,
+  type PromptTemplate,
+  type InsertPromptTemplate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
@@ -82,6 +85,12 @@ export interface IStorage {
   getQuizzesByUser(userId: string): Promise<any[]>;
   getTestbanksByUser(userId: string): Promise<any[]>;
   getNotificationsByUser(userId: string): Promise<any[]>;
+  
+  // Prompt Template Methods
+  getAllPromptTemplates(): Promise<PromptTemplate[]>;
+  createPromptTemplate(template: InsertPromptTemplate): Promise<PromptTemplate>;
+  updatePromptTemplate(id: string, template: Partial<InsertPromptTemplate>): Promise<PromptTemplate>;
+  deletePromptTemplate(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1008,6 +1017,154 @@ export class DatabaseStorage implements IStorage {
 
   async submitAssignment(sessionId: string, responses: Record<string, string>, timeSpent: number): Promise<any> {
     return this.submitMobileSession(sessionId, responses, timeSpent);
+  }
+
+  // Prompt Template Methods
+  async getAllPromptTemplates(): Promise<PromptTemplate[]> {
+    try {
+      // Mock implementation for testing - mapped to BackendPrompt interface
+      const mockPrompts = [
+        {
+          id: 'prompt1',
+          name: 'Question Generation',
+          description: 'Default template for generating questions',
+          category: 'question_generation',
+          promptType: 'system',
+          content: 'Generate educational questions about {topic} for {audience}',
+          variables: ['topic', 'audience'],
+          isActive: true,
+          isDefault: true,
+          version: '1.0.0',
+          usage: {
+            totalCalls: 156,
+            successRate: 94.2,
+            avgResponseTime: 2.3,
+            lastUsed: new Date('2024-01-08T18:30:00Z'),
+          },
+          createdBy: 'test-user',
+          createdAt: new Date('2024-01-01T00:00:00Z'),
+          updatedAt: new Date('2024-01-08T18:30:00Z'),
+        },
+        {
+          id: 'prompt2',
+          name: 'Question Validation',
+          description: 'Default template for validating questions',
+          category: 'question_validation',
+          promptType: 'system',
+          content: 'Validate this question for clarity and educational value: {question}',
+          variables: ['question'],
+          isActive: true,
+          isDefault: true,
+          version: '1.0.0',
+          usage: {
+            totalCalls: 87,
+            successRate: 96.8,
+            avgResponseTime: 1.8,
+            lastUsed: new Date('2024-01-08T17:45:00Z'),
+          },
+          createdBy: 'test-user',
+          createdAt: new Date('2024-01-01T00:00:00Z'),
+          updatedAt: new Date('2024-01-08T17:45:00Z'),
+        },
+        {
+          id: 'prompt3',
+          name: 'Content Analysis',
+          description: 'Template for analyzing educational content',
+          category: 'content_analysis',
+          promptType: 'user',
+          content: 'Analyze the following educational content: {content}',
+          variables: ['content'],
+          isActive: true,
+          isDefault: false,
+          version: '1.2.0',
+          usage: {
+            totalCalls: 42,
+            successRate: 91.3,
+            avgResponseTime: 3.1,
+            lastUsed: new Date('2024-01-08T16:20:00Z'),
+          },
+          createdBy: 'test-user',
+          createdAt: new Date('2024-01-01T00:00:00Z'),
+          updatedAt: new Date('2024-01-08T16:20:00Z'),
+        },
+        {
+          id: 'prompt4',
+          name: 'System Initialization',
+          description: 'System-level prompt for initializing AI context',
+          category: 'system',
+          promptType: 'system',
+          content: 'Initialize the AI system with the following context: {context}',
+          variables: ['context'],
+          isActive: true,
+          isDefault: true,
+          version: '2.0.0',
+          usage: {
+            totalCalls: 234,
+            successRate: 99.1,
+            avgResponseTime: 0.5,
+            lastUsed: new Date('2024-01-08T19:00:00Z'),
+          },
+          createdBy: 'test-user',
+          createdAt: new Date('2024-01-01T00:00:00Z'),
+          updatedAt: new Date('2024-01-08T19:00:00Z'),
+        },
+      ];
+      
+      return mockPrompts;
+    } catch (error) {
+      console.error('Error fetching prompt templates:', error);
+      return [];
+    }
+  }
+
+  async createPromptTemplate(templateData: InsertPromptTemplate): Promise<PromptTemplate> {
+    try {
+      // Mock implementation for testing
+      const newTemplate: PromptTemplate = {
+        id: 'prompt_' + Date.now(),
+        ...templateData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      return newTemplate;
+    } catch (error) {
+      console.error('Error creating prompt template:', error);
+      throw error;
+    }
+  }
+
+  async updatePromptTemplate(id: string, templateData: Partial<InsertPromptTemplate>): Promise<PromptTemplate> {
+    try {
+      // Mock implementation for testing
+      const updatedTemplate: PromptTemplate = {
+        id: id,
+        name: templateData.name || 'Updated Template',
+        description: templateData.description || 'Updated description',
+        category: templateData.category || 'general',
+        template: templateData.template || 'Updated template content',
+        variables: templateData.variables || [],
+        isSystemDefault: templateData.isSystemDefault || false,
+        isActive: templateData.isActive || true,
+        createdBy: templateData.createdBy || 'test-user',
+        accountId: templateData.accountId || '00000000-0000-0000-0000-000000000001',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      return updatedTemplate;
+    } catch (error) {
+      console.error('Error updating prompt template:', error);
+      throw error;
+    }
+  }
+
+  async deletePromptTemplate(id: string): Promise<boolean> {
+    try {
+      // Mock implementation for testing
+      return true;
+    } catch (error) {
+      console.error('Error deleting prompt template:', error);
+      return false;
+    }
   }
 }
 
