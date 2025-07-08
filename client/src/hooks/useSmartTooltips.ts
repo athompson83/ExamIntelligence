@@ -28,6 +28,22 @@ export const useSmartTooltips = (config: SmartTooltipConfig) => {
     isIdle: false,
     idleTime: 0
   });
+  const [isTooltipSystemMuted, setIsTooltipSystemMuted] = useState(false);
+
+  // Check if tooltip system is muted
+  useEffect(() => {
+    const isMuted = localStorage.getItem('tooltipSystemMuted') === 'true';
+    setIsTooltipSystemMuted(isMuted);
+    
+    // Listen for mute state changes
+    const handleMuteChange = () => {
+      const newMutedState = localStorage.getItem('tooltipSystemMuted') === 'true';
+      setIsTooltipSystemMuted(newMutedState);
+    };
+    
+    window.addEventListener('storage', handleMuteChange);
+    return () => window.removeEventListener('storage', handleMuteChange);
+  }, []);
 
   // Track user behavior
   useEffect(() => {
@@ -108,8 +124,10 @@ export const useSmartTooltips = (config: SmartTooltipConfig) => {
     };
   }, []);
 
-  // Smart tooltip triggers based on behavior
+  // Smart tooltip triggers based on behavior (only if not muted)
   useEffect(() => {
+    if (isTooltipSystemMuted) return;
+    
     const checkTriggers = () => {
       // First visit tooltip
       if (config.triggers?.onFirstVisit) {
@@ -164,10 +182,12 @@ export const useSmartTooltips = (config: SmartTooltipConfig) => {
     };
 
     checkTriggers();
-  }, [behaviorData, config, showTooltip]);
+  }, [behaviorData, config, showTooltip, isTooltipSystemMuted]);
 
-  // Manual trigger functions
+  // Manual trigger functions (respect mute state)
   const triggerContextualTooltip = useCallback((element: HTMLElement) => {
+    if (isTooltipSystemMuted) return;
+    
     const elementType = element.tagName.toLowerCase();
     const elementText = element.textContent || element.getAttribute('aria-label') || '';
     
@@ -199,9 +219,11 @@ export const useSmartTooltips = (config: SmartTooltipConfig) => {
       category: 'info',
       priority: 'medium'
     });
-  }, [showTooltip]);
+  }, [showTooltip, isTooltipSystemMuted]);
 
   const triggerFeatureTooltip = useCallback((featureName: string, description: string) => {
+    if (isTooltipSystemMuted) return;
+    
     showTooltip({
       id: `feature_${featureName}`,
       title: `${featureName} Feature`,
@@ -209,9 +231,11 @@ export const useSmartTooltips = (config: SmartTooltipConfig) => {
       category: 'feature',
       priority: 'medium'
     });
-  }, [showTooltip]);
+  }, [showTooltip, isTooltipSystemMuted]);
 
   const triggerErrorTooltip = useCallback((errorMessage: string, solution?: string) => {
+    if (isTooltipSystemMuted) return;
+    
     showTooltip({
       id: `error_${Date.now()}`,
       title: 'Something went wrong',
@@ -219,13 +243,14 @@ export const useSmartTooltips = (config: SmartTooltipConfig) => {
       category: 'warning',
       priority: 'high'
     });
-  }, [showTooltip]);
+  }, [showTooltip, isTooltipSystemMuted]);
 
   return {
     behaviorData,
     triggerContextualTooltip,
     triggerFeatureTooltip,
-    triggerErrorTooltip
+    triggerErrorTooltip,
+    isTooltipSystemMuted
   };
 };
 

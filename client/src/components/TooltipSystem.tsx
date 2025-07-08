@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MessageCircle, Lightbulb, Info, Zap, BookOpen, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -268,6 +268,26 @@ export const TooltipSystem: React.FC = () => {
   const [activeTooltip, setActiveTooltip] = useState<TooltipData | null>(null);
   const [tooltipQueue, setTooltipQueue] = useState<TooltipData[]>([]);
   const [dismissedTooltips, setDismissedTooltips] = useState<Set<string>>(new Set());
+  const [isTooltipSystemMuted, setIsTooltipSystemMuted] = useState(false);
+
+  // Check if tooltip system is muted on mount
+  useEffect(() => {
+    const isMuted = localStorage.getItem('tooltipSystemMuted') === 'true';
+    setIsTooltipSystemMuted(isMuted);
+  }, []);
+
+  // Save mute state to localStorage
+  const toggleTooltipMute = useCallback(() => {
+    const newMutedState = !isTooltipSystemMuted;
+    setIsTooltipSystemMuted(newMutedState);
+    localStorage.setItem('tooltipSystemMuted', newMutedState.toString());
+    
+    // Clear active tooltip when muting
+    if (newMutedState) {
+      setActiveTooltip(null);
+      setTooltipQueue([]);
+    }
+  }, [isTooltipSystemMuted]);
 
   // Sample tooltip data
   const tooltipData: TooltipData[] = [
@@ -308,15 +328,19 @@ export const TooltipSystem: React.FC = () => {
   ];
 
   useEffect(() => {
-    // Initialize tooltip queue with non-dismissed tooltips
-    const availableTooltips = tooltipData.filter(
-      tooltip => !dismissedTooltips.has(tooltip.id)
-    );
-    setTooltipQueue(availableTooltips);
-  }, [dismissedTooltips]);
+    // Initialize tooltip queue with non-dismissed tooltips only if not muted
+    if (!isTooltipSystemMuted) {
+      const availableTooltips = tooltipData.filter(
+        tooltip => !dismissedTooltips.has(tooltip.id)
+      );
+      setTooltipQueue(availableTooltips);
+    } else {
+      setTooltipQueue([]);
+    }
+  }, [dismissedTooltips, isTooltipSystemMuted]);
 
   useEffect(() => {
-    if (tooltipQueue.length > 0 && !activeTooltip) {
+    if (tooltipQueue.length > 0 && !activeTooltip && !isTooltipSystemMuted) {
       const nextTooltip = tooltipQueue.find(t => 
         t.priority === 'high' || 
         (!tooltipQueue.some(tt => tt.priority === 'high'))
@@ -330,7 +354,7 @@ export const TooltipSystem: React.FC = () => {
         setActiveTooltip(nextTooltip);
       }
     }
-  }, [tooltipQueue, activeTooltip]);
+  }, [tooltipQueue, activeTooltip, isTooltipSystemMuted]);
 
   const handleTooltipClose = () => {
     setActiveTooltip(null);
@@ -360,15 +384,42 @@ export const TooltipSystem: React.FC = () => {
   };
 
   return (
-    <AnimatePresence>
-      {activeTooltip && (
-        <ContextualTooltip
-          data={activeTooltip}
-          onClose={handleTooltipClose}
-          onInteract={handleTooltipInteract}
-        />
-      )}
-    </AnimatePresence>
+    <>
+      {/* Mute/Unmute Toggle Button */}
+      <motion.button
+        onClick={toggleTooltipMute}
+        className={`fixed bottom-4 right-4 z-40 p-3 rounded-full shadow-lg border-2 transition-all duration-200 ${
+          isTooltipSystemMuted 
+            ? 'bg-gray-100 border-gray-300 text-gray-500 hover:bg-gray-200' 
+            : 'bg-blue-600 border-blue-500 text-white hover:bg-blue-700'
+        }`}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        title={isTooltipSystemMuted ? 'Enable AI Assistant' : 'Disable AI Assistant'}
+      >
+        {isTooltipSystemMuted ? (
+          <div className="flex items-center">
+            <MessageCircle className="w-5 h-5" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+              <X className="w-2 h-2 text-white" />
+            </div>
+          </div>
+        ) : (
+          <MessageCircle className="w-5 h-5" />
+        )}
+      </motion.button>
+
+      {/* Tooltip System */}
+      <AnimatePresence>
+        {activeTooltip && !isTooltipSystemMuted && (
+          <ContextualTooltip
+            data={activeTooltip}
+            onClose={handleTooltipClose}
+            onInteract={handleTooltipInteract}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

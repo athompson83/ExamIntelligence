@@ -1324,10 +1324,29 @@ export default function App() {
 3. Click "Create codespace on main"
 4. Wait 2-3 minutes for environment setup
 
-#### 4. Install Dependencies & Run
-In the Codespace terminal (bottom panel):
+#### 4. Fix Node.js Detection Issues (IMPORTANT)
+Codespaces may get stuck on Node.js detection. Run these commands:
+
 \`\`\`bash
+# Navigate to correct directory
+cd /workspaces/proficiencyai-mobile-app
+
+# Update Node.js to latest version
+nvm install 18
+nvm use 18
+
+# Verify versions
+node -v
+npm -v
+
+# Install Expo CLI globally
+npm install -g @expo/cli
+
+# Clean install dependencies
+rm -rf node_modules package-lock.json
 npm install --legacy-peer-deps
+
+# Start Expo with tunnel (required for Codespaces)
 npx expo start --tunnel
 \`\`\`
 
@@ -1359,18 +1378,112 @@ The included workflow automatically:
 - Runs tests and quality checks
 - Deploys web version to GitHub Pages
 
-## Troubleshooting
+## Troubleshooting Common Issues
+
+### 🔧 Node.js Detection Stuck
+**Problem**: Codespace shows "detecting Node.js" and never completes
+**Solution**:
+\`\`\`bash
+# Force refresh and update
+cd /workspaces/proficiencyai-mobile-app
+nvm install 18 && nvm use 18
+npm install -g @expo/cli
+rm -rf node_modules && npm install --legacy-peer-deps
+\`\`\`
+
+### 🔧 Permission Denied Errors
+**Problem**: Cannot install packages or run commands
+**Solution**:
+\`\`\`bash
+# Make repository public
+# OR run in Codespace terminal:
+sudo chown -R \$USER:$(id -gn \$USER) /workspaces/proficiencyai-mobile-app
+\`\`\`
+
+### 🔧 Expo Server Won't Start
+**Problem**: Expo fails to start or shows network errors
+**Solution**:
+\`\`\`bash
+# Always use tunnel flag in Codespaces
+npx expo start --tunnel
+
+# If still fails, try:
+npx expo start --tunnel --clear
+\`\`\`
+
+### 🔧 QR Code Not Scanning
+**Problem**: QR code appears but won't scan properly
+**Solution**:
+1. Make sure Expo Go app is installed
+2. Use phone's camera app to scan (not Expo Go scanner)
+3. Ensure phone and Codespace are on same network
+4. Try manual URL entry in Expo Go
+
+### 🔧 Build Errors
+**Problem**: Various build or dependency errors
+**Solution**:
+\`\`\`bash
+# Check Node.js version (should be 18+)
+node -v
+
+# Clean reinstall
+rm -rf node_modules package-lock.json
+npm install --legacy-peer-deps
+
+# If still fails, try:
+npx expo install --fix
+\`\`\`
+
+## Dev Container Configuration
+
+Create \`.devcontainer/devcontainer.json\` for better Codespace setup:
+
+\`\`\`json
+{
+  "name": "React Native Expo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:0-18-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "postCreateCommand": "npm install --legacy-peer-deps && npm install -g @expo/cli",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [8081, 19000, 19001, 19002],
+  "portsAttributes": {
+    "8081": {
+      "label": "Metro",
+      "visibility": "public"
+    },
+    "19000": {
+      "label": "Expo Dev Server",
+      "visibility": "public"
+    }
+  }
+}
+\`\`\`
+
+## Getting Help
 
 ### Common Issues:
-1. **Permission denied**: Make repository public
-2. **Dependency conflicts**: Use \`--legacy-peer-deps\`
-3. **Network issues**: Use \`--tunnel\` flag
-4. **Build errors**: Check Node.js version (18+)
+1. **Node.js detection stuck**: Run manual commands above
+2. **Permission denied**: Make repository public
+3. **Dependency conflicts**: Use \`--legacy-peer-deps\`
+4. **Network issues**: Always use \`--tunnel\` flag
+5. **Build errors**: Check Node.js version (18+)
 
-### Getting Help:
+### Support Resources:
 - GitHub Issues in your repository
 - Expo Discord: https://expo.dev/discord
 - Stack Overflow: Tag \`expo\` and \`react-native\`
+- GitHub Codespaces docs: https://docs.github.com/codespaces
 
 ## Features Included:
 ✓ Complete React Native app
@@ -1381,6 +1494,7 @@ The included workflow automatically:
 ✓ TypeScript support
 ✓ GitHub Actions CI/CD
 ✓ Expo Go compatibility
+✓ Codespace optimization
 
 ## Next Steps After Deployment:
 1. Customize app branding
@@ -1407,6 +1521,40 @@ The included workflow automatically:
                                 URL.revokeObjectURL(url);
                               });
 
+                              // Also create a complete dev container configuration
+                              const devContainerContent = `{
+  "name": "React Native Expo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:0-18-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "postCreateCommand": "npm install --legacy-peer-deps && npm install -g @expo/cli",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [8081, 19000, 19001, 19002],
+  "portsAttributes": {
+    "8081": {
+      "label": "Metro",
+      "visibility": "public"
+    },
+    "19000": {
+      "label": "Expo Dev Server", 
+      "visibility": "public"
+    }
+  }
+}`;
+
+                              // Add dev container to files
+                              files['.devcontainer/devcontainer.json'] = devContainerContent;
+
                               // Also create a summary file
                               const summaryContent = `
 📱 ProficiencyAI Mobile App - GitHub Package Downloaded!
@@ -1417,12 +1565,18 @@ The included workflow automatically:
 • App.js - Main application
 • app.json - Expo configuration
 • DEPLOYMENT_GUIDE.md - Complete setup guide
+• .devcontainer/devcontainer.json - Codespace configuration
 
 🚀 Next Steps:
 1. Create GitHub repository at https://github.com/new
 2. Upload all downloaded files
-3. Create GitHub Codespace
-4. Run: npm install && expo start --tunnel
+3. Create GitHub Codespace  
+4. If Node.js detection is stuck, run:
+   cd /workspaces/proficiencyai-mobile-app
+   nvm install 18 && nvm use 18
+   npm install -g @expo/cli
+   npm install --legacy-peer-deps
+   npx expo start --tunnel
 5. Scan QR code with Expo Go app
 
 📚 Documentation:
@@ -1433,8 +1587,14 @@ The included workflow automatically:
 💡 Pro Tips:
 • Make repository public for free Codespaces
 • Use --legacy-peer-deps for dependencies
-• Use --tunnel flag for mobile testing
+• Always use --tunnel flag for mobile testing
 • Login with test@example.com / password
+
+🔧 Troubleshooting:
+• If Node.js detection is stuck: Run manual commands above
+• Permission denied: Make repository public
+• Build errors: Check Node.js version (18+)
+• Network issues: Always use --tunnel flag
 
 🔗 Useful Links:
 • GitHub: https://github.com/new
@@ -1476,7 +1636,11 @@ Happy coding! 🎉
                         <p>1. Download the mobile app package</p>
                         <p>2. Create new GitHub repository</p>
                         <p>3. Upload files and create Codespace</p>
-                        <p>4. Run: npm install && expo start --tunnel</p>
+                        <p>4. If Node.js detection is stuck:</p>
+                        <p className="ml-3">nvm install 18 && nvm use 18</p>
+                        <p className="ml-3">npm install -g @expo/cli</p>
+                        <p className="ml-3">npm install --legacy-peer-deps</p>
+                        <p className="ml-3">npx expo start --tunnel</p>
                         <p>5. Scan QR code with Expo Go app</p>
                       </div>
                     </div>
