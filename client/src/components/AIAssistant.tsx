@@ -216,41 +216,7 @@ export const AIAssistant: React.FC = () => {
 
   return (
     <>
-      {/* Floating Assistant Button */}
-      <motion.div
-        className="fixed bottom-6 right-6 z-50"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 2, duration: 0.5 }}
-      >
-        <AnimatePresence>
-          {!isOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="relative"
-            >
-              <Button
-                onClick={() => setIsOpen(true)}
-                className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
-                size="lg"
-              >
-                <MessageCircle className="w-6 h-6 text-white" />
-              </Button>
-              
-              {/* Notification badge */}
-              <motion.div
-                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <span className="text-xs text-white font-bold">!</span>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+      
 
       {/* Chat Interface */}
       <AnimatePresence>
