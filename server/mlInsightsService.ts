@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { storage } from "./storage";
+import { storage } from "./storage-simple";
 import type { 
   Quiz, 
   QuizAttempt, 

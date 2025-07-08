@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
-import { storage } from '../storage';
+import { storage } from '../storage-simple';
 
 interface WebSocketConnection {
   ws: WebSocket;

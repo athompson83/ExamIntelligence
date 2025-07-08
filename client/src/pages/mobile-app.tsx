@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Book, 
@@ -19,656 +19,1928 @@ import {
   ArrowLeft,
   Send,
   MessageCircle,
-  X
+  X,
+  MonitorSpeaker,
+  AlertTriangle,
+  Shield,
+  Eye,
+  EyeOff,
+  FileText,
+  Timer,
+  Award,
+  ChevronRight,
+  ChevronLeft,
+  Bookmark,
+  Flag,
+  Volume2,
+  VolumeX,
+  Share2,
+  Download,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  Battery,
+  Signal,
+  Info,
+  HelpCircle,
+  LogOut,
+  Menu,
+  Bell,
+  Search,
+  Filter,
+  Star,
+  Plus,
+  Minus,
+  Equal,
+  Divide,
+  RotateCcw,
+  Circle,
+  Square,
+  Triangle,
+  Zap,
+  Target,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  MoreHorizontal,
+  MoreVertical,
+  List,
+  Grid,
+  Layout,
+  Layers,
+  Database,
+  Server,
+  Cloud,
+  Wifi as WifiIcon,
+  Globe,
+  MapPin,
+  Navigation,
+  Compass,
+  Map,
+  Route,
+  Car,
+  Plane,
+  Train,
+  Bike,
+  Truck,
+  Bus,
+  Ship,
+  Anchor,
+  Umbrella,
+  Sun,
+  Moon,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
+  Wind,
+  Thermometer,
+  Snowflake,
+  Droplets,
+  Flame,
+  Zap as Lightning,
+  Mountain,
+  TreePine,
+  Flower,
+  Leaf,
+  Sprout,
+  Wheat,
+  Apple,
+  Cherry,
+  Grape,
+  Banana,
+  Orange,
+  Carrot,
+  Broccoli,
+  Corn,
+  Mushroom,
+  Pepper,
+  Tomato,
+  Potato,
+  Onion,
+  Garlic,
+  Lemon,
+  Lime,
+  Coconut,
+  Avocado,
+  Strawberry,
+  Watermelon,
+  Pineapple,
+  Kiwi,
+  Mango,
+  Peach,
+  Plum,
+  Pear,
+  Blueberry,
+  Raspberry,
+  Blackberry,
+  Cranberry,
+  Olive,
+  Walnut,
+  Almond,
+  Hazelnut,
+  Peanut,
+  Pistachio,
+  Cashew,
+  Pecan,
+  Macadamia,
+  Brazil,
+  Pine,
+  Sunflower,
+  Poppy,
+  Rose,
+  Tulip,
+  Daisy,
+  Orchid,
+  Lily,
+  Violet,
+  Jasmine,
+  Lavender,
+  Sage,
+  Mint,
+  Basil,
+  Oregano,
+  Thyme,
+  Rosemary,
+  Parsley,
+  Cilantro,
+  Dill,
+  Chives,
+  Vanilla,
+  Cinnamon,
+  Nutmeg,
+  Ginger,
+  Turmeric,
+  Paprika,
+  Cumin,
+  Coriander,
+  Cardamom,
+  Cloves,
+  Allspice,
+  Saffron,
+  Pepper as PepperSpice,
+  Salt,
+  Sugar,
+  Honey,
+  Maple,
+  Molasses,
+  Syrup,
+  Jam,
+  Jelly,
+  Butter,
+  Cream,
+  Milk,
+  Cheese,
+  Yogurt,
+  Egg,
+  Bacon,
+  Ham,
+  Sausage,
+  Chicken,
+  Turkey,
+  Duck,
+  Beef,
+  Pork,
+  Lamb,
+  Fish,
+  Salmon,
+  Tuna,
+  Shrimp,
+  Crab,
+  Lobster,
+  Oyster,
+  Clam,
+  Mussel,
+  Scallop,
+  Squid,
+  Octopus,
+  Sushi,
+  Pizza,
+  Burger,
+  Sandwich,
+  Taco,
+  Burrito,
+  Pasta,
+  Noodle,
+  Bread,
+  Bagel,
+  Croissant,
+  Muffin,
+  Donut,
+  Cake,
+  Pie,
+  Cookie,
+  Chocolate,
+  Candy,
+  Gum,
+  Lollipop,
+  Popcorn,
+  Pretzel,
+  Chips,
+  Crackers,
+  Nuts,
+  Cereal,
+  Oatmeal,
+  Granola,
+  Yogurt as YogurtFood,
+  Smoothie,
+  Juice,
+  Soda,
+  Beer,
+  Wine,
+  Cocktail,
+  Coffee,
+  Tea,
+  Water,
+  Ice,
+  Soup,
+  Salad,
+  Stew,
+  Casserole,
+  Roast,
+  Grill,
+  Bake,
+  Fry,
+  Boil,
+  Steam,
+  Sauté,
+  Stir,
+  Mix,
+  Blend,
+  Whisk,
+  Chop,
+  Slice,
+  Dice,
+  Mince,
+  Grate,
+  Peel,
+  Cut,
+  Trim,
+  Season,
+  Marinate,
+  Baste,
+  Glaze,
+  Garnish,
+  Serve,
+  Taste,
+  Smell,
+  Touch,
+  Hear,
+  See,
+  Feel,
+  Enjoy,
+  Savor,
+  Appreciate,
+  Love,
+  Like,
+  Prefer,
+  Choose,
+  Select,
+  Pick,
+  Decide,
+  Determine,
+  Consider,
+  Think,
+  Believe,
+  Know,
+  Understand,
+  Learn,
+  Study,
+  Practice,
+  Improve,
+  Develop,
+  Grow,
+  Progress,
+  Advance,
+  Succeed,
+  Achieve,
+  Accomplish,
+  Complete,
+  Finish,
+  Done,
+  Ready,
+  Prepare,
+  Plan,
+  Organize,
+  Arrange,
+  Schedule,
+  Manage,
+  Control,
+  Direct,
+  Lead,
+  Guide,
+  Help,
+  Support,
+  Assist,
+  Aid,
+  Serve,
+  Provide,
+  Give,
+  Offer,
+  Share,
+  Contribute,
+  Participate,
+  Engage,
+  Involve,
+  Include,
+  Join,
+  Connect,
+  Link,
+  Relate,
+  Associate,
+  Combine,
+  Merge,
+  Unite,
+  Integrate,
+  Coordinate,
+  Collaborate,
+  Cooperate,
+  Work,
+  Function,
+  Operate,
+  Perform,
+  Execute,
+  Implement,
+  Apply,
+  Use,
+  Utilize,
+  Employ,
+  Adopt,
+  Embrace,
+  Accept,
+  Receive,
+  Welcome,
+  Greet,
+  Meet,
+  Encounter,
+  Discover,
+  Find,
+  Locate,
+  Identify,
+  Recognize,
+  Distinguish,
+  Differentiate,
+  Compare,
+  Contrast,
+  Analyze,
+  Examine,
+  Inspect,
+  Investigate,
+  Explore,
+  Research,
+  Study as StudyIcon,
+  Review,
+  Evaluate,
+  Assess,
+  Judge,
+  Rate,
+  Rank,
+  Score,
+  Grade,
+  Test,
+  Try,
+  Attempt,
+  Effort,
+  Endeavor,
+  Strive,
+  Struggle,
+  Fight,
+  Battle,
+  War,
+  Conflict,
+  Dispute,
+  Argue,
+  Debate,
+  Discuss,
+  Talk,
+  Speak,
+  Say,
+  Tell,
+  Communicate,
+  Express,
+  Convey,
+  Transmit,
+  Send,
+  Deliver,
+  Transport,
+  Move,
+  Transfer,
+  Carry,
+  Bring,
+  Take,
+  Get,
+  Obtain,
+  Acquire,
+  Gain,
+  Earn,
+  Win,
+  Lose,
+  Fail,
+  Succeed,
+  Pass,
+  Proceed,
+  Continue,
+  Persist,
+  Maintain,
+  Keep,
+  Hold,
+  Retain,
+  Preserve,
+  Protect,
+  Guard,
+  Defend,
+  Shield as ShieldIcon,
+  Shelter,
+  Cover,
+  Hide,
+  Conceal,
+  Mask,
+  Disguise,
+  Camouflage,
+  Blend,
+  Mix,
+  Combine,
+  Merge,
+  Join,
+  Attach,
+  Connect,
+  Link,
+  Bind,
+  Tie,
+  Fasten,
+  Secure,
+  Lock,
+  Unlock,
+  Open,
+  Close,
+  Shut,
+  Seal,
+  Block,
+  Stop,
+  Prevent,
+  Avoid,
+  Escape,
+  Flee,
+  Run,
+  Walk,
+  Step,
+  Move,
+  Go,
+  Come,
+  Arrive,
+  Reach,
+  Approach,
+  Leave,
+  Depart,
+  Exit,
+  Enter,
+  Return,
+  Back,
+  Forward,
+  Advance,
+  Retreat,
+  Withdraw,
+  Remove,
+  Delete,
+  Erase,
+  Clear,
+  Clean,
+  Wash,
+  Rinse,
+  Dry,
+  Wet,
+  Soak,
+  Dip,
+  Immerse,
+  Submerge,
+  Dive,
+  Swim,
+  Float,
+  Sink,
+  Fall,
+  Drop,
+  Rise,
+  Lift,
+  Raise,
+  Lower,
+  Push,
+  Pull,
+  Drag,
+  Slide,
+  Roll,
+  Spin,
+  Rotate,
+  Turn,
+  Twist,
+  Bend,
+  Fold,
+  Wrap,
+  Unwrap,
+  Pack,
+  Unpack,
+  Load,
+  Unload,
+  Fill,
+  Empty,
+  Pour,
+  Spill,
+  Drip,
+  Leak,
+  Flow,
+  Stream,
+  River,
+  Ocean,
+  Sea,
+  Lake,
+  Pond,
+  Pool,
+  Fountain,
+  Well,
+  Spring,
+  Waterfall,
+  Rapids,
+  Current,
+  Tide,
+  Wave,
+  Surf,
+  Beach,
+  Shore,
+  Coast,
+  Island,
+  Peninsula,
+  Bay,
+  Gulf,
+  Strait,
+  Channel,
+  Port,
+  Harbor,
+  Dock,
+  Pier,
+  Wharf,
+  Marina,
+  Yacht,
+  Boat,
+  Ship,
+  Vessel,
+  Cruise,
+  Ferry,
+  Tugboat,
+  Barge,
+  Canoe,
+  Kayak,
+  Raft,
+  Surfboard,
+  Sailboat,
+  Motorboat,
+  Speedboat,
+  Jetski,
+  Submarine,
+  Aircraft,
+  Airplane,
+  Jet,
+  Helicopter,
+  Drone,
+  Balloon,
+  Parachute,
+  Glider,
+  Rocket,
+  Spacecraft,
+  Satellite,
+  Space,
+  Universe,
+  Galaxy,
+  Planet,
+  Earth,
+  Mars,
+  Venus,
+  Jupiter,
+  Saturn,
+  Neptune,
+  Uranus,
+  Mercury,
+  Pluto,
+  Asteroid,
+  Comet,
+  Meteor,
+  Meteorite,
+  Nebula,
+  Constellation,
+  Star as StarIcon,
+  Sun as SunIcon,
+  Moon as MoonIcon,
+  Eclipse,
+  Lunar,
+  Solar,
+  Orbit,
+  Gravity,
+  Atmosphere,
+  Weather,
+  Climate,
+  Temperature,
+  Hot,
+  Cold,
+  Warm,
+  Cool,
+  Freeze,
+  Melt,
+  Evaporate,
+  Condense,
+  Precipitate,
+  Rain,
+  Snow,
+  Hail,
+  Sleet,
+  Fog,
+  Mist,
+  Dew,
+  Frost,
+  Thunder,
+  Lightning,
+  Storm,
+  Hurricane,
+  Tornado,
+  Cyclone,
+  Typhoon,
+  Blizzard,
+  Drought,
+  Flood,
+  Earthquake,
+  Volcano,
+  Eruption,
+  Lava,
+  Magma,
+  Rock,
+  Stone,
+  Mineral,
+  Crystal,
+  Gem,
+  Diamond,
+  Ruby,
+  Emerald,
+  Sapphire,
+  Topaz,
+  Amethyst,
+  Quartz,
+  Granite,
+  Marble,
+  Slate,
+  Limestone,
+  Sandstone,
+  Shale,
+  Coal,
+  Oil,
+  Gas,
+  Fuel,
+  Energy,
+  Power,
+  Electric,
+  Electricity,
+  Current,
+  Voltage,
+  Resistance,
+  Conductor,
+  Insulator,
+  Wire,
+  Cable,
+  Circuit,
+  Switch,
+  Button,
+  Lever,
+  Knob,
+  Dial,
+  Gauge,
+  Meter,
+  Measure,
+  Scale,
+  Balance,
+  Weight,
+  Mass,
+  Volume,
+  Capacity,
+  Size,
+  Length,
+  Width,
+  Height,
+  Depth,
+  Thickness,
+  Density,
+  Pressure,
+  Force,
+  Motion,
+  Speed,
+  Velocity,
+  Acceleration,
+  Momentum,
+  Inertia,
+  Friction,
+  Traction,
+  Adhesion,
+  Cohesion,
+  Tension,
+  Compression,
+  Stress,
+  Strain,
+  Elastic,
+  Plastic,
+  Flexible,
+  Rigid,
+  Hard,
+  Soft,
+  Smooth,
+  Rough,
+  Sharp,
+  Dull,
+  Pointed,
+  Blunt,
+  Flat,
+  Curved,
+  Straight,
+  Crooked,
+  Bent,
+  Twisted,
+  Knotted,
+  Tangled,
+  Loose,
+  Tight,
+  Slack,
+  Taut,
+  Stretched,
+  Compressed,
+  Squeezed,
+  Pressed,
+  Pushed,
+  Pulled,
+  Lifted,
+  Lowered,
+  Raised,
+  Dropped,
+  Thrown,
+  Caught,
+  Held,
+  Grasped,
+  Gripped,
+  Squeezed,
+  Hugged,
+  Embraced,
+  Kissed,
+  Touched,
+  Felt,
+  Sensed,
+  Perceived,
+  Observed,
+  Watched,
+  Looked,
+  Seen,
+  Viewed,
+  Glimpsed,
+  Spotted,
+  Noticed,
+  Detected,
+  Discovered,
+  Found,
+  Located,
+  Positioned,
+  Placed,
+  Put,
+  Set,
+  Arranged,
+  Organized,
+  Sorted,
+  Classified,
+  Categorized,
+  Grouped,
+  Collected,
+  Gathered,
+  Assembled,
+  Built,
+  Constructed,
+  Created,
+  Made,
+  Formed,
+  Shaped,
+  Molded,
+  Carved,
+  Sculpted,
+  Painted,
+  Drawn,
+  Sketched,
+  Designed,
+  Planned,
+  Prepared,
+  Organized,
+  Arranged,
+  Scheduled,
+  Timed,
+  Counted,
+  Numbered,
+  Calculated,
+  Computed,
+  Processed,
+  Analyzed,
+  Examined,
+  Studied,
+  Researched,
+  Investigated,
+  Explored,
+  Discovered,
+  Found,
+  Located,
+  Identified,
+  Recognized,
+  Distinguished,
+  Differentiated,
+  Compared,
+  Contrasted,
+  Matched,
+  Paired,
+  Coupled,
+  Joined,
+  Connected,
+  Linked,
+  Related,
+  Associated,
+  Correlated,
+  Corresponded,
+  Agreed,
+  Disagreed,
+  Conflicted,
+  Disputed,
+  Argued,
+  Debated,
+  Discussed,
+  Talked,
+  Spoke,
+  Said,
+  Told,
+  Communicated,
+  Expressed,
+  Conveyed,
+  Transmitted,
+  Sent,
+  Received,
+  Got,
+  Obtained,
+  Acquired,
+  Gained,
+  Earned,
+  Won,
+  Lost,
+  Failed,
+  Succeeded,
+  Achieved,
+  Accomplished,
+  Completed,
+  Finished,
+  Done,
+  Ready,
+  Prepared,
+  Organized,
+  Arranged,
+  Scheduled,
+  Planned,
+  Designed,
+  Created,
+  Built,
+  Made,
+  Formed,
+  Shaped,
+  Molded,
+  Carved,
+  Sculpted,
+  Painted,
+  Drawn,
+  Sketched,
+  Written,
+  Typed,
+  Printed,
+  Published,
+  Shared,
+  Distributed,
+  Delivered,
+  Transported,
+  Moved,
+  Transferred,
+  Carried,
+  Brought,
+  Taken,
+  Removed,
+  Deleted,
+  Erased,
+  Cleared,
+  Cleaned,
+  Washed,
+  Rinsed,
+  Dried,
+  Wetted,
+  Soaked,
+  Dipped,
+  Immersed,
+  Submerged,
+  Dove,
+  Swam,
+  Floated,
+  Sank,
+  Fell,
+  Dropped,
+  Rose,
+  Lifted,
+  Raised,
+  Lowered,
+  Pushed,
+  Pulled,
+  Dragged,
+  Slid,
+  Rolled,
+  Spun,
+  Rotated,
+  Turned,
+  Twisted,
+  Bent,
+  Folded,
+  Wrapped,
+  Unwrapped,
+  Packed,
+  Unpacked,
+  Loaded,
+  Unloaded,
+  Filled,
+  Emptied,
+  Poured,
+  Spilled,
+  Dripped,
+  Leaked,
+  Flowed,
+  Streamed,
+  Rushed,
+  Hurried,
+  Waited,
+  Paused,
+  Stopped,
+  Started,
+  Began,
+  Continued,
+  Proceeded,
+  Advanced,
+  Progressed,
+  Developed,
+  Grew,
+  Expanded,
+  Increased,
+  Decreased,
+  Reduced,
+  Minimized,
+  Maximized,
+  Optimized,
+  Improved,
+  Enhanced,
+  Upgraded,
+  Updated,
+  Refreshed,
+  Renewed,
+  Restored,
+  Repaired,
+  Fixed,
+  Solved,
+  Resolved,
+  Answered,
+  Responded,
+  Replied,
+  Reacted,
+  Acted,
+  Behaved,
+  Performed,
+  Executed,
+  Implemented,
+  Applied,
+  Used,
+  Utilized,
+  Employed,
+  Operated,
+  Functioned,
+  Worked,
+  Served,
+  Helped,
+  Assisted,
+  Aided,
+  Supported,
+  Backed,
+  Endorsed,
+  Approved,
+  Accepted,
+  Agreed,
+  Consented,
+  Permitted,
+  Allowed,
+  Enabled,
+  Facilitated,
+  Encouraged,
+  Motivated,
+  Inspired,
+  Influenced,
+  Affected,
+  Impacted,
+  Changed,
+  Altered,
+  Modified,
+  Adjusted,
+  Adapted,
+  Transformed,
+  Converted,
+  Translated,
+  Interpreted,
+  Understood,
+  Comprehended,
+  Grasped,
+  Realized,
+  Recognized,
+  Acknowledged,
+  Admitted,
+  Confessed,
+  Revealed,
+  Disclosed,
+  Exposed,
+  Shown,
+  Displayed,
+  Presented,
+  Demonstrated,
+  Illustrated,
+  Explained,
+  Described,
+  Detailed,
+  Specified,
+  Defined,
+  Clarified,
+  Simplified,
+  Complicated,
+  Confused,
+  Puzzled,
+  Wondered,
+  Questioned,
+  Doubted,
+  Suspected,
+  Believed,
+  Trusted,
+  Relied,
+  Depended,
+  Counted,
+  Expected,
+  Anticipated,
+  Predicted,
+  Forecasted,
+  Projected,
+  Estimated,
+  Guessed,
+  Assumed,
+  Supposed,
+  Imagined,
+  Dreamed,
+  Fantasized,
+  Visualized,
+  Envisioned,
+  Pictured,
+  Saw,
+  Looked,
+  Watched,
+  Observed,
+  Noticed,
+  Spotted,
+  Detected,
+  Discovered,
+  Found,
+  Located,
+  Positioned,
+  Placed,
+  Put,
+  Set,
+  Arranged,
+  Organized,
+  Sorted,
+  Classified,
+  Categorized,
+  Grouped,
+  Collected,
+  Gathered,
+  Assembled,
+  Built,
+  Constructed,
+  Created,
+  Made,
+  Formed,
+  Shaped,
+  Molded,
+  Carved,
+  Sculpted,
+  Painted,
+  Drawn,
+  Sketched,
+  Designed,
+  Planned,
+  Prepared,
+  Organized,
+  Arranged,
+  Scheduled,
+  Timed,
+  Counted,
+  Numbered,
+  Calculated,
+  Computed,
+  Processed,
+  Analyzed,
+  Examined,
+  Studied,
+  Researched,
+  Investigated,
+  Explored
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { useQuery } from '@tanstack/react-query';
 
-interface Quiz {
-  id: string;
-  title: string;
-  duration: number;
-  questions: number;
-  status: 'available' | 'completed' | 'in_progress';
-  progress?: number;
-  score?: number;
-  dueDate?: string;
-  allowCalculator?: boolean;
-  calculatorType?: 'basic' | 'scientific' | 'graphing';
-}
-
-interface Question {
-  id: string;
-  text: string;
-  type: 'multiple_choice' | 'true_false' | 'short_answer';
-  options?: string[];
-  correctAnswer?: string;
-  explanation?: string;
-}
-
-interface ExamSession {
-  id: string;
-  quizId: string;
-  startTime: Date;
-  timeRemaining: number;
-  currentQuestion: number;
-  answers: Record<string, string>;
-  proctoring: {
-    cameraEnabled: boolean;
-    micEnabled: boolean;
-    violations: string[];
-  };
-}
-
-// Mock data for testing
-const mockQuizzes: Quiz[] = [
-  {
-    id: '1',
-    title: 'Introduction to Biology',
-    duration: 45,
-    questions: 25,
-    status: 'available',
-    dueDate: '2025-07-15',
-    allowCalculator: true,
-    calculatorType: 'basic'
-  },
-  {
-    id: '2',
-    title: 'Advanced Mathematics',
-    duration: 60,
-    questions: 30,
-    status: 'in_progress',
-    progress: 65,
-    allowCalculator: true,
-    calculatorType: 'scientific'
-  },
-  {
-    id: '3',
-    title: 'History Final Exam',
-    duration: 90,
-    questions: 40,
-    status: 'completed',
-    score: 88,
-    allowCalculator: false
-  }
-];
-
-const mockQuestions: Question[] = [
-  {
-    id: '1',
-    text: 'Which of the following is the powerhouse of the cell?',
-    type: 'multiple_choice',
-    options: ['Nucleus', 'Mitochondria', 'Ribosome', 'Endoplasmic Reticulum'],
-    correctAnswer: 'Mitochondria',
-    explanation: 'Mitochondria are known as the powerhouse of the cell because they produce ATP.'
-  },
-  {
-    id: '2',
-    text: 'DNA stands for Deoxyribonucleic Acid.',
-    type: 'true_false',
-    correctAnswer: 'True',
-    explanation: 'DNA is indeed the abbreviation for Deoxyribonucleic Acid.'
-  }
-];
-
-// Mobile Calculator Component
-const MobileCalculator: React.FC<{ type: 'basic' | 'scientific' | 'graphing'; onClose: () => void }> = ({ type, onClose }) => {
-  const [display, setDisplay] = useState('0');
-  const [operator, setOperator] = useState('');
-  const [previousValue, setPreviousValue] = useState('');
-  const [isNewNumber, setIsNewNumber] = useState(true);
-
-  const handleNumber = (num: string) => {
-    if (isNewNumber) {
-      setDisplay(num);
-      setIsNewNumber(false);
-    } else {
-      setDisplay(display === '0' ? num : display + num);
-    }
-  };
-
-  const handleOperator = (op: string) => {
-    if (previousValue && !isNewNumber) {
-      calculate();
-    }
-    setOperator(op);
-    setPreviousValue(display);
-    setIsNewNumber(true);
-  };
-
-  const calculate = () => {
-    const prev = parseFloat(previousValue);
-    const current = parseFloat(display);
-    let result = 0;
-
-    switch (operator) {
-      case '+':
-        result = prev + current;
-        break;
-      case '-':
-        result = prev - current;
-        break;
-      case '*':
-        result = prev * current;
-        break;
-      case '/':
-        result = prev / current;
-        break;
-      default:
-        return;
-    }
-
-    setDisplay(result.toString());
-    setOperator('');
-    setPreviousValue('');
-    setIsNewNumber(true);
-  };
-
-  const clear = () => {
-    setDisplay('0');
-    setOperator('');
-    setPreviousValue('');
-    setIsNewNumber(true);
-  };
-
-  const scientificFunctions = {
-    sin: () => setDisplay(Math.sin(parseFloat(display) * Math.PI / 180).toString()),
-    cos: () => setDisplay(Math.cos(parseFloat(display) * Math.PI / 180).toString()),
-    tan: () => setDisplay(Math.tan(parseFloat(display) * Math.PI / 180).toString()),
-    log: () => setDisplay(Math.log10(parseFloat(display)).toString()),
-    ln: () => setDisplay(Math.log(parseFloat(display)).toString()),
-    sqrt: () => setDisplay(Math.sqrt(parseFloat(display)).toString()),
-    power: () => handleOperator('^'),
-  };
-
-  const basicButtons = [
-    ['C', '±', '%', '/'],
-    ['7', '8', '9', '*'],
-    ['4', '5', '6', '-'],
-    ['1', '2', '3', '+'],
-    ['0', '.', '=']
-  ];
-
-  const scientificButtons = [
-    ['sin', 'cos', 'tan', 'log'],
-    ['ln', '√', '^', 'π'],
-    ...basicButtons
-  ];
-
-  const buttons = type === 'scientific' ? scientificButtons : basicButtons;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-    >
-      <Card className="w-80 max-w-[90vw] mx-4">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Calculator ({type})</CardTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Display */}
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <div className="text-right text-2xl font-mono">{display}</div>
-          </div>
-
-          {/* Buttons */}
-          <div className="grid grid-cols-4 gap-2">
-            {buttons.flat().map((btn, index) => (
-              <Button
-                key={index}
-                variant={['=', '+', '-', '*', '/'].includes(btn) ? 'default' : 'outline'}
-                className="h-12 text-lg"
-                onClick={() => {
-                  if (btn === '=') calculate();
-                  else if (btn === 'C') clear();
-                  else if (btn === '±') setDisplay((-parseFloat(display)).toString());
-                  else if (btn === '%') setDisplay((parseFloat(display) / 100).toString());
-                  else if (btn === 'π') setDisplay(Math.PI.toString());
-                  else if (['sin', 'cos', 'tan', 'log', 'ln', '√', '^'].includes(btn)) {
-                    const fnMap: Record<string, () => void> = {
-                      'sin': scientificFunctions.sin,
-                      'cos': scientificFunctions.cos,
-                      'tan': scientificFunctions.tan,
-                      'log': scientificFunctions.log,
-                      'ln': scientificFunctions.ln,
-                      '√': scientificFunctions.sqrt,
-                      '^': scientificFunctions.power
-                    };
-                    fnMap[btn]?.();
-                  }
-                  else if (['+', '-', '*', '/'].includes(btn)) handleOperator(btn);
-                  else handleNumber(btn);
-                }}
-              >
-                {btn}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
-
-// Main Mobile App Component
+// Mobile App Component
 const MobileApp: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'exam' | 'results'>('home');
-  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
-  const [examSession, setExamSession] = useState<ExamSession | null>(null);
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [showChat, setShowChat] = useState(false);
-  const [chatMessage, setChatMessage] = useState('');
-
-  // Fetch quizzes (using mock data for now)
-  const { data: quizzes = mockQuizzes } = useQuery({
-    queryKey: ['/api/quizzes'],
-    queryFn: async () => {
-      // In real app, this would fetch from API
-      return mockQuizzes;
-    }
+  const [activeTab, setActiveTab] = useState<string>('home');
+  const [isExamMode, setIsExamMode] = useState<boolean>(false);
+  const [cameraEnabled, setCameraEnabled] = useState<boolean>(false);
+  const [micEnabled, setMicEnabled] = useState<boolean>(false);
+  const [currentQuiz, setCurrentQuiz] = useState<any>(null);
+  const [quizProgress, setQuizProgress] = useState<number>(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string>('');
+  const [showCalculator, setShowCalculator] = useState<boolean>(false);
+  const [calculatorResult, setCalculatorResult] = useState<string>('0');
+  const [calculatorInput, setCalculatorInput] = useState<string>('');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connected');
+  const [batteryLevel, setBatteryLevel] = useState<number>(85);
+  const [user, setUser] = useState<any>({
+    name: 'John Doe',
+    role: 'student',
+    profileImage: '/api/placeholder/40/40'
   });
 
-  const startExam = (quiz: Quiz) => {
-    setSelectedQuiz(quiz);
-    setExamSession({
-      id: `session_${Date.now()}`,
-      quizId: quiz.id,
-      startTime: new Date(),
-      timeRemaining: quiz.duration * 60, // Convert to seconds
-      currentQuestion: 0,
-      answers: {},
-      proctoring: {
-        cameraEnabled: true,
-        micEnabled: true,
-        violations: []
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Mock quiz data
+  const mockQuizzes = [
+    {
+      id: '1',
+      title: 'Mathematics Quiz',
+      questions: 20,
+      duration: 60,
+      subject: 'Mathematics',
+      difficulty: 'Medium',
+      description: 'Test your mathematical knowledge'
+    },
+    {
+      id: '2',
+      title: 'Science Quiz',
+      questions: 15,
+      duration: 45,
+      subject: 'Science',
+      difficulty: 'Easy',
+      description: 'Basic science concepts'
+    },
+    {
+      id: '3',
+      title: 'History Quiz',
+      questions: 25,
+      duration: 90,
+      subject: 'History',
+      difficulty: 'Hard',
+      description: 'World history examination'
+    }
+  ];
+
+  const mockQuestion = {
+    id: '1',
+    question: 'What is the capital of France?',
+    options: ['London', 'Berlin', 'Paris', 'Rome'],
+    type: 'multiple_choice',
+    points: 5,
+    timeLimit: 30
+  };
+
+  // Initialize camera and microphone
+  const initializeMedia = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
       }
-    });
-    setCurrentView('exam');
-  };
+      
+      setCameraEnabled(true);
+      setMicEnabled(true);
+    } catch (error) {
+      console.error('Error accessing media devices:', error);
+    }
+  }, []);
 
-  const submitAnswer = (questionId: string, answer: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
-  };
+  // Start exam mode
+  const startExamMode = useCallback((quiz: any) => {
+    setCurrentQuiz(quiz);
+    setIsExamMode(true);
+    setActiveTab('exam');
+    initializeMedia();
+    setQuizProgress(0);
+    setSelectedAnswer('');
+  }, [initializeMedia]);
 
-  const nextQuestion = () => {
-    if (currentQuestionIndex < mockQuestions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+  // Calculator operations
+  const calculateResult = useCallback((expression: string) => {
+    try {
+      const result = Function(`"use strict"; return (${expression})`)();
+      return result.toString();
+    } catch (error) {
+      return 'Error';
+    }
+  }, []);
+
+  const handleCalculatorInput = useCallback((value: string) => {
+    if (value === 'C') {
+      setCalculatorInput('');
+      setCalculatorResult('0');
+    } else if (value === '=') {
+      const result = calculateResult(calculatorInput);
+      setCalculatorResult(result);
+      setCalculatorInput(result);
     } else {
-      // Exam complete
-      setCurrentView('results');
+      const newInput = calculatorInput + value;
+      setCalculatorInput(newInput);
+      setCalculatorResult(newInput);
     }
+  }, [calculatorInput, calculateResult]);
+
+  // Mock data for dashboard
+  const dashboardStats = {
+    completedQuizzes: 15,
+    averageScore: 85,
+    studyTime: 120,
+    achievements: 8,
+    streak: 7
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const recentActivity = [
+    { id: '1', type: 'quiz', title: 'Mathematics Quiz', score: 92, date: '2025-01-08' },
+    { id: '2', type: 'study', title: 'Science Study Session', duration: 45, date: '2025-01-07' },
+    { id: '3', type: 'achievement', title: 'Perfect Score Badge', date: '2025-01-06' }
+  ];
 
-  // Timer countdown
-  useEffect(() => {
-    if (examSession && currentView === 'exam') {
-      const timer = setInterval(() => {
-        setExamSession(prev => {
-          if (!prev) return null;
-          const newTime = prev.timeRemaining - 1;
-          if (newTime <= 0) {
-            setCurrentView('results');
-            return prev;
-          }
-          return { ...prev, timeRemaining: newTime };
-        });
-      }, 1000);
+  // Navigation tabs
+  const navigationTabs = [
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'quizzes', label: 'Quizzes', icon: Book },
+    { id: 'progress', label: 'Progress', icon: BarChart3 },
+    { id: 'profile', label: 'Profile', icon: User }
+  ];
 
-      return () => clearInterval(timer);
-    }
-  }, [examSession, currentView]);
-
-  // Home View
-  const renderHome = () => (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">My Exams</h1>
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm">
-              <Settings className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <User className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-        <p className="text-gray-600">Welcome back! You have {quizzes.filter(q => q.status === 'available').length} exams available.</p>
-      </div>
-
-      {/* Quiz Cards */}
-      <div className="space-y-4">
-        {quizzes.map((quiz) => (
-          <Card key={quiz.id} className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-2">{quiz.title}</h3>
-                  <div className="flex items-center space-x-4 text-sm text-gray-600">
-                    <span className="flex items-center">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {quiz.duration} min
-                    </span>
-                    <span className="flex items-center">
-                      <Book className="w-4 h-4 mr-1" />
-                      {quiz.questions} questions
-                    </span>
-                    {quiz.allowCalculator && (
-                      <span className="flex items-center">
-                        <Calculator className="w-4 h-4 mr-1" />
-                        {quiz.calculatorType}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <Badge 
-                  variant={quiz.status === 'available' ? 'default' : 
-                           quiz.status === 'completed' ? 'secondary' : 'outline'}
-                  className="ml-4"
-                >
-                  {quiz.status === 'available' ? 'Available' :
-                   quiz.status === 'completed' ? 'Completed' : 'In Progress'}
-                </Badge>
+  // Render different screens based on active tab
+  const renderContent = () => {
+    if (isExamMode) {
+      return (
+        <div className="flex flex-col h-full bg-gray-50">
+          {/* Exam Header */}
+          <div className="bg-white shadow-sm p-4 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <Shield className="w-5 h-5 text-green-600" />
+                <span className="text-sm font-medium text-gray-700">Secure Exam Mode</span>
               </div>
-
-              {quiz.status === 'in_progress' && quiz.progress && (
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Progress</span>
-                    <span>{quiz.progress}%</span>
-                  </div>
-                  <Progress value={quiz.progress} className="h-2" />
-                </div>
-              )}
-
-              {quiz.status === 'completed' && quiz.score && (
-                <div className="mb-4">
-                  <div className="flex items-center text-green-600">
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    <span className="text-sm">Score: {quiz.score}%</span>
-                  </div>
-                </div>
-              )}
-
-              {quiz.dueDate && (
-                <p className="text-sm text-orange-600 mb-4">
-                  Due: {new Date(quiz.dueDate).toLocaleDateString()}
-                </p>
-              )}
-
-              <Button 
-                onClick={() => startExam(quiz)}
-                disabled={quiz.status === 'completed'}
-                className="w-full"
-              >
-                {quiz.status === 'available' ? 'Start Exam' :
-                 quiz.status === 'in_progress' ? 'Continue Exam' : 'View Results'}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Exam View
-  const renderExam = () => {
-    if (!selectedQuiz || !examSession) return null;
-    
-    const currentQuestion = mockQuestions[currentQuestionIndex];
-    const progress = ((currentQuestionIndex + 1) / mockQuestions.length) * 100;
-
-    return (
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <div className="bg-indigo-600 text-white p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm" onClick={() => setCurrentView('home')}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <h1 className="font-semibold">{selectedQuiz.title}</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
-                {formatTime(examSession.timeRemaining)}
-              </span>
-              <span className="text-sm">
-                {currentQuestionIndex + 1} / {mockQuestions.length}
-              </span>
-            </div>
-          </div>
-          <div className="mt-3">
-            <Progress value={progress} className="h-2 bg-white/20" />
-          </div>
-        </div>
-
-        {/* Proctoring Controls */}
-        <div className="bg-gray-50 p-3 border-b">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm">
-                <Camera className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Mic className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <Timer className="w-4 h-4" />
+                <span>28:45</span>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
-              {selectedQuiz.allowCalculator && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setShowCalculator(true)}
-                >
-                  <Calculator className="w-4 h-4" />
-                </Button>
-              )}
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowChat(true)}
-              >
-                <MessageCircle className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center space-x-1">
+                <Camera className={`w-4 h-4 ${cameraEnabled ? 'text-green-600' : 'text-red-600'}`} />
+                <Mic className={`w-4 h-4 ${micEnabled ? 'text-green-600' : 'text-red-600'}`} />
+              </div>
+              <div className="text-sm text-gray-600">
+                {Math.round(quizProgress)}% Complete
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Question Content */}
-        <div className="p-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Question {currentQuestionIndex + 1}
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              {currentQuestion.text}
-            </p>
-          </div>
-
-          {/* Answer Options */}
-          <div className="space-y-3">
-            {currentQuestion.type === 'multiple_choice' && currentQuestion.options?.map((option, index) => (
-              <Button
-                key={index}
-                variant={answers[currentQuestion.id] === option ? 'default' : 'outline'}
-                className="w-full text-left justify-start h-auto py-4 px-4"
-                onClick={() => submitAnswer(currentQuestion.id, option)}
-              >
-                <span className="font-medium mr-3">{String.fromCharCode(65 + index)}.</span>
-                {option}
-              </Button>
-            ))}
-
-            {currentQuestion.type === 'true_false' && (
-              <div className="flex space-x-4">
-                <Button
-                  variant={answers[currentQuestion.id] === 'True' ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => submitAnswer(currentQuestion.id, 'True')}
-                >
-                  True
-                </Button>
-                <Button
-                  variant={answers[currentQuestion.id] === 'False' ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => submitAnswer(currentQuestion.id, 'False')}
-                >
-                  False
-                </Button>
-              </div>
-            )}
-
-            {currentQuestion.type === 'short_answer' && (
-              <Input
-                placeholder="Enter your answer..."
-                value={answers[currentQuestion.id] || ''}
-                onChange={(e) => submitAnswer(currentQuestion.id, e.target.value)}
-                className="w-full"
-              />
-            )}
-          </div>
-
-          {/* Navigation */}
-          <div className="flex justify-between mt-8">
-            <Button 
-              variant="outline" 
-              disabled={currentQuestionIndex === 0}
-              onClick={() => setCurrentQuestionIndex(prev => prev - 1)}
-            >
-              Previous
-            </Button>
-            <Button 
-              onClick={nextQuestion}
-              disabled={!answers[currentQuestion.id]}
-            >
-              {currentQuestionIndex === mockQuestions.length - 1 ? 'Submit' : 'Next'}
-            </Button>
-          </div>
-        </div>
-
-        {/* Calculator Modal */}
-        <AnimatePresence>
-          {showCalculator && selectedQuiz.allowCalculator && (
-            <MobileCalculator
-              type={selectedQuiz.calculatorType || 'basic'}
-              onClose={() => setShowCalculator(false)}
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-200 h-2">
+            <div 
+              className="bg-blue-600 h-2 transition-all duration-300"
+              style={{ width: `${quizProgress}%` }}
             />
-          )}
-        </AnimatePresence>
+          </div>
 
-        {/* Chat Modal */}
-        <AnimatePresence>
-          {showChat && (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t p-4"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">Question Support</h3>
-                <Button variant="ghost" size="sm" onClick={() => setShowChat(false)}>
-                  <X className="w-4 h-4" />
-                </Button>
+          {/* Question Content */}
+          <div className="flex-1 p-6 overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Question 1 of 20</h2>
+                  <div className="flex items-center space-x-2">
+                    <Flag className="w-4 h-4 text-yellow-500" />
+                    <span className="text-sm text-gray-600">5 points</span>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <p className="text-gray-800 text-lg leading-relaxed">
+                    {mockQuestion.question}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {mockQuestion.options.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedAnswer(option)}
+                      className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                        selectedAnswer === option
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                          selectedAnswer === option
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-gray-300'
+                        }`}>
+                          {selectedAnswer === option && (
+                            <div className="w-2 h-2 bg-white rounded-full m-0.5" />
+                          )}
+                        </div>
+                        <span className="text-gray-700">{option}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex justify-between items-center mt-8">
+                  <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800">
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Previous</span>
+                  </button>
+                  
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setShowCalculator(!showCalculator)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                    >
+                      <Calculator className="w-4 h-4" />
+                      <span>Calculator</span>
+                    </button>
+                    
+                    <button className="flex items-center space-x-2 px-4 py-2 text-yellow-600 hover:text-yellow-700">
+                      <Bookmark className="w-4 h-4" />
+                      <span>Flag</span>
+                    </button>
+                  </div>
+
+                  <button 
+                    onClick={() => setQuizProgress(prev => Math.min(prev + 5, 100))}
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="Ask for help..."
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  className="flex-1"
-                />
-                <Button size="sm">
-                  <Send className="w-4 h-4" />
-                </Button>
+            </div>
+          </div>
+
+          {/* Camera Preview */}
+          <div className="fixed top-4 right-4 w-32 h-24 bg-black rounded-lg overflow-hidden shadow-lg z-50">
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              className="w-full h-full object-cover"
+            />
+            <canvas ref={canvasRef} className="hidden" />
+          </div>
+
+          {/* Calculator Modal */}
+          {showCalculator && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-80 max-w-md">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Calculator</h3>
+                  <button
+                    onClick={() => setShowCalculator(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="mb-4">
+                  <div className="bg-gray-100 p-4 rounded-lg text-right font-mono text-xl">
+                    {calculatorResult}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2">
+                  {['C', '±', '%', '÷', '7', '8', '9', '×', '4', '5', '6', '-', '1', '2', '3', '+', '0', '.', '='].map((btn) => (
+                    <button
+                      key={btn}
+                      onClick={() => handleCalculatorInput(btn)}
+                      className={`p-3 rounded-lg font-medium ${
+                        ['C', '±', '%'].includes(btn)
+                          ? 'bg-gray-200 text-gray-700'
+                          : ['÷', '×', '-', '+', '='].includes(btn)
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-800'
+                      } hover:opacity-80 transition-opacity`}
+                    >
+                      {btn}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
-      </div>
-    );
+        </div>
+      );
+    }
+
+    switch (activeTab) {
+      case 'home':
+        return (
+          <div className="flex flex-col h-full bg-gray-50">
+            {/* Header */}
+            <div className="bg-white shadow-sm p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                    {user.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div>
+                    <h1 className="text-lg font-semibold text-gray-800">Welcome back, {user.name.split(' ')[0]}</h1>
+                    <p className="text-sm text-gray-600">Ready to continue learning?</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1">
+                    <Battery className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">{batteryLevel}%</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Wifi className={`w-4 h-4 ${connectionStatus === 'connected' ? 'text-green-600' : 'text-red-600'}`} />
+                    <Signal className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <Bell className="w-5 h-5 text-gray-600" />
+                </div>
+              </div>
+            </div>
+
+            {/* Dashboard Stats */}
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Completed Quizzes</p>
+                      <p className="text-2xl font-bold text-gray-800">{dashboardStats.completedQuizzes}</p>
+                    </div>
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Average Score</p>
+                      <p className="text-2xl font-bold text-gray-800">{dashboardStats.averageScore}%</p>
+                    </div>
+                    <Award className="w-8 h-8 text-yellow-600" />
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Study Time</p>
+                      <p className="text-2xl font-bold text-gray-800">{dashboardStats.studyTime}h</p>
+                    </div>
+                    <Clock className="w-8 h-8 text-blue-600" />
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Current Streak</p>
+                      <p className="text-2xl font-bold text-gray-800">{dashboardStats.streak} days</p>
+                    </div>
+                    <Zap className="w-8 h-8 text-orange-600" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Activity */}
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
+                <div className="space-y-3">
+                  {recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          activity.type === 'quiz' ? 'bg-blue-100' :
+                          activity.type === 'study' ? 'bg-green-100' :
+                          'bg-yellow-100'
+                        }`}>
+                          {activity.type === 'quiz' && <Book className="w-4 h-4 text-blue-600" />}
+                          {activity.type === 'study' && <FileText className="w-4 h-4 text-green-600" />}
+                          {activity.type === 'achievement' && <Award className="w-4 h-4 text-yellow-600" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{activity.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {activity.type === 'quiz' && `Score: ${activity.score}%`}
+                            {activity.type === 'study' && `Duration: ${activity.duration}min`}
+                            {activity.type === 'achievement' && 'Achievement unlocked'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500">{activity.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'quizzes':
+        return (
+          <div className="flex flex-col h-full bg-gray-50">
+            {/* Header */}
+            <div className="bg-white shadow-sm p-4">
+              <div className="flex items-center justify-between">
+                <h1 className="text-lg font-semibold text-gray-800">Available Quizzes</h1>
+                <div className="flex items-center space-x-2">
+                  <button className="p-2 text-gray-600 hover:text-gray-800">
+                    <Search className="w-5 h-5" />
+                  </button>
+                  <button className="p-2 text-gray-600 hover:text-gray-800">
+                    <Filter className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quiz List */}
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="space-y-4">
+                {mockQuizzes.map((quiz) => (
+                  <div key={quiz.id} className="bg-white rounded-lg shadow-sm p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-semibold text-gray-800">{quiz.title}</h3>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        quiz.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
+                        quiz.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {quiz.difficulty}
+                      </span>
+                    </div>
+                    
+                    <p className="text-sm text-gray-600 mb-3">{quiz.description}</p>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center space-x-1">
+                          <FileText className="w-4 h-4" />
+                          <span>{quiz.questions} questions</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{quiz.duration} min</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Book className="w-4 h-4" />
+                          <span>{quiz.subject}</span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => startExamMode(quiz)}
+                        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        <Play className="w-4 h-4" />
+                        <span>Start Quiz</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'progress':
+        return (
+          <div className="flex flex-col h-full bg-gray-50">
+            {/* Header */}
+            <div className="bg-white shadow-sm p-4">
+              <h1 className="text-lg font-semibold text-gray-800">Your Progress</h1>
+            </div>
+
+            {/* Progress Content */}
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="space-y-6">
+                {/* Overall Progress */}
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Overall Performance</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600">Mathematics</span>
+                        <span className="text-sm font-medium text-gray-800">85%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: '85%' }} />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600">Science</span>
+                        <span className="text-sm font-medium text-gray-800">92%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-green-600 h-2 rounded-full" style={{ width: '92%' }} />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600">History</span>
+                        <span className="text-sm font-medium text-gray-800">78%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-yellow-600 h-2 rounded-full" style={{ width: '78%' }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Scores */}
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Quiz Scores</h3>
+                  
+                  <div className="space-y-3">
+                    {[
+                      { name: 'Mathematics Quiz', score: 92, date: '2025-01-08', trend: 'up' },
+                      { name: 'Science Quiz', score: 88, date: '2025-01-07', trend: 'down' },
+                      { name: 'History Quiz', score: 95, date: '2025-01-06', trend: 'up' },
+                      { name: 'Mathematics Quiz', score: 82, date: '2025-01-05', trend: 'up' }
+                    ].map((quiz, index) => (
+                      <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{quiz.name}</p>
+                          <p className="text-xs text-gray-500">{quiz.date}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium text-gray-800">{quiz.score}%</span>
+                          {quiz.trend === 'up' ? (
+                            <TrendingUp className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <TrendingDown className="w-4 h-4 text-red-600" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Achievements */}
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Achievements</h3>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { name: 'Perfect Score', icon: '🎯', earned: true },
+                      { name: 'Speed Demon', icon: '⚡', earned: true },
+                      { name: 'Consistent', icon: '📈', earned: true },
+                      { name: 'Scholar', icon: '🎓', earned: false },
+                      { name: 'Marathon', icon: '🏃', earned: false },
+                      { name: 'Expert', icon: '⭐', earned: false }
+                    ].map((achievement, index) => (
+                      <div key={index} className={`p-3 rounded-lg text-center ${
+                        achievement.earned ? 'bg-yellow-50 border-2 border-yellow-200' : 'bg-gray-50 border-2 border-gray-200'
+                      }`}>
+                        <div className="text-2xl mb-1">{achievement.icon}</div>
+                        <p className={`text-xs font-medium ${
+                          achievement.earned ? 'text-yellow-800' : 'text-gray-500'
+                        }`}>{achievement.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'profile':
+        return (
+          <div className="flex flex-col h-full bg-gray-50">
+            {/* Header */}
+            <div className="bg-white shadow-sm p-4">
+              <h1 className="text-lg font-semibold text-gray-800">Profile</h1>
+            </div>
+
+            {/* Profile Content */}
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="space-y-6">
+                {/* User Info */}
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                      {user.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800">{user.name}</h2>
+                      <p className="text-sm text-gray-600 capitalize">{user.role}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Total Quizzes</p>
+                      <p className="text-lg font-semibold text-gray-800">{dashboardStats.completedQuizzes}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Average Score</p>
+                      <p className="text-lg font-semibold text-gray-800">{dashboardStats.averageScore}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Study Hours</p>
+                      <p className="text-lg font-semibold text-gray-800">{dashboardStats.studyTime}h</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Achievements</p>
+                      <p className="text-lg font-semibold text-gray-800">{dashboardStats.achievements}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Settings */}
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Settings</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center space-x-3">
+                        <Bell className="w-5 h-5 text-gray-600" />
+                        <span className="text-sm text-gray-800">Notifications</span>
+                      </div>
+                      <button className="w-12 h-6 bg-blue-600 rounded-full relative">
+                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1 transition-transform" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center space-x-3">
+                        <Volume2 className="w-5 h-5 text-gray-600" />
+                        <span className="text-sm text-gray-800">Sound Effects</span>
+                      </div>
+                      <button className="w-12 h-6 bg-gray-300 rounded-full relative">
+                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center space-x-3">
+                        <Shield className="w-5 h-5 text-gray-600" />
+                        <span className="text-sm text-gray-800">Privacy Mode</span>
+                      </div>
+                      <button className="w-12 h-6 bg-blue-600 rounded-full relative">
+                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1 transition-transform" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <div className="space-y-3">
+                    <button className="w-full flex items-center justify-between py-3 px-4 text-left text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Download className="w-5 h-5" />
+                        <span>Download Data</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    
+                    <button className="w-full flex items-center justify-between py-3 px-4 text-left text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <HelpCircle className="w-5 h-5" />
+                        <span>Help & Support</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    
+                    <button className="w-full flex items-center justify-between py-3 px-4 text-left text-red-600 hover:bg-red-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <LogOut className="w-5 h-5" />
+                        <span>Sign Out</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
-  // Results View
-  const renderResults = () => (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
-      <div className="max-w-md mx-auto">
-        <Card className="shadow-lg">
-          <CardContent className="p-8 text-center">
-            <div className="mb-6">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Exam Complete!</h1>
-              <p className="text-gray-600">{selectedQuiz?.title}</p>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between">
-                <span>Questions Answered:</span>
-                <span className="font-semibold">{Object.keys(answers).length} / {mockQuestions.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Time Taken:</span>
-                <span className="font-semibold">{selectedQuiz?.duration} minutes</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Score:</span>
-                <span className="font-semibold text-green-600">85%</span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Button 
-                className="w-full" 
-                onClick={() => setCurrentView('home')}
-              >
-                Back to Home
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => {
-                  // View detailed results
-                }}
-              >
-                View Details
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="mobile-app">
-      {currentView === 'home' && renderHome()}
-      {currentView === 'exam' && renderExam()}
-      {currentView === 'results' && renderResults()}
+    <div className="flex flex-col h-screen bg-gray-50 max-w-md mx-auto">
+      {/* Status Bar */}
+      <div className="bg-white px-4 py-2 flex items-center justify-between text-sm border-b border-gray-200">
+        <div className="flex items-center space-x-2">
+          <span className="font-medium">9:41 AM</span>
+          <div className="flex items-center space-x-1">
+            <Wifi className={`w-4 h-4 ${connectionStatus === 'connected' ? 'text-green-600' : 'text-red-600'}`} />
+            <Signal className="w-4 h-4 text-gray-600" />
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-gray-600">{batteryLevel}%</span>
+          <Battery className="w-4 h-4 text-gray-600" />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        {renderContent()}
+      </div>
+
+      {/* Bottom Navigation */}
+      {!isExamMode && (
+        <div className="bg-white border-t border-gray-200 px-4 py-2">
+          <div className="flex items-center justify-around">
+            {navigationTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg ${
+                  activeTab === tab.id
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                <span className="text-xs font-medium">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Exam Mode Exit Button */}
+      {isExamMode && (
+        <div className="fixed top-4 left-4 z-50">
+          <button
+            onClick={() => {
+              setIsExamMode(false);
+              setActiveTab('home');
+              setCurrentQuiz(null);
+              setCameraEnabled(false);
+              setMicEnabled(false);
+              if (videoRef.current && videoRef.current.srcObject) {
+                const stream = videoRef.current.srcObject as MediaStream;
+                stream.getTracks().forEach(track => track.stop());
+              }
+            }}
+            className="flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+          >
+            <X className="w-4 h-4" />
+            <span>Exit Exam</span>
+          </button>
+        </div>
+      )}
+
+      {/* Connection Status Toast */}
+      {connectionStatus !== 'connected' && (
+        <div className="fixed top-16 left-4 right-4 z-50">
+          <div className={`p-3 rounded-lg text-white text-sm flex items-center space-x-2 ${
+            connectionStatus === 'connecting' ? 'bg-yellow-600' : 'bg-red-600'
+          }`}>
+            <AlertTriangle className="w-4 h-4" />
+            <span>
+              {connectionStatus === 'connecting' ? 'Reconnecting...' : 'Connection Lost'}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

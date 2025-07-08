@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { storage } from "./storage";
+import { storage } from "./storage-simple";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, count, avg, sum, isNull, isNotNull } from "drizzle-orm";
 import { 

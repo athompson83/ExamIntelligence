@@ -53,7 +53,8 @@ import PublishedQuizzes from "@/pages/published-quizzes";
 import QuizPreview from "@/pages/quiz-preview";
 import EnhancedQuizPreview from "@/pages/enhanced-quiz-preview";
 import QuizManager from "@/pages/quiz-manager";
-import MobileApp from "@/pages/mobile-app";
+// import MobileApp from "@/pages/mobile-app";
+// import ComprehensiveMobileApp from "@/pages/mobile-comprehensive";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -86,7 +87,8 @@ function Router() {
             {(params) => <QuestionManager testbankId={params.id} />}
           </Route>
           <Route path="/quiz-manager" component={QuizManager} />
-          <Route path="/mobile" component={MobileApp} />
+          {/* <Route path="/mobile" component={MobileApp} />
+          <Route path="/mobile-comprehensive" component={ComprehensiveMobileApp} /> */}
           <Route path="/quiz-builder" component={EnhancedQuizBuilder} />
           <Route path="/enhanced-quiz-builder" component={EnhancedQuizBuilder} />
           <Route path="/cat-exam-builder" component={CATExamBuilder} />

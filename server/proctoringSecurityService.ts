@@ -1,5 +1,5 @@
 import express from 'express';
-import { DatabaseStorage } from './storage';
+import { DatabaseStorage } from './storage-simple';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 

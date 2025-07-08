@@ -1,4 +1,4 @@
-import { storage } from './storage';
+import { storage } from './storage-simple';
 
 export interface DifficultyRange {
   min: number;
