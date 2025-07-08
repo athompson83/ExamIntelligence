@@ -31,29 +31,30 @@ export default function Sidebar() {
   const { user } = useAuth();
 
   const navigationItems = [
-    { href: "/", label: "Dashboard", icon: BarChart3 },
-    { href: "/item-banks", label: "Item Banks", icon: BookOpen },
-    { href: "/quiz-manager", label: "Quiz Manager", icon: Puzzle },
-    { href: "/assignments", label: "Assignments", icon: ClipboardCheck },
-    { href: "/section-management", label: "Section Management", icon: Users },
-    { href: "/mobile", label: "Mobile App", icon: Smartphone },
-    { href: "/live-exams", label: "Live Exams", icon: PlayCircle },
-    { href: "/analytics", label: "Analytics", icon: BarChart3 },
-    { href: "/ai-resources", label: "AI Resources", icon: Brain },
+    { href: "/", label: "Dashboard", icon: BarChart3, tourId: "dashboard" },
+    { href: "/item-banks", label: "Item Banks", icon: BookOpen, tourId: "item-banks" },
+    { href: "/quiz-manager", label: "Quiz Manager", icon: Puzzle, tourId: "quiz-manager" },
+    { href: "/assignments", label: "Assignments", icon: ClipboardCheck, tourId: "assignments" },
+    { href: "/section-management", label: "Section Management", icon: Users, tourId: "section-management" },
+    { href: "/mobile", label: "Mobile App", icon: Smartphone, tourId: "mobile" },
+    { href: "/live-exams", label: "Live Exams", icon: PlayCircle, tourId: "live-exams" },
+    { href: "/analytics", label: "Analytics", icon: BarChart3, tourId: "analytics" },
+    { href: "/ai-resources", label: "AI Resources", icon: Brain, tourId: "ai-resources" },
+    { href: "/study-aids", label: "Study Aids", icon: BookOpen, tourId: "study-aids" },
   ];
 
   const supportItems = [
-    { href: "/announcements", label: "Announcements", icon: Megaphone },
-    { href: "/question-feedback", label: "Question Feedback", icon: MessageSquare },
-    { href: "/question-flagging", label: "Question Flagging", icon: Flag },
-    { href: "/bug-reporting", label: "Bug Reports", icon: Bug },
-    { href: "/notification-settings", label: "Notifications", icon: Bell },
-    { href: "/anonymous-quiz-access", label: "Anonymous Access", icon: HelpCircle },
+    { href: "/announcements", label: "Announcements", icon: Megaphone, tourId: "announcements" },
+    { href: "/question-feedback", label: "Question Feedback", icon: MessageSquare, tourId: "question-feedback" },
+    { href: "/question-flagging", label: "Question Flagging", icon: Flag, tourId: "question-flagging" },
+    { href: "/bug-reporting", label: "Bug Reports", icon: Bug, tourId: "bug-reporting" },
+    { href: "/notification-settings", label: "Notifications", icon: Bell, tourId: "notifications" },
+    { href: "/anonymous-quiz-access", label: "Anonymous Access", icon: HelpCircle, tourId: "anonymous-access" },
   ];
 
   const systemItems = [
-    ...(user?.role === 'admin' ? [{ href: "/user-management", label: "User Management", icon: Users }] : []),
-    { href: "/settings", label: "Settings", icon: Settings },
+    ...(user?.role === 'admin' ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
+    { href: "/settings", label: "Settings", icon: Settings, tourId: "settings" },
   ];
 
   const isActive = (href: string) => {
@@ -62,7 +63,7 @@ export default function Sidebar() {
   };
 
   return (
-    <nav className="sidebar-white w-64 fixed inset-y-0 left-0 z-50 shadow-sm border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <nav className="sidebar w-64 fixed inset-y-0 left-0 z-50 shadow-sm border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
       <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
         <div className="flex items-center">
@@ -87,6 +88,7 @@ export default function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
+                data-tour={item.tourId}
               >
                 <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
                 <span className="truncate">{item.label}</span>
@@ -108,6 +110,7 @@ export default function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
+                data-tour={item.tourId}
               >
                 <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
                 <span className="truncate">{item.label}</span>
@@ -130,6 +133,7 @@ export default function Sidebar() {
                     key={item.href}
                     href={item.href}
                     className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
+                    data-tour={item.tourId}
                   >
                     <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
                     <span className="truncate">{item.label}</span>

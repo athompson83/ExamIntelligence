@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Bell, Search, LogOut, User, Settings, GraduationCap, BookOpen, Bot, Bug, Megaphone, Flag, MessageSquare } from "lucide-react";
+import TourControl from "./TourControl";
 
 export default function TopBar() {
   const { user } = useAuth();
@@ -71,7 +72,7 @@ export default function TopBar() {
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="relative">
+            <Button variant="ghost" size="sm" className="relative" data-tour="notifications">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
@@ -99,6 +100,9 @@ export default function TopBar() {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        
+        {/* Tour Control */}
+        <TourControl />
         
         {/* User Profile */}
         <DropdownMenu>
