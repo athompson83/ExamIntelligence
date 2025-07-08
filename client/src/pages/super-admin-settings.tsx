@@ -501,7 +501,7 @@ export default function SuperAdminSettings() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="accounts">
               <Building2 className="h-4 w-4 mr-2" />
               Accounts
@@ -521,6 +521,10 @@ export default function SuperAdminSettings() {
             <TabsTrigger value="system">
               <Cog className="h-4 w-4 mr-2" />
               System
+            </TabsTrigger>
+            <TabsTrigger value="accessibility">
+              <Eye className="h-4 w-4 mr-2" />
+              Accessibility
             </TabsTrigger>
             <TabsTrigger value="mobile">
               <Smartphone className="h-4 w-4 mr-2" />
@@ -677,16 +681,25 @@ export default function SuperAdminSettings() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>AI Prompt Templates</CardTitle>
-                  <Button 
-                    onClick={() => {
-                      setSelectedPrompt(null);
-                      promptForm.reset();
-                      setIsPromptDialogOpen(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Prompt
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.open('/backend-prompt-management', '_blank')}
+                    >
+                      <Brain className="h-4 w-4 mr-2" />
+                      Advanced Builder
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setSelectedPrompt(null);
+                        promptForm.reset();
+                        setIsPromptDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Prompt
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -826,6 +839,79 @@ export default function SuperAdminSettings() {
                     <div className="flex items-center justify-between">
                       <span>Memory Usage</span>
                       <Badge variant="outline">67%</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Accessibility Tab */}
+          <TabsContent value="accessibility">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    Accessibility Settings
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Configure accessibility features for all users across the platform
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <h3 className="font-medium">Visual Accessibility</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm">High Contrast Mode</label>
+                          <Switch />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm">Large Text Options</label>
+                          <Switch />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm">Screen Reader Support</label>
+                          <Switch defaultChecked />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <h3 className="font-medium">Interaction Accessibility</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm">Keyboard Navigation</label>
+                          <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm">Focus Indicators</label>
+                          <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm">Voice Commands</label>
+                          <Switch />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="font-medium">Compliance Standards</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span className="text-sm">WCAG 2.1 AA</span>
+                        <Badge variant="default">Active</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span className="text-sm">Section 508</span>
+                        <Badge variant="default">Active</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span className="text-sm">ADA Compliant</span>
+                        <Badge variant="default">Active</Badge>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

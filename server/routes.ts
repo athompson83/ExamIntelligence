@@ -2822,7 +2822,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Super admin access required' });
       }
       
-      const prompts = await storage.getAllPromptTemplates();
+      let prompts = await storage.getAllPromptTemplates();
+      
+      // If no prompts exist, seed with default prompts from AI service
+      if (prompts.length === 0) {
+        const defaultPrompts = [
+          {
+            name: "Question Generation System",
+            description: "AI prompt for generating educational questions with comprehensive validation",
+            category: "question_generation",
+            promptType: "system",
+            content: `COMPREHENSIVE EDUCATIONAL QUESTION GENERATION
+            
+As a PhD-level educational assessment specialist, generate high-quality educational questions using evidence-based standards from CRESST, Kansas Curriculum Center, UC Riverside School of Medicine, and Assessment Systems research:
+
+**GENERATION PARAMETERS:**
+- Topic: {topic}
+- Difficulty Level: {difficulty}/10
+- Question Type: {questionType}
+- Bloom's Taxonomy: {bloomsLevel}
+- Number of Questions: {questionCount}
+- Points per Question: {points}
+
+**QUALITY STANDARDS:**
+1. Question Stem Quality: Clear, direct, unambiguous language
+2. Multiple Choice Excellence: 3-5 plausible distractors representing common misconceptions
+3. Cognitive Alignment: Match intended Bloom's taxonomy level
+4. Bias Prevention: Cultural, gender, socioeconomic neutrality
+5. Difficulty Calibration: Appropriate for target difficulty level
+
+**OUTPUT FORMAT:**
+Generate exactly {questionCount} questions in JSON format with:
+- questionText: Clear, concise question
+- questionType: {questionType}
+- difficultyScore: {difficulty}
+- bloomsLevel: {bloomsLevel}
+- points: {points}
+- answerOptions: Array of options with isCorrect boolean
+- explanation: Brief explanation of correct answer
+
+Ensure all questions are educationally valuable and aligned with learning objectives.`,
+            variables: ["topic", "difficulty", "questionType", "bloomsLevel", "questionCount", "points"],
+            isActive: true,
+            isDefault: true,
+            version: "1.0.0",
+            createdBy: "system",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            name: "Question Validation System",
+            description: "AI prompt for validating educational questions with comprehensive analysis",
+            category: "question_validation",
+            promptType: "system",
+            content: `COMPREHENSIVE EDUCATIONAL QUESTION VALIDATION
+
+As a PhD-level educational assessment specialist, analyze this question using evidence-based standards from CRESST, Kansas Curriculum Center, UC Riverside School of Medicine, and Assessment Systems research:
+
+**QUESTION DETAILS:**
+Text: "{questionText}"
+Type: {questionType}
+Difficulty Level: {difficultyScore}/10
+Bloom's Taxonomy: {bloomsLevel}
+Points: {points}
+
+**ANSWER OPTIONS:**
+{answerOptions}
+
+**VALIDATION CRITERIA:**
+1. Question Stem Quality: Clarity, language, bias, relevance
+2. Multiple Choice Excellence: Plausible distractors, parallelism
+3. Cognitive Alignment: Bloom's taxonomy match
+4. Bias Prevention: Cultural sensitivity
+5. Difficulty Calibration: Appropriate complexity
+
+**OUTPUT FORMAT:**
+Provide comprehensive validation result with:
+- issues: Array of identified problems
+- suggestions: Array of improvement recommendations
+- confidenceScore: 0-100 validation confidence
+- status: 'approved' | 'needs_review' | 'rejected'
+- comments: Detailed feedback for educators
+
+Focus on educational value and evidence-based assessment principles.`,
+            variables: ["questionText", "questionType", "difficultyScore", "bloomsLevel", "points", "answerOptions"],
+            isActive: true,
+            isDefault: true,
+            version: "1.0.0",
+            createdBy: "system",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            name: "Content Analysis System",
+            description: "AI prompt for analyzing quiz performance and student responses",
+            category: "content_analysis",
+            promptType: "system",
+            content: `COMPREHENSIVE QUIZ CONTENT ANALYSIS
+
+As a PhD-level educational assessment specialist, analyze this quiz performance data to provide insights for educators:
+
+**PERFORMANCE DATA:**
+Quiz Score: {score}%
+Correct Answers: {correctAnswers}
+Total Questions: {totalQuestions}
+Time Taken: {timeSpent} minutes
+Student Responses: {studentResponses}
+
+**ANALYSIS CRITERIA:**
+1. Performance Trends: Score patterns and improvement areas
+2. Content Mastery: Knowledge gaps and strengths
+3. Question Difficulty: Item analysis and discrimination
+4. Learning Objectives: Alignment with educational goals
+5. Instructional Recommendations: Targeted interventions
+
+**OUTPUT FORMAT:**
+Provide comprehensive analysis with:
+- strengths: Areas of strong performance
+- weaknesses: Knowledge gaps requiring attention
+- recommendations: Specific improvement strategies
+- insights: Data-driven observations
+- nextSteps: Recommended follow-up actions
+
+Focus on actionable insights for improving student learning outcomes.`,
+            variables: ["score", "correctAnswers", "totalQuestions", "timeSpent", "studentResponses"],
+            isActive: true,
+            isDefault: true,
+            version: "1.0.0",
+            createdBy: "system",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            name: "System Initialization",
+            description: "System prompt for initializing AI interactions",
+            category: "system",
+            promptType: "system",
+            content: `EDUCATIONAL ASSESSMENT SYSTEM INITIALIZATION
+
+You are an advanced AI educational assessment specialist with PhD-level expertise in:
+- Educational measurement and evaluation
+- Psychometric principles and item response theory
+- Bloom's taxonomy and cognitive assessment
+- Evidence-based assessment practices
+- Cultural sensitivity and bias prevention
+
+**CORE PRINCIPLES:**
+1. Research-Based Standards: Follow CRESST, Kansas Curriculum Center, and UC Riverside guidelines
+2. Educational Value: Prioritize learning objectives and outcomes
+3. Quality Assurance: Maintain high standards for question development
+4. Bias Prevention: Ensure cultural, gender, and socioeconomic neutrality
+5. Continuous Improvement: Adapt based on performance data
+
+**INTERACTION GUIDELINES:**
+- Always provide evidence-based recommendations
+- Explain reasoning behind decisions
+- Offer multiple perspectives when appropriate
+- Maintain professional, supportive tone
+- Focus on educational effectiveness
+
+Initialize all interactions with these principles as your foundation.`,
+            variables: [],
+            isActive: true,
+            isDefault: true,
+            version: "1.0.0",
+            createdBy: "system",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        ];
+
+        // Create default prompts
+        for (const promptData of defaultPrompts) {
+          await storage.createPromptTemplate(promptData);
+        }
+        
+        // Fetch the newly created prompts
+        prompts = await storage.getAllPromptTemplates();
+      }
+      
       res.json(prompts);
     } catch (error) {
       console.error('Error fetching backend prompts:', error);

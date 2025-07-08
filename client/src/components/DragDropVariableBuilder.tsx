@@ -580,7 +580,7 @@ export default function DragDropVariableBuilder({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-2 max-h-60 overflow-y-auto">
             {availableVariables.map((variable) => {
               const IconComponent = variable.icon || Info;
               const CategoryIcon = getCategoryIcon(variable.category);
@@ -589,32 +589,34 @@ export default function DragDropVariableBuilder({
               return (
                 <div
                   key={variable.id}
-                  className={`border rounded-lg p-3 ${
+                  className={`border rounded-lg p-3 transition-colors ${
                     isUsed ? 'bg-green-50 border-green-200' : 'bg-white hover:bg-gray-50'
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <IconComponent className="h-4 w-4 text-gray-600 mt-1" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                          {`{${variable.name}}`}
-                        </code>
-                        <Badge variant="outline" className={`text-xs ${getCategoryColor(variable.category)}`}>
-                          <CategoryIcon className="h-3 w-3 mr-1" />
-                          {variable.category.replace('_', ' ')}
-                        </Badge>
-                        {variable.isRequired && (
-                          <Badge variant="destructive" className="text-xs">Required</Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-1">{variable.description}</p>
-                      <div className="text-xs text-gray-500">
-                        Type: {variable.type}
-                        {variable.defaultValue && ` | Default: ${variable.defaultValue}`}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <IconComponent className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                            {`{${variable.name}}`}
+                          </code>
+                          <Badge variant="outline" className={`text-xs ${getCategoryColor(variable.category)}`}>
+                            <CategoryIcon className="h-3 w-3 mr-1" />
+                            {variable.category.replace('_', ' ')}
+                          </Badge>
+                          {variable.isRequired && (
+                            <Badge variant="destructive" className="text-xs">Required</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-1">{variable.description}</p>
+                        <div className="text-xs text-gray-500">
+                          Type: {variable.type}
+                          {variable.defaultValue && ` | Default: ${variable.defaultValue}`}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Button
                         size="sm"
                         variant="outline"

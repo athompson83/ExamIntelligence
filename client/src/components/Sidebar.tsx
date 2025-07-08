@@ -53,9 +53,7 @@ export default function Sidebar() {
 
   const systemItems = [
     ...(user?.role === 'admin' ? [{ href: "/user-management", label: "User Management", icon: Users }] : []),
-    ...(user?.role === 'super_admin' ? [{ href: "/backend-prompt-management", label: "Prompt Management", icon: Code }] : []),
     { href: "/settings", label: "Settings", icon: Settings },
-    { href: "/accessibility-settings", label: "Accessibility", icon: SettingsIcon },
   ];
 
   const isActive = (href: string) => {
