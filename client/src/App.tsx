@@ -6,63 +6,68 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { TooltipProvider as CustomTooltipProvider } from "@/components/TooltipProvider";
 import { OnboardingTourProvider } from "@/contexts/OnboardingTourContext";
 import OnboardingTour from "@/components/OnboardingTour";
+import { lazy, Suspense } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
+import LoadingSpinner from "@/components/ui/loading-spinner";
+
+// Core pages that are always needed
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
-import ItemBanks from "@/pages/item-banks";
-import QuestionManager from "@/pages/question-manager";
-
-import LiveExams from "@/pages/live-exams";
-import Analytics from "@/pages/Analytics";
-import AnalyticsDashboard from "@/pages/analytics-dashboard";
-import SpeedGrader from "@/pages/speed-grader";
-import UserManagement from "@/pages/user-management";
-import ExamInterface from "@/pages/exam-interface";
-import AdminSettings from "@/pages/admin-settings";
-import ReferenceBanks from "@/pages/reference-banks";
-import EnhancedQuizBuilder from "@/pages/enhanced-quiz-builder";
-import StudyAids from "@/pages/study-aids";
-import MLAnalytics from "@/pages/MLAnalytics";
-import ComprehensiveAnalytics from "@/pages/ComprehensiveAnalytics";
-import EnhancedDifficultyTracking from "@/pages/enhanced-difficulty-tracking";
 import NotFound from "@/pages/not-found";
-import ProjectStatus from "@/pages/project-status";
-import LanguageTest from "@/pages/language-test";
-import Settings from "@/pages/Settings";
-import SuperAdminSettings from "@/pages/super-admin-settings";
-import BadgesCertificates from "@/pages/badges-certificates";
-import BadgeSystem from "@/pages/badge-system";
-import AccessibilitySettings from "@/pages/accessibility-settings";
-import LearningFeedback from "@/pages/learning-feedback";
-import AIResources from "@/pages/AIResources";
-import StudentLogin from "@/pages/student-login";
-import StudentDashboard from "@/pages/student-dashboard";
-import StudentQuiz from "@/pages/student-quiz";
-import CATExamBuilder from "@/pages/CATExamBuilder";
-import ProctoringSecurity from "@/pages/proctoring-security";
-import QuestionFeedbackPage from "@/pages/question-feedback";
-import AnonymousQuizAccessPage from "@/pages/anonymous-quiz-access";
-import NotificationSettings from "@/pages/notification-settings";
-import BugReporting from "@/pages/bug-reporting";
-import Announcements from "@/pages/announcements";
-import QuestionFlagging from "@/pages/question-flagging";
-import AIChatbot from "@/pages/ai-chatbot";
-import BackendPromptManagement from "@/pages/backend-prompt-management";
-import BackendPromptTestPage from "@/pages/backend-prompt-test";
-import QuizTakerDemo from "@/pages/quiz-taker-demo";
-import QuizBuilderDemo from "@/pages/QuizBuilderDemo";
-import PublishedQuizzes from "@/pages/published-quizzes";
-import QuizPreview from "@/pages/quiz-preview";
-import EnhancedQuizPreview from "@/pages/enhanced-quiz-preview";
-import QuizManager from "@/pages/quiz-manager";
-import SectionManagement from "@/pages/SectionManagement";
-import Assignments from "@/pages/Assignments";
-import MobileApp from "@/pages/MobileAppFixed";
-import SystemTest from "@/pages/SystemTest";
-import ComprehensiveTest from "@/pages/ComprehensiveTest";
-import SectionManagementTest from "@/pages/SectionManagementTest";
-import Test from "@/pages/Test";
+
+// Lazy load pages to reduce initial bundle size
+const ItemBanks = lazy(() => import("@/pages/item-banks"));
+const QuestionManager = lazy(() => import("@/pages/question-manager"));
+const LiveExams = lazy(() => import("@/pages/live-exams"));
+const Analytics = lazy(() => import("@/pages/Analytics"));
+const AnalyticsDashboard = lazy(() => import("@/pages/analytics-dashboard"));
+const SpeedGrader = lazy(() => import("@/pages/speed-grader"));
+const UserManagement = lazy(() => import("@/pages/user-management"));
+const ExamInterface = lazy(() => import("@/pages/exam-interface"));
+const AdminSettings = lazy(() => import("@/pages/admin-settings"));
+const ReferenceBanks = lazy(() => import("@/pages/reference-banks"));
+const EnhancedQuizBuilder = lazy(() => import("@/pages/enhanced-quiz-builder"));
+const StudyAids = lazy(() => import("@/pages/study-aids"));
+const MLAnalytics = lazy(() => import("@/pages/MLAnalytics"));
+const ComprehensiveAnalytics = lazy(() => import("@/pages/ComprehensiveAnalytics"));
+const EnhancedDifficultyTracking = lazy(() => import("@/pages/enhanced-difficulty-tracking"));
+const ProjectStatus = lazy(() => import("@/pages/project-status"));
+const LanguageTest = lazy(() => import("@/pages/language-test"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const SuperAdminSettings = lazy(() => import("@/pages/super-admin-settings"));
+const BadgesCertificates = lazy(() => import("@/pages/badges-certificates"));
+const BadgeSystem = lazy(() => import("@/pages/badge-system"));
+const AccessibilitySettings = lazy(() => import("@/pages/accessibility-settings"));
+const LearningFeedback = lazy(() => import("@/pages/learning-feedback"));
+const AIResources = lazy(() => import("@/pages/AIResources"));
+const StudentLogin = lazy(() => import("@/pages/student-login"));
+const StudentDashboard = lazy(() => import("@/pages/student-dashboard"));
+const StudentQuiz = lazy(() => import("@/pages/student-quiz"));
+const CATExamBuilder = lazy(() => import("@/pages/CATExamBuilder"));
+const ProctoringSecurity = lazy(() => import("@/pages/proctoring-security"));
+const QuestionFeedbackPage = lazy(() => import("@/pages/question-feedback"));
+const AnonymousQuizAccessPage = lazy(() => import("@/pages/anonymous-quiz-access"));
+const NotificationSettings = lazy(() => import("@/pages/notification-settings"));
+const BugReporting = lazy(() => import("@/pages/bug-reporting"));
+const Announcements = lazy(() => import("@/pages/announcements"));
+const QuestionFlagging = lazy(() => import("@/pages/question-flagging"));
+const AIChatbot = lazy(() => import("@/pages/ai-chatbot"));
+const BackendPromptManagement = lazy(() => import("@/pages/backend-prompt-management"));
+const BackendPromptTestPage = lazy(() => import("@/pages/backend-prompt-test"));
+const QuizTakerDemo = lazy(() => import("@/pages/quiz-taker-demo"));
+const QuizBuilderDemo = lazy(() => import("@/pages/QuizBuilderDemo"));
+const PublishedQuizzes = lazy(() => import("@/pages/published-quizzes"));
+const QuizPreview = lazy(() => import("@/pages/quiz-preview"));
+const EnhancedQuizPreview = lazy(() => import("@/pages/enhanced-quiz-preview"));
+const QuizManager = lazy(() => import("@/pages/quiz-manager"));
+const SectionManagement = lazy(() => import("@/pages/SectionManagement"));
+const Assignments = lazy(() => import("@/pages/Assignments"));
+const MobileApp = lazy(() => import("@/pages/MobileAppFixed"));
+const SystemTest = lazy(() => import("@/pages/SystemTest"));
+const ComprehensiveTest = lazy(() => import("@/pages/ComprehensiveTest"));
+const SectionManagementTest = lazy(() => import("@/pages/SectionManagementTest"));
+const Test = lazy(() => import("@/pages/Test"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -80,79 +85,185 @@ function Router() {
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
-          <Route path="/language-test" component={LanguageTest} />
-          <Route path="/student-login" component={StudentLogin} />
+          <Route path="/language-test">
+            {() => <Suspense fallback={<LoadingSpinner />}><LanguageTest /></Suspense>}
+          </Route>
+          <Route path="/student-login">
+            {() => <Suspense fallback={<LoadingSpinner />}><StudentLogin /></Suspense>}
+          </Route>
         </>
       ) : (
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
-          <Route path="/item-banks" component={ItemBanks} />
+          <Route path="/item-banks">
+            {() => <Suspense fallback={<LoadingSpinner />}><ItemBanks /></Suspense>}
+          </Route>
           <Route path="/question-manager">
-            {() => <QuestionManager />}
+            {() => <Suspense fallback={<LoadingSpinner />}><QuestionManager /></Suspense>}
           </Route>
           <Route path="/testbanks/:id/questions">
-            {(params) => <QuestionManager testbankId={params.id} />}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><QuestionManager testbankId={params.id} /></Suspense>}
           </Route>
-          <Route path="/quiz-manager" component={QuizManager} />
-          <Route path="/assignments" component={Assignments} />
-          <Route path="/mobile" component={MobileApp} />
-          <Route path="/quiz-builder" component={EnhancedQuizBuilder} />
-          <Route path="/enhanced-quiz-builder" component={EnhancedQuizBuilder} />
-          <Route path="/cat-exam-builder" component={CATExamBuilder} />
-          <Route path="/live-exams" component={LiveExams} />
-          <Route path="/analytics" component={Analytics} />
-          <Route path="/analytics-dashboard" component={AnalyticsDashboard} />
-          <Route path="/ml-analytics" component={MLAnalytics} />
-          <Route path="/comprehensive-analytics" component={ComprehensiveAnalytics} />
+          <Route path="/quiz-manager">
+            {() => <Suspense fallback={<LoadingSpinner />}><QuizManager /></Suspense>}
+          </Route>
+          <Route path="/assignments">
+            {() => <Suspense fallback={<LoadingSpinner />}><Assignments /></Suspense>}
+          </Route>
+          <Route path="/mobile">
+            {() => <Suspense fallback={<LoadingSpinner />}><MobileApp /></Suspense>}
+          </Route>
+          <Route path="/quiz-builder">
+            {() => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizBuilder /></Suspense>}
+          </Route>
+          <Route path="/enhanced-quiz-builder">
+            {() => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizBuilder /></Suspense>}
+          </Route>
+          <Route path="/cat-exam-builder">
+            {() => <Suspense fallback={<LoadingSpinner />}><CATExamBuilder /></Suspense>}
+          </Route>
+          <Route path="/live-exams">
+            {() => <Suspense fallback={<LoadingSpinner />}><LiveExams /></Suspense>}
+          </Route>
+          <Route path="/analytics">
+            {() => <Suspense fallback={<LoadingSpinner />}><Analytics /></Suspense>}
+          </Route>
+          <Route path="/analytics-dashboard">
+            {() => <Suspense fallback={<LoadingSpinner />}><AnalyticsDashboard /></Suspense>}
+          </Route>
+          <Route path="/ml-analytics">
+            {() => <Suspense fallback={<LoadingSpinner />}><MLAnalytics /></Suspense>}
+          </Route>
+          <Route path="/comprehensive-analytics">
+            {() => <Suspense fallback={<LoadingSpinner />}><ComprehensiveAnalytics /></Suspense>}
+          </Route>
           <Route path="/speed-grader">
-            {() => <SpeedGrader />}
+            {() => <Suspense fallback={<LoadingSpinner />}><SpeedGrader /></Suspense>}
           </Route>
           <Route path="/speed-grader/:quizId">
-            {(params) => <SpeedGrader quizId={params.quizId} />}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><SpeedGrader quizId={params.quizId} /></Suspense>}
           </Route>
-          <Route path="/user-management" component={UserManagement} />
-          <Route path="/admin-settings" component={AdminSettings} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/super-admin-settings" component={SuperAdminSettings} />
-          <Route path="/reference-banks" component={ReferenceBanks} />
-          <Route path="/study-aids" component={StudyAids} />
-          <Route path="/ai-resources" component={AIResources} />
-          <Route path="/badges-certificates" component={BadgesCertificates} />
-          <Route path="/badge-system" component={BadgeSystem} />
-          <Route path="/learning-feedback" component={LearningFeedback} />
-          <Route path="/difficulty-tracking" component={EnhancedDifficultyTracking} />
-          <Route path="/enhanced-difficulty-tracking" component={EnhancedDifficultyTracking} />
-          <Route path="/accessibility-settings" component={AccessibilitySettings} />
-          <Route path="/proctoring-security" component={ProctoringSecurity} />
-          <Route path="/project-status" component={ProjectStatus} />
-          <Route path="/question-feedback" component={QuestionFeedbackPage} />
-          <Route path="/anonymous-quiz-access" component={AnonymousQuizAccessPage} />
-          <Route path="/notification-settings" component={NotificationSettings} />
-          <Route path="/bug-reporting" component={BugReporting} />
-          <Route path="/announcements" component={Announcements} />
-          <Route path="/question-flagging" component={QuestionFlagging} />
-          <Route path="/ai-chatbot" component={AIChatbot} />
-          <Route path="/backend-prompt-management" component={BackendPromptManagement} />
-          <Route path="/backend-prompt-test" component={BackendPromptTestPage} />
+          <Route path="/user-management">
+            {() => <Suspense fallback={<LoadingSpinner />}><UserManagement /></Suspense>}
+          </Route>
+          <Route path="/admin-settings">
+            {() => <Suspense fallback={<LoadingSpinner />}><AdminSettings /></Suspense>}
+          </Route>
+          <Route path="/settings">
+            {() => <Suspense fallback={<LoadingSpinner />}><Settings /></Suspense>}
+          </Route>
+          <Route path="/super-admin-settings">
+            {() => <Suspense fallback={<LoadingSpinner />}><SuperAdminSettings /></Suspense>}
+          </Route>
+          <Route path="/reference-banks">
+            {() => <Suspense fallback={<LoadingSpinner />}><ReferenceBanks /></Suspense>}
+          </Route>
+          <Route path="/study-aids">
+            {() => <Suspense fallback={<LoadingSpinner />}><StudyAids /></Suspense>}
+          </Route>
+          <Route path="/ai-resources">
+            {() => <Suspense fallback={<LoadingSpinner />}><AIResources /></Suspense>}
+          </Route>
+          <Route path="/badges-certificates">
+            {() => <Suspense fallback={<LoadingSpinner />}><BadgesCertificates /></Suspense>}
+          </Route>
+          <Route path="/badge-system">
+            {() => <Suspense fallback={<LoadingSpinner />}><BadgeSystem /></Suspense>}
+          </Route>
+          <Route path="/learning-feedback">
+            {() => <Suspense fallback={<LoadingSpinner />}><LearningFeedback /></Suspense>}
+          </Route>
+          <Route path="/difficulty-tracking">
+            {() => <Suspense fallback={<LoadingSpinner />}><EnhancedDifficultyTracking /></Suspense>}
+          </Route>
+          <Route path="/enhanced-difficulty-tracking">
+            {() => <Suspense fallback={<LoadingSpinner />}><EnhancedDifficultyTracking /></Suspense>}
+          </Route>
+          <Route path="/accessibility-settings">
+            {() => <Suspense fallback={<LoadingSpinner />}><AccessibilitySettings /></Suspense>}
+          </Route>
+          <Route path="/proctoring-security">
+            {() => <Suspense fallback={<LoadingSpinner />}><ProctoringSecurity /></Suspense>}
+          </Route>
+          <Route path="/project-status">
+            {() => <Suspense fallback={<LoadingSpinner />}><ProjectStatus /></Suspense>}
+          </Route>
+          <Route path="/question-feedback">
+            {() => <Suspense fallback={<LoadingSpinner />}><QuestionFeedbackPage /></Suspense>}
+          </Route>
+          <Route path="/anonymous-quiz-access">
+            {() => <Suspense fallback={<LoadingSpinner />}><AnonymousQuizAccessPage /></Suspense>}
+          </Route>
+          <Route path="/notification-settings">
+            {() => <Suspense fallback={<LoadingSpinner />}><NotificationSettings /></Suspense>}
+          </Route>
+          <Route path="/bug-reporting">
+            {() => <Suspense fallback={<LoadingSpinner />}><BugReporting /></Suspense>}
+          </Route>
+          <Route path="/announcements">
+            {() => <Suspense fallback={<LoadingSpinner />}><Announcements /></Suspense>}
+          </Route>
+          <Route path="/question-flagging">
+            {() => <Suspense fallback={<LoadingSpinner />}><QuestionFlagging /></Suspense>}
+          </Route>
+          <Route path="/ai-chatbot">
+            {() => <Suspense fallback={<LoadingSpinner />}><AIChatbot /></Suspense>}
+          </Route>
+          <Route path="/backend-prompt-management">
+            {() => <Suspense fallback={<LoadingSpinner />}><BackendPromptManagement /></Suspense>}
+          </Route>
+          <Route path="/backend-prompt-test">
+            {() => <Suspense fallback={<LoadingSpinner />}><BackendPromptTestPage /></Suspense>}
+          </Route>
           <Route path="/exam/:id">
-            {(params) => <ExamInterface examId={params.id} />}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><ExamInterface examId={params.id} /></Suspense>}
           </Route>
-          <Route path="/student" component={StudentDashboard} />
-          <Route path="/student-dashboard" component={StudentDashboard} />
-          <Route path="/student-quiz" component={StudentQuiz} />
-          <Route path="/student/quiz/:quizId" component={StudentQuiz} />
-          <Route path="/quiz/:id" component={EnhancedQuizPreview} />
-          <Route path="/quiz-preview/:id" component={EnhancedQuizPreview} />
-          <Route path="/enhanced-quiz-preview/:id" component={EnhancedQuizPreview} />
-          <Route path="/published-quizzes" component={PublishedQuizzes} />
-          <Route path="/quiz-taker-demo" component={QuizTakerDemo} />
-          <Route path="/quiz-builder-demo" component={QuizBuilderDemo} />
-          <Route path="/section-management" component={SectionManagement} />
-          <Route path="/test" component={Test} />
-          <Route path="/system-test" component={SystemTest} />
-          <Route path="/comprehensive-test" component={ComprehensiveTest} />
-          <Route path="/section-management-test" component={SectionManagementTest} />
+          <Route path="/student">
+            {() => <Suspense fallback={<LoadingSpinner />}><StudentDashboard /></Suspense>}
+          </Route>
+          <Route path="/student-dashboard">
+            {() => <Suspense fallback={<LoadingSpinner />}><StudentDashboard /></Suspense>}
+          </Route>
+          <Route path="/student-quiz">
+            {() => <Suspense fallback={<LoadingSpinner />}><StudentQuiz /></Suspense>}
+          </Route>
+          <Route path="/student/quiz/:quizId">
+            {(params) => <Suspense fallback={<LoadingSpinner />}><StudentQuiz quizId={params.quizId} /></Suspense>}
+          </Route>
+          <Route path="/quiz/:id">
+            {(params) => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizPreview id={params.id} /></Suspense>}
+          </Route>
+          <Route path="/quiz-preview/:id">
+            {(params) => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizPreview id={params.id} /></Suspense>}
+          </Route>
+          <Route path="/enhanced-quiz-preview/:id">
+            {(params) => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizPreview id={params.id} /></Suspense>}
+          </Route>
+          <Route path="/published-quizzes">
+            {() => <Suspense fallback={<LoadingSpinner />}><PublishedQuizzes /></Suspense>}
+          </Route>
+          <Route path="/quiz-taker-demo">
+            {() => <Suspense fallback={<LoadingSpinner />}><QuizTakerDemo /></Suspense>}
+          </Route>
+          <Route path="/quiz-builder-demo">
+            {() => <Suspense fallback={<LoadingSpinner />}><QuizBuilderDemo /></Suspense>}
+          </Route>
+          <Route path="/section-management">
+            {() => <Suspense fallback={<LoadingSpinner />}><SectionManagement /></Suspense>}
+          </Route>
+          <Route path="/test">
+            {() => <Suspense fallback={<LoadingSpinner />}><Test /></Suspense>}
+          </Route>
+          <Route path="/system-test">
+            {() => <Suspense fallback={<LoadingSpinner />}><SystemTest /></Suspense>}
+          </Route>
+          <Route path="/comprehensive-test">
+            {() => <Suspense fallback={<LoadingSpinner />}><ComprehensiveTest /></Suspense>}
+          </Route>
+          <Route path="/section-management-test">
+            {() => <Suspense fallback={<LoadingSpinner />}><SectionManagementTest /></Suspense>}
+          </Route>
         </>
       )}
       <Route component={NotFound} />

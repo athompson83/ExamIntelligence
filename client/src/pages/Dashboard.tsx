@@ -41,23 +41,47 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
+  const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ["/api/dashboard/stats"],
     enabled: isAuthenticated,
     retry: false,
   });
 
-  const { data: activeExamSessions } = useQuery({
+  const { data: activeExamSessions, error: sessionsError } = useQuery({
     queryKey: ["/api/dashboard/active-sessions"],
     enabled: isAuthenticated,
     retry: false,
   });
 
+  // Handle errors from API calls
+  useEffect(() => {
+    if (statsError && isUnauthorizedError(statsError)) {
+      toast({
+        title: "Session expired",
+        description: "Please log in again to continue.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 2000);
+    }
+  }, [statsError, toast]);
+
   if (isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="loading-spinner" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
+    );
+  }
+
+  if (statsLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
     );
   }
 
