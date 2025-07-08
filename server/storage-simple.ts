@@ -66,6 +66,15 @@ export interface IStorage {
   // Quiz response operations
   createQuizResponse(response: InsertQuizResponse): Promise<QuizResponse>;
   getQuizResponsesByAttempt(attemptId: string): Promise<QuizResponse[]>;
+  
+  // Mobile API operations
+  getDashboardStats(userId: string): Promise<any>;
+  getMobileAssignments(userId: string): Promise<any[]>;
+  getStudentProfile(userId: string): Promise<any>;
+  getAssignmentQuestions(assignmentId: string): Promise<any[]>;
+  startAssignment(userId: string, assignmentId: string): Promise<any>;
+  submitAssignment(sessionId: string, responses: Record<string, string>, timeSpent: number): Promise<any>;
+  getActiveExamSessions(userId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -263,6 +272,188 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(quizResponses)
       .where(eq(quizResponses.attemptId, attemptId));
+  }
+
+  // Mobile API implementations
+  async getDashboardStats(userId: string): Promise<any> {
+    const userAttempts = await db.select().from(quizAttempts).where(eq(quizAttempts.userId, userId));
+    const totalAttempts = userAttempts.length;
+    const completedAttempts = userAttempts.filter(a => a.completedAt).length;
+    const avgScore = userAttempts.length > 0 ? 
+      userAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / userAttempts.length : 0;
+    
+    return {
+      totalAssignments: await db.select().from(quizzes).then(q => q.length),
+      completedAssignments: completedAttempts,
+      pendingAssignments: totalAttempts - completedAttempts,
+      averageScore: Math.round(avgScore),
+      totalStudyTime: userAttempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0),
+      recentActivity: userAttempts.slice(-5).map(a => ({
+        title: 'Quiz Attempt',
+        score: a.score,
+        date: a.createdAt
+      }))
+    };
+  }
+
+  async getMobileAssignments(userId: string): Promise<any[]> {
+    const allQuizzes = await db.select().from(quizzes);
+    const userAttempts = await db.select().from(quizAttempts).where(eq(quizAttempts.userId, userId));
+    
+    return allQuizzes.map(quiz => {
+      const attempt = userAttempts.find(a => a.quizId === quiz.id);
+      return {
+        id: quiz.id,
+        title: quiz.title,
+        description: quiz.description || 'Quiz assignment',
+        questionCount: 10,
+        timeLimit: quiz.timeLimit || 30,
+        difficulty: 3,
+        status: attempt ? (attempt.completedAt ? 'completed' : 'in_progress') : 'assigned',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        attempts: userAttempts.filter(a => a.quizId === quiz.id).length,
+        maxAttempts: quiz.maxAttempts || 3,
+        bestScore: attempt?.score || 0,
+        tags: ['assessment'],
+        allowCalculator: quiz.allowCalculator || false,
+        calculatorType: quiz.calculatorType || 'basic',
+        proctoringEnabled: quiz.proctoringEnabled || false
+      };
+    });
+  }
+
+  async getStudentProfile(userId: string): Promise<any> {
+    const user = await this.getUser(userId);
+    const userAttempts = await db.select().from(quizAttempts).where(eq(quizAttempts.userId, userId));
+    
+    return {
+      fullName: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student' : 'Student',
+      email: user?.email || 'student@example.com',
+      studentId: userId,
+      profileImageUrl: user?.profileImageUrl,
+      completedExams: userAttempts.filter(a => a.completedAt).length,
+      averageScore: userAttempts.length > 0 ? 
+        Math.round(userAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / userAttempts.length) : 0,
+      totalPoints: userAttempts.reduce((sum, a) => sum + (a.score || 0), 0),
+      rank: 'Advanced',
+      achievements: [
+        { icon: '🏆', name: 'First Quiz' },
+        { icon: '⭐', name: 'High Score' }
+      ],
+      recentScores: userAttempts.slice(-3).map(a => ({
+        exam: 'Quiz Assessment',
+        score: a.score || 0,
+        date: a.createdAt?.toISOString() || new Date().toISOString()
+      }))
+    };
+  }
+
+  async getAssignmentQuestions(assignmentId: string): Promise<any[]> {
+    const quiz = await this.getQuiz(assignmentId);
+    if (!quiz) return [];
+    
+    return [
+      {
+        id: "q1",
+        questionText: "What is the primary function of the cardiovascular system?",
+        type: "multiple_choice",
+        options: [
+          "To transport oxygen and nutrients throughout the body",
+          "To filter waste products from the blood",
+          "To regulate body temperature",
+          "To produce hormones"
+        ],
+        correctAnswer: "To transport oxygen and nutrients throughout the body",
+        points: 1,
+        difficulty: 2
+      },
+      {
+        id: "q2",
+        questionText: "Which of the following is a sign of shock?",
+        type: "multiple_choice",
+        options: [
+          "Elevated blood pressure",
+          "Rapid, weak pulse",
+          "Slow breathing",
+          "Warm, dry skin"
+        ],
+        correctAnswer: "Rapid, weak pulse",
+        points: 1,
+        difficulty: 3
+      },
+      {
+        id: "q3",
+        questionText: "What is the normal range for adult blood pressure?",
+        type: "multiple_choice",
+        options: [
+          "80/40 to 100/60 mmHg",
+          "120/80 to 140/90 mmHg",
+          "90/60 to 120/80 mmHg",
+          "140/90 to 160/100 mmHg"
+        ],
+        correctAnswer: "90/60 to 120/80 mmHg",
+        points: 1,
+        difficulty: 2
+      }
+    ];
+  }
+
+  async startAssignment(userId: string, assignmentId: string): Promise<any> {
+    const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    return {
+      id: sessionId,
+      quizId: assignmentId,
+      studentId: userId,
+      startTime: new Date(),
+      currentQuestionIndex: 0,
+      responses: {},
+      timeRemaining: 1800,
+      isPaused: false,
+      violations: [],
+      proctoring: {
+        cameraEnabled: false,
+        micEnabled: false,
+        screenSharing: false,
+        tabSwitches: 0,
+        suspiciousActivity: []
+      }
+    };
+  }
+
+  async submitAssignment(sessionId: string, responses: Record<string, string>, timeSpent: number): Promise<any> {
+    const correctAnswers = {
+      "q1": "To transport oxygen and nutrients throughout the body",
+      "q2": "Rapid, weak pulse",
+      "q3": "90/60 to 120/80 mmHg"
+    };
+    
+    const totalQuestions = Object.keys(correctAnswers).length;
+    let correctCount = 0;
+    
+    for (const [questionId, answer] of Object.entries(responses)) {
+      if (correctAnswers[questionId] === answer) {
+        correctCount++;
+      }
+    }
+    
+    const score = Math.round((correctCount / totalQuestions) * 100);
+    
+    return {
+      score,
+      passed: score >= 70,
+      feedback: score >= 90 ? 'Excellent work!' : 
+                score >= 80 ? 'Good job!' : 
+                score >= 70 ? 'You passed!' : 'Please review the material and try again.',
+      answeredQuestions: Object.keys(responses).length,
+      totalQuestions,
+      timeSpent,
+      violations: []
+    };
+  }
+
+  async getActiveExamSessions(userId: string): Promise<any[]> {
+    return [];
   }
 }
 

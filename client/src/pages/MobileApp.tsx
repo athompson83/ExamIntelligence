@@ -604,7 +604,7 @@ export default function MobileApp() {
   };
 
   const nextQuestion = () => {
-    if (currentQuestion < mockQuestions.length - 1) {
+    if (questions && currentQuestion < questions.length - 1) {
       setCurrentQuestion(prev => prev + 1);
     }
   };
@@ -1005,7 +1005,7 @@ export default function MobileApp() {
         {/* Question Progress */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span>Question {currentQuestion + 1} of {mockQuestions.length}</span>
+            <span>Question {currentQuestion + 1} of {questions.length}</span>
             <span>{Math.round(progress)}% complete</span>
           </div>
           <Progress value={progress} className="h-2" />
