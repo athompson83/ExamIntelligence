@@ -1601,9 +1601,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })}\n\n`);
 
       const savedQuestions = [];
-      for (const generatedQuestion of generatedQuestions) {
+      for (let i = 0; i < generatedQuestions.length; i++) {
+        const generatedQuestion = generatedQuestions[i];
+        
+        // Send progress update for each question being saved
+        res.write(`data: ${JSON.stringify({ 
+          type: 'progress',
+          status: `Saving question ${i + 1} of ${generatedQuestions.length}...`,
+          current: Math.floor(90 + (i / generatedQuestions.length) * 10),
+          total: 100,
+          percentage: Math.floor(90 + (i / generatedQuestions.length) * 10)
+        })}\n\n`);
+        
+        // Normalize questionType to match schema (hyphens to underscores)
+        const normalizedQuestionType = generatedQuestion.questionType?.replace(/-/g, '_') || 'multiple_choice';
+        
         const questionData = insertQuestionSchema.parse({
           ...generatedQuestion,
+          questionType: normalizedQuestionType,
           testbankId: req.params.id,
           creatorId: req.user?.claims?.sub || req.user?.id || "test-user",
           // Convert numeric values to strings for validation
@@ -1692,8 +1707,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save generated questions to database
       const savedQuestions = [];
       for (const generatedQuestion of generatedQuestions) {
+        // Normalize questionType to match schema (hyphens to underscores)
+        const normalizedQuestionType = generatedQuestion.questionType?.replace(/-/g, '_') || 'multiple_choice';
+        
         const questionData = insertQuestionSchema.parse({
           ...generatedQuestion,
+          questionType: normalizedQuestionType,
           testbankId: req.params.id,
           creatorId: req.user?.claims?.sub || req.user?.id || "test-user",
           // Convert numeric values to strings for validation

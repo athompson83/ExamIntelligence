@@ -867,7 +867,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         "questions": [
           {
             "questionText": "Complete question text",
-            "questionType": "multiple_choice|multiple_response|true_false|fill_blank|essay|matching|ordering|categorization|hotspot|numerical|formula|multiple_fill_blank|stimulus|constructed_response|text_no_question",
+            "questionType": "multiple_choice|multiple_response|true_false|fill_blank|essay|matching|ordering|categorization|hot_spot|numerical|formula|multiple_fill_blank|stimulus|constructed_response|text_no_question",
             "points": 1,
             "difficultyScore": 5,
             "bloomsLevel": "understand|apply|analyze|evaluate|create|remember",
@@ -937,7 +937,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     `;
 
     // Send progress update before AI call
-    progressCallback?.({ status: 'Sending request to AI...', current: 2, total: questionCount });
+    progressCallback?.({ status: 'Sending request to AI...', current: Math.floor(questionCount * 0.1), total: questionCount });
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -991,10 +991,13 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     });
 
     // Send progress update after AI response
-    progressCallback?.({ status: 'Processing AI response...', current: Math.floor(questionCount * 0.3), total: questionCount });
+    progressCallback?.({ status: 'Processing AI response...', current: Math.floor(questionCount * 0.5), total: questionCount });
 
     const result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
     const questions = result.questions || [];
+
+    // Send progress update after parsing
+    progressCallback?.({ status: 'Validating questions...', current: Math.floor(questionCount * 0.6), total: questionCount });
 
     // Check if we got the expected number of questions
     if (questions.length < questionCount) {
@@ -1154,9 +1157,12 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         }
       }
 
+      // Normalize questionType to match schema (hyphens to underscores)
+      const normalizedQuestionType = (question.questionType || 'multiple_choice').replace(/-/g, '_');
+      
       return {
         questionText: question.questionText || `Generated question ${index + 1} for ${topic}`,
-        questionType: question.questionType || 'multiple_choice',
+        questionType: normalizedQuestionType,
         points: Math.max(1, question.points || 1).toString(),
         difficultyScore: Math.max(1, Math.min(10, question.difficultyScore || 5)).toString(),
         bloomsLevel: question.bloomsLevel || 'understand',
@@ -1175,7 +1181,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     });
 
     // Send final progress update
-    progressCallback?.({ status: 'Questions generation completed!', current: processedQuestions.length, total: questionCount });
+    progressCallback?.({ status: 'Questions generation completed!', current: Math.floor(questionCount * 0.9), total: questionCount });
 
     // Check if we need to generate additional questions due to filtering
     if (processedQuestions.length < questionCount) {
