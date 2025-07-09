@@ -86,7 +86,11 @@ export default function StudyAids() {
       referenceLinks?: string[];
       uploadedFiles?: File[];
     }) => {
-      return apiRequest('/api/study-aids/generate', { method: 'POST', body: JSON.stringify(data) });
+      const response = await apiRequest('/api/study-aids/generate', { 
+        method: 'POST', 
+        body: JSON.stringify(data) 
+      });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/study-aids'] });
@@ -114,7 +118,8 @@ export default function StudyAids() {
 
   const deleteStudyAidMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/study-aids/${id}`, { method: 'DELETE' });
+      const response = await apiRequest(`/api/study-aids/${id}`, { method: 'DELETE' });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/study-aids'] });
@@ -127,7 +132,8 @@ export default function StudyAids() {
 
   const updateAccessMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest('POST', `/api/study-aids/${id}/access`);
+      const response = await apiRequest(`/api/study-aids/${id}/access`, { method: 'POST' });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/study-aids'] });
@@ -136,7 +142,11 @@ export default function StudyAids() {
 
   const rateStudyAidMutation = useMutation({
     mutationFn: async ({ id, rating }: { id: string; rating: number }) => {
-      return apiRequest('POST', `/api/study-aids/${id}/rate`, { rating });
+      const response = await apiRequest(`/api/study-aids/${id}/rate`, { 
+        method: 'POST', 
+        body: JSON.stringify({ rating }) 
+      });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/study-aids'] });
@@ -160,7 +170,7 @@ export default function StudyAids() {
 
     createStudyAidMutation.mutate({
       type: selectedType,
-      quizId: selectedQuiz || undefined,
+      quizId: selectedQuiz === 'none' ? undefined : selectedQuiz || undefined,
       title: title.trim(),
       customPrompt: customPrompt.trim() || undefined,
       referenceLinks: referenceLinks.length > 0 ? referenceLinks : undefined,
@@ -185,9 +195,11 @@ export default function StudyAids() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </Layout>
     );
   }
 
@@ -247,7 +259,7 @@ export default function StudyAids() {
                     <SelectValue placeholder="Choose a quiz or leave blank for topic-based generation" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None - Topic-based generation</SelectItem>
+                    <SelectItem value="none">None - Topic-based generation</SelectItem>
                     {availableQuizzes.map((quiz: any) => (
                       <SelectItem key={quiz.id} value={quiz.id}>
                         {quiz.title}
@@ -390,7 +402,8 @@ export default function StudyAids() {
                 </Button>
                 <Button
                   onClick={handleCreateStudyAid}
-                  disabled={createStudyAidMutation.isPending}
+                  disabled={createStudyAidMutation.isPending || !selectedType || !title.trim()}
+                  className="min-w-[140px]"
                 >
                   {createStudyAidMutation.isPending ? (
                     <>
@@ -400,7 +413,7 @@ export default function StudyAids() {
                   ) : (
                     <>
                       <Brain className="w-4 h-4 mr-2" />
-                      Generate Study Aid
+                      Generate
                     </>
                   )}
                 </Button>

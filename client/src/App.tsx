@@ -13,6 +13,7 @@ import { lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { useEffect } from "react";
 
 // Core pages that are always needed
 import Landing from "@/pages/Landing";
@@ -81,6 +82,16 @@ const ProfileEnhancement = lazy(() => import("@/pages/profile-enhancement"));
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   const { currentPage } = usePageTracking();
+
+  // Preload common data for better performance
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Preload dashboard data
+      fetch('/api/dashboard/stats').catch(() => {});
+      fetch('/api/notifications').catch(() => {});
+      fetch('/api/study-aids').catch(() => {});
+    }
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (

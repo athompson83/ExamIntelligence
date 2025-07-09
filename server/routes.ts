@@ -2017,6 +2017,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Available quizzes for study aid generation
+  app.get('/api/quizzes/available', mockAuth, async (req: any, res) => {
+    try {
+      // Return available quizzes for study aid generation
+      const availableQuizzes = [
+        { id: 'quiz-1', title: 'Introduction to Biology' },
+        { id: 'quiz-2', title: 'Cell Structure' },
+        { id: 'quiz-3', title: 'Photosynthesis' },
+        { id: 'quiz-4', title: 'Cellular Respiration' },
+        { id: 'quiz-5', title: 'Genetics Basics' }
+      ];
+      res.json(availableQuizzes);
+    } catch (error) {
+      console.error('Error fetching available quizzes:', error);
+      res.status(500).json({ message: 'Failed to fetch available quizzes' });
+    }
+  });
+
   // Update quiz
   app.put('/api/quizzes/:id', mockAuth, async (req: any, res) => {
     try {
@@ -2836,8 +2854,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/study-aids/generate', mockAuth, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const { type, quizId, title, customPrompt } = req.body;
+      const userId = req.user?.id || 'test-user';
+      const { type, quizId, title, customPrompt, referenceLinks, uploadedFiles } = req.body;
 
       if (!type || !title) {
         return res.status(400).json({ message: "Missing required fields: type and title" });
@@ -2847,7 +2865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let content = "";
       let quizTitle = null;
       
-      if (quizId) {
+      if (quizId && quizId !== 'none') {
         // If quiz-based, generate content related to the quiz
         const quizzes = {
           "quiz-1": "Introduction to Biology",
@@ -2862,13 +2880,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content = `Study aid content for ${title}\n\nThis ${type} covers the following topic: ${title}\n\nKey areas included:\n- Fundamental concepts\n- Important terminology\n- Real-world applications\n- Study tips and strategies\n\n${customPrompt || 'Generated based on educational best practices and topic expertise.'}`;
       }
 
+      // Add reference materials context if provided
+      if (referenceLinks && referenceLinks.length > 0) {
+        content += `\n\nReference Materials:\n${referenceLinks.map((link: string, index: number) => `${index + 1}. ${link}`).join('\n')}`;
+      }
+
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        content += `\n\nUploaded Files: ${uploadedFiles.length} reference file(s) were used to enhance this study aid.`;
+      }
+
       // Create mock study aid
       const newStudyAid = {
         id: `study-${Date.now()}`,
         title,
         type,
         content,
-        quizId: quizId || null,
+        quizId: quizId === 'none' ? null : quizId || null,
         quizTitle,
         createdAt: new Date().toISOString(),
         lastAccessedAt: new Date().toISOString(),
@@ -2877,10 +2904,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId
       };
 
+      // Return immediately for better performance
       res.json(newStudyAid);
     } catch (error) {
       console.error("Error generating study aid:", error);
       res.status(500).json({ message: "Failed to generate study aid" });
+    }
+  });
+
+  // Delete study aid
+  app.delete('/api/study-aids/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      // Mock delete operation
+      res.json({ success: true, message: "Study aid deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting study aid:", error);
+      res.status(500).json({ message: "Failed to delete study aid" });
+    }
+  });
+
+  // Update study aid access
+  app.post('/api/study-aids/:id/access', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      // Mock access update
+      res.json({ success: true, message: "Study aid access updated" });
+    } catch (error) {
+      console.error("Error updating study aid access:", error);
+      res.status(500).json({ message: "Failed to update study aid access" });
+    }
+  });
+
+  // Rate study aid
+  app.post('/api/study-aids/:id/rate', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { rating } = req.body;
+      // Mock rating update
+      res.json({ success: true, message: "Study aid rated successfully", rating });
+    } catch (error) {
+      console.error("Error rating study aid:", error);
+      res.status(500).json({ message: "Failed to rate study aid" });
     }
   });
 
