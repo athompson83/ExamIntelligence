@@ -770,6 +770,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Onboarding completion tracking
+  app.post('/api/users/onboarding/complete', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      
+      // Mark user's onboarding as completed
+      await storage.updateUserOnboardingStatus(userId, true);
+      
+      res.json({ message: 'Onboarding completed successfully' });
+    } catch (error) {
+      console.error('Error updating onboarding status:', error);
+      res.status(500).json({ message: 'Failed to update onboarding status' });
+    }
+  });
+
+  app.get('/api/users/onboarding/status', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      res.json({ 
+        hasCompletedOnboarding: user.hasCompletedOnboarding || false,
+        isFirstLogin: !user.hasCompletedOnboarding && !user.onboardingSkipped
+      });
+    } catch (error) {
+      console.error('Error fetching onboarding status:', error);
+      res.status(500).json({ message: 'Failed to fetch onboarding status' });
+    }
+  });
+
   // Dashboard routes
   app.get('/api/dashboard/stats', mockAuth, async (req: any, res) => {
     try {

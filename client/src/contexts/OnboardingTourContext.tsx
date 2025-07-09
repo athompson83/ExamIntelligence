@@ -41,17 +41,25 @@ export const OnboardingTourProvider: React.FC<OnboardingTourProviderProps> = ({ 
     if (isAuthenticated && user) {
       const userSpecificKey = `${TOUR_COMPLETED_KEY}_${user.id}`;
       const userSpecificSkipKey = `${TOUR_SKIPPED_KEY}_${user.id}`;
+      const userFirstLoginKey = `onboarding_first_login_${user.id}`;
       
       const tourCompleted = localStorage.getItem(userSpecificKey);
       const tourSkipped = localStorage.getItem(userSpecificSkipKey);
+      const hasLoggedInBefore = localStorage.getItem(userFirstLoginKey);
       
-      // Check if this is the user's first visit
-      if (!tourCompleted && !tourSkipped) {
+      // Only show tour if this is truly the first time the user has logged in
+      if (!tourCompleted && !tourSkipped && !hasLoggedInBefore) {
         setIsFirstVisit(true);
+        // Mark that user has logged in before
+        localStorage.setItem(userFirstLoginKey, 'true');
         // Auto-start tour for first-time users after a brief delay
         setTimeout(() => {
           setIsOnboardingActive(true);
         }, 1000);
+      } else if (!hasLoggedInBefore) {
+        // If user has completed/skipped tour but this is still marked as first login,
+        // mark as not first login to prevent future auto-starts
+        localStorage.setItem(userFirstLoginKey, 'true');
       }
     }
   }, [isAuthenticated, user]);
@@ -88,8 +96,13 @@ export const OnboardingTourProvider: React.FC<OnboardingTourProviderProps> = ({ 
     if (user) {
       const userSpecificKey = `${TOUR_COMPLETED_KEY}_${user.id}`;
       const userSpecificSkipKey = `${TOUR_SKIPPED_KEY}_${user.id}`;
+      const userFirstLoginKey = `onboarding_first_login_${user.id}`;
+      
+      // Clear all tour-related storage for manual restart
       localStorage.removeItem(userSpecificKey);
       localStorage.removeItem(userSpecificSkipKey);
+      // Note: We don't remove userFirstLoginKey to prevent auto-start on future logins
+      
       setIsFirstVisit(true);
       startOnboarding();
     }

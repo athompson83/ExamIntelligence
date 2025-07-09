@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Joyride, { CallBackProps, STATUS, EVENTS, ACTIONS } from 'react-joyride';
 import { useOnboardingTour } from '@/contexts/OnboardingTourContext';
 import { useAuth } from '@/hooks/useAuth';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { X, Play, RotateCcw } from 'lucide-react';
 
@@ -178,11 +179,19 @@ const OnboardingTour: React.FC = () => {
     }
   };
 
-  const handleJoyrideCallback = (data: CallBackProps) => {
+  const handleJoyrideCallback = async (data: CallBackProps) => {
     const { status, type, action, index } = data;
 
     if (([STATUS.FINISHED, STATUS.SKIPPED] as string[]).includes(status)) {
       if (status === STATUS.FINISHED) {
+        // Call backend API to mark onboarding as completed
+        try {
+          await apiRequest('/api/users/onboarding/complete', {
+            method: 'POST',
+          });
+        } catch (error) {
+          console.error('Failed to mark onboarding as completed in backend:', error);
+        }
         markTourCompleted();
       } else if (status === STATUS.SKIPPED) {
         skipTour();
