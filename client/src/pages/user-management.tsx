@@ -1,532 +1,424 @@
-import { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
-import { apiRequest } from '@/lib/queryClient';
-import { 
-  UserPlus, 
-  Upload, 
-  Download, 
-  Users, 
-  Link as LinkIcon, 
-  Settings, 
-  Mail, 
-  FileText,
-  Search,
-  Copy,
-  CheckCircle,
-  XCircle,
-  AlertCircle
-} from 'lucide-react';
-import { TipTooltip, AdminTooltip, FeatureTooltip } from '@/components/SmartTooltip';
+import { Eye, Mail, Users, Settings, UserCheck } from 'lucide-react';
+import Layout from '@/components/Layout';
 
 interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
-  accountId: string;
+  role: 'super_admin' | 'admin' | 'teacher' | 'student';
+  isActive: boolean;
   createdAt: string;
-  updatedAt: string;
 }
 
-export default function UserManagementPage() {
-  const { user } = useAuth();
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'success' | 'error';
+  recipients: string[];
+  createdAt: string;
+  sentAt?: string;
+}
+
+export default function UserManagement() {
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showImpersonateDialog, setShowImpersonateDialog] = useState(false);
+  const [showNotificationDialog, setShowNotificationDialog] = useState(false);
+  const [notificationData, setNotificationData] = useState({
+    title: '',
+    message: '',
+    type: 'info' as const,
+    recipients: 'all' as 'all' | 'section',
+    sectionId: '',
+  });
+  const [filterRole, setFilterRole] = useState<string>('all');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [newUser, setNewUser] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    role: 'student'
-  });
-  const [accountLinkUrl, setAccountLinkUrl] = useState('');
 
-  // Fetch users based on user role
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: user?.role === 'super_admin' ? ['/api/super-admin/users'] : ['/api/admin/users'],
+  // Fetch users
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ['/api/users'],
     retry: false,
   });
 
-  // Generate account link
-  const generateAccountLink = useMutation({
-    mutationFn: async () => {
-      return await apiRequest('/api/admin/generate-account-link', {
+  // Fetch sections for notifications
+  const { data: sections = [] } = useQuery({
+    queryKey: ['/api/sections'],
+    retry: false,
+  });
+
+  // Fetch notifications
+  const { data: notifications = [] } = useQuery<Notification[]>({
+    queryKey: ['/api/notifications/sent'],
+    retry: false,
+  });
+
+  // User impersonation mutation
+  const impersonateMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiRequest(`/api/admin/impersonate`, {
         method: 'POST',
+        body: JSON.stringify({ userId }),
       });
+      return response.json();
     },
     onSuccess: (data) => {
-      setAccountLinkUrl(data.link);
       toast({
-        title: "Account Link Generated",
-        description: "Share this link with new users to join your account",
+        title: "Impersonation Started",
+        description: `Now viewing the app as ${selectedUser?.firstName} ${selectedUser?.lastName}`,
       });
+      // Reload the page to apply impersonation
+      window.location.reload();
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to generate account link",
+        description: "Failed to start impersonation. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  // Create user mutation
-  const createUserMutation = useMutation({
-    mutationFn: async (userData: any) => {
-      return await apiRequest('/api/admin/users', {
+  // Password reset mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiRequest(`/api/admin/reset-password`, {
         method: 'POST',
-        body: JSON.stringify(userData),
+        body: JSON.stringify({ userId }),
       });
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      setIsCreateDialogOpen(false);
-      setNewUser({ email: '', firstName: '', lastName: '', role: 'student' });
       toast({
-        title: "User Created",
-        description: "New user has been successfully created",
+        title: "Password Reset Sent",
+        description: "A password reset email has been sent to the user.",
       });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to create user",
+        description: "Failed to send password reset email. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  // Update user role mutation
-  const updateUserRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      return await apiRequest(`/api/admin/users/${userId}/role`, {
-        method: 'PUT',
-        body: JSON.stringify({ role }),
+  // Send notification mutation
+  const sendNotificationMutation = useMutation({
+    mutationFn: async (notificationData: any) => {
+      const response = await apiRequest('/api/admin/notifications', {
+        method: 'POST',
+        body: JSON.stringify(notificationData),
       });
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications/sent'] });
+      setShowNotificationDialog(false);
+      setNotificationData({
+        title: '',
+        message: '',
+        type: 'info',
+        recipients: 'all',
+        sectionId: '',
+      });
       toast({
-        title: "Role Updated",
-        description: "User role has been updated successfully",
+        title: "Notification Sent",
+        description: "Your notification has been sent successfully.",
       });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to update user role",
+        description: "Failed to send notification. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  // CSV upload mutation
-  const uploadCsvMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('csvFile', file);
-      
-      return await apiRequest('/api/admin/users/bulk-upload', {
-        method: 'POST',
-        body: formData,
-      });
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      setIsUploadDialogOpen(false);
-      setCsvFile(null);
-      toast({
-        title: "Users Uploaded",
-        description: `Successfully created ${data.created} users`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Upload Error",
-        description: "Failed to upload CSV file",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Filter users based on search and role
-  const filteredUsers = users.filter((user: User) => {
-    const matchesSearch = 
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    
-    return matchesSearch && matchesRole;
-  });
-
-  // Download CSV template
-  const downloadTemplate = () => {
-    const csvContent = `email,firstName,lastName,role
-john.doe@example.com,John,Doe,student
-jane.smith@example.com,Jane,Smith,teacher
-admin@example.com,Admin,User,admin`;
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'user_upload_template.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  const handleImpersonateUser = (user: User) => {
+    setSelectedUser(user);
+    setShowImpersonateDialog(true);
   };
 
-  // Copy link to clipboard
-  const copyLink = useCallback(() => {
-    navigator.clipboard.writeText(accountLinkUrl);
-    toast({
-      title: "Link Copied",
-      description: "Account link has been copied to clipboard",
-    });
-  }, [accountLinkUrl, toast]);
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'super_admin':
-        return 'bg-red-100 text-red-800';
-      case 'admin':
-        return 'bg-blue-100 text-blue-800';
-      case 'teacher':
-        return 'bg-green-100 text-green-800';
-      case 'student':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const confirmImpersonation = () => {
+    if (selectedUser) {
+      impersonateMutation.mutate(selectedUser.id);
+      setShowImpersonateDialog(false);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage users and their roles in your account
-          </p>
+  const handleResetPassword = (user: User) => {
+    resetPasswordMutation.mutate(user.id);
+  };
+
+  const handleSendNotification = () => {
+    sendNotificationMutation.mutate(notificationData);
+  };
+
+  const filteredUsers = users.filter(user => 
+    filterRole === 'all' || user.role === filterRole
+  );
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'super_admin': return 'bg-red-100 text-red-800';
+      case 'admin': return 'bg-blue-100 text-blue-800';
+      case 'teacher': return 'bg-green-100 text-green-800';
+      case 'student': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (usersLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-        <div className="flex gap-2">
-          <AdminTooltip
-            id="account-link-feature"
-            title="Generate Registration Link"
-            content="Create a shareable link that allows new users to register and automatically join your account. Perfect for onboarding students or staff."
-            position="top"
-            trigger="hover"
-          >
-            <Button 
-              variant="outline" 
-              onClick={() => generateAccountLink.mutate()}
-              disabled={generateAccountLink.isPending}
-            >
-              <LinkIcon className="h-4 w-4 mr-2" />
-              Generate Account Link
-            </Button>
-          </AdminTooltip>
-          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-            <DialogTrigger asChild>
-              <FeatureTooltip
-                id="bulk-upload-feature"
-                title="Bulk User Upload 🚀"
-                content="Upload multiple users at once using a CSV file. Download the template first to see the required format (email, firstName, lastName, role)."
-                position="top"
-                trigger="hover"
-              >
-                <Button variant="outline">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Bulk Upload
-                </Button>
-              </FeatureTooltip>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Bulk Upload Users</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="csvFile">CSV File</Label>
-                  <Input
-                    id="csvFile"
-                    type="file"
-                    accept=".csv"
-                    onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Upload a CSV file with user data
-                  </p>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">User Management</h1>
+          <Button onClick={() => setShowNotificationDialog(true)}>
+            <Mail className="w-4 h-4 mr-2" />
+            Send Notification
+          </Button>
+        </div>
+
+        <Tabs defaultValue="users" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>User List</CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="role-filter">Filter by Role:</Label>
+                    <Select value={filterRole} onValueChange={setFilterRole}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Roles</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="teacher">Teacher</SelectItem>
+                        <SelectItem value="student">Student</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={downloadTemplate}
-                    className="flex-1"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Template
-                  </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {filteredUsers.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <p className="font-medium">{user.firstName} {user.lastName}</p>
+                          <p className="text-sm text-gray-600">{user.email}</p>
+                        </div>
+                        <Badge className={getRoleBadgeColor(user.role)}>
+                          {user.role.replace('_', ' ')}
+                        </Badge>
+                        <Badge variant={user.isActive ? "default" : "secondary"}>
+                          {user.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleImpersonateUser(user)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          View As
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleResetPassword(user)}
+                          disabled={resetPasswordMutation.isPending}
+                        >
+                          <Mail className="w-4 h-4 mr-2" />
+                          Reset Password
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsUploadDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={() => csvFile && uploadCsvMutation.mutate(csvFile)}
-                    disabled={!csvFile || uploadCsvMutation.isPending}
-                  >
-                    {uploadCsvMutation.isPending ? 'Uploading...' : 'Upload'}
-                  </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Sent Notifications</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {notifications.map((notification) => (
+                    <div key={notification.id} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium">{notification.title}</h3>
+                        <Badge variant={notification.type === 'info' ? 'default' : 'secondary'}>
+                          {notification.type}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>Recipients: {notification.recipients.length}</span>
+                        <span>Sent: {new Date(notification.sentAt || notification.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Impersonation Confirmation Dialog */}
+        <Dialog open={showImpersonateDialog} onOpenChange={setShowImpersonateDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm User Impersonation</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>Are you sure you want to view the app as:</p>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="font-medium">{selectedUser?.firstName} {selectedUser?.lastName}</p>
+                <p className="text-sm text-gray-600">{selectedUser?.email}</p>
+                <Badge className={getRoleBadgeColor(selectedUser?.role || '')}>
+                  {selectedUser?.role.replace('_', ' ')}
+                </Badge>
               </div>
-            </DialogContent>
-          </Dialog>
-          
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add User
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Add New User</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                This will reload the page and you will see the app from their perspective.
+              </p>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowImpersonateDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={confirmImpersonation} disabled={impersonateMutation.isPending}>
+                  {impersonateMutation.isPending ? 'Starting...' : 'Start Impersonation'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Send Notification Dialog */}
+        <Dialog open={showNotificationDialog} onOpenChange={setShowNotificationDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Send Notification</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={notificationData.title}
+                  onChange={(e) => setNotificationData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Enter notification title"
+                />
+              </div>
+              <div>
+                <Label htmlFor="message">Message</Label>
+                <textarea
+                  id="message"
+                  className="w-full p-3 border rounded-md"
+                  rows={4}
+                  value={notificationData.message}
+                  onChange={(e) => setNotificationData(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Enter notification message"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    placeholder="user@example.com"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      value={newUser.firstName}
-                      onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
-                      placeholder="John"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      value={newUser.lastName}
-                      onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
-                      placeholder="Doe"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value })}>
+                  <Label htmlFor="type">Type</Label>
+                  <Select value={notificationData.type} onValueChange={(value: any) => setNotificationData(prev => ({ ...prev, type: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="teacher">Teacher</SelectItem>
-                      {user?.role === 'super_admin' && <SelectItem value="admin">Admin</SelectItem>}
+                      <SelectItem value="info">Info</SelectItem>
+                      <SelectItem value="warning">Warning</SelectItem>
+                      <SelectItem value="success">Success</SelectItem>
+                      <SelectItem value="error">Error</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsCreateDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={() => createUserMutation.mutate(newUser)}
-                    disabled={createUserMutation.isPending || !newUser.email || !newUser.firstName || !newUser.lastName}
-                  >
-                    {createUserMutation.isPending ? 'Creating...' : 'Create User'}
-                  </Button>
+                <div>
+                  <Label htmlFor="recipients">Recipients</Label>
+                  <Select value={notificationData.recipients} onValueChange={(value: any) => setNotificationData(prev => ({ ...prev, recipients: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Users</SelectItem>
+                      <SelectItem value="section">Specific Section</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Account Link Display */}
-      {accountLinkUrl && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LinkIcon className="h-5 w-5" />
-              Account Registration Link
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Input value={accountLinkUrl} readOnly className="flex-1" />
-              <Button variant="outline" size="sm" onClick={copyLink}>
-                <Copy className="h-4 w-4" />
-              </Button>
+              {notificationData.recipients === 'section' && (
+                <div>
+                  <Label htmlFor="section">Section</Label>
+                  <Select value={notificationData.sectionId} onValueChange={(value) => setNotificationData(prev => ({ ...prev, sectionId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sections.map((section: any) => (
+                        <SelectItem key={section.id} value={section.id}>
+                          {section.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowNotificationDialog(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSendNotification} 
+                  disabled={sendNotificationMutation.isPending || !notificationData.title || !notificationData.message}
+                >
+                  {sendNotificationMutation.isPending ? 'Sending...' : 'Send Notification'}
+                </Button>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Share this link with new users to allow them to register for your account
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Filters */}
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="student">Students</SelectItem>
-            <SelectItem value="teacher">Teachers</SelectItem>
-            <SelectItem value="admin">Admins</SelectItem>
-            {user?.role === 'super_admin' && <SelectItem value="super_admin">Super Admins</SelectItem>}
-          </SelectContent>
-        </Select>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Users ({filteredUsers.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading users...</div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No users found matching your criteria
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user: User) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {user.firstName} {user.lastName}
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge className={getRoleBadgeColor(user.role)}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={user.role}
-                        onValueChange={(newRole) => 
-                          updateUserRoleMutation.mutate({ userId: user.id, role: newRole })
-                        }
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="student">Student</SelectItem>
-                          <SelectItem value="teacher">Teacher</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          {user?.role === 'super_admin' && <SelectItem value="super_admin">Super Admin</SelectItem>}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* CSV Upload Template Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            CSV Upload Format
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Your CSV file should include the following columns:
-          </p>
-          <div className="bg-muted p-4 rounded-lg">
-            <code className="text-sm">
-              email,firstName,lastName,role<br/>
-              john.doe@example.com,John,Doe,student<br/>
-              jane.smith@example.com,Jane,Smith,teacher<br/>
-              admin@example.com,Admin,User,admin
-            </code>
-          </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            Valid roles: student, teacher, admin{user?.role === 'super_admin' ? ', super_admin' : ''}
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    </Layout>
   );
 }

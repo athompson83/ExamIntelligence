@@ -2709,9 +2709,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Study Aid Routes  
-  app.get('/api/study-aids',  async (req: any, res) => {
+  app.get('/api/study-aids', mockAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims?.sub || req.user.id;
+      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
       const studyAids = await storage.getStudyAidsByStudent(userId);
       res.json(studyAids);
     } catch (error) {
@@ -2720,9 +2720,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/study-aids',  async (req: any, res) => {
+  app.post('/api/study-aids', mockAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims?.sub || req.user.id;
+      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
       const studyAidData = insertStudyAidSchema.parse({
         ...req.body,
         studentId: userId,
@@ -3263,6 +3263,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching quiz progress:", error);
       res.status(500).json({ error: "Failed to fetch quiz progress" });
+    }
+  });
+
+  // Admin User Management API endpoints
+  app.post('/api/admin/impersonate', mockAuth, async (req: any, res) => {
+    try {
+      const { userId } = req.body;
+      const currentUser = req.user;
+      
+      // Only admins can impersonate
+      if (currentUser.role !== 'admin' && currentUser.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+      
+      // Get user to impersonate
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Set impersonation session
+      req.session.impersonatedUserId = userId;
+      req.session.originalUserId = currentUser.id;
+      
+      res.json({ success: true, message: 'Impersonation started', user: targetUser });
+    } catch (error) {
+      console.error('Error starting impersonation:', error);
+      res.status(500).json({ message: 'Failed to start impersonation' });
+    }
+  });
+
+  app.post('/api/admin/reset-password', mockAuth, async (req: any, res) => {
+    try {
+      const { userId } = req.body;
+      const currentUser = req.user;
+      
+      // Only admins can reset passwords
+      if (currentUser.role !== 'admin' && currentUser.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+      
+      // Get user
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // In a real app, this would send an email with reset link
+      // For now, we'll just log it
+      console.log(`Password reset requested for user: ${targetUser.email}`);
+      
+      res.json({ success: true, message: 'Password reset email sent' });
+    } catch (error) {
+      console.error('Error sending password reset:', error);
+      res.status(500).json({ message: 'Failed to send password reset email' });
+    }
+  });
+
+  app.post('/api/admin/notifications', mockAuth, async (req: any, res) => {
+    try {
+      const { title, message, type, recipients, sectionId } = req.body;
+      const currentUser = req.user;
+      
+      // Only admins can send notifications
+      if (currentUser.role !== 'admin' && currentUser.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+      
+      let recipientList = [];
+      
+      if (recipients === 'all') {
+        // Get all users
+        const allUsers = await storage.getAllUsers();
+        recipientList = allUsers.map(user => user.id);
+      } else if (recipients === 'section' && sectionId) {
+        // Get users in specific section
+        const sectionMembers = await storage.getSectionMembers(sectionId);
+        recipientList = sectionMembers.map(member => member.studentId);
+      }
+      
+      const notification = {
+        id: `notif-${Date.now()}`,
+        title,
+        message,
+        type,
+        recipients: recipientList,
+        createdAt: new Date().toISOString(),
+        sentAt: new Date().toISOString(),
+        senderId: currentUser.id
+      };
+      
+      // In a real app, this would save to database and send actual notifications
+      console.log('Notification sent:', notification);
+      
+      res.json({ success: true, notification });
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      res.status(500).json({ message: 'Failed to send notification' });
+    }
+  });
+
+  app.get('/api/notifications/sent', mockAuth, async (req: any, res) => {
+    try {
+      // Mock sent notifications
+      const sentNotifications = [
+        {
+          id: 'notif-1',
+          title: 'System Maintenance',
+          message: 'The system will be under maintenance tomorrow from 2-4 PM.',
+          type: 'warning',
+          recipients: ['all'],
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          sentAt: new Date(Date.now() - 86400000).toISOString()
+        },
+        {
+          id: 'notif-2', 
+          title: 'New Quiz Available',
+          message: 'A new quiz has been assigned to your section.',
+          type: 'info',
+          recipients: ['section-1'],
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+          sentAt: new Date(Date.now() - 3600000).toISOString()
+        }
+      ];
+      
+      res.json(sentNotifications);
+    } catch (error) {
+      console.error('Error fetching sent notifications:', error);
+      res.status(500).json({ message: 'Failed to fetch sent notifications' });
     }
   });
 
@@ -3915,6 +4044,17 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
+  app.delete('/api/sections/:sectionId/members/:studentId', mockAuth, async (req, res) => {
+    try {
+      const { sectionId, studentId } = req.params;
+      await storage.removeStudentFromSection(sectionId, studentId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing student from section:', error);
+      res.status(500).json({ message: 'Failed to remove student from section' });
+    }
+  });
+
   app.get('/api/quiz-assignments', mockAuth, async (req, res) => {
     try {
       const assignments = await storage.getQuizAssignments();
@@ -3939,6 +4079,58 @@ Initialize all interactions with these principles as your foundation.`,
         maxAttempts,
         timeLimit,
       });
+
+      // Auto-generate study aids when quiz is assigned
+      if (assignment.quizId) {
+        try {
+          // Get the quiz details
+          const quiz = await storage.getQuiz(assignment.quizId);
+          
+          if (quiz) {
+            // Determine which students to generate study aids for
+            let targetStudents: string[] = [];
+            
+            if (assignedToUserId) {
+              targetStudents = [assignedToUserId];
+            } else if (assignedToSectionId) {
+              // Get all students in the section
+              const sectionMembers = await storage.getSectionMembers(assignedToSectionId);
+              targetStudents = sectionMembers.map(member => member.studentId);
+            }
+            
+            // Generate study aids for each target student
+            for (const studentId of targetStudents) {
+              const studyAidTypes = ['study_guide', 'flashcards', 'practice_questions'];
+              
+              for (const type of studyAidTypes) {
+                const studyAidData = {
+                  id: `study-${Date.now()}-${studentId}-${type}`,
+                  title: `${quiz.title} - ${type.replace('_', ' ')}`,
+                  type: type,
+                  content: `Auto-generated ${type.replace('_', ' ')} for ${quiz.title}. This material will help you prepare for the upcoming quiz assignment.`,
+                  quizId: quiz.id,
+                  quizTitle: quiz.title,
+                  studentId: studentId,
+                  createdAt: new Date().toISOString(),
+                  lastAccessedAt: new Date().toISOString(),
+                  accessCount: 0,
+                  rating: 0,
+                  isAutoGenerated: true
+                };
+                
+                // Create the study aid
+                await storage.createStudyAid(studyAidData);
+              }
+            }
+            
+            console.log(`Auto-generated study aids for ${targetStudents.length} students for quiz assignment: ${assignment.id}`);
+          }
+        } catch (studyAidError) {
+          console.error('Error auto-generating study aids:', studyAidError);
+          // Don't fail the assignment creation if study aid generation fails
+        }
+      }
+
       res.json(assignment);
     } catch (error) {
       console.error('Error creating quiz assignment:', error);

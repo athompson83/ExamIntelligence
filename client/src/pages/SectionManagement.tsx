@@ -172,6 +172,29 @@ export default function SectionManagement() {
     },
   });
 
+  const removeStudentMutation = useMutation({
+    mutationFn: async ({ sectionId, studentId }: { sectionId: string; studentId: string }) => {
+      await apiRequest(`/api/sections/${sectionId}/members/${studentId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sections'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/sections', selectedSectionId, 'members'] });
+      toast({
+        title: "Student removed",
+        description: "Student has been removed from the section successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to remove student from section. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Create quiz assignment mutation
   const createAssignmentMutation = useMutation({
     mutationFn: async (assignmentData: {
@@ -580,9 +603,17 @@ export default function SectionManagement() {
                 <div className="space-y-2">
                   {sectionMembers.map((member: any, index: number) => (
                     <div key={member.studentId || `member-${index}`} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span>{member.studentName || `${member.firstName} ${member.lastName}`}</span>
-                      <Button variant="outline" size="sm">
-                        Remove
+                      <div>
+                        <span className="font-medium">{member.studentName || `${member.firstName || ''} ${member.lastName || ''}`.trim() || member.studentEmail}</span>
+                        <span className="text-sm text-gray-600 ml-2">({member.studentEmail})</span>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => removeStudentMutation.mutate({ sectionId: selectedSectionId!, studentId: member.studentId })}
+                        disabled={removeStudentMutation.isPending}
+                      >
+                        {removeStudentMutation.isPending ? 'Removing...' : 'Remove'}
                       </Button>
                     </div>
                   ))}
