@@ -98,6 +98,14 @@ export interface IStorage {
   createPromptTemplate(template: InsertPromptTemplate): Promise<PromptTemplate>;
   updatePromptTemplate(id: string, template: Partial<InsertPromptTemplate>): Promise<PromptTemplate>;
   deletePromptTemplate(id: string): Promise<boolean>;
+  
+  // Super Admin Methods
+  getAllAccountsWithStats(): Promise<any[]>;
+  createAccount(account: any): Promise<any>;
+  updateAccount(id: string, account: any): Promise<any>;
+  deleteAccount(id: string): Promise<boolean>;
+  getAllUsersWithAccountInfo(): Promise<any[]>;
+  getAllLLMProvidersWithAccountInfo(): Promise<any[]>;
 
   // Study Aid Methods
   getStudyAidsByStudent(studentId: string): Promise<any[]>;
@@ -1926,6 +1934,107 @@ Return JSON with the new question data:
       }
     } catch (error) {
       console.error('Error seeding quiz data:', error);
+    }
+  }
+
+  // Super Admin Methods
+  async getAllAccountsWithStats(): Promise<any[]> {
+    try {
+      const mockAccounts = [
+        {
+          id: 'account-1',
+          name: 'Test Organization',
+          plan: 'enterprise',
+          userCount: 25,
+          storageUsed: 1.2,
+          storageLimit: 10,
+          isActive: true,
+          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          lastActivity: new Date().toISOString(),
+        },
+        {
+          id: 'account-2',
+          name: 'Educational Institute',
+          plan: 'professional',
+          userCount: 150,
+          storageUsed: 5.8,
+          storageLimit: 25,
+          isActive: true,
+          createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+          lastActivity: new Date(Date.now() - 3600000).toISOString(),
+        }
+      ];
+      return mockAccounts;
+    } catch (error) {
+      console.error('Error fetching accounts with stats:', error);
+      return [];
+    }
+  }
+
+  async createAccount(accountData: any): Promise<any> {
+    try {
+      const newAccount = {
+        id: `account-${Date.now()}`,
+        ...accountData,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+      };
+      return newAccount;
+    } catch (error) {
+      console.error('Error creating account:', error);
+      throw error;
+    }
+  }
+
+  async updateAccount(id: string, accountData: any): Promise<any> {
+    try {
+      const updatedAccount = {
+        id,
+        ...accountData,
+        updatedAt: new Date().toISOString(),
+      };
+      return updatedAccount;
+    } catch (error) {
+      console.error('Error updating account:', error);
+      throw error;
+    }
+  }
+
+  async deleteAccount(id: string): Promise<boolean> {
+    try {
+      return true;
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      return false;
+    }
+  }
+
+  async getAllLLMProvidersWithAccountInfo(): Promise<any[]> {
+    try {
+      const mockProviders = [
+        {
+          id: 'provider-1',
+          name: 'OpenAI Configuration',
+          provider: 'openai',
+          accountId: 'account-1',
+          accountName: 'Test Organization',
+          isActive: true,
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          id: 'provider-2',
+          name: 'Anthropic Setup',
+          provider: 'anthropic',
+          accountId: 'account-2',
+          accountName: 'Educational Institute',
+          isActive: true,
+          createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+        }
+      ];
+      return mockProviders;
+    } catch (error) {
+      console.error('Error fetching LLM providers:', error);
+      return [];
     }
   }
 }

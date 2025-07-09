@@ -6080,14 +6080,14 @@ Initialize all interactions with these principles as your foundation.`,
   });
 
   // Get all prompt templates (super admin only)
-  app.get('/api/super-admin/prompt-templates', async (req: any, res) => {
+  app.get('/api/super-admin/prompt-templates', mockAuth, async (req: any, res) => {
     try {
       const user = req.user;
       if (!user || user.role !== 'super_admin') {
         return res.status(403).json({ message: 'Super admin access required' });
       }
 
-      const templates = await storage.getAllPromptTemplatesWithStats();
+      const templates = await storage.getAllPromptTemplates();
       res.json(templates);
     } catch (error) {
       console.error('Error fetching prompt templates:', error);
@@ -6096,7 +6096,7 @@ Initialize all interactions with these principles as your foundation.`,
   });
 
   // Create prompt template (super admin only)
-  app.post('/api/super-admin/prompt-templates', async (req: any, res) => {
+  app.post('/api/super-admin/prompt-templates', mockAuth, async (req: any, res) => {
     try {
       const user = req.user;
       if (!user || user.role !== 'super_admin') {
@@ -6116,7 +6116,7 @@ Initialize all interactions with these principles as your foundation.`,
   });
 
   // Update prompt template (super admin only)
-  app.put('/api/super-admin/prompt-templates/:id', async (req: any, res) => {
+  app.put('/api/super-admin/prompt-templates/:id', mockAuth, async (req: any, res) => {
     try {
       const user = req.user;
       if (!user || user.role !== 'super_admin') {
@@ -6128,6 +6128,22 @@ Initialize all interactions with these principles as your foundation.`,
     } catch (error) {
       console.error('Error updating prompt template:', error);
       res.status(500).json({ message: 'Failed to update prompt template' });
+    }
+  });
+
+  // Delete prompt template (super admin only)
+  app.delete('/api/super-admin/prompt-templates/:id', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const success = await storage.deletePromptTemplate(req.params.id);
+      res.json({ success });
+    } catch (error) {
+      console.error('Error deleting prompt template:', error);
+      res.status(500).json({ message: 'Failed to delete prompt template' });
     }
   });
 
@@ -7512,6 +7528,54 @@ Initialize all interactions with these principles as your foundation.`,
     } catch (error) {
       console.error('Error fetching assignment questions:', error);
       res.status(500).json({ message: 'Failed to fetch questions' });
+    }
+  });
+
+
+
+  // Super Admin accounts and users endpoints
+  app.get('/api/super-admin/accounts', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const accounts = await storage.getAllAccountsWithStats();
+      res.json(accounts);
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+      res.status(500).json({ message: 'Failed to fetch accounts' });
+    }
+  });
+
+  app.get('/api/super-admin/users', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const users = await storage.getAllUsersWithAccountInfo();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
+  app.get('/api/super-admin/llm-providers', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const providers = await storage.getAllLLMProvidersWithAccountInfo();
+      res.json(providers);
+    } catch (error) {
+      console.error('Error fetching LLM providers:', error);
+      res.status(500).json({ message: 'Failed to fetch LLM providers' });
     }
   });
 

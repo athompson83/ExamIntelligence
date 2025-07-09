@@ -83,10 +83,9 @@ interface PromptTemplate {
   id: string;
   name: string;
   description?: string;
-  promptText: string;
   category: string;
+  content: string;
   isActive: boolean;
-  usageCount: number;
   createdAt: string;
 }
 
@@ -188,7 +187,7 @@ export default function SuperAdminSettings() {
     defaultValues: {
       name: "",
       description: "",
-      promptText: "",
+      content: "",
       category: "question_generation",
       isActive: true
     }
@@ -420,7 +419,7 @@ export default function SuperAdminSettings() {
     promptForm.reset({
       name: prompt.name,
       description: prompt.description || "",
-      promptText: prompt.promptText,
+      content: prompt.content,
       category: prompt.category,
       isActive: prompt.isActive
     });
@@ -708,7 +707,6 @@ export default function SuperAdminSettings() {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Category</TableHead>
-                      <TableHead>Usage Count</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead>Actions</TableHead>
@@ -721,7 +719,6 @@ export default function SuperAdminSettings() {
                         <TableCell>
                           <Badge variant="outline">{prompt.category}</Badge>
                         </TableCell>
-                        <TableCell>{prompt.usageCount}</TableCell>
                         <TableCell>
                           <Badge variant={prompt.isActive ? "default" : "secondary"}>
                             {prompt.isActive ? "Active" : "Inactive"}
@@ -2096,10 +2093,10 @@ Happy coding! 🎉
 
                 <FormField
                   control={promptForm.control}
-                  name="promptText"
+                  name="content"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Prompt Text</FormLabel>
+                      <FormLabel>Prompt Content</FormLabel>
                       <FormControl>
                         <Textarea 
                           {...field}
