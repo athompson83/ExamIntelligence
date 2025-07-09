@@ -72,6 +72,10 @@ const ComprehensiveTest = lazy(() => import("@/pages/ComprehensiveTest"));
 const SectionManagementTest = lazy(() => import("@/pages/SectionManagementTest"));
 const Test = lazy(() => import("@/pages/Test"));
 const AccountRegistration = lazy(() => import("@/pages/account-registration"));
+const Gradebook = lazy(() => import("@/pages/gradebook"));
+const Prerequisites = lazy(() => import("@/pages/prerequisites"));
+const ProgressTracking = lazy(() => import("@/pages/progress-tracking"));
+const CustomerSupport = lazy(() => import("@/pages/customer-support"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -268,6 +272,18 @@ function Router() {
           </Route>
           <Route path="/section-management-test">
             {() => <Suspense fallback={<LoadingSpinner />}><SectionManagementTest /></Suspense>}
+          </Route>
+          <Route path="/gradebook">
+            {() => <Suspense fallback={<LoadingSpinner />}><Gradebook /></Suspense>}
+          </Route>
+          <Route path="/prerequisites">
+            {() => <Suspense fallback={<LoadingSpinner />}><Prerequisites /></Suspense>}
+          </Route>
+          <Route path="/progress-tracking">
+            {() => <Suspense fallback={<LoadingSpinner />}><ProgressTracking /></Suspense>}
+          </Route>
+          <Route path="/customer-support">
+            {() => <Suspense fallback={<LoadingSpinner />}><CustomerSupport /></Suspense>}
           </Route>
         </>
       )}

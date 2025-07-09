@@ -2848,6 +2848,567 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced API endpoints for new functionality
+
+  // Gradebook API endpoints
+  app.get('/api/gradebook', mockAuth, async (req: any, res) => {
+    try {
+      const gradebook = [
+        {
+          id: "gb1",
+          studentId: "student-1",
+          studentName: "Alice Johnson",
+          studentEmail: "alice@test.com",
+          quizId: "quiz-1",
+          quizTitle: "Introduction to Biology",
+          score: 85,
+          maxScore: 100,
+          percentage: 85,
+          completedAt: new Date().toISOString(),
+          attempts: 1,
+          timeSpent: 1800,
+          status: "completed"
+        },
+        {
+          id: "gb2",
+          studentId: "student-2",
+          studentName: "Bob Smith",
+          studentEmail: "bob@test.com",
+          quizId: "quiz-1",
+          quizTitle: "Introduction to Biology",
+          score: 92,
+          maxScore: 100,
+          percentage: 92,
+          completedAt: new Date().toISOString(),
+          attempts: 2,
+          timeSpent: 2100,
+          status: "completed"
+        }
+      ];
+      res.json(gradebook);
+    } catch (error) {
+      console.error("Error fetching gradebook:", error);
+      res.status(500).json({ error: "Failed to fetch gradebook" });
+    }
+  });
+
+  app.get('/api/gradebook/quiz-stats', mockAuth, async (req: any, res) => {
+    try {
+      const quizStats = [
+        {
+          id: "quiz-1",
+          title: "Introduction to Biology",
+          totalStudents: 25,
+          completedStudents: 23,
+          averageScore: 88.5,
+          highestScore: 98,
+          lowestScore: 72
+        },
+        {
+          id: "quiz-2",
+          title: "Cell Structure",
+          totalStudents: 25,
+          completedStudents: 20,
+          averageScore: 85.2,
+          highestScore: 95,
+          lowestScore: 68
+        }
+      ];
+      res.json(quizStats);
+    } catch (error) {
+      console.error("Error fetching quiz stats:", error);
+      res.status(500).json({ error: "Failed to fetch quiz stats" });
+    }
+  });
+
+  app.put('/api/gradebook/:entryId/feedback', mockAuth, async (req: any, res) => {
+    try {
+      const { entryId } = req.params;
+      const { feedback } = req.body;
+      
+      res.json({ success: true, message: "Feedback updated successfully" });
+    } catch (error) {
+      console.error("Error updating feedback:", error);
+      res.status(500).json({ error: "Failed to update feedback" });
+    }
+  });
+
+  app.post('/api/gradebook/send-email', mockAuth, async (req: any, res) => {
+    try {
+      const { studentId, subject, message } = req.body;
+      
+      res.json({ success: true, message: "Email sent successfully" });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      res.status(500).json({ error: "Failed to send email" });
+    }
+  });
+
+  // Prerequisites API endpoints
+  app.get('/api/prerequisites', mockAuth, async (req: any, res) => {
+    try {
+      const prerequisites = [
+        {
+          id: "prereq-1",
+          quizId: "quiz-2",
+          quizTitle: "Cell Structure",
+          prerequisiteQuizId: "quiz-1",
+          prerequisiteQuizTitle: "Introduction to Biology",
+          minimumScore: 80,
+          strictOrder: true,
+          createdAt: new Date().toISOString()
+        }
+      ];
+      res.json(prerequisites);
+    } catch (error) {
+      console.error("Error fetching prerequisites:", error);
+      res.status(500).json({ error: "Failed to fetch prerequisites" });
+    }
+  });
+
+  app.get('/api/prerequisites/status', mockAuth, async (req: any, res) => {
+    try {
+      const prerequisiteStatuses = [
+        {
+          studentId: "student-1",
+          studentName: "Alice Johnson",
+          quizId: "quiz-2",
+          quizTitle: "Cell Structure",
+          canAccess: true,
+          missingPrerequisites: []
+        },
+        {
+          studentId: "student-3",
+          studentName: "Charlie Brown",
+          quizId: "quiz-2",
+          quizTitle: "Cell Structure",
+          canAccess: false,
+          missingPrerequisites: [
+            {
+              quizId: "quiz-1",
+              quizTitle: "Introduction to Biology",
+              minimumScore: 80,
+              currentScore: 65,
+              completed: true
+            }
+          ]
+        }
+      ];
+      res.json(prerequisiteStatuses);
+    } catch (error) {
+      console.error("Error fetching prerequisite status:", error);
+      res.status(500).json({ error: "Failed to fetch prerequisite status" });
+    }
+  });
+
+  app.post('/api/prerequisites', mockAuth, async (req: any, res) => {
+    try {
+      const { quizId, prerequisiteQuizId, minimumScore, strictOrder } = req.body;
+      
+      const newPrerequisite = {
+        id: `prereq-${Date.now()}`,
+        quizId,
+        prerequisiteQuizId,
+        minimumScore,
+        strictOrder,
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json(newPrerequisite);
+    } catch (error) {
+      console.error("Error creating prerequisite:", error);
+      res.status(500).json({ error: "Failed to create prerequisite" });
+    }
+  });
+
+  app.put('/api/prerequisites/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      res.json({ success: true, message: "Prerequisite updated successfully" });
+    } catch (error) {
+      console.error("Error updating prerequisite:", error);
+      res.status(500).json({ error: "Failed to update prerequisite" });
+    }
+  });
+
+  app.delete('/api/prerequisites/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      res.json({ success: true, message: "Prerequisite deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting prerequisite:", error);
+      res.status(500).json({ error: "Failed to delete prerequisite" });
+    }
+  });
+
+  // Progress Tracking API endpoints
+  app.get('/api/progress/analytics', mockAuth, async (req: any, res) => {
+    try {
+      const { timeRange } = req.query;
+      
+      const progressAnalytics = {
+        totalStudents: 25,
+        activeStudents: 23,
+        averageCompletion: 78.5,
+        averageScore: 86.2,
+        totalQuizzes: 5,
+        completedAttempts: 98,
+        progressTrends: [
+          { date: "2025-01-01", completions: 5, averageScore: 85 },
+          { date: "2025-01-02", completions: 8, averageScore: 87 },
+          { date: "2025-01-03", completions: 12, averageScore: 89 }
+        ],
+        scoreDistribution: [
+          { range: "90-100%", count: 15, percentage: 35 },
+          { range: "80-89%", count: 18, percentage: 42 },
+          { range: "70-79%", count: 8, percentage: 18 },
+          { range: "60-69%", count: 2, percentage: 5 }
+        ]
+      };
+      
+      res.json(progressAnalytics);
+    } catch (error) {
+      console.error("Error fetching progress analytics:", error);
+      res.status(500).json({ error: "Failed to fetch progress analytics" });
+    }
+  });
+
+  app.get('/api/progress/students', mockAuth, async (req: any, res) => {
+    try {
+      const { student, timeRange } = req.query;
+      
+      const studentProgress = [
+        {
+          id: "progress-1",
+          studentId: "student-1",
+          studentName: "Alice Johnson",
+          studentEmail: "alice@test.com",
+          totalQuizzes: 5,
+          completedQuizzes: 4,
+          averageScore: 88.5,
+          totalTimeSpent: 7200,
+          streakDays: 7,
+          lastActive: new Date().toISOString(),
+          progressPercentage: 80,
+          achievements: [
+            {
+              id: "ach-1",
+              title: "Quiz Master",
+              description: "Completed 5 quizzes",
+              earnedAt: new Date().toISOString(),
+              icon: "star"
+            }
+          ],
+          recentScores: [
+            {
+              quizId: "quiz-1",
+              quizTitle: "Introduction to Biology",
+              score: 85,
+              completedAt: new Date().toISOString()
+            }
+          ]
+        }
+      ];
+      
+      res.json(studentProgress);
+    } catch (error) {
+      console.error("Error fetching student progress:", error);
+      res.status(500).json({ error: "Failed to fetch student progress" });
+    }
+  });
+
+  app.get('/api/progress/quizzes', mockAuth, async (req: any, res) => {
+    try {
+      const { quiz, timeRange } = req.query;
+      
+      const quizProgress = [
+        {
+          quizId: "quiz-1",
+          quizTitle: "Introduction to Biology",
+          totalStudents: 25,
+          completedStudents: 23,
+          averageScore: 88.5,
+          completionRate: 92,
+          difficulty: 7.5,
+          timeSpent: 1800
+        },
+        {
+          quizId: "quiz-2",
+          quizTitle: "Cell Structure",
+          totalStudents: 25,
+          completedStudents: 20,
+          averageScore: 85.2,
+          completionRate: 80,
+          difficulty: 8.2,
+          timeSpent: 2100
+        }
+      ];
+      
+      res.json(quizProgress);
+    } catch (error) {
+      console.error("Error fetching quiz progress:", error);
+      res.status(500).json({ error: "Failed to fetch quiz progress" });
+    }
+  });
+
+  // Customer Support API endpoints
+  app.get('/api/support/tickets', mockAuth, async (req: any, res) => {
+    try {
+      const tickets = [
+        {
+          id: "ticket-1",
+          title: "Quiz loading issue",
+          description: "The quiz page is not loading properly when I click on it.",
+          category: "technical",
+          priority: "medium",
+          status: "open",
+          userId: "student-1",
+          userName: "Alice Johnson",
+          userEmail: "alice@test.com",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          responses: [
+            {
+              id: "response-1",
+              message: "Thank you for reporting this issue. We are looking into it.",
+              isStaff: true,
+              createdAt: new Date().toISOString(),
+              author: "Support Team"
+            }
+          ]
+        }
+      ];
+      
+      res.json(tickets);
+    } catch (error) {
+      console.error("Error fetching support tickets:", error);
+      res.status(500).json({ error: "Failed to fetch support tickets" });
+    }
+  });
+
+  app.get('/api/support/faqs', mockAuth, async (req: any, res) => {
+    try {
+      const faqs = [
+        {
+          id: "faq-1",
+          question: "How do I reset my password?",
+          answer: "You can reset your password by clicking on the 'Forgot Password' link on the login page.",
+          category: "account",
+          helpful: 15,
+          notHelpful: 2,
+          views: 150
+        },
+        {
+          id: "faq-2",
+          question: "Why can't I access a quiz?",
+          answer: "Make sure you have completed all prerequisite quizzes and that the quiz is within its availability window.",
+          category: "quiz",
+          helpful: 25,
+          notHelpful: 1,
+          views: 200
+        }
+      ];
+      
+      res.json(faqs);
+    } catch (error) {
+      console.error("Error fetching FAQs:", error);
+      res.status(500).json({ error: "Failed to fetch FAQs" });
+    }
+  });
+
+  app.get('/api/support/knowledge-base', mockAuth, async (req: any, res) => {
+    try {
+      const knowledgeBase = [
+        {
+          id: "kb-1",
+          title: "Getting Started Guide",
+          content: "This comprehensive guide will help you get started with the platform...",
+          category: "tutorial",
+          tags: ["beginner", "setup", "tutorial"],
+          views: 500,
+          helpful: 45,
+          lastUpdated: new Date().toISOString()
+        }
+      ];
+      
+      res.json(knowledgeBase);
+    } catch (error) {
+      console.error("Error fetching knowledge base:", error);
+      res.status(500).json({ error: "Failed to fetch knowledge base" });
+    }
+  });
+
+  app.get('/api/support/stats', mockAuth, async (req: any, res) => {
+    try {
+      const supportStats = {
+        openTickets: 3,
+        avgResponseTime: "2.5",
+        resolvedToday: 5,
+        satisfaction: 95
+      };
+      
+      res.json(supportStats);
+    } catch (error) {
+      console.error("Error fetching support stats:", error);
+      res.status(500).json({ error: "Failed to fetch support stats" });
+    }
+  });
+
+  app.post('/api/support/tickets', mockAuth, async (req: any, res) => {
+    try {
+      const { title, description, category, priority } = req.body;
+      
+      const newTicket = {
+        id: `ticket-${Date.now()}`,
+        title,
+        description,
+        category,
+        priority,
+        status: "open",
+        userId: req.user.id,
+        userName: `${req.user.firstName} ${req.user.lastName}`,
+        userEmail: req.user.email,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        responses: []
+      };
+      
+      res.json(newTicket);
+    } catch (error) {
+      console.error("Error creating support ticket:", error);
+      res.status(500).json({ error: "Failed to create support ticket" });
+    }
+  });
+
+  app.post('/api/support/tickets/:ticketId/respond', mockAuth, async (req: any, res) => {
+    try {
+      const { ticketId } = req.params;
+      const { message } = req.body;
+      
+      const newResponse = {
+        id: `response-${Date.now()}`,
+        message,
+        isStaff: req.user.role === 'admin' || req.user.role === 'super_admin',
+        createdAt: new Date().toISOString(),
+        author: `${req.user.firstName} ${req.user.lastName}`
+      };
+      
+      res.json(newResponse);
+    } catch (error) {
+      console.error("Error responding to ticket:", error);
+      res.status(500).json({ error: "Failed to respond to ticket" });
+    }
+  });
+
+  app.put('/api/support/tickets/:ticketId/status', mockAuth, async (req: any, res) => {
+    try {
+      const { ticketId } = req.params;
+      const { status } = req.body;
+      
+      res.json({ success: true, message: "Ticket status updated successfully" });
+    } catch (error) {
+      console.error("Error updating ticket status:", error);
+      res.status(500).json({ error: "Failed to update ticket status" });
+    }
+  });
+
+  app.post('/api/support/faqs/:faqId/rate', mockAuth, async (req: any, res) => {
+    try {
+      const { faqId } = req.params;
+      const { helpful } = req.body;
+      
+      res.json({ success: true, message: "FAQ rating updated successfully" });
+    } catch (error) {
+      console.error("Error rating FAQ:", error);
+      res.status(500).json({ error: "Failed to rate FAQ" });
+    }
+  });
+
+  // Additional Study Aids endpoints for enhanced functionality
+  app.get('/api/quizzes/completed', mockAuth, async (req: any, res) => {
+    try {
+      const completedQuizzes = [
+        {
+          id: "quiz-1",
+          title: "Introduction to Biology",
+          completedAt: new Date().toISOString()
+        },
+        {
+          id: "quiz-2",
+          title: "Cell Structure",
+          completedAt: new Date().toISOString()
+        }
+      ];
+      
+      res.json(completedQuizzes);
+    } catch (error) {
+      console.error("Error fetching completed quizzes:", error);
+      res.status(500).json({ error: "Failed to fetch completed quizzes" });
+    }
+  });
+
+  app.delete('/api/study-aids/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      res.json({ success: true, message: "Study aid deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting study aid:", error);
+      res.status(500).json({ error: "Failed to delete study aid" });
+    }
+  });
+
+  app.post('/api/study-aids/:id/access', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      res.json({ success: true, message: "Access tracked successfully" });
+    } catch (error) {
+      console.error("Error tracking access:", error);
+      res.status(500).json({ error: "Failed to track access" });
+    }
+  });
+
+  app.post('/api/study-aids/:id/rate', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { rating } = req.body;
+      
+      res.json({ success: true, message: "Study aid rated successfully" });
+    } catch (error) {
+      console.error("Error rating study aid:", error);
+      res.status(500).json({ error: "Failed to rate study aid" });
+    }
+  });
+
+  // Students endpoint for filters
+  app.get('/api/students', mockAuth, async (req: any, res) => {
+    try {
+      const students = [
+        {
+          id: "student-1",
+          firstName: "Alice",
+          lastName: "Johnson",
+          email: "alice@test.com"
+        },
+        {
+          id: "student-2",
+          firstName: "Bob",
+          lastName: "Smith",
+          email: "bob@test.com"
+        }
+      ];
+      
+      res.json(students);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      res.status(500).json({ error: "Failed to fetch students" });
+    }
+  });
+
   // Backend Prompts API routes
   app.get('/api/backend-prompts', mockAuth, async (req, res) => {
     try {

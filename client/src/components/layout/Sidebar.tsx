@@ -14,7 +14,11 @@ import {
   LayoutDashboard,
   ChevronLeft,
   ChevronRight,
-  GraduationCap
+  GraduationCap,
+  Calendar,
+  Link,
+  TrendingUp,
+  Headphones
 } from "lucide-react";
 
 interface SidebarProps {
@@ -25,18 +29,25 @@ const getTeacherNavigation = (t: any) => [
   { name: t('navigation.dashboard'), href: "/", icon: LayoutDashboard },
   { name: t('navigation.itemBanks'), href: "/item-banks", icon: FolderOpen },
   { name: t('navigation.quizBuilder'), href: "/quiz-manager", icon: Puzzle },
-  { name: "CAT Exams", href: "/cat-exam-builder", icon: Brain },
+  { name: "Assignments", href: "/assignments", icon: Calendar },
+  { name: "Study Aids", href: "/study-aids", icon: BookOpen },
+  { name: "Prerequisites", href: "/prerequisites", icon: Link },
+  { name: "Gradebook", href: "/gradebook", icon: BarChart3 },
+  { name: "Progress Tracking", href: "/progress-tracking", icon: TrendingUp },
   { name: t('navigation.liveExams'), href: "/live-exams", icon: Play },
   { name: t('navigation.analytics'), href: "/analytics", icon: BarChart3 },
   { name: "AI Resources", href: "/ai-resources", icon: Brain },
   { name: t('navigation.userManagement'), href: "/user-management", icon: Users },
+  { name: "Customer Support", href: "/customer-support", icon: Headphones },
   { name: t('navigation.settings'), href: "/settings", icon: Settings },
 ];
 
 const getStudentNavigation = (t: any) => [
-  { name: "Dashboard", href: "/student-dashboard", icon: LayoutDashboard },
-  { name: "My Quizzes", href: "/student-dashboard", icon: BookOpen },
-  { name: "Study Materials", href: "/student-dashboard", icon: Brain },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "My Assignments", href: "/assignments", icon: Calendar },
+  { name: "Study Aids", href: "/study-aids", icon: BookOpen },
+  { name: "My Progress", href: "/progress-tracking", icon: TrendingUp },
+  { name: "Support", href: "/customer-support", icon: Headphones },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

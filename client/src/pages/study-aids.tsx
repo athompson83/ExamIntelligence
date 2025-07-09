@@ -33,6 +33,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Layout from "@/components/Layout";
+import { FeatureTooltip, AdminTooltip } from "@/components/SmartTooltip";
 
 interface StudyAid {
   id: string;
@@ -180,22 +182,36 @@ export default function StudyAids() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Study Aids</h1>
-          <p className="text-muted-foreground">
-            AI-generated study materials to enhance your learning
-          </p>
+    <Layout>
+      <div className="space-y-6">
+        {/* Breadcrumb */}
+        <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <BookOpen className="h-4 w-4" />
+          <span>/</span>
+          <span>Study Aids</span>
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Study Aid
-            </Button>
-          </DialogTrigger>
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Study Aids</h1>
+            <p className="text-muted-foreground">
+              AI-generated study materials to enhance your learning
+            </p>
+          </div>
+        <FeatureTooltip
+          id="create-study-aid"
+          title="AI Study Aid Generator 🧠"
+          content="Generate personalized study materials from quiz content including summaries, flashcards, practice questions, and concept maps."
+          position="top"
+        >
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Study Aid
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Generate New Study Aid</DialogTitle>
@@ -290,6 +306,7 @@ export default function StudyAids() {
             </div>
           </DialogContent>
         </Dialog>
+        </FeatureTooltip>
       </div>
 
       {/* Stats Cards */}
@@ -457,6 +474,7 @@ export default function StudyAids() {
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </Layout>
   );
 }
