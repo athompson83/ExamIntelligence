@@ -106,6 +106,9 @@ export interface IStorage {
   // AI Resource Methods (unified with Study Aids)
   getAiResourcesByUser(userId: string): Promise<any[]>;
   createAiResource(resourceData: any): Promise<any>;
+
+  // Data seeding method
+  seedQuizData(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -673,8 +676,44 @@ export class DatabaseStorage implements IStorage {
 
   async getQuizzesByUser(userId: string): Promise<any[]> {
     try {
+      // Get all quizzes for the user
       const userQuizzes = await db.select().from(quizzes).where(eq(quizzes.creatorId, userId));
-      return userQuizzes;
+      
+      // For each quiz, get the actual question count and other details
+      const enrichedQuizzes = await Promise.all(
+        userQuizzes.map(async (quiz) => {
+          // Get actual question count by checking quiz questions
+          const questionCount = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(questions)
+            .where(eq(questions.testbankId, quiz.testbankId || ''))
+            .then(result => result[0]?.count || 0);
+          
+          // Get quiz attempts to determine max attempts and other stats
+          const attempts = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(quizAttempts)
+            .where(eq(quizAttempts.quizId, quiz.id))
+            .then(result => result[0]?.count || 0);
+          
+          return {
+            ...quiz,
+            questionCount: questionCount,
+            attempts: attempts,
+            maxAttempts: quiz.maxAttempts || 3,
+            timeLimit: quiz.timeLimit || 60,
+            difficulty: quiz.difficulty || 5,
+            status: quiz.status || 'draft',
+            tags: quiz.tags || [],
+            allowCalculator: quiz.allowCalculator || false,
+            calculatorType: quiz.calculatorType || 'basic',
+            proctoringEnabled: quiz.proctoringEnabled || false,
+            bestScore: null, // Would need to calculate from attempts
+          };
+        })
+      );
+      
+      return enrichedQuizzes;
     } catch (error) {
       console.error('Error fetching quizzes by user:', error);
       return [];
@@ -955,8 +994,44 @@ export class DatabaseStorage implements IStorage {
 
   async getQuizzesByUser(userId: string): Promise<any[]> {
     try {
-      const userQuizzes = await db.select().from(quizzes);
-      return userQuizzes;
+      // Get all quizzes for the user
+      const userQuizzes = await db.select().from(quizzes).where(eq(quizzes.creatorId, userId));
+      
+      // For each quiz, get the actual question count and other details
+      const enrichedQuizzes = await Promise.all(
+        userQuizzes.map(async (quiz) => {
+          // Get actual question count by checking quiz questions
+          const questionCount = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(questions)
+            .where(eq(questions.testbankId, quiz.testbankId || ''))
+            .then(result => result[0]?.count || 0);
+          
+          // Get quiz attempts to determine max attempts and other stats
+          const attempts = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(quizAttempts)
+            .where(eq(quizAttempts.quizId, quiz.id))
+            .then(result => result[0]?.count || 0);
+          
+          return {
+            ...quiz,
+            questionCount: questionCount,
+            attempts: attempts,
+            maxAttempts: quiz.maxAttempts || 3,
+            timeLimit: quiz.timeLimit || 60,
+            difficulty: quiz.difficulty || 5,
+            status: quiz.status || 'draft',
+            tags: quiz.tags || [],
+            allowCalculator: quiz.allowCalculator || false,
+            calculatorType: quiz.calculatorType || 'basic',
+            proctoringEnabled: quiz.proctoringEnabled || false,
+            bestScore: null, // Would need to calculate from attempts
+          };
+        })
+      );
+      
+      return enrichedQuizzes;
     } catch (error) {
       console.error('Error fetching quizzes by user:', error);
       return [];
@@ -1668,6 +1743,189 @@ Return JSON with the new question data:
     } catch (error) {
       console.error('Error creating AI resource:', error);
       throw error;
+    }
+  }
+
+  async seedQuizData(): Promise<void> {
+    try {
+      // Check if we already have quizzes, if not, create some sample ones
+      const existingQuizzes = await db.select().from(quizzes).limit(1);
+      
+      if (existingQuizzes.length === 0) {
+        // Create some sample testbanks first
+        const testbank1 = await db.insert(testbanks).values({
+          id: 'testbank-1',
+          name: 'Biology Fundamentals',
+          description: 'Basic biology concepts and principles',
+          creatorId: 'test-user',
+          accountId: 'default-account',
+          isPublic: true,
+          tags: ['biology', 'science'],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }).returning().then(r => r[0]);
+
+        const testbank2 = await db.insert(testbanks).values({
+          id: 'testbank-2',
+          name: 'Mathematics Basics',
+          description: 'Fundamental mathematics concepts',
+          creatorId: 'test-user',
+          accountId: 'default-account',
+          isPublic: true,
+          tags: ['math', 'algebra'],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }).returning().then(r => r[0]);
+
+        // Create sample questions for testbank1
+        await db.insert(questions).values([
+          {
+            id: 'q1',
+            testbankId: 'testbank-1',
+            questionText: 'What is the basic unit of life?',
+            questionType: 'multiple_choice',
+            difficulty: 3,
+            points: 10,
+            timeLimit: 30,
+            explanation: 'The cell is the basic unit of life.',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'q2',
+            testbankId: 'testbank-1',
+            questionText: 'What process do plants use to make food?',
+            questionType: 'multiple_choice',
+            difficulty: 4,
+            points: 10,
+            timeLimit: 30,
+            explanation: 'Photosynthesis is the process plants use to make food.',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'q3',
+            testbankId: 'testbank-1',
+            questionText: 'What is DNA?',
+            questionType: 'multiple_choice',
+            difficulty: 5,
+            points: 15,
+            timeLimit: 45,
+            explanation: 'DNA is the molecule that contains genetic information.',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
+        ]);
+
+        // Create sample questions for testbank2
+        await db.insert(questions).values([
+          {
+            id: 'q4',
+            testbankId: 'testbank-2',
+            questionText: 'What is 2 + 2?',
+            questionType: 'multiple_choice',
+            difficulty: 1,
+            points: 5,
+            timeLimit: 15,
+            explanation: '2 + 2 equals 4.',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'q5',
+            testbankId: 'testbank-2',
+            questionText: 'What is the quadratic formula?',
+            questionType: 'multiple_choice',
+            difficulty: 7,
+            points: 20,
+            timeLimit: 60,
+            explanation: 'The quadratic formula is x = (-b ± √(b²-4ac)) / 2a.',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
+        ]);
+
+        // Create sample quizzes with different characteristics
+        await db.insert(quizzes).values([
+          {
+            id: 'quiz-1',
+            title: 'Biology Quiz 1',
+            description: 'Test your knowledge of basic biology',
+            testbankId: 'testbank-1',
+            creatorId: 'test-user',
+            accountId: 'default-account',
+            timeLimit: 30,
+            maxAttempts: 3,
+            difficulty: 4,
+            isPublic: true,
+            allowCalculator: false,
+            proctoringEnabled: false,
+            status: 'published',
+            tags: ['biology', 'quiz'],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'quiz-2',
+            title: 'Advanced Biology Exam',
+            description: 'Comprehensive biology examination',
+            testbankId: 'testbank-1',
+            creatorId: 'test-user',
+            accountId: 'default-account',
+            timeLimit: 90,
+            maxAttempts: 2,
+            difficulty: 7,
+            isPublic: false,
+            allowCalculator: false,
+            proctoringEnabled: true,
+            status: 'published',
+            tags: ['biology', 'exam', 'advanced'],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'quiz-3',
+            title: 'Math Practice Quiz',
+            description: 'Practice your math skills',
+            testbankId: 'testbank-2',
+            creatorId: 'test-user',
+            accountId: 'default-account',
+            timeLimit: 45,
+            maxAttempts: 5,
+            difficulty: 5,
+            isPublic: true,
+            allowCalculator: true,
+            calculatorType: 'scientific',
+            proctoringEnabled: false,
+            status: 'published',
+            tags: ['math', 'practice'],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'quiz-4',
+            title: 'Quick Math Assessment',
+            description: 'Short math assessment',
+            testbankId: 'testbank-2',
+            creatorId: 'test-user',
+            accountId: 'default-account',
+            timeLimit: 15,
+            maxAttempts: 1,
+            difficulty: 3,
+            isPublic: true,
+            allowCalculator: false,
+            proctoringEnabled: false,
+            status: 'draft',
+            tags: ['math', 'assessment'],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
+        ]);
+
+        console.log('Sample quiz data seeded successfully');
+      }
+    } catch (error) {
+      console.error('Error seeding quiz data:', error);
     }
   }
 }

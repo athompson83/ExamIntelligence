@@ -2003,6 +2003,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Seed quiz data endpoint
+  app.post('/api/seed-quiz-data', mockAuth, async (req, res) => {
+    try {
+      await storage.seedQuizData();
+      res.json({ message: 'Quiz data seeded successfully' });
+    } catch (error) {
+      console.error('Error seeding quiz data:', error);
+      res.status(500).json({ message: 'Failed to seed quiz data' });
+    }
+  });
+
   app.get('/api/quizzes/available', mockAuth, async (req: any, res) => {
     try {
       // Use proper user ID extraction with fallback
