@@ -32,7 +32,7 @@ const ExamInterface = lazy(() => import("@/pages/exam-interface"));
 const AdminSettings = lazy(() => import("@/pages/admin-settings"));
 const ReferenceBanks = lazy(() => import("@/pages/reference-banks"));
 const EnhancedQuizBuilder = lazy(() => import("@/pages/enhanced-quiz-builder"));
-const StudyAids = lazy(() => import("@/pages/study-aids"));
+const StudyResources = lazy(() => import("@/pages/study-resources"));
 const MLAnalytics = lazy(() => import("@/pages/MLAnalytics"));
 const ComprehensiveAnalytics = lazy(() => import("@/pages/ComprehensiveAnalytics"));
 const EnhancedDifficultyTracking = lazy(() => import("@/pages/enhanced-difficulty-tracking"));
@@ -44,7 +44,7 @@ const BadgesCertificates = lazy(() => import("@/pages/badges-certificates"));
 const BadgeSystem = lazy(() => import("@/pages/badge-system"));
 const AccessibilitySettings = lazy(() => import("@/pages/accessibility-settings"));
 const LearningFeedback = lazy(() => import("@/pages/learning-feedback"));
-const AIResources = lazy(() => import("@/pages/AIResources"));
+
 const StudentLogin = lazy(() => import("@/pages/student-login"));
 const StudentDashboard = lazy(() => import("@/pages/student-dashboard"));
 const StudentQuiz = lazy(() => import("@/pages/student-quiz"));
@@ -181,10 +181,13 @@ function Router() {
             {() => <Suspense fallback={<LoadingSpinner />}><ReferenceBanks /></Suspense>}
           </Route>
           <Route path="/study-aids">
-            {() => <Suspense fallback={<LoadingSpinner />}><StudyAids /></Suspense>}
+            {() => <Suspense fallback={<LoadingSpinner />}><StudyResources /></Suspense>}
           </Route>
           <Route path="/ai-resources">
-            {() => <Suspense fallback={<LoadingSpinner />}><AIResources /></Suspense>}
+            {() => <Suspense fallback={<LoadingSpinner />}><StudyResources /></Suspense>}
+          </Route>
+          <Route path="/study-resources">
+            {() => <Suspense fallback={<LoadingSpinner />}><StudyResources /></Suspense>}
           </Route>
           <Route path="/badges-certificates">
             {() => <Suspense fallback={<LoadingSpinner />}><BadgesCertificates /></Suspense>}

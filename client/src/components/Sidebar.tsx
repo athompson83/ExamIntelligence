@@ -39,8 +39,7 @@ export default function Sidebar() {
     { href: "/mobile", label: "Mobile App", icon: Smartphone, tourId: "mobile" },
     { href: "/live-exams", label: "Live Exams", icon: PlayCircle, tourId: "live-exams" },
     { href: "/analytics", label: "Analytics", icon: BarChart3, tourId: "analytics" },
-    { href: "/ai-resources", label: "AI Resources", icon: Brain, tourId: "ai-resources" },
-    { href: "/study-aids", label: "Study Aids", icon: BookOpen, tourId: "study-aids" },
+    { href: "/study-resources", label: "Study Resources", icon: Brain, tourId: "study-resources" },
   ];
 
   const supportItems = [
