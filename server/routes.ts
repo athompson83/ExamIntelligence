@@ -1421,11 +1421,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create answer options if provided
       if (req.body.answerOptions && Array.isArray(req.body.answerOptions)) {
         for (const option of req.body.answerOptions) {
-          const optionData = insertAnswerOptionSchema.parse({
-            ...option,
-            questionId: question.id,
-          });
-          await storage.createAnswerOption(optionData);
+          // Ensure answerText is present and valid
+          if (!option.answerText || typeof option.answerText !== 'string' || option.answerText.trim() === '') {
+            console.warn(`Skipping invalid answer option for question ${question.id}:`, option);
+            continue;
+          }
+          
+          try {
+            const optionData = insertAnswerOptionSchema.parse({
+              ...option,
+              questionId: question.id,
+              answerText: option.answerText.trim(),
+              isCorrect: Boolean(option.isCorrect),
+              displayOrder: option.displayOrder || 0,
+            });
+            await storage.createAnswerOption(optionData);
+          } catch (validationError) {
+            console.error(`Failed to create answer option for question ${question.id}:`, validationError);
+            // Continue with other options
+          }
         }
       }
       
@@ -1603,11 +1617,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create answer options if provided
         if (generatedQuestion.answerOptions && Array.isArray(generatedQuestion.answerOptions)) {
           for (const option of generatedQuestion.answerOptions) {
-            const optionData = insertAnswerOptionSchema.parse({
-              ...option,
-              questionId: question.id,
-            });
-            await storage.createAnswerOption(optionData);
+            // Ensure answerText is present and valid
+            if (!option.answerText || typeof option.answerText !== 'string' || option.answerText.trim() === '') {
+              console.warn(`Skipping invalid answer option for question ${question.id}:`, option);
+              continue;
+            }
+            
+            try {
+              const optionData = insertAnswerOptionSchema.parse({
+                ...option,
+                questionId: question.id,
+                answerText: option.answerText.trim(),
+                isCorrect: Boolean(option.isCorrect),
+                displayOrder: option.displayOrder || 0,
+              });
+              await storage.createAnswerOption(optionData);
+            } catch (validationError) {
+              console.error(`Failed to create answer option for question ${question.id}:`, validationError);
+              // Continue with other options
+            }
           }
         }
         
@@ -1679,11 +1707,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create answer options if provided
         if (generatedQuestion.answerOptions && Array.isArray(generatedQuestion.answerOptions)) {
           for (const option of generatedQuestion.answerOptions) {
-            const optionData = insertAnswerOptionSchema.parse({
-              ...option,
-              questionId: question.id,
-            });
-            await storage.createAnswerOption(optionData);
+            // Ensure answerText is present and valid
+            if (!option.answerText || typeof option.answerText !== 'string' || option.answerText.trim() === '') {
+              console.warn(`Skipping invalid answer option for question ${question.id}:`, option);
+              continue;
+            }
+            
+            try {
+              const optionData = insertAnswerOptionSchema.parse({
+                ...option,
+                questionId: question.id,
+                answerText: option.answerText.trim(),
+                isCorrect: Boolean(option.isCorrect),
+                displayOrder: option.displayOrder || 0,
+              });
+              await storage.createAnswerOption(optionData);
+            } catch (validationError) {
+              console.error(`Failed to create answer option for question ${question.id}:`, validationError);
+              // Continue with other options
+            }
           }
         }
         
@@ -1711,11 +1753,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create answer options if provided
       if (req.body.answerOptions && Array.isArray(req.body.answerOptions)) {
         for (const option of req.body.answerOptions) {
-          const optionData = insertAnswerOptionSchema.parse({
-            ...option,
-            questionId: question.id,
-          });
-          await storage.createAnswerOption(optionData);
+          // Ensure answerText is present and valid
+          if (!option.answerText || typeof option.answerText !== 'string' || option.answerText.trim() === '') {
+            console.warn(`Skipping invalid answer option for question ${question.id}:`, option);
+            continue;
+          }
+          
+          try {
+            const optionData = insertAnswerOptionSchema.parse({
+              ...option,
+              questionId: question.id,
+              answerText: option.answerText.trim(),
+              isCorrect: Boolean(option.isCorrect),
+              displayOrder: option.displayOrder || 0,
+            });
+            await storage.createAnswerOption(optionData);
+          } catch (validationError) {
+            console.error(`Failed to create answer option for question ${question.id}:`, validationError);
+            // Continue with other options
+          }
         }
       }
       

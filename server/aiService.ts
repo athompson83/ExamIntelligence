@@ -805,25 +805,52 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         * Use realistic scenarios and application-based questions
         * Create distractors based on common student errors
         * Ensure one clearly correct answer
+        * Include 3-5 answer options with answerText field
       - True/False: Use only for absolute concepts, avoid complex nuances
         * Focus on fundamental principles and facts
         * Avoid ambiguous or trick statements
+        * Include exactly 2 answer options: "True" and "False"
       - Essay: Test synthesis, analysis, and original thinking with clear rubrics
         * Provide specific scoring criteria and expectations
         * Use authentic, real-world scenarios
         * Include word count guidelines
+        * No answer options needed - use questionConfig for rubric
       - Fill-in-blank: Use for key terms and specific facts, one correct answer
         * Test essential vocabulary and concepts
         * Provide sufficient context for understanding
-      - Matching: Group related concepts with clear categories (5-10 items max)
-        * Ensure all items belong to the same conceptual domain
-        * Include more options than matches to prevent elimination
+        * Include correct answer as single answer option
       - Multiple Response: Test comprehensive understanding of related concepts
         * Use when multiple correct answers enhance learning
         * Clearly indicate how many options to select
+        * Include 4-7 answer options with multiple correct answers
       - Hotspot: Test spatial understanding and visual comprehension
         * Use diagrams, maps, or images for location-based knowledge
         * Provide clear instructions for selection
+        * No traditional answer options - use questionConfig for coordinates
+      - Ordering: Test understanding of sequences, processes, or chronology
+        * Create items that need to be arranged in correct order
+        * Use for procedures, timelines, or step-by-step processes
+        * Include 3-6 items as answer options with correct sequence
+      - Categorization: Test ability to classify items into groups
+        * Create items that belong to different categories
+        * Use for classification, grouping, or sorting tasks
+        * Include items and categories as answer options
+      - Matching: Group related concepts with clear categories (5-10 items max)
+        * Ensure all items belong to the same conceptual domain
+        * Include more options than matches to prevent elimination
+        * Create pairs of matching items as answer options
+      - Multiple Fill Blank: Test multiple related concepts in one question
+        * Use for complex sentences with multiple missing terms
+        * Each blank should test a different concept
+        * Include correct answers for each blank as answer options
+      - Numerical: Test mathematical calculations and quantitative reasoning
+        * Focus on problem-solving with numerical answers
+        * Include correct numerical value as answer option
+        * Provide clear units and formatting requirements
+      - Formula: Test understanding of mathematical relationships
+        * Use for complex calculations requiring formulas
+        * Include correct formula result as answer option
+        * Show work and reasoning in feedback
       
       **Bias Prevention:**
       - Use inclusive language and diverse examples
@@ -840,7 +867,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         "questions": [
           {
             "questionText": "Complete question text",
-            "questionType": "multiple_choice|multiple_response|true_false|fill_blank|essay|matching",
+            "questionType": "multiple_choice|multiple_response|true_false|fill_blank|essay|matching|ordering|categorization|hotspot|numerical|formula|multiple_fill_blank|stimulus|constructed_response|text_no_question",
             "points": 1,
             "difficultyScore": 5,
             "bloomsLevel": "understand|apply|analyze|evaluate|create|remember",
@@ -853,18 +880,28 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
             "partialCredit": false,
             "answerOptions": [
               {
-                "answerText": "Option text",
+                "answerText": "REQUIRED: Option text - this field is MANDATORY and must be a non-empty string",
                 "isCorrect": true,
                 "displayOrder": 0,
                 "reasoning": "Detailed explanation of why this answer is correct and what key concepts it demonstrates that students should understand"
               },
               {
-                "answerText": "Distractor option",
+                "answerText": "REQUIRED: Distractor option - this field is MANDATORY and must be a non-empty string",
                 "isCorrect": false,
                 "displayOrder": 1,
                 "reasoning": "Explanation of why this answer is incorrect and what common misconception or error it represents"
               }
             ],
+            "questionConfig": {
+              "orderingItems": ["First item", "Second item", "Third item"],
+              "categories": ["Category A", "Category B"],
+              "matchingPairs": [{"left": "Term 1", "right": "Definition 1"}],
+              "correctSequence": [0, 1, 2],
+              "blanks": ["blank1", "blank2"],
+              "numericalAnswer": 42,
+              "formula": "x = y + z",
+              "hotspotCoordinates": {"x": 100, "y": 200}
+            },
             "imageUrl": "",
             "audioUrl": "",
             "videoUrl": "",
@@ -872,6 +909,18 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
           }
         ]
       }
+      
+      **CRITICAL answerText REQUIREMENT**:
+      - EVERY answer option MUST have a non-empty answerText field
+      - For ordering questions: answerText should be the item to be ordered
+      - For categorization questions: answerText should be the item to be categorized
+      - For matching questions: answerText should be the term or definition
+      - For true/false questions: answerText should be "True" or "False"
+      - For multiple choice: answerText should be the complete option text
+      - For fill-in-blank: answerText should be the correct answer
+      - For essay questions: answerText should be sample key points or rubric criteria
+      - For numerical: answerText should be the numerical answer as a string
+      - NEVER leave answerText undefined, null, or empty - this will cause validation errors
       
       **CRITICAL QUALITY STANDARDS**:
       - NEVER generate incomplete questions, titles only, or placeholder content
@@ -1033,6 +1082,69 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
             isCorrect: Boolean(option.isCorrect),
             displayOrder: optIndex,
           })) : [];
+
+      // Generate default answer options if none provided, based on question type
+      if (validatedAnswerOptions.length === 0) {
+        switch (question.questionType) {
+          case 'true_false':
+            validatedAnswerOptions.push(
+              { answerText: 'True', isCorrect: true, displayOrder: 0 },
+              { answerText: 'False', isCorrect: false, displayOrder: 1 }
+            );
+            break;
+          case 'multiple_choice':
+            validatedAnswerOptions.push(
+              { answerText: 'Option A', isCorrect: true, displayOrder: 0 },
+              { answerText: 'Option B', isCorrect: false, displayOrder: 1 },
+              { answerText: 'Option C', isCorrect: false, displayOrder: 2 },
+              { answerText: 'Option D', isCorrect: false, displayOrder: 3 }
+            );
+            break;
+          case 'fill_blank':
+            validatedAnswerOptions.push(
+              { answerText: 'Answer', isCorrect: true, displayOrder: 0 }
+            );
+            break;
+          case 'ordering':
+            validatedAnswerOptions.push(
+              { answerText: 'First step', isCorrect: true, displayOrder: 0 },
+              { answerText: 'Second step', isCorrect: true, displayOrder: 1 },
+              { answerText: 'Third step', isCorrect: true, displayOrder: 2 }
+            );
+            break;
+          case 'categorization':
+            validatedAnswerOptions.push(
+              { answerText: 'Item 1', isCorrect: true, displayOrder: 0 },
+              { answerText: 'Item 2', isCorrect: true, displayOrder: 1 },
+              { answerText: 'Category A', isCorrect: true, displayOrder: 2 },
+              { answerText: 'Category B', isCorrect: true, displayOrder: 3 }
+            );
+            break;
+          case 'matching':
+            validatedAnswerOptions.push(
+              { answerText: 'Term 1', isCorrect: true, displayOrder: 0 },
+              { answerText: 'Definition 1', isCorrect: true, displayOrder: 1 },
+              { answerText: 'Term 2', isCorrect: true, displayOrder: 2 },
+              { answerText: 'Definition 2', isCorrect: true, displayOrder: 3 }
+            );
+            break;
+          case 'numerical':
+            validatedAnswerOptions.push(
+              { answerText: '42', isCorrect: true, displayOrder: 0 }
+            );
+            break;
+          case 'essay':
+            validatedAnswerOptions.push(
+              { answerText: 'Key concept 1', isCorrect: true, displayOrder: 0 },
+              { answerText: 'Key concept 2', isCorrect: true, displayOrder: 1 }
+            );
+            break;
+          default:
+            validatedAnswerOptions.push(
+              { answerText: 'Default answer', isCorrect: true, displayOrder: 0 }
+            );
+        }
+      }
 
       // Ensure at least one correct answer for multiple choice
       if (question.questionType === 'multiple_choice' && validatedAnswerOptions.length > 0) {
