@@ -153,6 +153,85 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
     }
   }, [question, form]);
 
+  // Initialize question type specific data when question type changes
+  useEffect(() => {
+    switch (watchedQuestionType) {
+      case "ordering":
+        if (orderingItems.length === 0) {
+          setOrderingItems([
+            { id: 'item-1', text: '', correctOrder: 1 },
+            { id: 'item-2', text: '', correctOrder: 2 },
+            { id: 'item-3', text: '', correctOrder: 3 }
+          ]);
+        }
+        break;
+      
+      case "categorization":
+        if (categorizationCategories.length === 0) {
+          setCategorizationCategories([
+            { id: 'category-1', name: 'Category 1', description: '', items: [] },
+            { id: 'category-2', name: 'Category 2', description: '', items: [] }
+          ]);
+        }
+        if (categorizationItems.length === 0) {
+          setCategorizationItems([
+            { id: 'item-1', text: '', categoryId: 'unassigned' },
+            { id: 'item-2', text: '', categoryId: 'unassigned' },
+            { id: 'item-3', text: '', categoryId: 'unassigned' }
+          ]);
+        }
+        break;
+      
+      case "true_false":
+        if (answerOptions.length === 0 || answerOptions.length > 2) {
+          setAnswerOptions([
+            { text: "True", isCorrect: true },
+            { text: "False", isCorrect: false }
+          ]);
+        }
+        break;
+      
+      case "multiple_choice":
+      case "multiple_response":
+        if (answerOptions.length === 0) {
+          setAnswerOptions([
+            { text: "", isCorrect: false },
+            { text: "", isCorrect: false },
+            { text: "", isCorrect: false },
+            { text: "", isCorrect: false }
+          ]);
+        }
+        break;
+      
+      case "matching":
+        if (matchingPairs.length === 0) {
+          setMatchingPairs([
+            { id: '1', leftItem: '', rightItem: '' },
+            { id: '2', leftItem: '', rightItem: '' }
+          ]);
+        }
+        break;
+      
+      case "multiple_fill_blank":
+        if (answerOptions.length === 0) {
+          setAnswerOptions([
+            { text: "", isCorrect: true },
+            { text: "", isCorrect: true }
+          ]);
+        }
+        break;
+      
+      case "numerical":
+      case "fill_blank":
+        if (answerOptions.length === 0) {
+          setAnswerOptions([
+            { text: "", isCorrect: true }
+          ]);
+        }
+        break;
+    }
+  }, [watchedQuestionType]);
+
   const saveQuestionMutation = useMutation({
     mutationFn: async (data: QuestionFormData) => {
       let questionConfig = {};

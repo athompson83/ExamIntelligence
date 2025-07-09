@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface Quiz {
   id: string;
@@ -34,9 +36,30 @@ interface Quiz {
 
 export default function QuizManager() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const { data: quizzes, isLoading } = useQuery({
     queryKey: ['/api/quizzes'],
+  });
+
+  const deleteQuizMutation = useMutation({
+    mutationFn: async (quizId: string) => {
+      await apiRequest("DELETE", `/api/quizzes/${quizId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
+      toast({
+        title: "Success",
+        description: "Quiz deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete quiz",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleCreateNew = () => {
@@ -57,8 +80,9 @@ export default function QuizManager() {
   };
 
   const handleDelete = (quizId: string) => {
-    // TODO: Implement quiz deletion with confirmation
-    console.log('Delete quiz:', quizId);
+    if (window.confirm("Are you sure you want to delete this quiz? This action cannot be undone.")) {
+      deleteQuizMutation.mutate(quizId);
+    }
   };
 
   const handleAnalytics = (quizId: string) => {
