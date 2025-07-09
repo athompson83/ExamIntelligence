@@ -765,6 +765,48 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                     </div>
                   )}
 
+                  {/* Ordering Question Editor */}
+                  {watchedQuestionType === "ordering" && (
+                    <OrderingQuestionEditor
+                      items={orderingItems}
+                      onChange={setOrderingItems}
+                    />
+                  )}
+
+                  {/* Categorization Question Editor */}
+                  {watchedQuestionType === "categorization" && (
+                    <CategorizationQuestionEditor
+                      categories={categorizationCategories}
+                      items={categorizationItems}
+                      onChange={(categories, items) => {
+                        setCategorizationCategories(categories);
+                        setCategorizationItems(items);
+                      }}
+                    />
+                  )}
+
+                  {/* Hot Spot Question Editor */}
+                  {watchedQuestionType === "hot_spot" && (
+                    <HotSpotQuestionEditor
+                      imageUrl={hotSpotImageUrl}
+                      hotSpots={hotSpotAreas}
+                      showCalculator={hotSpotShowCalculator}
+                      onChange={(imageUrl, hotSpots, showCalculator) => {
+                        setHotSpotImageUrl(imageUrl);
+                        setHotSpotAreas(hotSpots);
+                        setHotSpotShowCalculator(showCalculator);
+                      }}
+                    />
+                  )}
+
+                  {/* Formula Question Editor */}
+                  {watchedQuestionType === "formula" && (
+                    <FormulaQuestionEditor
+                      config={formulaConfig}
+                      onChange={setFormulaConfig}
+                    />
+                  )}
+
                   {/* Stimulus Question */}
                   {watchedQuestionType === "stimulus" && (
                     <div className="space-y-4">
