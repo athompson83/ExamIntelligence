@@ -978,8 +978,17 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                             { value: "multiple_response", label: "Multiple Response" },
                             { value: "true_false", label: "True/False" },
                             { value: "fill_blank", label: "Fill in the Blank" },
+                            { value: "multiple_fill_blank", label: "Multiple Fill in the Blank" },
                             { value: "essay", label: "Essay" },
-                            { value: "matching", label: "Matching" }
+                            { value: "file_upload", label: "File Upload" },
+                            { value: "formula", label: "Formula" },
+                            { value: "numerical", label: "Numerical" },
+                            { value: "matching", label: "Matching" },
+                            { value: "ordering", label: "Ordering" },
+                            { value: "categorization", label: "Categorization" },
+                            { value: "hot_spot", label: "Hot Spot" },
+                            { value: "stimulus", label: "Stimulus" },
+                            { value: "text_no_question", label: "Text Block" }
                           ].map((type) => (
                             <div key={type.value} className="flex items-center space-x-2">
                               <Checkbox
@@ -1432,8 +1441,17 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                             <SelectItem value="multiple_response">Multiple Response</SelectItem>
                             <SelectItem value="true_false">True/False</SelectItem>
                             <SelectItem value="fill_blank">Fill in the Blank</SelectItem>
+                            <SelectItem value="multiple_fill_blank">Multiple Fill in the Blank</SelectItem>
                             <SelectItem value="essay">Essay</SelectItem>
+                            <SelectItem value="file_upload">File Upload</SelectItem>
+                            <SelectItem value="formula">Formula</SelectItem>
+                            <SelectItem value="numerical">Numerical</SelectItem>
                             <SelectItem value="matching">Matching</SelectItem>
+                            <SelectItem value="ordering">Ordering</SelectItem>
+                            <SelectItem value="categorization">Categorization</SelectItem>
+                            <SelectItem value="hot_spot">Hot Spot</SelectItem>
+                            <SelectItem value="stimulus">Stimulus</SelectItem>
+                            <SelectItem value="text_no_question">Text Block</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

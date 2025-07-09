@@ -214,13 +214,17 @@ export function QuestionEditor({ testbankId, question, onSave, onCancel }: Quest
     { value: "multiple_response", label: "Multiple Response" },
     { value: "true_false", label: "True/False" },
     { value: "fill_blank", label: "Fill in the Blank" },
+    { value: "multiple_fill_blank", label: "Multiple Fill in the Blank" },
     { value: "essay", label: "Essay" },
-    { value: "constructed_response", label: "Constructed Response" },
-    { value: "hot_spot", label: "Hot Spot" },
-    { value: "categorization", label: "Categorization" },
+    { value: "file_upload", label: "File Upload" },
     { value: "formula", label: "Formula" },
+    { value: "numerical", label: "Numerical" },
     { value: "matching", label: "Matching" },
     { value: "ordering", label: "Ordering" },
+    { value: "categorization", label: "Categorization" },
+    { value: "hot_spot", label: "Hot Spot" },
+    { value: "stimulus", label: "Stimulus" },
+    { value: "text_no_question", label: "Text Block" },
   ];
 
   const bloomsLevels = [
