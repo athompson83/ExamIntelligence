@@ -8,6 +8,29 @@
     scroll-behavior: smooth;
   }
   
+  /* Hide scrollbars but maintain scroll functionality */
+  * {
+    /* Firefox */
+    scrollbar-width: none;
+    /* IE and Edge */
+    -ms-overflow-style: none;
+  }
+  
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  *::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    background: transparent;
+  }
+  
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  *::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  
   /* Focus styles for better accessibility */
   :focus-visible {
     outline: 2px solid hsl(var(--primary));
