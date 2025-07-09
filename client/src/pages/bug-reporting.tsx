@@ -118,13 +118,13 @@ export default function BugReportingPage() {
   // Fetch user's bug reports
   const { data: myReports, isLoading: loadingMyReports } = useQuery({
     queryKey: ["/api/bug-reports", "my"],
-    queryFn: () => apiRequest("GET", "/api/bug-reports/my"),
+    retry: false,
   });
 
   // Fetch all bug reports (for admins/teachers)
   const { data: allReports, isLoading: loadingAllReports } = useQuery({
     queryKey: ["/api/bug-reports", "all"],
-    queryFn: () => apiRequest("GET", "/api/bug-reports"),
+    retry: false,
   });
 
   // Fetch current user info
@@ -238,7 +238,7 @@ export default function BugReportingPage() {
     }
   };
 
-  const filteredReports = (reports: BugReport[] | undefined) => {
+  const getFilteredReports = (reports: BugReport[] | undefined) => {
     if (!reports) return [];
     
     return reports.filter(report => {
@@ -247,6 +247,9 @@ export default function BugReportingPage() {
       return matchesStatus && matchesType;
     });
   };
+
+  const filteredMyReports = getFilteredReports(myReports);
+  const filteredAllReports = getFilteredReports(allReports);
 
   const categories = [
     "Authentication",
@@ -323,7 +326,7 @@ export default function BugReportingPage() {
           <div className="grid gap-4">
             {loadingMyReports ? (
               <div className="text-center py-8">Loading your reports...</div>
-            ) : filteredReports(myReports).length === 0 ? (
+            ) : filteredMyReports.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-8">
                   <Bug className="h-12 w-12 text-muted-foreground mb-4" />
@@ -338,7 +341,7 @@ export default function BugReportingPage() {
                 </CardContent>
               </Card>
             ) : (
-              filteredReports(myReports).map((report: BugReport) => (
+              filteredMyReports.map((report: BugReport) => (
                 <Card key={report.id} className="cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => setSelectedReport(report)}>
                   <CardHeader className="pb-3">
@@ -388,10 +391,10 @@ export default function BugReportingPage() {
             <div className="grid gap-4">
               {loadingAllReports ? (
                 <div className="text-center py-8">Loading all reports...</div>
-              ) : filteredReports(allReports).length === 0 ? (
+              ) : filteredAllReports.length === 0 ? (
                 <div className="text-center py-8">No reports found matching your filters.</div>
               ) : (
-                filteredReports(allReports).map((report: BugReport) => (
+                filteredAllReports.map((report: BugReport) => (
                   <Card key={report.id}>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
@@ -477,7 +480,7 @@ export default function BugReportingPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {allReports?.filter((r: BugReport) => r.status === "open").length || 0}
+                  {(allReports || []).filter((r: BugReport) => r.status === "open").length}
                 </div>
               </CardContent>
             </Card>
@@ -488,7 +491,7 @@ export default function BugReportingPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {allReports?.filter((r: BugReport) => r.status === "in_progress").length || 0}
+                  {(allReports || []).filter((r: BugReport) => r.status === "in_progress").length}
                 </div>
               </CardContent>
             </Card>
@@ -499,11 +502,11 @@ export default function BugReportingPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {allReports?.filter((r: BugReport) => 
+                  {(allReports || []).filter((r: BugReport) => 
                     r.status === "resolved" && 
                     r.resolvedAt && 
                     new Date(r.resolvedAt).getMonth() === new Date().getMonth()
-                  ).length || 0}
+                  ).length}
                 </div>
               </CardContent>
             </Card>

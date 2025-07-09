@@ -114,7 +114,7 @@ export default function AnonymousQuizAccessPage() {
   // Fetch anonymous quiz links
   const { data: anonymousLinks, isLoading: loadingLinks } = useQuery({
     queryKey: ["/api/anonymous-quiz-links"],
-    queryFn: () => apiRequest("GET", "/api/anonymous-quiz-links"),
+    retry: false,
   });
 
   // Fetch quiz attempts for selected link
@@ -237,7 +237,7 @@ export default function AnonymousQuizAccessPage() {
   };
 
   // Filter and search logic
-  const filteredLinks = (anonymousLinks || []).filter((link: AnonymousQuizLink) => {
+  const filteredLinks = Array.isArray(anonymousLinks) ? anonymousLinks.filter((link: AnonymousQuizLink) => {
     const matchesSearch = link.linkName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          link.quiz?.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === "all" || 
@@ -245,7 +245,7 @@ export default function AnonymousQuizAccessPage() {
                          (filterStatus === "inactive" && !link.isActive) ||
                          (filterStatus === "expired" && link.validUntil && new Date(link.validUntil) < new Date());
     return matchesSearch && matchesStatus;
-  });
+  }) : [];
 
   const openCreateDialog = () => {
     setEditingLink(null);

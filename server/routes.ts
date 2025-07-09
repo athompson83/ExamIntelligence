@@ -2250,9 +2250,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/ai/resources',  async (req: any, res) => {
+  app.get('/api/ai/resources', mockAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims?.sub || req.user.id;
+      const userId = req.user?.id || "test-user";
       const resources = await storage.getAiResourcesByUser(userId);
       res.json(resources);
     } catch (error) {
