@@ -58,6 +58,12 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
   const [categorizationCategories, setCategorizationCategories] = useState<Array<{ id: string; name: string; description: string; items: string[] }>>([]);
   const [categorizationItems, setCategorizationItems] = useState<Array<{ id: string; text: string; categoryId: string }>>([]);
   
+  // State for matching questions
+  const [matchingPairs, setMatchingPairs] = useState<Array<{ id: string; leftItem: string; rightItem: string }>>([
+    { id: '1', leftItem: '', rightItem: '' },
+    { id: '2', leftItem: '', rightItem: '' }
+  ]);
+  
   // State for hot spot questions
   const [hotSpotImageUrl, setHotSpotImageUrl] = useState<string>("");
   const [hotSpotAreas, setHotSpotAreas] = useState<Array<{ id: string; x: number; y: number; width: number; height: number; isCorrect: boolean; feedback?: string }>>([]);
@@ -212,6 +218,37 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
           correctAnswers = answerOptions
             .filter(option => option.isCorrect && option.text.trim() !== "")
             .map(option => option.text);
+          break;
+        
+        case "multiple_fill_blank":
+          formattedAnswerOptions = answerOptions.filter(option => option.text.trim() !== "");
+          correctAnswers = answerOptions
+            .filter(option => option.text.trim() !== "")
+            .map(option => option.text);
+          questionConfig = {
+            blanks: answerOptions.map((option, index) => ({
+              id: `blank${index + 1}`,
+              correctAnswer: option.text,
+              position: index + 1
+            }))
+          };
+          break;
+        
+        case "matching":
+          questionConfig = {
+            leftItems: matchingPairs.map(pair => ({
+              id: `left${pair.id}`,
+              text: pair.leftItem
+            })),
+            rightItems: matchingPairs.map(pair => ({
+              id: `right${pair.id}`,
+              text: pair.rightItem
+            })),
+            correctMatches: matchingPairs.reduce((acc, pair) => {
+              acc[`left${pair.id}`] = `right${pair.id}`;
+              return acc;
+            }, {} as Record<string, string>)
+          };
           break;
         
         case "essay":
@@ -611,6 +648,162 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                     </div>
                   )}
 
+                  {/* Multiple Fill in the Blank */}
+                  {watchedQuestionType === "multiple_fill_blank" && (
+                    <div className="space-y-4">
+                      <FormLabel>Multiple Fill in the Blank Configuration</FormLabel>
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                          <strong>Instructions:</strong> Use [blank1], [blank2], etc. in your question text to indicate multiple fill-in areas.
+                          Example: "The [blank1] is the capital of [blank2]."
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        <FormLabel>Correct Answers</FormLabel>
+                        {answerOptions.map((option, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <span className="text-sm font-medium w-16">Blank {index + 1}:</span>
+                            <Input
+                              placeholder={`Answer for blank ${index + 1}`}
+                              value={option.text}
+                              onChange={(e) => updateAnswerOption(index, 'text', e.target.value)}
+                              className="flex-1"
+                            />
+                            {answerOptions.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeAnswerOption(index)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addAnswerOption}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Blank
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching Question */}
+                  {watchedQuestionType === "matching" && (
+                    <div className="space-y-4">
+                      <FormLabel>Matching Pairs</FormLabel>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          <strong>Instructions:</strong> Create pairs of items that students will match.
+                          Each pair should have a left item and corresponding right item.
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        {matchingPairs.map((pair, index) => (
+                          <div key={pair.id} className="grid grid-cols-2 gap-4 p-3 border rounded-lg">
+                            <div>
+                              <Label className="text-sm text-gray-600">Left Item</Label>
+                              <Input
+                                placeholder={`Left item ${index + 1}`}
+                                value={pair.leftItem}
+                                onChange={(e) => {
+                                  const updated = matchingPairs.map(p => 
+                                    p.id === pair.id ? { ...p, leftItem: e.target.value } : p
+                                  );
+                                  setMatchingPairs(updated);
+                                }}
+                              />
+                            </div>
+                            <div className="flex items-end space-x-2">
+                              <div className="flex-1">
+                                <Label className="text-sm text-gray-600">Right Item</Label>
+                                <Input
+                                  placeholder={`Right item ${index + 1}`}
+                                  value={pair.rightItem}
+                                  onChange={(e) => {
+                                    const updated = matchingPairs.map(p => 
+                                      p.id === pair.id ? { ...p, rightItem: e.target.value } : p
+                                    );
+                                    setMatchingPairs(updated);
+                                  }}
+                                />
+                              </div>
+                              {matchingPairs.length > 2 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setMatchingPairs(matchingPairs.filter(p => p.id !== pair.id));
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newId = (matchingPairs.length + 1).toString();
+                            setMatchingPairs([...matchingPairs, { id: newId, leftItem: '', rightItem: '' }]);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Pair
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Stimulus Question */}
+                  {watchedQuestionType === "stimulus" && (
+                    <div className="space-y-4">
+                      <FormLabel>Stimulus Configuration</FormLabel>
+                      <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-purple-700 dark:text-purple-300">
+                          <strong>Note:</strong> Stimulus questions provide context material (text, image, data) 
+                          that students use to answer questions. The stimulus content should be included in the question text.
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <Label>Stimulus Content</Label>
+                          <Textarea
+                            placeholder="Enter the stimulus content (passage, data, chart description, etc.)"
+                            className="min-h-[120px]"
+                            value={answerOptions[0]?.text || ''}
+                            onChange={(e) => {
+                              setAnswerOptions([{ text: e.target.value, isCorrect: true }]);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Text Block (No Question) */}
+                  {watchedQuestionType === "text_no_question" && (
+                    <div className="space-y-4">
+                      <FormLabel>Text Block Configuration</FormLabel>
+                      <div className="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong>Note:</strong> Text blocks provide information without requiring an answer.
+                          They are useful for instructions, context, or breaks between questions.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Tags */}
                   <FormField
                     control={form.control}
@@ -679,6 +872,8 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                 {watchedQuestionText ? (
                   <div className="space-y-4">
                     <p className="text-gray-900 dark:text-white">{watchedQuestionText}</p>
+                    
+                    {/* Multiple Choice/Response Preview */}
                     {(watchedQuestionType === "multiple_choice" || watchedQuestionType === "multiple_response") && (
                       <div className="space-y-2">
                         {answerOptions.filter(option => option.text.trim()).map((option, index) => (
@@ -699,6 +894,87 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                             </div>
                           </div>
                         ))}
+                      </div>
+                    )}
+
+                    {/* True/False Preview */}
+                    {watchedQuestionType === "true_false" && (
+                      <div className="space-y-2">
+                        <div className={`p-3 border rounded-lg ${answerOptions[0]?.isCorrect ? "border-green-500 bg-green-50 dark:bg-green-900/20" : "border-gray-300 dark:border-gray-600"}`}>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-4 h-4 border border-gray-400 rounded-full" />
+                            <span>True</span>
+                            {answerOptions[0]?.isCorrect && <CheckCircle className="h-4 w-4 text-green-500 ml-auto" />}
+                          </div>
+                        </div>
+                        <div className={`p-3 border rounded-lg ${answerOptions[1]?.isCorrect ? "border-green-500 bg-green-50 dark:bg-green-900/20" : "border-gray-300 dark:border-gray-600"}`}>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-4 h-4 border border-gray-400 rounded-full" />
+                            <span>False</span>
+                            {answerOptions[1]?.isCorrect && <CheckCircle className="h-4 w-4 text-green-500 ml-auto" />}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ordering Preview */}
+                    {watchedQuestionType === "ordering" && orderingItems.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">Correct order:</p>
+                        {orderingItems.map((item, index) => (
+                          <div key={item.id} className="flex items-center space-x-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                            <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm">{index + 1}</span>
+                            <span>{item.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Matching Preview */}
+                    {watchedQuestionType === "matching" && matchingPairs.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">Matching pairs:</p>
+                        {matchingPairs.filter(pair => pair.leftItem.trim() && pair.rightItem.trim()).map((pair, index) => (
+                          <div key={pair.id} className="flex items-center space-x-4 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                            <span className="flex-1 text-left">{pair.leftItem}</span>
+                            <span className="text-gray-400">→</span>
+                            <span className="flex-1 text-right">{pair.rightItem}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Multiple Fill in the Blank Preview */}
+                    {watchedQuestionType === "multiple_fill_blank" && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">Fill in the blanks:</p>
+                        {answerOptions.filter(option => option.text.trim()).map((option, index) => (
+                          <div key={index} className="flex items-center space-x-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
+                            <span className="font-medium">Blank {index + 1}:</span>
+                            <span className="text-green-600">{option.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Numerical Preview */}
+                    {watchedQuestionType === "numerical" && answerOptions[0]?.text && (
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
+                        <p className="text-sm text-gray-600">Correct answer:</p>
+                        <p className="text-lg font-medium text-green-600">{answerOptions[0].text}</p>
+                      </div>
+                    )}
+
+                    {/* Other question types */}
+                    {["essay", "file_upload", "fill_blank", "stimulus", "text_no_question"].includes(watchedQuestionType) && (
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
+                        <p className="text-sm text-gray-600">
+                          {watchedQuestionType === "essay" && "Students will see a text area for their essay response."}
+                          {watchedQuestionType === "file_upload" && "Students will see a file upload interface."}
+                          {watchedQuestionType === "fill_blank" && "Students will see input fields for blanks marked in the question text."}
+                          {watchedQuestionType === "stimulus" && "Students will see the stimulus content with the question."}
+                          {watchedQuestionType === "text_no_question" && "This is an informational text block without a question."}
+                        </p>
                       </div>
                     )}
                   </div>
