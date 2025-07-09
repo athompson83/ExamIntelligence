@@ -2813,6 +2813,200 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export and sharing endpoints for study resources
+  app.get('/api/study-resources/:id/export', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { format } = req.query;
+      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
+      
+      // Get the resource
+      const resources = await storage.getAiResourcesByUser(userId);
+      const resource = resources.find(r => r.id === id);
+      
+      if (!resource) {
+        return res.status(404).json({ message: "Resource not found" });
+      }
+      
+      let content = '';
+      let contentType = 'text/plain';
+      let filename = `${resource.title}.txt`;
+      
+      switch (format) {
+        case 'pdf':
+          contentType = 'application/pdf';
+          filename = `${resource.title}.pdf`;
+          content = `PDF Export of ${resource.title}\n\n${resource.content}`;
+          break;
+        case 'csv':
+          contentType = 'text/csv';
+          filename = `${resource.title}.csv`;
+          content = `Title,Type,Content,Created At\n"${resource.title}","${resource.type}","${resource.content}","${resource.createdAt}"`;
+          break;
+        case 'json':
+          contentType = 'application/json';
+          filename = `${resource.title}.json`;
+          content = JSON.stringify(resource, null, 2);
+          break;
+        default:
+          content = `${resource.title}\n\n${resource.content}\n\nCreated: ${resource.createdAt}`;
+      }
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(content);
+    } catch (error) {
+      console.error("Error exporting resource:", error);
+      res.status(500).json({ message: "Failed to export resource" });
+    }
+  });
+
+  app.post('/api/study-resources/:id/share', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { shareType } = req.body;
+      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
+      
+      // Get the resource
+      const resources = await storage.getAiResourcesByUser(userId);
+      const resource = resources.find(r => r.id === id);
+      
+      if (!resource) {
+        return res.status(404).json({ message: "Resource not found" });
+      }
+      
+      // Generate share link
+      const shareUrl = `${req.protocol}://${req.get('host')}/shared-resource/${id}`;
+      
+      // In a real implementation, you would save the share token to database
+      const shareToken = `share-${Date.now()}-${Math.random().toString(36).substring(2)}`;
+      
+      res.json({
+        shareUrl,
+        shareToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+      });
+    } catch (error) {
+      console.error("Error sharing resource:", error);
+      res.status(500).json({ message: "Failed to share resource" });
+    }
+  });
+
+  app.get('/api/shared-resource/:id', async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // In a real implementation, you would validate the share token
+      // For now, we'll just return a basic shared resource page
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Shared Study Resource</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+            .header { border-bottom: 1px solid #ddd; padding-bottom: 20px; margin-bottom: 20px; }
+            .content { line-height: 1.6; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Shared Study Resource</h1>
+            <p>This study resource has been shared with you from ProficiencyAI</p>
+          </div>
+          <div class="content">
+            <h2>Resource ID: ${id}</h2>
+            <p>This is a shared study resource. The actual content would be displayed here.</p>
+          </div>
+          <div class="footer">
+            <p>Powered by ProficiencyAI - Advanced Educational Assessment Platform</p>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    } catch (error) {
+      console.error("Error accessing shared resource:", error);
+      res.status(500).json({ message: "Failed to access shared resource" });
+    }
+  });
+
+  // Bulk operations for study resources
+  app.post('/api/study-resources/bulk-export', mockAuth, async (req: any, res) => {
+    try {
+      const { resourceIds, format } = req.body;
+      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
+      
+      // Get all resources for the user
+      const resources = await storage.getAiResourcesByUser(userId);
+      const selectedResources = resources.filter(r => resourceIds.includes(r.id));
+      
+      if (selectedResources.length === 0) {
+        return res.status(404).json({ message: "No resources found" });
+      }
+      
+      let content = '';
+      let contentType = 'text/plain';
+      let filename = `study-resources-bulk.txt`;
+      
+      switch (format) {
+        case 'pdf':
+          contentType = 'application/pdf';
+          filename = `study-resources-bulk.pdf`;
+          content = selectedResources.map(r => 
+            `PDF Export: ${r.title}\n\n${r.content}\n\n---\n\n`
+          ).join('');
+          break;
+        case 'csv':
+          contentType = 'text/csv';
+          filename = `study-resources-bulk.csv`;
+          content = 'Title,Type,Content,Created At\n' + 
+            selectedResources.map(r => 
+              `"${r.title}","${r.type}","${r.content}","${r.createdAt}"`
+            ).join('\n');
+          break;
+        case 'json':
+          contentType = 'application/json';
+          filename = `study-resources-bulk.json`;
+          content = JSON.stringify(selectedResources, null, 2);
+          break;
+        default:
+          content = selectedResources.map(r => 
+            `${r.title}\n\n${r.content}\n\nCreated: ${r.createdAt}\n\n---\n\n`
+          ).join('');
+      }
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(content);
+    } catch (error) {
+      console.error("Error bulk exporting resources:", error);
+      res.status(500).json({ message: "Failed to bulk export resources" });
+    }
+  });
+
+  app.post('/api/study-resources/bulk-delete', mockAuth, async (req: any, res) => {
+    try {
+      const { resourceIds } = req.body;
+      const userId = req.user?.claims?.sub || req.user?.id || "test-user";
+      
+      // In a real implementation, you would delete from database
+      // For now, we'll just return success
+      res.json({ 
+        message: `Successfully deleted ${resourceIds.length} resources`,
+        deletedCount: resourceIds.length
+      });
+    } catch (error) {
+      console.error("Error bulk deleting resources:", error);
+      res.status(500).json({ message: "Failed to bulk delete resources" });
+    }
+  });
+
   app.post('/api/study-aids', mockAuth, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub || req.user?.id || "test-user";

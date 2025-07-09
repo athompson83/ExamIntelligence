@@ -190,6 +190,147 @@ export default function StudyResources() {
     });
   };
 
+  const handleExportResource = async (resource: StudyResource, format: 'pdf' | 'txt' | 'csv' | 'json') => {
+    try {
+      const response = await apiRequest(`/api/study-resources/${resource.id}/export?format=${format}`, {
+        method: 'GET',
+      });
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${resource.title}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Success",
+        description: `Resource exported as ${format.toUpperCase()}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export resource",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareResource = async (resource: StudyResource) => {
+    try {
+      const response = await apiRequest(`/api/study-resources/${resource.id}/share`, {
+        method: 'POST',
+        body: JSON.stringify({ shareType: 'link' }),
+      });
+      
+      const data = await response.json();
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: resource.title,
+          text: `Check out this study resource: ${resource.title}`,
+          url: data.shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(data.shareUrl);
+        toast({
+          title: "Success",
+          description: "Share link copied to clipboard",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to share resource",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const [viewingResource, setViewingResource] = useState<StudyResource | null>(null);
+  const [selectedResources, setSelectedResources] = useState<string[]>([]);
+
+  const handleViewResource = (resource: StudyResource) => {
+    setViewingResource(resource);
+  };
+
+  const handleSelectResource = (resourceId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedResources(prev => [...prev, resourceId]);
+    } else {
+      setSelectedResources(prev => prev.filter(id => id !== resourceId));
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedResources.length === filteredResources.length) {
+      setSelectedResources([]);
+    } else {
+      setSelectedResources(filteredResources.map(r => r.id));
+    }
+  };
+
+  const handleBulkExport = async (format: 'pdf' | 'txt' | 'csv' | 'json') => {
+    try {
+      const response = await apiRequest('/api/study-resources/bulk-export', {
+        method: 'POST',
+        body: JSON.stringify({
+          resourceIds: selectedResources,
+          format,
+        }),
+      });
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `study-resources-bulk.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Success",
+        description: `${selectedResources.length} resources exported as ${format.toUpperCase()}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export resources",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await apiRequest('/api/study-resources/bulk-delete', {
+        method: 'POST',
+        body: JSON.stringify({
+          resourceIds: selectedResources,
+        }),
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/ai/resources'] });
+      setSelectedResources([]);
+      
+      toast({
+        title: "Success",
+        description: `${selectedResources.length} resources deleted`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete resources",
+        variant: "destructive",
+      });
+    }
+  };
+
   const addReferenceLink = () => {
     if (newReferenceLink.trim() && !referenceLinks.includes(newReferenceLink.trim())) {
       setReferenceLinks([...referenceLinks, newReferenceLink.trim()]);
@@ -331,7 +472,7 @@ export default function StudyResources() {
             </Dialog>
           </div>
 
-          {/* Filters */}
+          {/* Filters and Bulk Actions */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -357,6 +498,71 @@ export default function StudyResources() {
                 ))}
               </SelectContent>
             </Select>
+            
+            {/* Bulk Actions */}
+            {selectedResources.length > 0 && (
+              <div className="flex gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export ({selectedResources.length})
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Bulk Export Resources</DialogTitle>
+                      <DialogDescription>
+                        Export {selectedResources.length} selected resources
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => handleBulkExport('pdf')}
+                        className="flex items-center justify-center"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        PDF
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => handleBulkExport('txt')}
+                        className="flex items-center justify-center"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Text
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => handleBulkExport('csv')}
+                        className="flex items-center justify-center"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        CSV
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => handleBulkExport('json')}
+                        className="flex items-center justify-center"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        JSON
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleBulkDelete}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete ({selectedResources.length})
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Tabs */}
@@ -385,16 +591,37 @@ export default function StudyResources() {
                   ))}
                 </div>
               ) : filteredResources.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredResources.map((resource: StudyResource) => {
-                    const IconComponent = getResourceIcon(resource.type);
-                    const colorClass = getResourceColor(resource.type);
-                    
-                    return (
-                      <Card key={resource.id} className="hover:shadow-lg transition-shadow">
+                <div className="space-y-4">
+                  {/* Select All */}
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <input
+                      type="checkbox"
+                      checked={selectedResources.length === filteredResources.length}
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300"
+                    />
+                    <Label className="text-sm">
+                      Select All ({filteredResources.length} resources)
+                    </Label>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredResources.map((resource: StudyResource) => {
+                      const IconComponent = getResourceIcon(resource.type);
+                      const colorClass = getResourceColor(resource.type);
+                      const isSelected = selectedResources.includes(resource.id);
+                      
+                      return (
+                        <Card key={resource.id} className={`hover:shadow-lg transition-shadow ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => handleSelectResource(resource.id, e.target.checked)}
+                                className="rounded border-gray-300"
+                              />
                               <div className={`p-2 rounded-lg ${colorClass}`}>
                                 <IconComponent className="h-4 w-4 text-white" />
                               </div>
@@ -449,15 +676,69 @@ export default function StudyResources() {
                           <Separator className="my-3" />
                           
                           <div className="flex items-center justify-between">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleViewResource(resource)}
+                            >
                               <Eye className="h-4 w-4 mr-1" />
                               View
                             </Button>
                             <div className="flex space-x-2">
-                              <Button variant="outline" size="sm">
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button variant="outline" size="sm">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Export Resource</DialogTitle>
+                                    <DialogDescription>
+                                      Choose format to export "{resource.title}"
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <Button 
+                                      variant="outline" 
+                                      onClick={() => handleExportResource(resource, 'pdf')}
+                                      className="flex items-center justify-center"
+                                    >
+                                      <FileText className="h-4 w-4 mr-2" />
+                                      PDF
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      onClick={() => handleExportResource(resource, 'txt')}
+                                      className="flex items-center justify-center"
+                                    >
+                                      <FileText className="h-4 w-4 mr-2" />
+                                      Text
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      onClick={() => handleExportResource(resource, 'csv')}
+                                      className="flex items-center justify-center"
+                                    >
+                                      <FileText className="h-4 w-4 mr-2" />
+                                      CSV
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      onClick={() => handleExportResource(resource, 'json')}
+                                      className="flex items-center justify-center"
+                                    >
+                                      <FileText className="h-4 w-4 mr-2" />
+                                      JSON
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleShareResource(resource)}
+                              >
                                 <Share className="h-4 w-4" />
                               </Button>
                             </div>
@@ -499,6 +780,141 @@ export default function StudyResources() {
           </Tabs>
         </div>
       </div>
+
+      {/* Resource Viewer Modal */}
+      {viewingResource && (
+        <Dialog open={!!viewingResource} onOpenChange={() => setViewingResource(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {(() => {
+                  const IconComponent = getResourceIcon(viewingResource.type);
+                  const colorClass = getResourceColor(viewingResource.type);
+                  return (
+                    <>
+                      <div className={`p-2 rounded-lg ${colorClass}`}>
+                        <IconComponent className="h-4 w-4 text-white" />
+                      </div>
+                      {viewingResource.title}
+                    </>
+                  );
+                })()}
+              </DialogTitle>
+              <DialogDescription>
+                <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    {formatTimeAgo(viewingResource.createdAt)}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Eye className="h-4 w-4" />
+                    {viewingResource.accessCount} views
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                    {viewingResource.rating}
+                  </div>
+                  <Badge variant={viewingResource.isAutoGenerated ? "default" : "secondary"}>
+                    {viewingResource.isAutoGenerated ? 'Auto-Generated' : 'Manual'}
+                  </Badge>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {viewingResource.quizTitle && (
+                <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <BookOpen className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm">Related to: {viewingResource.quizTitle}</span>
+                </div>
+              )}
+              
+              <div className="prose dark:prose-invert max-w-none">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {viewingResource.content}
+                </div>
+              </div>
+              
+              {viewingResource.tags && viewingResource.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                  <span className="text-sm font-medium">Tags:</span>
+                  {viewingResource.tags.map((tag, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleShareResource(viewingResource)}
+                  >
+                    <Share className="h-4 w-4 mr-1" />
+                    Share
+                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Download className="h-4 w-4 mr-1" />
+                        Export
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Export Resource</DialogTitle>
+                        <DialogDescription>
+                          Choose format to export "{viewingResource.title}"
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleExportResource(viewingResource, 'pdf')}
+                          className="flex items-center justify-center"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          PDF
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleExportResource(viewingResource, 'txt')}
+                          className="flex items-center justify-center"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Text
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleExportResource(viewingResource, 'csv')}
+                          className="flex items-center justify-center"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          CSV
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleExportResource(viewingResource, 'json')}
+                          className="flex items-center justify-center"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          JSON
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <Button onClick={() => setViewingResource(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Layout>
   );
 }
