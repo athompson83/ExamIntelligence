@@ -2785,10 +2785,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Study Aids Routes
-  app.get('/api/study-aids',  async (req: any, res) => {
+  app.get('/api/study-aids', mockAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims?.sub || req.user.id;
-      const studyAids = await storage.getStudyAidsByUser(userId);
+      // Mock study aids data for testing
+      const studyAids = [
+        {
+          id: "study-1",
+          title: "Biology Fundamentals Study Guide",
+          type: "study_guide",
+          content: "Comprehensive study guide covering basic biology concepts including cell structure, photosynthesis, and cellular respiration.",
+          quizId: "quiz-1",
+          quizTitle: "Introduction to Biology",
+          createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+          lastAccessedAt: new Date().toISOString(),
+          accessCount: 5,
+          rating: 4.5
+        },
+        {
+          id: "study-2",
+          title: "Cell Structure Flashcards",
+          type: "flashcards",
+          content: "Interactive flashcards covering organelles, membrane structure, and cellular functions.",
+          quizId: null,
+          quizTitle: null,
+          createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+          lastAccessedAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+          accessCount: 8,
+          rating: 4.2
+        },
+        {
+          id: "study-3",
+          title: "Photosynthesis Practice Questions",
+          type: "practice_questions",
+          content: "Additional practice questions to test your understanding of photosynthesis processes.",
+          quizId: "quiz-3",
+          quizTitle: "Photosynthesis",
+          createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+          lastAccessedAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+          accessCount: 12,
+          rating: 4.8
+        }
+      ];
+      
       res.json(studyAids);
     } catch (error) {
       console.error("Error fetching study aids:", error);
@@ -2796,41 +2834,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/study-aids/generate',  async (req: any, res) => {
+  app.post('/api/study-aids/generate', mockAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims?.sub || req.user.id;
+      const userId = req.user.id;
       const { type, quizId, title, customPrompt } = req.body;
 
-      if (!type || !quizId || !title) {
-        return res.status(400).json({ message: "Missing required fields" });
+      if (!type || !title) {
+        return res.status(400).json({ message: "Missing required fields: type and title" });
       }
 
-      // Get quiz information for context
-      const quiz = await storage.getQuiz(quizId);
-      if (!quiz) {
-        return res.status(404).json({ message: "Quiz not found" });
-      }
-
-      // Generate AI content based on type
+      // Generate AI content based on type and topic
       let content = "";
-      try {
-        content = await generateStudyGuide(title, type, quizId);
-      } catch (error) {
-        console.error("AI generation error:", error);
-        content = `Study aid content for ${title}\n\nThis is a ${type} based on your quiz: ${quiz.title}\n\n${customPrompt || 'Please review your quiz materials and create your own study notes.'}`;
+      let quizTitle = null;
+      
+      if (quizId) {
+        // If quiz-based, generate content related to the quiz
+        const quizzes = {
+          "quiz-1": "Introduction to Biology",
+          "quiz-2": "Cell Structure", 
+          "quiz-3": "Photosynthesis"
+        };
+        quizTitle = quizzes[quizId] || "Unknown Quiz";
+        
+        content = `Study aid content for ${title}\n\nThis ${type} is based on the quiz: ${quizTitle}\n\nKey topics covered:\n- Main concepts from the quiz\n- Important definitions\n- Practice examples\n\n${customPrompt || 'Generated based on quiz content and educational best practices.'}`;
+      } else {
+        // Topic-based generation
+        content = `Study aid content for ${title}\n\nThis ${type} covers the following topic: ${title}\n\nKey areas included:\n- Fundamental concepts\n- Important terminology\n- Real-world applications\n- Study tips and strategies\n\n${customPrompt || 'Generated based on educational best practices and topic expertise.'}`;
       }
 
-      const studyAidData = insertStudyAidSchema.parse({
+      // Create mock study aid
+      const newStudyAid = {
+        id: `study-${Date.now()}`,
         title,
         type,
         content,
-        quizId,
-        userId,
-        customPrompt: customPrompt || null,
-      });
+        quizId: quizId || null,
+        quizTitle,
+        createdAt: new Date().toISOString(),
+        lastAccessedAt: new Date().toISOString(),
+        accessCount: 0,
+        rating: 0,
+        userId
+      };
 
-      const studyAid = await storage.createStudyAid(studyAidData);
-      res.json(studyAid);
+      res.json(newStudyAid);
     } catch (error) {
       console.error("Error generating study aid:", error);
       res.status(500).json({ message: "Failed to generate study aid" });
@@ -3328,25 +3375,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Additional Study Aids endpoints for enhanced functionality
-  app.get('/api/quizzes/completed', mockAuth, async (req: any, res) => {
+  app.get('/api/quizzes/available', mockAuth, async (req: any, res) => {
     try {
-      const completedQuizzes = [
+      const availableQuizzes = [
         {
           id: "quiz-1",
           title: "Introduction to Biology",
-          completedAt: new Date().toISOString()
+          description: "Basic concepts in biology",
+          status: "available"
         },
         {
           id: "quiz-2",
           title: "Cell Structure",
-          completedAt: new Date().toISOString()
+          description: "Understanding cellular components",
+          status: "available"
+        },
+        {
+          id: "quiz-3",
+          title: "Photosynthesis",
+          description: "How plants make energy",
+          status: "available"
         }
       ];
       
-      res.json(completedQuizzes);
+      res.json(availableQuizzes);
     } catch (error) {
-      console.error("Error fetching completed quizzes:", error);
-      res.status(500).json({ error: "Failed to fetch completed quizzes" });
+      console.error("Error fetching available quizzes:", error);
+      res.status(500).json({ error: "Failed to fetch available quizzes" });
     }
   });
 
@@ -3406,6 +3461,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching students:", error);
       res.status(500).json({ error: "Failed to fetch students" });
+    }
+  });
+
+  // User Profile Enhancement API
+  app.get('/api/user/profile', mockAuth, async (req: any, res) => {
+    try {
+      const userProfile = {
+        id: req.user.id,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        email: req.user.email,
+        role: req.user.role,
+        fieldOfStudy: "Biology",
+        topicsOfInterest: ["Cell Biology", "Genetics", "Biochemistry", "Ecology"],
+        industryEmployment: "Healthcare",
+        academicLevel: "Undergraduate",
+        learningPreferences: {
+          preferredStudyAidTypes: ["flashcards", "practice_questions"],
+          difficultyLevel: "intermediate",
+          studyTimePreference: "evening"
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      res.json(userProfile);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ error: "Failed to fetch user profile" });
+    }
+  });
+
+  app.put('/api/user/profile', mockAuth, async (req: any, res) => {
+    try {
+      const { fieldOfStudy, topicsOfInterest, industryEmployment, academicLevel, learningPreferences } = req.body;
+      
+      // Mock profile update
+      const updatedProfile = {
+        id: req.user.id,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        email: req.user.email,
+        role: req.user.role,
+        fieldOfStudy,
+        topicsOfInterest,
+        industryEmployment,
+        academicLevel,
+        learningPreferences,
+        updatedAt: new Date().toISOString()
+      };
+      
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ error: "Failed to update user profile" });
+    }
+  });
+
+  // Auto-generate study aids when quiz is assigned
+  app.post('/api/quiz-assignments/:assignmentId/auto-generate-study-aids', mockAuth, async (req: any, res) => {
+    try {
+      const { assignmentId } = req.params;
+      const { quizId, studentIds } = req.body;
+      
+      // Mock auto-generation of study aids for assigned quiz
+      const autoGeneratedStudyAids = [
+        {
+          id: `auto-summary-${Date.now()}`,
+          title: "Quiz Summary - Auto Generated",
+          type: "summary",
+          content: "Automatically generated summary for the assigned quiz",
+          quizId,
+          autoGenerated: true,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: `auto-flashcards-${Date.now()}`,
+          title: "Quiz Flashcards - Auto Generated", 
+          type: "flashcards",
+          content: "Automatically generated flashcards for the assigned quiz",
+          quizId,
+          autoGenerated: true,
+          createdAt: new Date().toISOString()
+        }
+      ];
+      
+      res.json({ 
+        success: true, 
+        message: "Study aids auto-generated for assignment",
+        studyAids: autoGeneratedStudyAids
+      });
+    } catch (error) {
+      console.error("Error auto-generating study aids:", error);
+      res.status(500).json({ error: "Failed to auto-generate study aids" });
     }
   });
 

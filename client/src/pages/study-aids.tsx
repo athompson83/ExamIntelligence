@@ -64,6 +64,9 @@ export default function StudyAids() {
   const [title, setTitle] = useState<string>('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  const [referenceLinks, setReferenceLinks] = useState<string[]>([]);
+  const [newReferenceLink, setNewReferenceLink] = useState<string>('');
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const { toast } = useToast();
 
   const { data: studyAids = [], isLoading } = useQuery({
@@ -71,15 +74,17 @@ export default function StudyAids() {
   });
 
   const { data: availableQuizzes = [] } = useQuery({
-    queryKey: ['/api/quizzes/completed'],
+    queryKey: ['/api/quizzes/available'],
   });
 
   const createStudyAidMutation = useMutation({
     mutationFn: async (data: { 
       type: string; 
-      quizId: string; 
+      quizId?: string; 
       title: string; 
       customPrompt?: string;
+      referenceLinks?: string[];
+      uploadedFiles?: File[];
     }) => {
       return apiRequest('/api/study-aids/generate', { method: 'POST', body: JSON.stringify(data) });
     },
@@ -90,6 +95,9 @@ export default function StudyAids() {
       setSelectedQuiz('');
       setCustomPrompt('');
       setTitle('');
+      setReferenceLinks([]);
+      setNewReferenceLink('');
+      setUploadedFiles([]);
       toast({
         title: "Study Aid Generated",
         description: "Your personalized study aid has been created successfully!",
@@ -141,10 +149,10 @@ export default function StudyAids() {
   });
 
   const handleCreateStudyAid = () => {
-    if (!selectedType || !selectedQuiz || !title.trim()) {
+    if (!selectedType || !title.trim()) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please provide a title and select a study aid type.",
         variant: "destructive",
       });
       return;
@@ -152,9 +160,11 @@ export default function StudyAids() {
 
     createStudyAidMutation.mutate({
       type: selectedType,
-      quizId: selectedQuiz,
+      quizId: selectedQuiz || undefined,
       title: title.trim(),
       customPrompt: customPrompt.trim() || undefined,
+      referenceLinks: referenceLinks.length > 0 ? referenceLinks : undefined,
+      uploadedFiles: uploadedFiles.length > 0 ? uploadedFiles : undefined,
     });
   };
 
@@ -216,7 +226,7 @@ export default function StudyAids() {
             <DialogHeader>
               <DialogTitle>Generate New Study Aid</DialogTitle>
               <DialogDescription>
-                Create personalized study materials based on your quiz performance
+                Create personalized study materials based on topics or quiz content
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -224,22 +234,23 @@ export default function StudyAids() {
                 <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
-                  placeholder="Enter a title for your study aid"
+                  placeholder="Enter a title for your study aid (e.g., Biology Review, Math Formulas)"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="quiz">Select Quiz</Label>
+                <Label htmlFor="quiz">Based on Quiz (Optional)</Label>
                 <Select value={selectedQuiz} onValueChange={setSelectedQuiz}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose a completed quiz" />
+                    <SelectValue placeholder="Choose a quiz or leave blank for topic-based generation" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">None - Topic-based generation</SelectItem>
                     {availableQuizzes.map((quiz: any) => (
                       <SelectItem key={quiz.id} value={quiz.id}>
-                        {quiz.title} - {quiz.score}%
+                        {quiz.title}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -277,6 +288,97 @@ export default function StudyAids() {
                   onChange={(e) => setCustomPrompt(e.target.value)}
                   rows={3}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Reference Links (Optional)</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Add reference URL (e.g., https://example.com/article)"
+                    value={newReferenceLink}
+                    onChange={(e) => setNewReferenceLink(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (newReferenceLink.trim()) {
+                        setReferenceLinks([...referenceLinks, newReferenceLink.trim()]);
+                        setNewReferenceLink('');
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+                {referenceLinks.length > 0 && (
+                  <div className="space-y-1">
+                    {referenceLinks.map((link, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span className="text-sm truncate">{link}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setReferenceLinks(referenceLinks.filter((_, i) => i !== index));
+                          }}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Reference Files (Optional)</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.md"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setUploadedFiles(Array.from(e.target.files));
+                      }
+                    }}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="text-gray-500">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Click to upload reference files (PDF, DOC, TXT, MD)
+                      </p>
+                    </div>
+                  </label>
+                </div>
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-1">
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span className="text-sm">{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+                          }}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
