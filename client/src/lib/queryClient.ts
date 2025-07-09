@@ -8,20 +8,20 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
+  method: string,
   url: string,
+  data?: any,
   options?: {
-    method?: string;
-    body?: string;
     headers?: Record<string, string>;
   },
 ): Promise<Response> {
   const res = await fetch(url, {
-    method: options?.method || 'GET',
+    method,
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
     },
-    body: options?.body,
+    body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { apiRequest } from "@/lib/queryClient";
@@ -54,8 +54,17 @@ export default function ItemBanks() {
       await apiRequest("POST", "/api/testbanks", data);
     },
     onSuccess: () => {
+      // Force refresh the testbanks list
       queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
+      queryClient.refetchQueries({ queryKey: ['/api/testbanks'] });
+      // Also clear the cache to ensure fresh data
+      queryClient.removeQueries({ queryKey: ['/api/testbanks'] });
+      
       setIsDialogOpen(false);
+      setEditingTestbank(null);
+      // Reset form by clearing any remaining state
+      const form = document.getElementById('create-testbank-form') as HTMLFormElement;
+      if (form) form.reset();
       toast({
         title: "Success",
         description: "Item bank created successfully",
@@ -252,8 +261,11 @@ export default function ItemBanks() {
                   <DialogTitle>
                     {editingTestbank ? 'Edit Item Bank' : 'Create New Item Bank'}
                   </DialogTitle>
+                  <DialogDescription>
+                    {editingTestbank ? 'Update the details of your item bank.' : 'Create a new item bank to organize your questions.'}
+                  </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form id="create-testbank-form" onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <Label htmlFor="title">Title</Label>
                     <Input
