@@ -14,6 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AIValidationPanel from "./AIValidationPanel";
 import { OrderingQuestionEditor } from "./question-types/OrderingQuestionEditor";
 import { CategorizationQuestionEditor } from "./question-types/CategorizationQuestionEditor";
+import { HotSpotQuestionEditor } from "./question-types/HotSpotQuestionEditor";
+import { FormulaQuestionEditor } from "./question-types/FormulaQuestionEditor";
 import { 
   Plus, 
   Trash2, 
@@ -53,8 +55,32 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
   const [orderingItems, setOrderingItems] = useState<Array<{ id: string; text: string; correctOrder: number }>>([]);
   
   // State for categorization questions
-  const [categorizationCategories, setCategorizationCategories] = useState<Array<{ id: string; name: string; items: string[] }>>([]);
+  const [categorizationCategories, setCategorizationCategories] = useState<Array<{ id: string; name: string; description: string; items: string[] }>>([]);
   const [categorizationItems, setCategorizationItems] = useState<Array<{ id: string; text: string; categoryId: string }>>([]);
+  
+  // State for hot spot questions
+  const [hotSpotImageUrl, setHotSpotImageUrl] = useState<string>("");
+  const [hotSpotAreas, setHotSpotAreas] = useState<Array<{ id: string; x: number; y: number; width: number; height: number; isCorrect: boolean; feedback?: string }>>([]);
+  const [hotSpotShowCalculator, setHotSpotShowCalculator] = useState<boolean>(false);
+  
+  // State for formula questions
+  const [formulaConfig, setFormulaConfig] = useState<{
+    variables: Array<{ id: string; name: string; min: number; max: number; decimals: number }>;
+    formula: string;
+    possibleAnswers: number;
+    decimalPlaces: number;
+    marginType: 'absolute' | 'percentage';
+    marginValue: number;
+    scientificNotation: boolean;
+  }>({
+    variables: [],
+    formula: "",
+    possibleAnswers: 200,
+    decimalPlaces: 0,
+    marginType: 'absolute',
+    marginValue: 0,
+    scientificNotation: false,
+  });
 
   const { data: question } = useQuery({
     queryKey: ["/api/questions", questionId],
@@ -99,6 +125,24 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
           setCategorizationCategories(config.categories);
           setCategorizationItems(config.items);
         }
+        
+        if (question.questionType === "hot_spot") {
+          setHotSpotImageUrl(config.imageUrl || "");
+          setHotSpotAreas(config.hotSpots || []);
+          setHotSpotShowCalculator(config.showCalculator || false);
+        }
+        
+        if (question.questionType === "formula") {
+          setFormulaConfig({
+            variables: config.variables || [],
+            formula: config.formula || "",
+            possibleAnswers: config.possibleAnswers || 200,
+            decimalPlaces: config.decimalPlaces || 0,
+            marginType: config.marginType || 'absolute',
+            marginValue: config.marginValue || 0,
+            scientificNotation: config.scientificNotation || false,
+          });
+        }
       }
     }
   }, [question, form]);
@@ -126,6 +170,22 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
               acc[item.id] = item.categoryId;
               return acc;
             }, {} as Record<string, string>)
+          };
+          break;
+        
+        case "hot_spot":
+          questionConfig = {
+            imageUrl: hotSpotImageUrl,
+            hotSpots: hotSpotAreas,
+            showCalculator: hotSpotShowCalculator,
+            correctSpots: hotSpotAreas.filter(spot => spot.isCorrect).map(spot => spot.id)
+          };
+          break;
+        
+        case "formula":
+          questionConfig = {
+            ...formulaConfig,
+            correctAnswers: [] // Will be generated based on variables and formula
           };
           break;
         
@@ -471,6 +531,28 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                         setCategorizationCategories(categories);
                         setCategorizationItems(items);
                       }}
+                    />
+                  )}
+
+                  {/* Hot Spot Question Editor */}
+                  {watchedQuestionType === "hot_spot" && (
+                    <HotSpotQuestionEditor
+                      imageUrl={hotSpotImageUrl}
+                      hotSpots={hotSpotAreas}
+                      showCalculator={hotSpotShowCalculator}
+                      onChange={(imageUrl, hotSpots, showCalculator) => {
+                        setHotSpotImageUrl(imageUrl);
+                        setHotSpotAreas(hotSpots);
+                        setHotSpotShowCalculator(showCalculator);
+                      }}
+                    />
+                  )}
+
+                  {/* Formula Question Editor */}
+                  {watchedQuestionType === "formula" && (
+                    <FormulaQuestionEditor
+                      {...formulaConfig}
+                      onChange={setFormulaConfig}
                     />
                   )}
 

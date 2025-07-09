@@ -34,11 +34,12 @@ interface OrderingQuestionEditorProps {
   onChange: (items: OrderingItem[]) => void;
 }
 
-function SortableItem({ id, text, onTextChange, onRemove }: {
+function SortableItem({ id, text, onTextChange, onRemove, index }: {
   id: string;
   text: string;
   onTextChange: (text: string) => void;
   onRemove: () => void;
+  index: number;
 }) {
   const {
     attributes,
@@ -58,19 +59,26 @@ function SortableItem({ id, text, onTextChange, onRemove }: {
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center space-x-2 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg ${
+      className={`flex items-center space-x-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg ${
         isDragging ? "opacity-50" : ""
       }`}
     >
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-        <GripVertical className="h-5 w-5 text-gray-400" />
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full flex items-center justify-center text-sm font-medium">
+          {index + 1}
+        </div>
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-5 w-5 text-gray-400" />
+        </div>
       </div>
-      <Input
-        value={text}
-        onChange={(e) => onTextChange(e.target.value)}
-        placeholder="Enter item text..."
-        className="flex-1"
-      />
+      <div className="flex-1">
+        <Input
+          value={text}
+          onChange={(e) => onTextChange(e.target.value)}
+          placeholder="Enter answer text..."
+          className="w-full"
+        />
+      </div>
       <Button
         type="button"
         variant="ghost"
@@ -146,17 +154,22 @@ export function OrderingQuestionEditor({ items, onChange }: OrderingQuestionEdit
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Label>Items to Order</Label>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addItem}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Item
-          </Button>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Answers</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addItem}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Answer
+            </Button>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Create the answers in the correct order. Students will see them shuffled.
+          </p>
         </div>
 
         <DndContext
@@ -166,11 +179,12 @@ export function OrderingQuestionEditor({ items, onChange }: OrderingQuestionEdit
         >
           <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
-              {items.map((item) => (
+              {items.map((item, index) => (
                 <SortableItem
                   key={item.id}
                   id={item.id}
                   text={item.text}
+                  index={index}
                   onTextChange={(text) => updateItemText(item.id, text)}
                   onRemove={() => removeItem(item.id)}
                 />

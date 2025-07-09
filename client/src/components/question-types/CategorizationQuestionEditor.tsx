@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Trash2, Plus, GripVertical } from "lucide-react";
 import {
@@ -33,6 +34,7 @@ interface CategorizationItem {
 interface Category {
   id: string;
   name: string;
+  description: string;
   items: string[]; // Array of item IDs
 }
 
@@ -107,10 +109,15 @@ function DroppableCategory({ category, items, onRemoveItem }: {
   return (
     <div
       ref={setNodeRef}
-      className="min-h-[100px] p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      className="min-h-[120px] p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50"
     >
-      <h4 className="font-medium text-sm mb-2">{category.name}</h4>
-      <div className="space-y-1">
+      <div className="mb-3">
+        <h4 className="font-medium text-base mb-1">{category.name}</h4>
+        {category.description && (
+          <p className="text-sm text-gray-600 dark:text-gray-400">{category.description}</p>
+        )}
+      </div>
+      <div className="space-y-2">
         {categoryItems.map((item) => (
           <div
             key={item.id}
@@ -129,8 +136,8 @@ function DroppableCategory({ category, items, onRemoveItem }: {
           </div>
         ))}
         {categoryItems.length === 0 && (
-          <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-            Drop items here
+          <div className="text-center py-6 text-gray-500 dark:text-gray-400 text-sm">
+            Drop answers here
           </div>
         )}
       </div>
@@ -181,6 +188,7 @@ export function CategorizationQuestionEditor({ categories, items, onChange }: Ca
     const newCategory: Category = {
       id: `category-${Date.now()}`,
       name: "",
+      description: "",
       items: [],
     };
     onChange([...categories, newCategory], items);
@@ -198,6 +206,13 @@ export function CategorizationQuestionEditor({ categories, items, onChange }: Ca
   const updateCategoryName = (categoryId: string, name: string) => {
     const updatedCategories = categories.map(cat =>
       cat.id === categoryId ? { ...cat, name } : cat
+    );
+    onChange(updatedCategories, items);
+  };
+
+  const updateCategoryDescription = (categoryId: string, description: string) => {
+    const updatedCategories = categories.map(cat =>
+      cat.id === categoryId ? { ...cat, description } : cat
     );
     onChange(updatedCategories, items);
   };
@@ -266,24 +281,33 @@ export function CategorizationQuestionEditor({ categories, items, onChange }: Ca
             </Button>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-4">
             {categories.map((category) => (
-              <div key={category.id} className="flex items-center space-x-2">
-                <Input
-                  value={category.name}
-                  onChange={(e) => updateCategoryName(category.id, e.target.value)}
-                  placeholder="Category name..."
-                  className="flex-1"
+              <div key={category.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Input
+                    value={category.name}
+                    onChange={(e) => updateCategoryName(category.id, e.target.value)}
+                    placeholder="Category name..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeCategory(category.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Textarea
+                  value={category.description}
+                  onChange={(e) => updateCategoryDescription(category.id, e.target.value)}
+                  placeholder="Category description (optional)..."
+                  rows={2}
+                  className="w-full"
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeCategory(category.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </div>
             ))}
           </div>
