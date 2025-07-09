@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AIValidationPanel from "./AIValidationPanel";
+import { OrderingQuestionEditor } from "./question-types/OrderingQuestionEditor";
+import { CategorizationQuestionEditor } from "./question-types/CategorizationQuestionEditor";
 import { 
   Plus, 
   Trash2, 
@@ -46,6 +48,13 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
     { text: "", isCorrect: false },
   ]);
   const [validationResults, setValidationResults] = useState<any>(null);
+  
+  // State for ordering questions
+  const [orderingItems, setOrderingItems] = useState<Array<{ id: string; text: string; correctOrder: number }>>([]);
+  
+  // State for categorization questions
+  const [categorizationCategories, setCategorizationCategories] = useState<Array<{ id: string; name: string; items: string[] }>>([]);
+  const [categorizationItems, setCategorizationItems] = useState<Array<{ id: string; text: string; categoryId: string }>>([]);
 
   const { data: question } = useQuery({
     queryKey: ["/api/questions", questionId],
@@ -77,18 +86,95 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
       if (question.answerOptions) {
         setAnswerOptions(question.answerOptions);
       }
+
+      // Load question-specific data from questionConfig
+      if (question.questionConfig) {
+        const config = question.questionConfig;
+        
+        if (question.questionType === "ordering" && config.items) {
+          setOrderingItems(config.items);
+        }
+        
+        if (question.questionType === "categorization" && config.categories && config.items) {
+          setCategorizationCategories(config.categories);
+          setCategorizationItems(config.items);
+        }
+      }
     }
   }, [question, form]);
 
   const saveQuestionMutation = useMutation({
     mutationFn: async (data: QuestionFormData) => {
+      let questionConfig = {};
+      let formattedAnswerOptions = [];
+      let correctAnswers: string[] = [];
+
+      // Handle different question types
+      switch (data.questionType) {
+        case "ordering":
+          questionConfig = {
+            items: orderingItems,
+            correctOrder: orderingItems.map(item => item.id)
+          };
+          break;
+        
+        case "categorization":
+          questionConfig = {
+            categories: categorizationCategories,
+            items: categorizationItems,
+            correctMapping: categorizationItems.reduce((acc, item) => {
+              acc[item.id] = item.categoryId;
+              return acc;
+            }, {} as Record<string, string>)
+          };
+          break;
+        
+        case "true_false":
+          formattedAnswerOptions = [
+            { text: "True", isCorrect: answerOptions[0]?.isCorrect || false },
+            { text: "False", isCorrect: answerOptions[1]?.isCorrect || false }
+          ];
+          correctAnswers = formattedAnswerOptions
+            .filter(option => option.isCorrect)
+            .map(option => option.text);
+          break;
+        
+        case "multiple_choice":
+        case "multiple_response":
+          formattedAnswerOptions = answerOptions.filter(option => option.text.trim() !== "");
+          correctAnswers = answerOptions
+            .filter(option => option.isCorrect && option.text.trim() !== "")
+            .map(option => option.text);
+          break;
+        
+        case "numerical":
+          formattedAnswerOptions = answerOptions.filter(option => option.text.trim() !== "");
+          correctAnswers = answerOptions
+            .filter(option => option.isCorrect && option.text.trim() !== "")
+            .map(option => option.text);
+          break;
+        
+        case "essay":
+        case "file_upload":
+        case "fill_blank":
+        case "stimulus":
+        case "text_no_question":
+          // These don't need answer options
+          break;
+        
+        default:
+          formattedAnswerOptions = answerOptions.filter(option => option.text.trim() !== "");
+          correctAnswers = answerOptions
+            .filter(option => option.isCorrect && option.text.trim() !== "")
+            .map(option => option.text);
+      }
+
       const formattedData = {
         ...data,
         tags: data.tags ? data.tags.split(',').map(tag => tag.trim()) : [],
-        answerOptions: answerOptions.filter(option => option.text.trim() !== ""),
-        correctAnswers: answerOptions
-          .filter(option => option.isCorrect && option.text.trim() !== "")
-          .map(option => option.text),
+        answerOptions: formattedAnswerOptions,
+        correctAnswers,
+        questionConfig,
       };
 
       if (questionId) {
@@ -235,10 +321,19 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                             <SelectContent>
                               <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
                               <SelectItem value="multiple_response">Multiple Response</SelectItem>
-                              <SelectItem value="constructed_response">Constructed Response</SelectItem>
                               <SelectItem value="true_false">True/False</SelectItem>
-                              <SelectItem value="hot_spot">Hot Spot</SelectItem>
+                              <SelectItem value="fill_blank">Fill in the Blank</SelectItem>
+                              <SelectItem value="multiple_fill_blank">Multiple Fill in the Blank</SelectItem>
+                              <SelectItem value="essay">Essay</SelectItem>
+                              <SelectItem value="file_upload">File Upload</SelectItem>
+                              <SelectItem value="formula">Formula</SelectItem>
+                              <SelectItem value="numerical">Numeric</SelectItem>
+                              <SelectItem value="matching">Matching</SelectItem>
+                              <SelectItem value="ordering">Ordering</SelectItem>
                               <SelectItem value="categorization">Categorization</SelectItem>
+                              <SelectItem value="hot_spot">Hot Spot</SelectItem>
+                              <SelectItem value="stimulus">Stimulus</SelectItem>
+                              <SelectItem value="text_no_question">Text Block</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -273,7 +368,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                     />
                   </div>
 
-                  {/* Answer Options */}
+                  {/* Answer Options for Multiple Choice/Response */}
                   {(watchedQuestionType === "multiple_choice" || watchedQuestionType === "multiple_response") && (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -291,7 +386,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                       
                       <div className="space-y-3">
                         {answerOptions.map((option, index) => (
-                          <div key={index} className="answer-option">
+                          <div key={index} className="answer-option flex items-center space-x-2">
                             <Checkbox
                               checked={option.isCorrect}
                               onCheckedChange={(checked) => 
@@ -317,6 +412,120 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* True/False Options */}
+                  {watchedQuestionType === "true_false" && (
+                    <div className="space-y-4">
+                      <FormLabel>Correct Answer</FormLabel>
+                      <div className="flex space-x-4">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="trueFalseAnswer"
+                            value="true"
+                            checked={answerOptions[0]?.isCorrect || false}
+                            onChange={() => {
+                              setAnswerOptions([
+                                { text: "True", isCorrect: true },
+                                { text: "False", isCorrect: false }
+                              ]);
+                            }}
+                          />
+                          <span>True</span>
+                        </label>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="trueFalseAnswer"
+                            value="false"
+                            checked={answerOptions[1]?.isCorrect || false}
+                            onChange={() => {
+                              setAnswerOptions([
+                                { text: "True", isCorrect: false },
+                                { text: "False", isCorrect: true }
+                              ]);
+                            }}
+                          />
+                          <span>False</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ordering Question Editor */}
+                  {watchedQuestionType === "ordering" && (
+                    <OrderingQuestionEditor
+                      items={orderingItems}
+                      onChange={setOrderingItems}
+                    />
+                  )}
+
+                  {/* Categorization Question Editor */}
+                  {watchedQuestionType === "categorization" && (
+                    <CategorizationQuestionEditor
+                      categories={categorizationCategories}
+                      items={categorizationItems}
+                      onChange={(categories, items) => {
+                        setCategorizationCategories(categories);
+                        setCategorizationItems(items);
+                      }}
+                    />
+                  )}
+
+                  {/* Essay Question */}
+                  {watchedQuestionType === "essay" && (
+                    <div className="space-y-4">
+                      <FormLabel>Essay Question Configuration</FormLabel>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          <strong>Note:</strong> Essay questions are open-ended and require manual grading. 
+                          Students will see a text area to enter their response.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fill in the Blank */}
+                  {watchedQuestionType === "fill_blank" && (
+                    <div className="space-y-4">
+                      <FormLabel>Fill in the Blank Configuration</FormLabel>
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                          <strong>Instructions:</strong> Use [blank] or [answer] in your question text to indicate where students should fill in answers.
+                          Example: "The capital of France is [blank]."
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* File Upload */}
+                  {watchedQuestionType === "file_upload" && (
+                    <div className="space-y-4">
+                      <FormLabel>File Upload Configuration</FormLabel>
+                      <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          <strong>Note:</strong> Students will be able to upload files as their response. 
+                          Supported formats: PDF, DOC, DOCX, TXT, images.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Numerical Answer */}
+                  {watchedQuestionType === "numerical" && (
+                    <div className="space-y-4">
+                      <FormLabel>Correct Answer</FormLabel>
+                      <Input
+                        placeholder="Enter numerical answer (e.g., 42 or 3.14)"
+                        value={answerOptions[0]?.text || ""}
+                        onChange={(e) => {
+                          setAnswerOptions([{ text: e.target.value, isCorrect: true }]);
+                        }}
+                        type="number"
+                        step="any"
+                      />
                     </div>
                   )}
 
