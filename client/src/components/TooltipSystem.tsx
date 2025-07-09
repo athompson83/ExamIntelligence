@@ -265,30 +265,14 @@ export const TooltipSystem: React.FC = () => {
   const [dismissedTooltips, setDismissedTooltips] = useState<Set<string>>(new Set());
   const [isTooltipSystemMuted, setIsTooltipSystemMuted] = useState(false);
 
-  // Check if tooltip system is muted on mount and cleanup old dismissed tooltips
+  // Check if tooltip system is muted on mount and load permanently dismissed tooltips
   useEffect(() => {
     const isMuted = localStorage.getItem('tooltipSystemMuted') === 'true';
     setIsTooltipSystemMuted(isMuted);
     
-    // Clean up old dismissed tooltips from previous sessions (older than 24 hours)
-    const currentTime = Date.now();
-    const keysToRemove: string[] = [];
-    
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith('dismissed_')) {
-        const sessionValue = localStorage.getItem(key);
-        if (sessionValue && sessionValue.startsWith('session_')) {
-          const sessionTime = parseInt(sessionValue.replace('session_', ''));
-          // Remove if older than 24 hours (next login session)
-          if (currentTime - sessionTime > 24 * 60 * 60 * 1000) {
-            keysToRemove.push(key);
-          }
-        }
-      }
-    }
-    
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    // Load permanently dismissed tooltips
+    const permanentlyDismissed = JSON.parse(localStorage.getItem('permanentlyDismissedTooltips') || '[]');
+    setDismissedTooltips(new Set(permanentlyDismissed));
   }, []);
 
   // Save mute state to localStorage
@@ -346,11 +330,8 @@ export const TooltipSystem: React.FC = () => {
     // Initialize tooltip queue with non-dismissed tooltips only if not muted
     if (!isTooltipSystemMuted) {
       const availableTooltips = tooltipData.filter(tooltip => {
-        // Check if dismissed in current session
-        const dismissedKey = `dismissed_${tooltip.id}`;
-        const isDismissedThisSession = localStorage.getItem(dismissedKey) !== null;
-        
-        return !dismissedTooltips.has(tooltip.id) && !isDismissedThisSession;
+        // Check if permanently dismissed
+        return !dismissedTooltips.has(tooltip.id);
       });
       setTooltipQueue(availableTooltips);
     } else {
@@ -389,11 +370,12 @@ export const TooltipSystem: React.FC = () => {
     console.log('Tooltip interaction:', action, activeTooltip?.id);
     
     if (action === 'dismissed') {
-      // Mark this specific tooltip as dismissed until next login
+      // Mark this specific tooltip as permanently dismissed
       if (activeTooltip?.id) {
-        const currentSession = `session_${Date.now()}`;
-        const dismissedKey = `dismissed_${activeTooltip.id}`;
-        localStorage.setItem(dismissedKey, currentSession);
+        const currentDismissed = JSON.parse(localStorage.getItem('permanentlyDismissedTooltips') || '[]');
+        const updatedDismissed = [...currentDismissed, activeTooltip.id];
+        localStorage.setItem('permanentlyDismissedTooltips', JSON.stringify(updatedDismissed));
+        setDismissedTooltips(new Set(updatedDismissed));
       }
       handleTooltipClose();
     }
