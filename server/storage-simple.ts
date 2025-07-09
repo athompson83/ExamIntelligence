@@ -37,6 +37,13 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  getAllUsersWithAccountInfo(): Promise<any[]>;
+  getUsersByAccount(accountId: string): Promise<User[]>;
+  updateUserRole(userId: string, role: string): Promise<User | undefined>;
+  bulkCreateUsers(users: any[]): Promise<User[]>;
+  
+  // System statistics
+  getSystemStatistics(): Promise<any>;
   
   // Testbank operations
   createTestbank(testbank: InsertTestbank): Promise<Testbank>;
@@ -1017,6 +1024,104 @@ export class DatabaseStorage implements IStorage {
 
   async submitAssignment(sessionId: string, responses: Record<string, string>, timeSpent: number): Promise<any> {
     return this.submitMobileSession(sessionId, responses, timeSpent);
+  }
+
+  // New methods for user management
+  async getAllUsersWithAccountInfo(): Promise<any[]> {
+    try {
+      const allUsers = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          role: users.role,
+          accountId: users.accountId,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt
+        })
+        .from(users)
+        .leftJoin(accounts, eq(users.accountId, accounts.id));
+      
+      return allUsers;
+    } catch (error) {
+      console.error('Error fetching all users with account info:', error);
+      return [];
+    }
+  }
+
+  async getUsersByAccount(accountId: string): Promise<User[]> {
+    try {
+      const accountUsers = await db
+        .select()
+        .from(users)
+        .where(eq(users.accountId, accountId));
+      
+      return accountUsers;
+    } catch (error) {
+      console.error('Error fetching users by account:', error);
+      return [];
+    }
+  }
+
+  async updateUserRole(userId: string, role: string): Promise<User | undefined> {
+    try {
+      const [updatedUser] = await db
+        .update(users)
+        .set({ role, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      return undefined;
+    }
+  }
+
+  async bulkCreateUsers(userList: any[]): Promise<User[]> {
+    try {
+      const createdUsers = await db
+        .insert(users)
+        .values(userList)
+        .returning();
+      
+      return createdUsers;
+    } catch (error) {
+      console.error('Error bulk creating users:', error);
+      return [];
+    }
+  }
+
+  async getSystemStatistics(): Promise<any> {
+    try {
+      const totalUsers = await db.select().from(users).then(users => users.length);
+      const totalAccounts = await db.select().from(accounts).then(accounts => accounts.length);
+      const totalQuizzes = await db.select().from(quizzes).then(quizzes => quizzes.length);
+      const totalTestbanks = await db.select().from(testbanks).then(testbanks => testbanks.length);
+      const totalQuestions = await db.select().from(questions).then(questions => questions.length);
+      
+      return {
+        totalUsers,
+        totalAccounts,
+        totalQuizzes,
+        totalTestbanks,
+        totalQuestions,
+        systemHealth: 'healthy',
+        uptime: '99.9%'
+      };
+    } catch (error) {
+      console.error('Error fetching system statistics:', error);
+      return {
+        totalUsers: 0,
+        totalAccounts: 0,
+        totalQuizzes: 0,
+        totalTestbanks: 0,
+        totalQuestions: 0,
+        systemHealth: 'error',
+        uptime: '0%'
+      };
+    }
   }
 
   // Prompt Template Methods

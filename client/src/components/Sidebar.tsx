@@ -53,7 +53,7 @@ export default function Sidebar() {
   ];
 
   const systemItems = [
-    ...(user?.role === 'admin' ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
+    ...(['admin', 'teacher', 'super_admin'].includes(user?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
     { href: "/settings", label: "Settings", icon: Settings, tourId: "settings" },
   ];
 

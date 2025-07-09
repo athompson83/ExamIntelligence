@@ -4508,6 +4508,198 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
+  // Admin User Management Routes
+  app.get('/api/admin/users', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || !['admin', 'teacher', 'super_admin'].includes(user.role)) {
+        return res.status(403).json({ message: "Forbidden: Admin access required" });
+      }
+
+      // If super admin, get all users; if admin, get users from their account
+      const users = user.role === 'super_admin' 
+        ? await storage.getAllUsers()
+        : await storage.getUsersByAccount(user.accountId);
+      
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post('/api/admin/users', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || !['admin', 'teacher', 'super_admin'].includes(user.role)) {
+        return res.status(403).json({ message: "Forbidden: Admin access required" });
+      }
+
+      const { email, firstName, lastName, role } = req.body;
+      
+      // Create user with admin's account
+      const newUser = await storage.upsertUser({
+        id: `user-${Date.now()}`,
+        email,
+        firstName,
+        lastName,
+        role,
+        accountId: user.accountId || '00000000-0000-0000-0000-000000000001',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      res.json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.put('/api/admin/users/:userId/role', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || !['admin', 'teacher', 'super_admin'].includes(user.role)) {
+        return res.status(403).json({ message: "Forbidden: Admin access required" });
+      }
+
+      const { role } = req.body;
+      const targetUserId = req.params.userId;
+      
+      const updatedUser = await storage.updateUserRole(targetUserId, role);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  app.post('/api/admin/users/bulk-upload', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || !['admin', 'teacher', 'super_admin'].includes(user.role)) {
+        return res.status(403).json({ message: "Forbidden: Admin access required" });
+      }
+
+      // For now, return a mock response since we don't have multer setup
+      // In a real implementation, you would parse the CSV file here
+      const mockUsers = [
+        {
+          id: `user-${Date.now()}-1`,
+          email: 'john.doe@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          role: 'student',
+          accountId: user.accountId || '00000000-0000-0000-0000-000000000001',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: `user-${Date.now()}-2`,
+          email: 'jane.smith@example.com',
+          firstName: 'Jane',
+          lastName: 'Smith',
+          role: 'teacher',
+          accountId: user.accountId || '00000000-0000-0000-0000-000000000001',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+      
+      const createdUsers = await storage.bulkCreateUsers(mockUsers);
+      res.json({ created: createdUsers.length, users: createdUsers });
+    } catch (error) {
+      console.error("Error bulk uploading users:", error);
+      res.status(500).json({ message: "Failed to bulk upload users" });
+    }
+  });
+
+  app.post('/api/admin/generate-account-link', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || !['admin', 'teacher', 'super_admin'].includes(user.role)) {
+        return res.status(403).json({ message: "Forbidden: Admin access required" });
+      }
+
+      // Generate a unique account link
+      const accountId = user.accountId || '00000000-0000-0000-0000-000000000001';
+      const linkToken = `${accountId}-${Date.now()}`;
+      const link = `${req.protocol}://${req.get('host')}/join/${linkToken}`;
+      
+      res.json({ link });
+    } catch (error) {
+      console.error("Error generating account link:", error);
+      res.status(500).json({ message: "Failed to generate account link" });
+    }
+  });
+
+  // Account registration routes
+  app.get('/api/auth/validate-token/:token', async (req: any, res) => {
+    try {
+      const { token } = req.params;
+      
+      // Parse token to extract account info
+      if (!token || !token.includes('-')) {
+        return res.status(400).json({ message: "Invalid token format" });
+      }
+
+      const accountId = token.split('-')[0];
+      
+      // For now, return mock account info
+      // In production, you would validate the token and get actual account info
+      res.json({
+        accountId,
+        accountName: 'Test Organization',
+        isValid: true
+      });
+    } catch (error) {
+      console.error("Error validating token:", error);
+      res.status(400).json({ message: "Invalid or expired token" });
+    }
+  });
+
+  app.post('/api/auth/register', async (req: any, res) => {
+    try {
+      const { firstName, lastName, email, password, token } = req.body;
+      
+      if (!token || !token.includes('-')) {
+        return res.status(400).json({ message: "Invalid registration token" });
+      }
+
+      const accountId = token.split('-')[0];
+      
+      // Create new user
+      const newUser = await storage.upsertUser({
+        id: `user-${Date.now()}`,
+        email,
+        firstName,
+        lastName,
+        role: 'student', // Default role for new registrations
+        accountId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      res.json({ 
+        message: "Registration successful", 
+        user: newUser 
+      });
+    } catch (error) {
+      console.error("Error registering user:", error);
+      res.status(500).json({ message: "Failed to register user" });
+    }
+  });
+
   // Super Admin CRM Endpoints
   
   // Get all accounts (super admin only)

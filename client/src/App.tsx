@@ -68,6 +68,7 @@ const SystemTest = lazy(() => import("@/pages/SystemTest"));
 const ComprehensiveTest = lazy(() => import("@/pages/ComprehensiveTest"));
 const SectionManagementTest = lazy(() => import("@/pages/SectionManagementTest"));
 const Test = lazy(() => import("@/pages/Test"));
+const AccountRegistration = lazy(() => import("@/pages/account-registration"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -266,6 +267,9 @@ function Router() {
           </Route>
         </>
       )}
+      <Route path="/join/:token">
+        {(params) => <Suspense fallback={<LoadingSpinner />}><AccountRegistration token={params.token} /></Suspense>}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
