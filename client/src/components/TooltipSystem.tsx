@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MessageCircle, Lightbulb, Info, Zap, BookOpen, Target } from 'lucide-react';
+import { X, MessageCircle, Lightbulb, Info, Zap, BookOpen, Target, VolumeX, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 interface TooltipData {
   id: string;
@@ -264,18 +265,9 @@ export const TooltipSystem: React.FC = () => {
   const [tooltipQueue, setTooltipQueue] = useState<TooltipData[]>([]);
   const [dismissedTooltips, setDismissedTooltips] = useState<Set<string>>(new Set());
   const [isTooltipSystemMuted, setIsTooltipSystemMuted] = useState(false);
+  const { toast } = useToast();
 
-  // Check if tooltip system is muted on mount and load permanently dismissed tooltips
-  useEffect(() => {
-    const isMuted = localStorage.getItem('tooltipSystemMuted') === 'true';
-    setIsTooltipSystemMuted(isMuted);
-    
-    // Load permanently dismissed tooltips
-    const permanentlyDismissed = JSON.parse(localStorage.getItem('permanentlyDismissedTooltips') || '[]');
-    setDismissedTooltips(new Set(permanentlyDismissed));
-  }, []);
-
-  // Save mute state to localStorage
+  // Save mute state to localStorage and show notification
   const toggleTooltipMute = useCallback(() => {
     const newMutedState = !isTooltipSystemMuted;
     setIsTooltipSystemMuted(newMutedState);
@@ -286,7 +278,37 @@ export const TooltipSystem: React.FC = () => {
       setActiveTooltip(null);
       setTooltipQueue([]);
     }
-  }, [isTooltipSystemMuted]);
+    
+    // Show toast notification
+    toast({
+      title: newMutedState ? 'AI Tooltips Disabled' : 'AI Tooltips Enabled',
+      description: newMutedState 
+        ? 'You will no longer receive AI assistant tooltips. Click the button again to re-enable them.' 
+        : 'AI assistant tooltips are now active. You\'ll receive helpful tips and guidance as you navigate.',
+      duration: 3000,
+    });
+  }, [isTooltipSystemMuted, toast]);
+
+  // Check if tooltip system is muted on mount and load permanently dismissed tooltips
+  useEffect(() => {
+    const isMuted = localStorage.getItem('tooltipSystemMuted') === 'true';
+    setIsTooltipSystemMuted(isMuted);
+    
+    // Load permanently dismissed tooltips
+    const permanentlyDismissed = JSON.parse(localStorage.getItem('permanentlyDismissedTooltips') || '[]');
+    setDismissedTooltips(new Set(permanentlyDismissed));
+    
+    // Add keyboard shortcut (Alt + T for Toggle tooltips)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        toggleTooltipMute();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [toggleTooltipMute]);
 
   // Sample tooltip data
   const tooltipData: TooltipData[] = [
@@ -392,29 +414,59 @@ export const TooltipSystem: React.FC = () => {
 
   return (
     <>
-      {/* Mute/Unmute Toggle Button */}
-      <motion.button
-        onClick={toggleTooltipMute}
-        className={`fixed bottom-4 right-4 z-40 p-3 rounded-full shadow-lg border-2 transition-all duration-200 ${
-          isTooltipSystemMuted 
-            ? 'bg-gray-100 border-gray-300 text-gray-500 hover:bg-gray-200' 
-            : 'bg-blue-600 border-blue-500 text-white hover:bg-blue-700'
-        }`}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        title={isTooltipSystemMuted ? 'Enable AI Assistant' : 'Disable AI Assistant'}
+      {/* Enhanced Mute/Unmute Toggle Button */}
+      <motion.div
+        className="fixed bottom-4 right-4 z-40"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
       >
-        {isTooltipSystemMuted ? (
-          <div className="flex items-center">
-            <MessageCircle className="w-5 h-5" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-              <X className="w-2 h-2 text-white" />
+        <motion.button
+          onClick={toggleTooltipMute}
+          className={`
+            relative group p-3 rounded-full shadow-lg border-2 transition-all duration-300 
+            ${isTooltipSystemMuted 
+              ? 'bg-gray-100 border-gray-300 text-gray-500 hover:bg-gray-200 hover:border-gray-400' 
+              : 'bg-blue-600 border-blue-500 text-white hover:bg-blue-700 hover:border-blue-600'
+            }
+            ${!isTooltipSystemMuted && !activeTooltip ? 'animate-pulse' : ''}
+          `}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          title={isTooltipSystemMuted ? 'Enable AI Assistant Tooltips (Alt+T)' : 'Disable AI Assistant Tooltips (Alt+T)'}
+        >
+          {isTooltipSystemMuted ? (
+            <VolumeX className="w-5 h-5" />
+          ) : (
+            <Volume2 className="w-5 h-5" />
+          )}
+          
+          {/* Tooltip on hover */}
+          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-black text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+            <div className="text-center">
+              {isTooltipSystemMuted ? 'Enable AI Tooltips' : 'Disable AI Tooltips'}
+              <div className="text-gray-400 mt-1">Alt+T</div>
             </div>
+            <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
           </div>
-        ) : (
-          <MessageCircle className="w-5 h-5" />
-        )}
-      </motion.button>
+        </motion.button>
+        
+        {/* Status indicator */}
+        <motion.div
+          className={`absolute -top-1 -left-1 w-3 h-3 rounded-full ${
+            isTooltipSystemMuted ? 'bg-red-500' : 'bg-green-500'
+          }`}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [1, 0.7, 1]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </motion.div>
 
       {/* Tooltip System */}
       <AnimatePresence>
@@ -448,6 +500,44 @@ export const useTooltipTrigger = () => {
   };
 
   return { triggerTooltip };
+};
+
+// Hook for accessing tooltip mute state and controls
+export const useTooltipMute = () => {
+  const [isTooltipSystemMuted, setIsTooltipSystemMuted] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const isMuted = localStorage.getItem('tooltipSystemMuted') === 'true';
+    setIsTooltipSystemMuted(isMuted);
+  }, []);
+
+  const toggleTooltipMute = useCallback(() => {
+    const newMutedState = !isTooltipSystemMuted;
+    setIsTooltipSystemMuted(newMutedState);
+    localStorage.setItem('tooltipSystemMuted', newMutedState.toString());
+    
+    // Dispatch event to notify TooltipSystem component
+    const event = new CustomEvent('tooltipMuteChanged', {
+      detail: { isMuted: newMutedState }
+    });
+    window.dispatchEvent(event);
+    
+    // Show toast notification
+    toast({
+      title: newMutedState ? 'AI Tooltips Disabled' : 'AI Tooltips Enabled',
+      description: newMutedState 
+        ? 'You will no longer receive AI assistant tooltips. Use Alt+T to toggle them back on.' 
+        : 'AI assistant tooltips are now active. Press Alt+T to disable them anytime.',
+      duration: 3000,
+    });
+  }, [isTooltipSystemMuted, toast]);
+
+  return { 
+    isTooltipSystemMuted, 
+    toggleTooltipMute,
+    setTooltipSystemMuted 
+  };
 };
 
 export default TooltipSystem;

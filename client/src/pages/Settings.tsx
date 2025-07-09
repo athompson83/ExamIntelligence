@@ -22,14 +22,17 @@ import {
   Key,
   Mail,
   Monitor,
-  Smartphone
+  Smartphone,
+  MessageCircle
 } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useTooltipMute } from "@/components/TooltipSystem";
 
 export default function Settings() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("profile");
+  const { isTooltipSystemMuted, toggleTooltipMute } = useTooltipMute();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -176,6 +179,14 @@ export default function Settings() {
                 >
                   <Palette className="h-4 w-4 mr-2" />
                   Appearance
+                </Button>
+                <Button
+                  variant={activeTab === "interface" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => setActiveTab("interface")}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Interface
                 </Button>
                 {user?.role === 'admin' && (
                   <Button
@@ -594,6 +605,95 @@ export default function Settings() {
                           </div>
                           <Switch />
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === "interface" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <MessageCircle className="h-5 w-5 mr-2" />
+                    Interface Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">AI Assistant</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">AI Tooltips</p>
+                            <p className="text-sm text-gray-500">
+                              Show helpful tooltips and guidance from the AI assistant
+                            </p>
+                            <div className="flex items-center mt-2 space-x-2">
+                              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">Alt</kbd>
+                              <span className="text-xs">+</span>
+                              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">T</kbd>
+                              <span className="text-xs text-gray-500">Quick toggle</span>
+                            </div>
+                          </div>
+                          <Switch
+                            checked={!isTooltipSystemMuted}
+                            onCheckedChange={toggleTooltipMute}
+                          />
+                        </div>
+                        <Separator />
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Tooltip Status</p>
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${isTooltipSystemMuted ? 'bg-red-500' : 'bg-green-500'}`} />
+                            <span className="text-sm text-gray-600">
+                              {isTooltipSystemMuted ? 'AI tooltips are disabled' : 'AI tooltips are active'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Floating Controls</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Show Floating Mute Button</p>
+                            <p className="text-sm text-gray-500">
+                              Display floating tooltip mute button in bottom-right corner
+                            </p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Reset Options</h3>
+                      <div className="space-y-4">
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            localStorage.removeItem('permanentlyDismissedTooltips');
+                            toast({
+                              title: "Tooltips Reset",
+                              description: "All dismissed tooltips have been reset and will show again.",
+                              duration: 3000,
+                            });
+                          }}
+                        >
+                          Reset All Dismissed Tooltips
+                        </Button>
+                        <p className="text-sm text-gray-500">
+                          This will make all previously dismissed tooltips appear again
+                        </p>
                       </div>
                     </div>
                   </div>
