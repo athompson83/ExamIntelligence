@@ -686,7 +686,7 @@ export class DatabaseStorage implements IStorage {
           const questionCount = await db
             .select({ count: sql<number>`count(*)` })
             .from(questions)
-            .where(eq(questions.testbankId, quiz.testbankId || ''))
+            .where(quiz.testbankId ? eq(questions.testbankId, quiz.testbankId) : sql`1=0`)
             .then(result => result[0]?.count || 0);
           
           // Get quiz attempts to determine max attempts and other stats
@@ -1004,7 +1004,7 @@ export class DatabaseStorage implements IStorage {
           const questionCount = await db
             .select({ count: sql<number>`count(*)` })
             .from(questions)
-            .where(eq(questions.testbankId, quiz.testbankId || ''))
+            .where(quiz.testbankId ? eq(questions.testbankId, quiz.testbankId) : sql`1=0`)
             .then(result => result[0]?.count || 0);
           
           // Get quiz attempts to determine max attempts and other stats

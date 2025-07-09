@@ -182,7 +182,7 @@ export default function StudyResources() {
 
     createResourceMutation.mutate({
       type: selectedType,
-      quizId: selectedQuiz || undefined,
+      quizId: selectedQuiz && selectedQuiz !== 'custom' ? selectedQuiz : undefined,
       title,
       customPrompt: customPrompt || undefined,
       referenceLinks: referenceLinks.filter(link => link.trim() !== ''),
@@ -406,7 +406,7 @@ export default function StudyResources() {
                         <SelectValue placeholder="Select quiz or enter custom topic" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Custom Topic</SelectItem>
+                        <SelectItem value="custom">Custom Topic</SelectItem>
                         {availableQuizzes.map((quiz: any) => (
                           <SelectItem key={quiz.id} value={quiz.id}>
                             {quiz.title}

@@ -16,7 +16,7 @@ import {
   ChevronRight,
   GraduationCap,
   Calendar,
-  Link,
+  Link2,
   TrendingUp,
   Headphones
 } from "lucide-react";
@@ -31,7 +31,7 @@ const getTeacherNavigation = (t: any) => [
   { name: t('navigation.quizBuilder'), href: "/quiz-manager", icon: Puzzle },
   { name: "Assignments", href: "/assignments", icon: Calendar },
   { name: "Study Aids", href: "/study-aids", icon: BookOpen },
-  { name: "Prerequisites", href: "/prerequisites", icon: Link },
+  { name: "Prerequisites", href: "/prerequisites", icon: Link2 },
   { name: "Gradebook", href: "/gradebook", icon: BarChart3 },
   { name: "Progress Tracking", href: "/progress-tracking", icon: TrendingUp },
   { name: t('navigation.liveExams'), href: "/live-exams", icon: Play },
