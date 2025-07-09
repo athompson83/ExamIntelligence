@@ -21,6 +21,7 @@ import {
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { TipTooltip, AdminTooltip, FeatureTooltip } from '@/components/SmartTooltip';
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -222,9 +223,16 @@ export default function Dashboard() {
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
                     Start a live proctored exam to see monitoring details here.
                   </p>
-                  <Button onClick={() => window.location.href = '/live-exams'}>
-                    Start Live Proctored Exam
-                  </Button>
+                  <FeatureTooltip
+                    id="live-proctoring-start"
+                    title="Live Proctoring Feature 🎯"
+                    content="Start a live proctored exam with real-time monitoring, violation detection, and comprehensive security measures."
+                    position="top"
+                  >
+                    <Button onClick={() => window.location.href = '/live-exams'}>
+                      Start Live Proctored Exam
+                    </Button>
+                  </FeatureTooltip>
                 </div>
               )}
             </CardContent>
@@ -296,7 +304,14 @@ export default function Dashboard() {
                   <option>Last 30 days</option>
                   <option>Last 90 days</option>
                 </select>
-                <Button variant="outline" size="sm">View Full Report</Button>
+                <TipTooltip
+                  id="analytics-report"
+                  title="Analytics Reports 📊"
+                  content="Access detailed performance reports, student insights, and question analytics to improve your assessments."
+                  position="left"
+                >
+                  <Button variant="outline" size="sm">View Full Report</Button>
+                </TipTooltip>
               </div>
             </div>
           </CardHeader>

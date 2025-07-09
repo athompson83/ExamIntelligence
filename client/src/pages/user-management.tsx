@@ -26,6 +26,7 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react';
+import { TipTooltip, AdminTooltip, FeatureTooltip } from '@/components/SmartTooltip';
 
 interface User {
   id: string;
@@ -228,20 +229,36 @@ admin@example.com,Admin,User,admin`;
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => generateAccountLink.mutate()}
-            disabled={generateAccountLink.isPending}
+          <AdminTooltip
+            id="account-link-feature"
+            title="Generate Registration Link"
+            content="Create a shareable link that allows new users to register and automatically join your account. Perfect for onboarding students or staff."
+            position="top"
+            trigger="hover"
           >
-            <LinkIcon className="h-4 w-4 mr-2" />
-            Generate Account Link
-          </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => generateAccountLink.mutate()}
+              disabled={generateAccountLink.isPending}
+            >
+              <LinkIcon className="h-4 w-4 mr-2" />
+              Generate Account Link
+            </Button>
+          </AdminTooltip>
           <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Upload className="h-4 w-4 mr-2" />
-                Bulk Upload
-              </Button>
+              <FeatureTooltip
+                id="bulk-upload-feature"
+                title="Bulk User Upload 🚀"
+                content="Upload multiple users at once using a CSV file. Download the template first to see the required format (email, firstName, lastName, role)."
+                position="top"
+                trigger="hover"
+              >
+                <Button variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Bulk Upload
+                </Button>
+              </FeatureTooltip>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>

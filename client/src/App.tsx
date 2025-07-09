@@ -5,10 +5,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TooltipProvider as CustomTooltipProvider } from "@/components/TooltipProvider";
 import { OnboardingTourProvider } from "@/contexts/OnboardingTourContext";
+import { AITooltipProvider } from "@/contexts/AITooltipContext";
 import OnboardingTour from "@/components/OnboardingTour";
+import AITooltipMascot from "@/components/AITooltipMascot";
 import { lazy, Suspense } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
+import { usePageTracking } from "@/hooks/usePageTracking";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
 // Core pages that are always needed
@@ -72,6 +75,7 @@ const AccountRegistration = lazy(() => import("@/pages/account-registration"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { currentPage } = usePageTracking();
 
   if (isLoading) {
     return (
@@ -271,6 +275,9 @@ function Router() {
         {(params) => <Suspense fallback={<LoadingSpinner />}><AccountRegistration token={params.token} /></Suspense>}
       </Route>
       <Route component={NotFound} />
+      
+      {/* AI Tooltip Mascot - only show for authenticated users */}
+      {isAuthenticated && <AITooltipMascot currentPage={currentPage} />}
     </Switch>
   );
 }
@@ -280,11 +287,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <CustomTooltipProvider>
-          <OnboardingTourProvider>
-            <Toaster />
-            <Router />
-            <OnboardingTour />
-          </OnboardingTourProvider>
+          <AITooltipProvider>
+            <OnboardingTourProvider>
+              <Toaster />
+              <Router />
+              <OnboardingTour />
+            </OnboardingTourProvider>
+          </AITooltipProvider>
         </CustomTooltipProvider>
       </TooltipProvider>
     </QueryClientProvider>
