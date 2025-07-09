@@ -1066,6 +1066,8 @@ export const quizAssignmentsRelations = relations(quizAssignments, ({ one }) => 
   account: one(accounts, { fields: [quizAssignments.accountId], references: [accounts.id] }),
 }));
 
+
+
 // certificateTemplatesRelations moved to NEW FEATURES section
 
 // Insert schemas
@@ -1091,7 +1093,6 @@ export const insertAssignmentSubmissionSchema = createInsertSchema(assignmentSub
 export const insertStudyAidSchema = createInsertSchema(studyAids).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMobileDeviceSchema = createInsertSchema(mobileDevices).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
-export type InsertPromptTemplate = z.infer<typeof insertPromptTemplateSchema>;
 export const insertLlmProviderSchema = createInsertSchema(llmProviders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCustomInstructionSchema = createInsertSchema(customInstructions).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMoodEntrySchema = createInsertSchema(moodEntries).omit({ id: true, createdAt: true });
@@ -1104,6 +1105,8 @@ export const insertBadgeTemplateSchema = createInsertSchema(badgeTemplates).omit
 export const insertSectionSchema = createInsertSchema(sections).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertSectionMembershipSchema = createInsertSchema(sectionMemberships).omit({ id: true, joinedAt: true });
 export const insertQuizAssignmentSchema = createInsertSchema(quizAssignments).omit({ id: true, createdAt: true, updatedAt: true });
+
+
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -1174,6 +1177,16 @@ export type InsertSectionMembership = z.infer<typeof insertSectionMembershipSche
 export type SectionMembership = typeof sectionMemberships.$inferSelect;
 export type InsertQuizAssignment = z.infer<typeof insertQuizAssignmentSchema>;
 export type QuizAssignment = typeof quizAssignments.$inferSelect;
+
+// Offline sync types
+export type InsertOfflineSyncQueue = z.infer<typeof insertOfflineSyncQueueSchema>;
+export type OfflineSyncQueue = typeof offlineSyncQueue.$inferSelect;
+export type InsertConnectionLog = z.infer<typeof insertConnectionLogSchema>;
+export type ConnectionLog = typeof connectionLogs.$inferSelect;
+export type InsertTeacherNotification = z.infer<typeof insertTeacherNotificationSchema>;
+export type TeacherNotification = typeof teacherNotifications.$inferSelect;
+export type InsertDeviceSyncStatus = z.infer<typeof insertDeviceSyncStatusSchema>;
+export type DeviceSyncStatus = typeof deviceSyncStatus.$inferSelect;
 
 // Additional tables for badge and certificate system
 export const awardedBadges = pgTable("awarded_badges", {
@@ -1296,6 +1309,155 @@ export const proctorAlerts = pgTable("proctor_alerts", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// ============= OFFLINE SYNC CAPABILITIES =============
+
+// Offline sync queue - stores actions that need to be synced when online
+export const offlineSyncQueue = pgTable("offline_sync_queue", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  deviceId: varchar("device_id").notNull(),
+  actionType: varchar("action_type", { 
+    enum: ["quiz_attempt", "quiz_response", "progress_update", "proctoring_event", 
+           "security_event", "quiz_completion", "file_upload", "note_creation"] 
+  }).notNull(),
+  
+  // Sync data
+  payload: jsonb("payload").notNull(),
+  clientTimestamp: timestamp("client_timestamp").notNull(),
+  priority: varchar("priority", { enum: ["low", "medium", "high", "critical"] }).notNull().default("medium"),
+  
+  // Sync status
+  status: varchar("status", { enum: ["pending", "syncing", "completed", "failed", "conflict"] }).notNull().default("pending"),
+  syncedAt: timestamp("synced_at"),
+  errorMessage: text("error_message"),
+  retryCount: integer("retry_count").default(0),
+  maxRetries: integer("max_retries").default(3),
+  
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Connection logs - tracks connectivity status during exam sessions
+export const connectionLogs = pgTable("connection_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  quizAttemptId: uuid("quiz_attempt_id").references(() => quizAttempts.id),
+  deviceId: varchar("device_id").notNull(),
+  sessionId: varchar("session_id").notNull(),
+  
+  // Connection event
+  eventType: varchar("event_type", { 
+    enum: ["connected", "disconnected", "reconnected", "poor_connection", "network_error"] 
+  }).notNull(),
+  connectionQuality: varchar("connection_quality", { enum: ["excellent", "good", "fair", "poor"] }),
+  
+  // Network details
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  networkType: varchar("network_type"), // wifi, cellular, ethernet
+  bandwidth: integer("bandwidth"), // in kbps
+  latency: integer("latency"), // in ms
+  
+  // Context
+  currentQuestionIndex: integer("current_question_index"),
+  questionsAnswered: integer("questions_answered"),
+  timeRemaining: integer("time_remaining"), // in seconds
+  
+  // Offline mode details
+  offlineModeEnabled: boolean("offline_mode_enabled").default(false),
+  offlineDuration: integer("offline_duration"), // in seconds
+  actionsQueuedOffline: integer("actions_queued_offline").default(0),
+  
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// Teacher notifications for offline students
+export const teacherNotifications = pgTable("teacher_notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teacherId: varchar("teacher_id").references(() => users.id).notNull(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
+  
+  // Notification details
+  notificationType: varchar("notification_type", { 
+    enum: ["student_disconnected", "student_reconnected", "offline_mode_enabled", 
+           "sync_completed", "sync_failed", "suspicious_offline_activity"] 
+  }).notNull(),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  severity: varchar("severity", { enum: ["info", "warning", "error", "critical"] }).notNull().default("info"),
+  
+  // Context data
+  connectionDuration: integer("connection_duration"), // seconds offline
+  questionsAnsweredOffline: integer("questions_answered_offline").default(0),
+  metadata: jsonb("metadata"),
+  
+  // Notification status
+  read: boolean("read").default(false),
+  readAt: timestamp("read_at"),
+  dismissed: boolean("dismissed").default(false),
+  dismissedAt: timestamp("dismissed_at"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Device sync status - tracks sync capabilities per device
+export const deviceSyncStatus = pgTable("device_sync_status", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  deviceId: varchar("device_id").notNull(),
+  
+  // Device capabilities
+  offlineModeSupported: boolean("offline_mode_supported").default(false),
+  storageCapacity: integer("storage_capacity"), // in MB
+  storageUsed: integer("storage_used").default(0),
+  
+  // Sync status
+  lastSyncAt: timestamp("last_sync_at"),
+  pendingActions: integer("pending_actions").default(0),
+  syncErrors: integer("sync_errors").default(0),
+  
+  // Device info
+  deviceType: varchar("device_type", { enum: ["mobile", "tablet", "desktop", "web"] }),
+  platform: varchar("platform"), // iOS, Android, Web
+  appVersion: varchar("app_version"),
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  lastSeenAt: timestamp("last_seen_at").defaultNow(),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Offline sync relations
+export const offlineSyncQueueRelations = relations(offlineSyncQueue, ({ one }) => ({
+  user: one(users, { fields: [offlineSyncQueue.userId], references: [users.id] }),
+}));
+
+export const connectionLogsRelations = relations(connectionLogs, ({ one }) => ({
+  user: one(users, { fields: [connectionLogs.userId], references: [users.id] }),
+  quizAttempt: one(quizAttempts, { fields: [connectionLogs.quizAttemptId], references: [quizAttempts.id] }),
+}));
+
+export const teacherNotificationsRelations = relations(teacherNotifications, ({ one }) => ({
+  teacher: one(users, { fields: [teacherNotifications.teacherId], references: [users.id] }),
+  student: one(users, { fields: [teacherNotifications.studentId], references: [users.id] }),
+  quiz: one(quizzes, { fields: [teacherNotifications.quizId], references: [quizzes.id] }),
+}));
+
+export const deviceSyncStatusRelations = relations(deviceSyncStatus, ({ one }) => ({
+  user: one(users, { fields: [deviceSyncStatus.userId], references: [users.id] }),
+}));
+
+// Offline sync schemas
+export const insertOfflineSyncQueueSchema = createInsertSchema(offlineSyncQueue).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertConnectionLogSchema = createInsertSchema(connectionLogs).omit({ id: true, timestamp: true });
+export const insertTeacherNotificationSchema = createInsertSchema(teacherNotifications).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDeviceSyncStatusSchema = createInsertSchema(deviceSyncStatus).omit({ id: true, createdAt: true, updatedAt: true });
 
 // ============= NEW FEATURES: QUESTION FEEDBACK & EXPLANATIONS =============
 

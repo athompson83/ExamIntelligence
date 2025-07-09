@@ -99,6 +99,14 @@ export interface IStorage {
   updatePromptTemplate(id: string, template: Partial<InsertPromptTemplate>): Promise<PromptTemplate>;
   deletePromptTemplate(id: string): Promise<boolean>;
   
+  // Offline Sync Methods
+  getTeachersForQuiz(quizId: string): Promise<User[]>;
+  saveQuizResponse(payload: any): Promise<any>;
+  updateQuizProgress(payload: any): Promise<any>;
+  logProctoringEvent(payload: any): Promise<any>;
+  logSecurityEvent(payload: any): Promise<any>;
+  completeQuizAttempt(payload: any): Promise<any>;
+  
   // Super Admin Methods
   getAllAccountsWithStats(): Promise<any[]>;
   createAccount(account: any): Promise<any>;
@@ -2035,6 +2043,124 @@ Return JSON with the new question data:
     } catch (error) {
       console.error('Error fetching LLM providers:', error);
       return [];
+    }
+  }
+
+  // Offline Sync Methods Implementation
+  async getTeachersForQuiz(quizId: string): Promise<User[]> {
+    try {
+      const quiz = await this.getQuiz(quizId);
+      if (!quiz) return [];
+      
+      // Get the quiz creator as a teacher
+      const teachers = [];
+      if (quiz.createdBy) {
+        const teacher = await this.getUser(quiz.createdBy);
+        if (teacher) teachers.push(teacher);
+      }
+      
+      // Get account admins for this quiz's account
+      const accountUsers = await this.getUsersByAccount(quiz.accountId);
+      const admins = accountUsers.filter(user => 
+        user.role === 'admin' || user.role === 'teacher' || user.role === 'super_admin'
+      );
+      
+      // Combine and deduplicate
+      const allTeachers = [...teachers, ...admins];
+      return allTeachers.filter((teacher, index, self) => 
+        self.findIndex(t => t.id === teacher.id) === index
+      );
+    } catch (error) {
+      console.error('Error getting teachers for quiz:', error);
+      return [];
+    }
+  }
+
+  async saveQuizResponse(payload: any): Promise<any> {
+    try {
+      // Create or update quiz response
+      const response = await this.createQuizResponse(payload);
+      return response;
+    } catch (error) {
+      console.error('Error saving quiz response:', error);
+      throw error;
+    }
+  }
+
+  async updateQuizProgress(payload: any): Promise<any> {
+    try {
+      // Update quiz attempt progress
+      const { attemptId, currentQuestionIndex, questionsAnswered, timeSpent } = payload;
+      
+      // Get the existing attempt
+      const attempt = await this.getQuizAttempt(attemptId);
+      if (!attempt) {
+        throw new Error('Quiz attempt not found');
+      }
+      
+      // Update the attempt with progress
+      await db.update(quizAttempts)
+        .set({
+          currentQuestionIndex,
+          questionsAnswered,
+          timeSpent,
+          updatedAt: new Date()
+        })
+        .where(eq(quizAttempts.id, attemptId));
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating quiz progress:', error);
+      throw error;
+    }
+  }
+
+  async logProctoringEvent(payload: any): Promise<any> {
+    try {
+      // Log proctoring event
+      console.log('Proctoring event logged:', payload);
+      
+      // In a real implementation, this would insert into a proctoring_logs table
+      // For now, just return success
+      return { success: true, eventId: `proctoring-${Date.now()}` };
+    } catch (error) {
+      console.error('Error logging proctoring event:', error);
+      throw error;
+    }
+  }
+
+  async logSecurityEvent(payload: any): Promise<any> {
+    try {
+      // Log security event
+      console.log('Security event logged:', payload);
+      
+      // In a real implementation, this would insert into a security_logs table
+      // For now, just return success
+      return { success: true, eventId: `security-${Date.now()}` };
+    } catch (error) {
+      console.error('Error logging security event:', error);
+      throw error;
+    }
+  }
+
+  async completeQuizAttempt(payload: any): Promise<any> {
+    try {
+      const { attemptId, finalScore, completedAt } = payload;
+      
+      // Update quiz attempt as completed
+      await db.update(quizAttempts)
+        .set({
+          score: finalScore,
+          completedAt: completedAt || new Date(),
+          isSubmitted: true,
+          updatedAt: new Date()
+        })
+        .where(eq(quizAttempts.id, attemptId));
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error completing quiz attempt:', error);
+      throw error;
     }
   }
 }

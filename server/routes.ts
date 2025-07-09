@@ -45,6 +45,7 @@ import {
 } from "./aiService";
 import { errorLogger } from "./errorLogger";
 import { DifficultyService } from "./difficultyService";
+import { offlineSyncService } from "./offlineSync";
 import { 
   generateQTIExport,
   generateCSVExport,
@@ -7576,6 +7577,174 @@ Initialize all interactions with these principles as your foundation.`,
     } catch (error) {
       console.error('Error fetching LLM providers:', error);
       res.status(500).json({ message: 'Failed to fetch LLM providers' });
+    }
+  });
+
+  // ============= OFFLINE SYNC API ROUTES =============
+  
+  // Queue offline action for later sync
+  app.post('/api/offline-sync/queue', mockAuth, async (req: any, res) => {
+    try {
+      const { deviceId, actionType, payload, priority = 'medium' } = req.body;
+      
+      const action = {
+        type: actionType,
+        payload,
+        timestamp: new Date(),
+        priority
+      };
+      
+      const queueItem = await offlineSyncService.queueOfflineAction(
+        req.user.id,
+        deviceId,
+        action
+      );
+      
+      res.json(queueItem);
+    } catch (error) {
+      console.error("Error queuing offline action:", error);
+      res.status(500).json({ error: "Failed to queue offline action" });
+    }
+  });
+
+  // Get pending sync actions
+  app.get('/api/offline-sync/pending/:deviceId', mockAuth, async (req: any, res) => {
+    try {
+      const { deviceId } = req.params;
+      
+      const pendingActions = await offlineSyncService.getPendingSyncActions(
+        req.user.id,
+        deviceId
+      );
+      
+      res.json(pendingActions);
+    } catch (error) {
+      console.error("Error getting pending sync actions:", error);
+      res.status(500).json({ error: "Failed to get pending sync actions" });
+    }
+  });
+
+  // Process sync queue
+  app.post('/api/offline-sync/process/:deviceId', mockAuth, async (req: any, res) => {
+    try {
+      const { deviceId } = req.params;
+      
+      const result = await offlineSyncService.processSyncQueue(
+        req.user.id,
+        deviceId
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error processing sync queue:", error);
+      res.status(500).json({ error: "Failed to process sync queue" });
+    }
+  });
+
+  // Log connection event
+  app.post('/api/offline-sync/connection-log', mockAuth, async (req: any, res) => {
+    try {
+      const { deviceId, sessionId, eventType, quality, context, quizAttemptId } = req.body;
+      
+      const event = {
+        type: eventType,
+        quality,
+        context
+      };
+      
+      const logEntry = await offlineSyncService.logConnectionEvent(
+        req.user.id,
+        deviceId,
+        sessionId,
+        event,
+        quizAttemptId
+      );
+      
+      res.json(logEntry);
+    } catch (error) {
+      console.error("Error logging connection event:", error);
+      res.status(500).json({ error: "Failed to log connection event" });
+    }
+  });
+
+  // Get teacher notifications about offline students
+  app.get('/api/offline-sync/teacher-notifications', mockAuth, async (req: any, res) => {
+    try {
+      const { unreadOnly = false } = req.query;
+      
+      const notifications = await offlineSyncService.getTeacherNotifications(
+        req.user.id,
+        unreadOnly === 'true'
+      );
+      
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error getting teacher notifications:", error);
+      res.status(500).json({ error: "Failed to get teacher notifications" });
+    }
+  });
+
+  // Mark notification as read
+  app.put('/api/offline-sync/notifications/:id/read', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      await offlineSyncService.markNotificationRead(id);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  // Get device sync status
+  app.get('/api/offline-sync/device-status/:deviceId', mockAuth, async (req: any, res) => {
+    try {
+      const { deviceId } = req.params;
+      
+      const status = await offlineSyncService.getDeviceSyncStatus(
+        req.user.id,
+        deviceId
+      );
+      
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting device sync status:", error);
+      res.status(500).json({ error: "Failed to get device sync status" });
+    }
+  });
+
+  // Update device sync status
+  app.put('/api/offline-sync/device-status/:deviceId', mockAuth, async (req: any, res) => {
+    try {
+      const { deviceId } = req.params;
+      const updates = req.body;
+      
+      const status = await offlineSyncService.updateDeviceSyncStatus(
+        req.user.id,
+        deviceId,
+        updates
+      );
+      
+      res.json(status);
+    } catch (error) {
+      console.error("Error updating device sync status:", error);
+      res.status(500).json({ error: "Failed to update device sync status" });
+    }
+  });
+
+  // Get connection logs for monitoring
+  app.get('/api/offline-sync/connection-logs', mockAuth, async (req: any, res) => {
+    try {
+      const { sessionId, quizAttemptId } = req.query;
+      
+      // This would normally query the database
+      // For now, return empty array since we haven't implemented the full database query
+      res.json([]);
+    } catch (error) {
+      console.error("Error getting connection logs:", error);
+      res.status(500).json({ error: "Failed to get connection logs" });
     }
   });
 

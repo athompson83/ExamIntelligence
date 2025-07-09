@@ -23,7 +23,8 @@ import {
   Code,
   MessageSquare,
   HelpCircle,
-  Smartphone
+  Smartphone,
+  Cloud
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -53,6 +54,7 @@ export default function Sidebar() {
 
   const systemItems = [
     ...(['admin', 'teacher', 'super_admin'].includes(user?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
+    { href: "/offline-sync", label: "Offline Sync", icon: Cloud, tourId: "offline-sync" },
     { href: "/settings", label: "Settings", icon: Settings, tourId: "settings" },
   ];
 

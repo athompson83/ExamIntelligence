@@ -78,6 +78,7 @@ const Prerequisites = lazy(() => import("@/pages/prerequisites"));
 const ProgressTracking = lazy(() => import("@/pages/progress-tracking"));
 const CustomerSupport = lazy(() => import("@/pages/customer-support"));
 const ProfileEnhancement = lazy(() => import("@/pages/profile-enhancement"));
+const OfflineSyncPage = lazy(() => import("@/pages/OfflineSyncPage"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -302,6 +303,9 @@ function Router() {
           </Route>
           <Route path="/profile-enhancement">
             {() => <Suspense fallback={<LoadingSpinner />}><ProfileEnhancement /></Suspense>}
+          </Route>
+          <Route path="/offline-sync">
+            {() => <Suspense fallback={<LoadingSpinner />}><OfflineSyncPage /></Suspense>}
           </Route>
         </>
       )}
