@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -87,6 +88,10 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
     marginValue: 0,
     scientificNotation: false,
   });
+  
+  // State for question options
+  const [shuffleAnswers, setShuffleAnswers] = useState(false);
+  const [requireResponse, setRequireResponse] = useState(true);
 
   const { data: question } = useQuery({
     queryKey: ["/api/questions", questionId],
@@ -152,6 +157,8 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
       }
     }
   }, [question, form]);
+
+  const watchedQuestionType = form.watch("questionType");
 
   // Initialize question type specific data when question type changes
   useEffect(() => {
@@ -421,7 +428,6 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
     saveQuestionMutation.mutate(data);
   };
 
-  const watchedQuestionType = form.watch("questionType");
   const watchedQuestionText = form.watch("questionText");
 
   const getDifficultyBadge = (score?: number) => {
@@ -632,10 +638,31 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
 
                   {/* Ordering Question Editor */}
                   {watchedQuestionType === "ordering" && (
-                    <OrderingQuestionEditor
-                      items={orderingItems}
-                      onChange={setOrderingItems}
-                    />
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Ordering Items</FormLabel>
+                        <div className="text-sm text-gray-500">
+                          <span className="font-medium">Top Label:</span> First item
+                        </div>
+                      </div>
+                      <Input
+                        placeholder="Enter top label (optional)"
+                        className="w-1/2"
+                      />
+                      <OrderingQuestionEditor
+                        items={orderingItems}
+                        onChange={setOrderingItems}
+                      />
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-500">
+                          <span className="font-medium">Bottom Label:</span> Last item
+                        </div>
+                        <Input
+                          placeholder="Enter bottom label (optional)"
+                          className="w-1/2"
+                        />
+                      </div>
+                    </div>
                   )}
 
                   {/* Categorization Question Editor */}
@@ -652,24 +679,227 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
 
                   {/* Hot Spot Question Editor */}
                   {watchedQuestionType === "hot_spot" && (
-                    <HotSpotQuestionEditor
-                      imageUrl={hotSpotImageUrl}
-                      hotSpots={hotSpotAreas}
-                      showCalculator={hotSpotShowCalculator}
-                      onChange={(imageUrl, hotSpots, showCalculator) => {
-                        setHotSpotImageUrl(imageUrl);
-                        setHotSpotAreas(hotSpots);
-                        setHotSpotShowCalculator(showCalculator);
-                      }}
-                    />
+                    <div className="space-y-4">
+                      <FormLabel>Hot Spot Image</FormLabel>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <div className="space-y-2">
+                          <div className="text-gray-500">
+                            <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            Drag n' Drop here or{" "}
+                            <button className="text-blue-600 hover:text-blue-800">Browse</button>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <div className="text-blue-600 mt-0.5">
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="text-sm text-blue-800">
+                            <p className="font-medium">This question type is not accessible to users requiring screen readers.</p>
+                            <p className="mt-1">
+                              Keyboard controls are available while using the hotspot.{" "}
+                              <button className="underline">Click here</button> or press f for a list of shortcuts.
+                              Just make sure an input field is focused to use these controls.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="show-calculator"
+                            checked={hotSpotShowCalculator}
+                            onCheckedChange={setHotSpotShowCalculator}
+                          />
+                          <label htmlFor="show-calculator" className="text-sm font-medium">
+                            Show on-screen calculator
+                          </label>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {/* Formula Question Editor */}
                   {watchedQuestionType === "formula" && (
-                    <FormulaQuestionEditor
-                      {...formulaConfig}
-                      onChange={setFormulaConfig}
-                    />
+                    <div className="space-y-6">
+                      <FormLabel>Formula Question Configuration</FormLabel>
+                      
+                      {/* Variables Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Variables</h3>
+                        <p className="text-sm text-gray-600">
+                          Once you have entered your variables above, you should see them listed below. 
+                          You can specify the range of possible values for each variable below.
+                        </p>
+                        
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse border border-gray-300">
+                            <thead>
+                              <tr className="bg-gray-50">
+                                <th className="border border-gray-300 px-4 py-2 text-left">Variable</th>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Min</th>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Max</th>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Decimals</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {formulaConfig.variables.map((variable, index) => (
+                                <tr key={variable.id}>
+                                  <td className="border border-gray-300 px-4 py-2 font-medium">{variable.name}</td>
+                                  <td className="border border-gray-300 px-4 py-2">
+                                    <Input
+                                      type="number"
+                                      value={variable.min}
+                                      onChange={(e) => {
+                                        const newVariables = [...formulaConfig.variables];
+                                        newVariables[index].min = Number(e.target.value);
+                                        setFormulaConfig({...formulaConfig, variables: newVariables});
+                                      }}
+                                      className="w-20"
+                                    />
+                                  </td>
+                                  <td className="border border-gray-300 px-4 py-2">
+                                    <Input
+                                      type="number"
+                                      value={variable.max}
+                                      onChange={(e) => {
+                                        const newVariables = [...formulaConfig.variables];
+                                        newVariables[index].max = Number(e.target.value);
+                                        setFormulaConfig({...formulaConfig, variables: newVariables});
+                                      }}
+                                      className="w-20"
+                                    />
+                                  </td>
+                                  <td className="border border-gray-300 px-4 py-2">
+                                    <Input
+                                      type="number"
+                                      value={variable.decimals}
+                                      onChange={(e) => {
+                                        const newVariables = [...formulaConfig.variables];
+                                        newVariables[index].decimals = Number(e.target.value);
+                                        setFormulaConfig({...formulaConfig, variables: newVariables});
+                                      }}
+                                      className="w-20"
+                                    />
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Formula Definition */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Formula Definition</h3>
+                        <p className="text-sm text-gray-600">
+                          Next, write the formula or formulas used to compute the correct answer. 
+                          Use the same variable names listed above. (e.g., "5 + x")
+                        </p>
+                        <Textarea
+                          placeholder="Enter your formula here..."
+                          value={formulaConfig.formula}
+                          onChange={(e) => setFormulaConfig({...formulaConfig, formula: e.target.value})}
+                          className="min-h-[100px] font-mono"
+                        />
+                      </div>
+
+                      {/* Generate Possible Solutions */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Generate Possible Solutions</h3>
+                        <p className="text-sm text-gray-600">
+                          Finally, build as many variable-solution combinations as you need for your quiz.
+                        </p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Number of solutions <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex items-center">
+                              <Input
+                                type="number"
+                                value={formulaConfig.possibleAnswers}
+                                onChange={(e) => setFormulaConfig({...formulaConfig, possibleAnswers: Number(e.target.value)})}
+                                className="w-20"
+                              />
+                              <div className="ml-2 flex flex-col">
+                                <button className="text-xs px-1 border hover:bg-gray-100">▲</button>
+                                <button className="text-xs px-1 border hover:bg-gray-100">▼</button>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Decimal places</label>
+                            <div className="flex items-center">
+                              <Input
+                                type="number"
+                                value={formulaConfig.decimalPlaces}
+                                onChange={(e) => setFormulaConfig({...formulaConfig, decimalPlaces: Number(e.target.value)})}
+                                className="w-20"
+                              />
+                              <div className="ml-2 flex flex-col">
+                                <button className="text-xs px-1 border hover:bg-gray-100">▲</button>
+                                <button className="text-xs px-1 border hover:bg-gray-100">▼</button>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="scientific-notation"
+                              checked={formulaConfig.scientificNotation}
+                              onCheckedChange={(checked) => setFormulaConfig({...formulaConfig, scientificNotation: checked as boolean})}
+                            />
+                            <label htmlFor="scientific-notation" className="text-sm font-medium">
+                              Display as Scientific Notation
+                            </label>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Margin type</label>
+                            <Select
+                              value={formulaConfig.marginType}
+                              onValueChange={(value: 'absolute' | 'percentage') => setFormulaConfig({...formulaConfig, marginType: value})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="absolute">Absolute</SelectItem>
+                                <SelectItem value="percentage">Percentage</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-2">+/- margin of error</label>
+                            <div className="flex items-center">
+                              <Input
+                                type="number"
+                                value={formulaConfig.marginValue}
+                                onChange={(e) => setFormulaConfig({...formulaConfig, marginValue: Number(e.target.value)})}
+                                className="w-20"
+                              />
+                              <div className="ml-2 flex flex-col">
+                                <button className="text-xs px-1 border hover:bg-gray-100">▲</button>
+                                <button className="text-xs px-1 border hover:bg-gray-100">▼</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {/* Essay Question */}
@@ -844,47 +1074,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                     </div>
                   )}
 
-                  {/* Ordering Question Editor */}
-                  {watchedQuestionType === "ordering" && (
-                    <OrderingQuestionEditor
-                      items={orderingItems}
-                      onChange={setOrderingItems}
-                    />
-                  )}
 
-                  {/* Categorization Question Editor */}
-                  {watchedQuestionType === "categorization" && (
-                    <CategorizationQuestionEditor
-                      categories={categorizationCategories}
-                      items={categorizationItems}
-                      onChange={(categories, items) => {
-                        setCategorizationCategories(categories);
-                        setCategorizationItems(items);
-                      }}
-                    />
-                  )}
-
-                  {/* Hot Spot Question Editor */}
-                  {watchedQuestionType === "hot_spot" && (
-                    <HotSpotQuestionEditor
-                      imageUrl={hotSpotImageUrl}
-                      hotSpots={hotSpotAreas}
-                      showCalculator={hotSpotShowCalculator}
-                      onChange={(imageUrl, hotSpots, showCalculator) => {
-                        setHotSpotImageUrl(imageUrl);
-                        setHotSpotAreas(hotSpots);
-                        setHotSpotShowCalculator(showCalculator);
-                      }}
-                    />
-                  )}
-
-                  {/* Formula Question Editor */}
-                  {watchedQuestionType === "formula" && (
-                    <FormulaQuestionEditor
-                      config={formulaConfig}
-                      onChange={setFormulaConfig}
-                    />
-                  )}
 
                   {/* Stimulus Question */}
                   {watchedQuestionType === "stimulus" && (
@@ -925,6 +1115,51 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                     </div>
                   )}
 
+                  {/* Question Configuration */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="points"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Points</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              placeholder="1"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="difficulty"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Difficulty (1-10)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="10"
+                              placeholder="5"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   {/* Tags */}
                   <FormField
                     control={form.control}
@@ -942,6 +1177,34 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                       </FormItem>
                     )}
                   />
+
+                  {/* Question Options */}
+                  <div className="space-y-3">
+                    <FormLabel>Question Options</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="shuffle-answers"
+                          checked={shuffleAnswers}
+                          onCheckedChange={setShuffleAnswers}
+                        />
+                        <label htmlFor="shuffle-answers" className="text-sm font-medium">
+                          Shuffle answer choices
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="require-response"
+                          checked={requireResponse}
+                          onCheckedChange={setRequireResponse}
+                        />
+                        <label htmlFor="require-response" className="text-sm font-medium">
+                          Require response
+                        </label>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-6 border-t">
