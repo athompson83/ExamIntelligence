@@ -216,11 +216,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQuestionsByTestbank(testbankId: string): Promise<Question[]> {
-    return await db
-      .select()
-      .from(questions)
-      .where(eq(questions.testbankId, testbankId))
-      .orderBy(desc(questions.createdAt));
+    try {
+      return await db
+        .select()
+        .from(questions)
+        .where(eq(questions.testbankId, testbankId))
+        .orderBy(desc(questions.createdAt));
+    } catch (error) {
+      console.error('Error in getQuestionsByTestbank:', error);
+      // Return empty array if there are database issues
+      return [];
+    }
   }
 
   async updateQuestion(id: string, questionData: Partial<InsertQuestion>): Promise<Question | undefined> {

@@ -410,28 +410,80 @@ export default function EnhancedQuizBuilder() {
 
   const availableQuestions = Array.isArray(questions) ? questions : [];
   
-  // Autosave functionality - only save when quiz actually changes
+  // Smart autosave functionality - only save when quiz actually changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const previousQuizRef = useRef<string>('');
+  const lastSavedQuizRef = useRef<string>('');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [currentTab, setCurrentTab] = useState<string>('basic');
+  const previousTabRef = useRef<string>('basic');
   
+  // Track changes to quiz state
   useEffect(() => {
     const currentQuizState = JSON.stringify(quiz);
     
     // Skip change detection on initial load or if quiz is empty
     if (isInitialLoad || !quiz.title) {
       previousQuizRef.current = currentQuizState;
+      lastSavedQuizRef.current = currentQuizState;
       setIsInitialLoad(false);
       return;
     }
     
-    // Check if quiz has actually changed
-    if (currentQuizState !== previousQuizRef.current && previousQuizRef.current !== '') {
+    // Check if quiz has actually changed from last saved state
+    if (currentQuizState !== lastSavedQuizRef.current && lastSavedQuizRef.current !== '') {
       setHasUnsavedChanges(true);
     }
     
     previousQuizRef.current = currentQuizState;
   }, [quiz, isInitialLoad]);
+
+  // Auto-save when tab changes and there are unsaved changes
+  useEffect(() => {
+    if (currentTab !== previousTabRef.current && hasUnsavedChanges && quiz.title) {
+      performAutoSave();
+    }
+    previousTabRef.current = currentTab;
+  }, [currentTab, hasUnsavedChanges]);
+
+  // Auto-save function
+  const performAutoSave = async () => {
+    if (!hasUnsavedChanges || !quiz.title || isAutoSaving) return;
+    
+    setIsAutoSaving(true);
+    try {
+      const saveData = {
+        ...quiz,
+        creatorId: 'test-user',
+        accountId: '00000000-0000-0000-0000-000000000001',
+      };
+
+      let response;
+      if (quizId) {
+        response = await apiRequest(`/api/quizzes/${quizId}`, {
+          method: 'PUT',
+          body: JSON.stringify(saveData),
+        });
+      } else {
+        response = await apiRequest('/api/quizzes', {
+          method: 'POST',
+          body: JSON.stringify(saveData),
+        });
+        if (response.id) {
+          setQuizId(response.id);
+        }
+      }
+      
+      setHasUnsavedChanges(false);
+      setLastSaved(new Date());
+      lastSavedQuizRef.current = JSON.stringify(quiz);
+      
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    } finally {
+      setIsAutoSaving(false);
+    }
+  };
 
   // Load existing quiz if id parameter is provided
   useEffect(() => {
@@ -869,7 +921,7 @@ export default function EnhancedQuizBuilder() {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="basic" className="space-y-6">
+        <Tabs defaultValue="basic" value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="basic">Basic Settings</TabsTrigger>
             <TabsTrigger value="questions">Questions</TabsTrigger>
@@ -966,25 +1018,15 @@ export default function EnhancedQuizBuilder() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="startTime">Start Time</Label>
-                    <Input
-                      id="startTime"
-                      type="datetime-local"
-                      value={quiz.startTime ? new Date(quiz.startTime).toISOString().slice(0, 16) : ""}
-                      onChange={(e) => setQuiz(prev => ({ ...prev, startTime: e.target.value ? new Date(e.target.value) : null }))}
-                    />
+                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border">
+                  <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Assignment Scheduling</span>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="endTime">End Time</Label>
-                    <Input
-                      id="endTime"
-                      type="datetime-local"
-                      value={quiz.endTime ? new Date(quiz.endTime).toISOString().slice(0, 16) : ""}
-                      onChange={(e) => setQuiz(prev => ({ ...prev, endTime: e.target.value ? new Date(e.target.value) : null }))}
-                    />
-                  </div>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    Start and end times are now managed through Assignment settings or Live Exam scheduling.
+                    This allows for better control over when students can access specific quiz instances.
+                  </p>
                 </div>
               </CardContent>
             </Card>
