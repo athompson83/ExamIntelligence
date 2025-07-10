@@ -452,19 +452,10 @@ export const TooltipSystem: React.FC = () => {
         </motion.button>
         
         {/* Status indicator */}
-        <motion.div
+        <div
           className={`absolute -top-1 -left-1 w-3 h-3 rounded-full ${
             isTooltipSystemMuted ? 'bg-red-500' : 'bg-green-500'
           }`}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [1, 0.7, 1]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
         />
       </motion.div>
 

@@ -571,9 +571,24 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                           <div key={index} className="answer-option flex items-center space-x-2">
                             <Checkbox
                               checked={option.isCorrect}
-                              onCheckedChange={(checked) => 
-                                updateAnswerOption(index, 'isCorrect', checked as boolean)
-                              }
+                              onCheckedChange={(checked) => {
+                                if (watchedQuestionType === "multiple_choice") {
+                                  // For multiple choice, only allow one correct answer
+                                  if (checked) {
+                                    // Uncheck all other options first
+                                    const updatedOptions = answerOptions.map((opt, idx) => ({
+                                      ...opt,
+                                      isCorrect: idx === index
+                                    }));
+                                    setAnswerOptions(updatedOptions);
+                                  } else {
+                                    updateAnswerOption(index, 'isCorrect', false);
+                                  }
+                                } else {
+                                  // For multiple response, allow multiple correct answers
+                                  updateAnswerOption(index, 'isCorrect', checked as boolean);
+                                }
+                              }}
                             />
                             <Input
                               placeholder={`Option ${index + 1}`}

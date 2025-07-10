@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Plus, 
   Edit, 
@@ -15,7 +18,9 @@ import {
   Calendar,
   BarChart3,
   Home,
-  ChevronRight
+  ChevronRight,
+  Search,
+  UserPlus
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -37,6 +42,7 @@ interface Quiz {
 export default function QuizManager() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: quizzes, isLoading } = useQuery({
     queryKey: ['/api/quizzes'],
@@ -89,6 +95,10 @@ export default function QuizManager() {
     setLocation(`/analytics?quiz=${quizId}`);
   };
 
+  const handleAssign = (quiz: Quiz) => {
+    setLocation(`/assignments?quiz=${quiz.id}`);
+  };
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -106,79 +116,15 @@ export default function QuizManager() {
 
   // Ensure quizzes is an array
   const quizzesArray = Array.isArray(quizzes) ? quizzes : [];
-  const draftQuizzes = quizzesArray.filter((q: Quiz) => !q.publishedAt);
-  const publishedQuizzes = quizzesArray.filter((q: Quiz) => q.publishedAt);
-
-  const QuizCard = ({ quiz, isDraft = false }: { quiz: Quiz; isDraft?: boolean }) => (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg mb-1">{quiz.title || "Untitled Quiz"}</CardTitle>
-            <CardDescription className="text-sm">
-              {quiz.description || "No description provided"}
-            </CardDescription>
-          </div>
-          <Badge variant={isDraft ? "outline" : "default"}>
-            {isDraft ? "Draft" : "Published"}
-          </Badge>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="pt-0">
-        <div className="space-y-3">
-          {/* Quiz Stats */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
-              <span>{quiz.questionCount || quiz.questions?.length || 0} questions</span>
-            </div>
-            {quiz.timeLimit && (
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>{quiz.timeLimit} min</span>
-              </div>
-            )}
-            {quiz.maxAttempts && (
-              <div className="flex items-center gap-1">
-                <Users className="h-4 w-4" />
-                <span>{quiz.maxAttempts === -1 ? "Unlimited" : quiz.maxAttempts} attempts</span>
-              </div>
-            )}
-          </div>
-
-          {/* Last Modified */}
-          <div className="text-xs text-muted-foreground">
-            {isDraft ? "Last modified" : "Published"} {formatDistanceToNow(new Date(isDraft ? quiz.updatedAt : quiz.publishedAt!), { addSuffix: true })}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)}>
-              <Edit className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)}>
-              <Eye className="h-4 w-4 mr-1" />
-              Preview
-            </Button>
-            {!isDraft && (
-              <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)}>
-                <BarChart3 className="h-4 w-4 mr-1" />
-                Analytics
-              </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
-              <Copy className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+  
+  // Filter quizzes based on search term
+  const filteredQuizzes = quizzesArray.filter((quiz: Quiz) =>
+    quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (quiz.description && quiz.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+  
+  const draftQuizzes = filteredQuizzes.filter((q: Quiz) => !q.publishedAt);
+  const publishedQuizzes = filteredQuizzes.filter((q: Quiz) => q.publishedAt);
 
   return (
     <div className="p-6">
@@ -201,6 +147,19 @@ export default function QuizManager() {
           <Plus className="h-4 w-4" />
           Create New Quiz
         </Button>
+      </div>
+
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search quizzes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
       </div>
 
       {/* Overview Stats */}
@@ -259,31 +218,108 @@ export default function QuizManager() {
       {/* Quiz Lists */}
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="all">All Quizzes ({quizzesArray.length})</TabsTrigger>
+          <TabsTrigger value="all">All Quizzes ({filteredQuizzes.length})</TabsTrigger>
           <TabsTrigger value="drafts">Drafts ({draftQuizzes.length})</TabsTrigger>
           <TabsTrigger value="published">Published ({publishedQuizzes.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          {quizzesArray.length === 0 ? (
+          {filteredQuizzes.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No quizzes yet</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {searchTerm ? "No quizzes match your search" : "No quizzes yet"}
+                </h3>
                 <p className="text-muted-foreground mb-4">
-                  Get started by creating your first quiz.
+                  {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first quiz"}
                 </p>
-                <Button onClick={handleCreateNew}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Quiz
-                </Button>
+                {!searchTerm && (
+                  <Button onClick={handleCreateNew}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Quiz
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {quizzesArray.map((quiz: Quiz) => (
-                <QuizCard key={quiz.id} quiz={quiz} isDraft={!quiz.publishedAt} />
-              ))}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quiz Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Questions</TableHead>
+                    <TableHead>Time Limit</TableHead>
+                    <TableHead>Last Modified</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredQuizzes.map((quiz: Quiz) => (
+                    <TableRow key={quiz.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{quiz.title || "Untitled Quiz"}</div>
+                          {quiz.description && (
+                            <div className="text-sm text-muted-foreground">{quiz.description}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={quiz.publishedAt ? "default" : "outline"}>
+                          {quiz.publishedAt ? "Published" : "Draft"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4" />
+                          <span>{quiz.questionCount || quiz.questions?.length || 0}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {quiz.timeLimit ? (
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{quiz.timeLimit} min</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">No limit</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(quiz.updatedAt), { addSuffix: true })}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleAssign(quiz)}>
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
+                          {quiz.publishedAt && (
+                            <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)}>
+                              <BarChart3 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </TabsContent>
@@ -293,21 +329,84 @@ export default function QuizManager() {
             <Card>
               <CardContent className="text-center py-12">
                 <Edit className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No draft quizzes</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {searchTerm ? "No draft quizzes match your search" : "No draft quizzes"}
+                </h3>
                 <p className="text-muted-foreground mb-4">
-                  All your quizzes are published or you haven't created any yet.
+                  {searchTerm ? "Try adjusting your search terms" : "All your quizzes are published or you haven't created any yet"}
                 </p>
-                <Button onClick={handleCreateNew}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Quiz
-                </Button>
+                {!searchTerm && (
+                  <Button onClick={handleCreateNew}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New Quiz
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {draftQuizzes.map((quiz: Quiz) => (
-                <QuizCard key={quiz.id} quiz={quiz} isDraft={true} />
-              ))}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quiz Name</TableHead>
+                    <TableHead>Questions</TableHead>
+                    <TableHead>Time Limit</TableHead>
+                    <TableHead>Last Modified</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {draftQuizzes.map((quiz: Quiz) => (
+                    <TableRow key={quiz.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{quiz.title || "Untitled Quiz"}</div>
+                          {quiz.description && (
+                            <div className="text-sm text-muted-foreground">{quiz.description}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4" />
+                          <span>{quiz.questionCount || quiz.questions?.length || 0}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {quiz.timeLimit ? (
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{quiz.timeLimit} min</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">No limit</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(quiz.updatedAt), { addSuffix: true })}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </TabsContent>
@@ -317,21 +416,90 @@ export default function QuizManager() {
             <Card>
               <CardContent className="text-center py-12">
                 <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No published quizzes</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {searchTerm ? "No published quizzes match your search" : "No published quizzes"}
+                </h3>
                 <p className="text-muted-foreground mb-4">
-                  Publish your first quiz to make it available to students.
+                  {searchTerm ? "Try adjusting your search terms" : "Publish your first quiz to make it available to students"}
                 </p>
-                <Button onClick={handleCreateNew}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Quiz
-                </Button>
+                {!searchTerm && (
+                  <Button onClick={handleCreateNew}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New Quiz
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {publishedQuizzes.map((quiz: Quiz) => (
-                <QuizCard key={quiz.id} quiz={quiz} isDraft={false} />
-              ))}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quiz Name</TableHead>
+                    <TableHead>Questions</TableHead>
+                    <TableHead>Time Limit</TableHead>
+                    <TableHead>Published</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {publishedQuizzes.map((quiz: Quiz) => (
+                    <TableRow key={quiz.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{quiz.title || "Untitled Quiz"}</div>
+                          {quiz.description && (
+                            <div className="text-sm text-muted-foreground">{quiz.description}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4" />
+                          <span>{quiz.questionCount || quiz.questions?.length || 0}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {quiz.timeLimit ? (
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{quiz.timeLimit} min</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">No limit</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(quiz.publishedAt!), { addSuffix: true })}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleAssign(quiz)}>
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)}>
+                            <BarChart3 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </TabsContent>

@@ -63,6 +63,7 @@ export interface IStorage {
   // Answer option operations
   createAnswerOption(option: InsertAnswerOption): Promise<AnswerOption>;
   getAnswerOptionsByQuestion(questionId: string): Promise<AnswerOption[]>;
+  deleteAnswerOption(id: string): Promise<boolean>;
   
   // Quiz operations
   createQuiz(quiz: InsertQuiz): Promise<Quiz>;
@@ -248,6 +249,11 @@ export class DatabaseStorage implements IStorage {
       .from(answerOptions)
       .where(eq(answerOptions.questionId, questionId))
       .orderBy(answerOptions.displayOrder);
+  }
+
+  async deleteAnswerOption(id: string): Promise<boolean> {
+    const result = await db.delete(answerOptions).where(eq(answerOptions.id, id));
+    return result.rowCount > 0;
   }
 
   // Quiz operations
