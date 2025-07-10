@@ -653,9 +653,6 @@ export default function EnhancedQuizBuilder() {
     }
   }, []);
 
-  // Reference to track last saved quiz state
-  const lastSavedQuizRef = useRef<string>('');
-
   // Separate effect for autosave with debouncing
   useEffect(() => {
     if (!quiz.title || isAutoSaving) return;
