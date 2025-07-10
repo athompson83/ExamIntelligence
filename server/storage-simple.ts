@@ -126,6 +126,9 @@ export interface IStorage {
 
   // Data seeding method
   seedQuizData(): Promise<void>;
+  
+  // Proctoring Methods
+  getUnresolvedProctoringLogs(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2167,6 +2170,17 @@ Return JSON with the new question data:
     } catch (error) {
       console.error('Error completing quiz attempt:', error);
       throw error;
+    }
+  }
+
+  // Proctoring Methods
+  async getUnresolvedProctoringLogs(): Promise<any[]> {
+    try {
+      // Return empty array for now - would query proctoring_logs table in real implementation
+      return [];
+    } catch (error) {
+      console.error('Error fetching unresolved proctoring logs:', error);
+      return [];
     }
   }
 }

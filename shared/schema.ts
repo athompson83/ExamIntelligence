@@ -150,6 +150,14 @@ export const questions = pgTable("questions", {
   lastUsed: timestamp("last_used"),
   usageCount: integer("usage_count").default(0),
   
+  // CAT/IRT Parameters for Computer Adaptive Testing
+  irtDifficulty: numeric("irt_difficulty", { precision: 5, scale: 3 }).default("0.000"), // b parameter in IRT
+  irtDiscrimination: numeric("irt_discrimination", { precision: 5, scale: 3 }).default("1.000"), // a parameter in IRT
+  irtGuessing: numeric("irt_guessing", { precision: 5, scale: 3 }).default("0.000"), // c parameter in IRT (3PL model)
+  irtSlipping: numeric("irt_slipping", { precision: 5, scale: 3 }).default("1.000"), // upper asymptote for 4PL model
+  irtCalibrated: boolean("irt_calibrated").default(false), // Whether IRT parameters have been calibrated
+  irtSampleSize: integer("irt_sample_size").default(0), // Number of responses used for calibration
+  
   // Dynamic difficulty tracking
   originalDifficultyScore: numeric("original_difficulty_score", { precision: 3, scale: 1 }),
   currentDifficultyScore: numeric("current_difficulty_score", { precision: 3, scale: 1 }),
@@ -222,6 +230,32 @@ export const quizzes = pgTable("quizzes", {
   
   // Advanced features
   adaptiveTesting: boolean("adaptive_testing").default(false),
+  catModel: varchar("cat_model", { enum: ["rasch", "2pl", "3pl", "grm"] }).default("2pl"), // Default to 2PL as most common and effective
+  catSettings: jsonb("cat_settings").$type<{
+    initialDifficulty: number;
+    difficultyAdjustment: number;
+    minQuestions: number;
+    maxQuestions: number;
+    terminationCriteria: {
+      confidenceLevel: number;
+      standardError: number;
+      timeLimit: number;
+    };
+    itemSelectionMethod: string;
+    scoringMethod: string;
+  }>().default({
+    initialDifficulty: 0, // Theta = 0 (moderate ability)
+    difficultyAdjustment: 0.5,
+    minQuestions: 10,
+    maxQuestions: 50,
+    terminationCriteria: {
+      confidenceLevel: 0.95,
+      standardError: 0.3,
+      timeLimit: 120
+    },
+    itemSelectionMethod: "maximum_information",
+    scoringMethod: "eap" // Expected A Posteriori
+  }),
   
   // AI-powered feedback and learning features
   enableQuestionFeedback: boolean("enable_question_feedback").default(false),

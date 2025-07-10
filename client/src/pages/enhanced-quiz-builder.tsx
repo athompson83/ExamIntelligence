@@ -1615,8 +1615,246 @@ export default function EnhancedQuizBuilder() {
                     />
                     <Label htmlFor="enable-learning-prescription">Enable Learning Prescription</Label>
                   </div>
+                </CardContent>
+              </Card>
 
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Computer Adaptive Testing (CAT)
+                  </CardTitle>
+                  <CardDescription>
+                    Dynamically adjust question difficulty based on student performance using Item Response Theory
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="adaptive-testing"
+                      checked={quiz.adaptiveTesting || false}
+                      onCheckedChange={(checked) => setQuiz(prev => ({ 
+                        ...prev, 
+                        adaptiveTesting: checked,
+                        // Initialize default CAT settings when enabled
+                        catSettings: checked ? (prev.catSettings || {
+                          initialDifficulty: 0,
+                          difficultyAdjustment: 0.5,
+                          minQuestions: 10,
+                          maxQuestions: 50,
+                          terminationCriteria: {
+                            confidenceLevel: 0.95,
+                            standardError: 0.3,
+                            timeLimit: 120
+                          },
+                          itemSelectionMethod: "maximum_information",
+                          scoringMethod: "eap"
+                        }) : prev.catSettings
+                      }))}
+                    />
+                    <Label htmlFor="adaptive-testing">Enable Computer Adaptive Testing</Label>
+                  </div>
 
+                  {quiz.adaptiveTesting && (
+                    <div className="ml-6 border-l-2 border-blue-200 pl-4 space-y-4 bg-blue-50/50 rounded-r-lg p-4">
+                      <h4 className="font-medium text-blue-900 flex items-center gap-2">
+                        <Brain className="h-4 w-4" />
+                        CAT Configuration
+                      </h4>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="catModel">CAT Model</Label>
+                          <Select 
+                            value={quiz.catModel || "2pl"} 
+                            onValueChange={(value) => setQuiz(prev => ({ ...prev, catModel: value }))}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="rasch">Rasch Model (1PL)</SelectItem>
+                              <SelectItem value="2pl">2-Parameter Logistic (2PL) ⭐ Recommended</SelectItem>
+                              <SelectItem value="3pl">3-Parameter Logistic (3PL)</SelectItem>
+                              <SelectItem value="grm">Graded Response Model (GRM)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            2PL is the most commonly used and effective model
+                          </p>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="itemSelectionMethod">Item Selection Method</Label>
+                          <Select 
+                            value={quiz.catSettings?.itemSelectionMethod || "maximum_information"} 
+                            onValueChange={(value) => setQuiz(prev => ({ 
+                              ...prev, 
+                              catSettings: { ...prev.catSettings, itemSelectionMethod: value }
+                            }))}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="maximum_information">Maximum Information</SelectItem>
+                              <SelectItem value="random">Random Selection</SelectItem>
+                              <SelectItem value="a_stratified">A-Stratified</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="initialDifficulty">Initial Difficulty (θ): {quiz.catSettings?.initialDifficulty || 0}</Label>
+                          <input
+                            type="range"
+                            id="initialDifficulty"
+                            min="-3"
+                            max="3"
+                            step="0.1"
+                            value={quiz.catSettings?.initialDifficulty || 0}
+                            onChange={(e) => setQuiz(prev => ({ 
+                              ...prev, 
+                              catSettings: { 
+                                ...prev.catSettings, 
+                                initialDifficulty: parseFloat(e.target.value) 
+                              }
+                            }))}
+                            className="w-full mt-2"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                            <span>Easy (-3)</span>
+                            <span>Moderate (0)</span>
+                            <span>Hard (+3)</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="scoringMethod">Scoring Method</Label>
+                          <Select 
+                            value={quiz.catSettings?.scoringMethod || "eap"} 
+                            onValueChange={(value) => setQuiz(prev => ({ 
+                              ...prev, 
+                              catSettings: { ...prev.catSettings, scoringMethod: value }
+                            }))}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="eap">Expected A Posteriori (EAP)</SelectItem>
+                              <SelectItem value="map">Maximum A Posteriori (MAP)</SelectItem>
+                              <SelectItem value="mle">Maximum Likelihood (MLE)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="minQuestions">Minimum Questions: {quiz.catSettings?.minQuestions || 10}</Label>
+                          <input
+                            type="range"
+                            id="minQuestions"
+                            min="5"
+                            max="30"
+                            step="1"
+                            value={quiz.catSettings?.minQuestions || 10}
+                            onChange={(e) => setQuiz(prev => ({ 
+                              ...prev, 
+                              catSettings: { 
+                                ...prev.catSettings, 
+                                minQuestions: parseInt(e.target.value) 
+                              }
+                            }))}
+                            className="w-full mt-2"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="maxQuestions">Maximum Questions: {quiz.catSettings?.maxQuestions || 50}</Label>
+                          <input
+                            type="range"
+                            id="maxQuestions"
+                            min="10"
+                            max="100"
+                            step="1"
+                            value={quiz.catSettings?.maxQuestions || 50}
+                            onChange={(e) => setQuiz(prev => ({ 
+                              ...prev, 
+                              catSettings: { 
+                                ...prev.catSettings, 
+                                maxQuestions: parseInt(e.target.value) 
+                              }
+                            }))}
+                            className="w-full mt-2"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <h5 className="font-medium text-sm">Termination Criteria</h5>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="confidenceLevel">Confidence Level: {((quiz.catSettings?.terminationCriteria?.confidenceLevel || 0.95) * 100).toFixed(0)}%</Label>
+                            <input
+                              type="range"
+                              id="confidenceLevel"
+                              min="0.80"
+                              max="0.99"
+                              step="0.01"
+                              value={quiz.catSettings?.terminationCriteria?.confidenceLevel || 0.95}
+                              onChange={(e) => setQuiz(prev => ({ 
+                                ...prev, 
+                                catSettings: { 
+                                  ...prev.catSettings, 
+                                  terminationCriteria: {
+                                    ...prev.catSettings?.terminationCriteria,
+                                    confidenceLevel: parseFloat(e.target.value)
+                                  }
+                                }
+                              }))}
+                              className="w-full mt-2"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="standardError">Standard Error: {quiz.catSettings?.terminationCriteria?.standardError || 0.3}</Label>
+                            <input
+                              type="range"
+                              id="standardError"
+                              min="0.1"
+                              max="0.5"
+                              step="0.05"
+                              value={quiz.catSettings?.terminationCriteria?.standardError || 0.3}
+                              onChange={(e) => setQuiz(prev => ({ 
+                                ...prev, 
+                                catSettings: { 
+                                  ...prev.catSettings, 
+                                  terminationCriteria: {
+                                    ...prev.catSettings?.terminationCriteria,
+                                    standardError: parseFloat(e.target.value)
+                                  }
+                                }
+                              }))}
+                              className="w-full mt-2"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-100 border border-blue-300 rounded-lg p-3">
+                        <h6 className="font-medium text-blue-900 text-sm mb-1">How CAT Works</h6>
+                        <p className="text-xs text-blue-700">
+                          CAT starts with moderate difficulty questions and adapts based on responses. 
+                          Correct answers lead to harder questions, incorrect answers to easier ones. 
+                          The test ends when confidence criteria are met or limits are reached.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

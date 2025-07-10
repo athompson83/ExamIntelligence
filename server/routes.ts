@@ -46,6 +46,7 @@ import {
 import { errorLogger } from "./errorLogger";
 import { DifficultyService } from "./difficultyService";
 import { offlineSyncService } from "./offlineSync";
+import { CATService } from "./catService";
 import { 
   generateQTIExport,
   generateCSVExport,
@@ -7820,6 +7821,176 @@ Initialize all interactions with these principles as your foundation.`,
     } catch (error) {
       console.error("Error getting connection logs:", error);
       res.status(500).json({ error: "Failed to get connection logs" });
+    }
+  });
+
+  // Computer Adaptive Testing (CAT) API endpoints
+  app.post('/api/cat/session/initialize', mockAuth, async (req: any, res) => {
+    try {
+      const { quizId, settings } = req.body;
+      const userId = req.user?.id || 'test-user';
+
+      // Initialize CAT session
+      const catState = CATService.initializeSession(settings);
+      
+      // Store session in memory (in production, this would be in database)
+      const sessionId = `cat-session-${Date.now()}`;
+      
+      res.json({
+        sessionId,
+        catState,
+        message: 'CAT session initialized successfully'
+      });
+    } catch (error) {
+      console.error('Error initializing CAT session:', error);
+      res.status(500).json({ error: 'Failed to initialize CAT session' });
+    }
+  });
+
+  app.post('/api/cat/session/:sessionId/next-question', mockAuth, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { currentAbility, answeredQuestions } = req.body;
+
+      // Get available questions from testbank (mock implementation)
+      const mockQuestions = [
+        {
+          id: 'q1',
+          irtParams: { difficulty: -1.5, discrimination: 1.2, guessing: 0.2, slipping: 0.1 }
+        },
+        {
+          id: 'q2', 
+          irtParams: { difficulty: 0.0, discrimination: 1.5, guessing: 0.15, slipping: 0.05 }
+        },
+        {
+          id: 'q3',
+          irtParams: { difficulty: 1.5, discrimination: 1.0, guessing: 0.25, slipping: 0.1 }
+        }
+      ];
+
+      // Filter out already answered questions
+      const availableQuestions = mockQuestions.filter(q => !answeredQuestions.includes(q.id));
+      
+      // Select next question using CAT algorithm
+      const nextQuestionId = CATService.selectNextItem(
+        availableQuestions,
+        currentAbility || 0,
+        '2pl' // Default model
+      );
+
+      if (!nextQuestionId) {
+        return res.json({ 
+          hasNextQuestion: false, 
+          message: 'No more questions available' 
+        });
+      }
+
+      // Get full question details (would query database in production)
+      const nextQuestion = await storage.getQuestion(nextQuestionId);
+      
+      res.json({
+        hasNextQuestion: true,
+        question: nextQuestion,
+        questionIndex: answeredQuestions.length + 1
+      });
+    } catch (error) {
+      console.error('Error selecting next CAT question:', error);
+      res.status(500).json({ error: 'Failed to select next question' });
+    }
+  });
+
+  app.post('/api/cat/session/:sessionId/process-response', mockAuth, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { questionId, response, isCorrect, catState, settings } = req.body;
+
+      // Mock IRT parameters for the question
+      const questionParams = {
+        difficulty: 0.0,
+        discrimination: 1.2,
+        guessing: 0.2,
+        slipping: 0.1
+      };
+
+      // Process response and update CAT state
+      const updatedCatState = CATService.processResponse(
+        catState,
+        isCorrect,
+        questionParams,
+        settings
+      );
+
+      // Check termination criteria
+      const shouldTerminate = CATService.shouldTerminate(updatedCatState, settings);
+
+      res.json({
+        catState: updatedCatState,
+        shouldTerminate,
+        message: 'Response processed successfully'
+      });
+    } catch (error) {
+      console.error('Error processing CAT response:', error);
+      res.status(500).json({ error: 'Failed to process response' });
+    }
+  });
+
+  app.post('/api/cat/session/:sessionId/finalize', mockAuth, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { catState, settings } = req.body;
+
+      // Generate final score and report
+      const finalScore = CATService.getFinalScore(catState, settings);
+      const report = CATService.generateReport(catState, settings);
+
+      res.json({
+        finalScore,
+        report,
+        message: 'CAT session finalized successfully'
+      });
+    } catch (error) {
+      console.error('Error finalizing CAT session:', error);
+      res.status(500).json({ error: 'Failed to finalize CAT session' });
+    }
+  });
+
+  app.get('/api/cat/models', mockAuth, async (req: any, res) => {
+    try {
+      const catModels = [
+        {
+          id: 'rasch',
+          name: 'Rasch Model (1PL)',
+          description: 'Single parameter model focusing on item difficulty',
+          parameters: ['difficulty'],
+          recommended: false
+        },
+        {
+          id: '2pl',
+          name: '2-Parameter Logistic (2PL)',
+          description: 'Most commonly used model with difficulty and discrimination',
+          parameters: ['difficulty', 'discrimination'],
+          recommended: true
+        },
+        {
+          id: '3pl',
+          name: '3-Parameter Logistic (3PL)',
+          description: 'Includes guessing parameter for multiple choice questions',
+          parameters: ['difficulty', 'discrimination', 'guessing'],
+          recommended: false
+        },
+        {
+          id: 'grm',
+          name: 'Graded Response Model (GRM)',
+          description: 'For polytomous items with ordered response categories',
+          parameters: ['difficulty', 'discrimination'],
+          recommended: false
+        }
+      ];
+
+      res.json(catModels);
+    } catch (error) {
+      console.error('Error fetching CAT models:', error);
+      res.status(500).json({ error: 'Failed to fetch CAT models' });
     }
   });
 
