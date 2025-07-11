@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { QuickStats } from "@/components/dashboard/quick-stats";
@@ -13,6 +14,7 @@ import { Plus, Puzzle, Bot, Eye } from "lucide-react";
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -62,7 +64,7 @@ export default function Dashboard() {
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button 
               className="bg-primary text-white p-4 h-auto hover:bg-primary/90 transition-colors duration-200"
-              onClick={() => window.location.href = '/item-banks'}
+              onClick={() => setLocation('/item-banks')}
             >
               <Plus className="mr-2 h-4 w-4" />
               Create Item Bank
@@ -70,7 +72,7 @@ export default function Dashboard() {
             
             <Button 
               className="bg-secondary text-white p-4 h-auto hover:bg-secondary/90 transition-colors duration-200"
-              onClick={() => window.location.href = '/quiz-builder'}
+              onClick={() => setLocation('/quiz-builder')}
             >
               <Puzzle className="mr-2 h-4 w-4" />
               Build Quiz
@@ -78,7 +80,7 @@ export default function Dashboard() {
             
             <Button 
               className="bg-orange-500 text-white p-4 h-auto hover:bg-orange-600 transition-colors duration-200"
-              onClick={() => window.location.href = '/ai-resources'}
+              onClick={() => setLocation('/ai-resources')}
             >
               <Bot className="mr-2 h-4 w-4" />
               AI Generate
@@ -86,7 +88,7 @@ export default function Dashboard() {
             
             <Button 
               className="bg-purple-600 text-white p-4 h-auto hover:bg-purple-700 transition-colors duration-200"
-              onClick={() => window.location.href = '/live-exams'}
+              onClick={() => setLocation('/live-exams')}
             >
               <Eye className="mr-2 h-4 w-4" />
               Monitor Exams
