@@ -11,6 +11,7 @@ import {
   sectionMemberships,
   quizAssignments,
   promptTemplates,
+  archiveHistory,
   type User,
   type UpsertUser,
   type Testbank,
@@ -129,6 +130,21 @@ export interface IStorage {
   
   // Proctoring Methods
   getUnresolvedProctoringLogs(): Promise<any[]>;
+  
+  // Archive Management Methods
+  archiveQuestion(questionId: string, userId: string, reason: string): Promise<Question | undefined>;
+  archiveQuiz(quizId: string, userId: string, reason: string): Promise<Quiz | undefined>;
+  archiveTestbank(testbankId: string, userId: string, reason: string): Promise<Testbank | undefined>;
+  restoreQuestion(questionId: string, userId: string): Promise<Question | undefined>;
+  restoreQuiz(quizId: string, userId: string): Promise<Quiz | undefined>;
+  restoreTestbank(testbankId: string, userId: string): Promise<Testbank | undefined>;
+  getArchivedQuestions(accountId: string): Promise<Question[]>;
+  getArchivedQuizzes(accountId: string): Promise<Quiz[]>;
+  getArchivedTestbanks(accountId: string): Promise<Testbank[]>;
+  getArchiveHistory(itemType?: string, itemId?: string): Promise<any[]>;
+  permanentlyDeleteQuestion(questionId: string, userId: string): Promise<boolean>;
+  permanentlyDeleteQuiz(quizId: string, userId: string): Promise<boolean>;
+  permanentlyDeleteTestbank(testbankId: string, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -175,7 +191,10 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(testbanks)
-      .where(eq(testbanks.accountId, accountId))
+      .where(and(
+        eq(testbanks.accountId, accountId),
+        eq(testbanks.isArchived, false)
+      ))
       .orderBy(desc(testbanks.createdAt));
   }
 
@@ -183,7 +202,10 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(testbanks)
-      .where(eq(testbanks.creatorId, userId))
+      .where(and(
+        eq(testbanks.creatorId, userId),
+        eq(testbanks.isArchived, false)
+      ))
       .orderBy(desc(testbanks.createdAt));
   }
 
@@ -196,9 +218,18 @@ export class DatabaseStorage implements IStorage {
     return testbank;
   }
 
-  async deleteTestbank(id: string): Promise<boolean> {
-    const result = await db.delete(testbanks).where(eq(testbanks.id, id));
-    return result.rowCount > 0;
+  async deleteTestbank(id: string, userId?: string, reason?: string): Promise<boolean> {
+    // Safety protocol: Archive instead of delete
+    // This method is kept for backwards compatibility but now archives
+    const testbank = await this.getTestbank(id);
+    if (!testbank) return false;
+    
+    const archived = await this.archiveTestbank(
+      id, 
+      userId || 'system', 
+      reason || 'Deleted via legacy delete method'
+    );
+    return archived !== undefined;
   }
 
   // Question operations
@@ -220,7 +251,10 @@ export class DatabaseStorage implements IStorage {
       return await db
         .select()
         .from(questions)
-        .where(eq(questions.testbankId, testbankId))
+        .where(and(
+          eq(questions.testbankId, testbankId),
+          eq(questions.isArchived, false)
+        ))
         .orderBy(desc(questions.createdAt));
     } catch (error) {
       console.error('Error in getQuestionsByTestbank:', error);
@@ -238,9 +272,18 @@ export class DatabaseStorage implements IStorage {
     return question;
   }
 
-  async deleteQuestion(id: string): Promise<boolean> {
-    const result = await db.delete(questions).where(eq(questions.id, id));
-    return result.rowCount > 0;
+  async deleteQuestion(id: string, userId?: string, reason?: string): Promise<boolean> {
+    // Safety protocol: Archive instead of delete
+    // This method is kept for backwards compatibility but now archives
+    const question = await this.getQuestion(id);
+    if (!question) return false;
+    
+    const archived = await this.archiveQuestion(
+      id, 
+      userId || 'system', 
+      reason || 'Deleted via legacy delete method'
+    );
+    return archived !== undefined;
   }
 
   // Answer option operations
@@ -283,7 +326,10 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(quizzes)
-      .where(eq(quizzes.accountId, accountId))
+      .where(and(
+        eq(quizzes.accountId, accountId),
+        eq(quizzes.isArchived, false)
+      ))
       .orderBy(desc(quizzes.createdAt));
   }
 
@@ -296,9 +342,18 @@ export class DatabaseStorage implements IStorage {
     return quiz;
   }
 
-  async deleteQuiz(id: string): Promise<boolean> {
-    const result = await db.delete(quizzes).where(eq(quizzes.id, id));
-    return result.rowCount > 0;
+  async deleteQuiz(id: string, userId?: string, reason?: string): Promise<boolean> {
+    // Safety protocol: Archive instead of delete
+    // This method is kept for backwards compatibility but now archives
+    const quiz = await this.getQuiz(id);
+    if (!quiz) return false;
+    
+    const archived = await this.archiveQuiz(
+      id, 
+      userId || 'system', 
+      reason || 'Deleted via legacy delete method'
+    );
+    return archived !== undefined;
   }
 
   // Quiz attempt operations
@@ -2187,6 +2242,400 @@ Return JSON with the new question data:
     } catch (error) {
       console.error('Error fetching unresolved proctoring logs:', error);
       return [];
+    }
+  }
+
+  // Archive Management Methods
+  async archiveQuestion(questionId: string, userId: string, reason: string): Promise<Question | undefined> {
+    try {
+      // Get the question first to store original data
+      const question = await this.getQuestion(questionId);
+      if (!question) return undefined;
+
+      // Archive the question
+      const [archivedQuestion] = await db
+        .update(questions)
+        .set({
+          isArchived: true,
+          archivedAt: new Date(),
+          archivedBy: userId,
+          archiveReason: reason,
+          canRestore: true,
+          updatedAt: new Date()
+        })
+        .where(eq(questions.id, questionId))
+        .returning();
+
+      // Log the archival action
+      await db.insert(archiveHistory).values({
+        itemType: 'question',
+        itemId: questionId,
+        itemTitle: question.questionText.substring(0, 100),
+        action: 'archived',
+        performedBy: userId,
+        reason: reason,
+        originalData: question,
+        timestamp: new Date()
+      });
+
+      return archivedQuestion;
+    } catch (error) {
+      console.error('Error archiving question:', error);
+      return undefined;
+    }
+  }
+
+  async archiveQuiz(quizId: string, userId: string, reason: string): Promise<Quiz | undefined> {
+    try {
+      // Get the quiz first to store original data
+      const quiz = await this.getQuiz(quizId);
+      if (!quiz) return undefined;
+
+      // Archive the quiz
+      const [archivedQuiz] = await db
+        .update(quizzes)
+        .set({
+          isArchived: true,
+          archivedAt: new Date(),
+          archivedBy: userId,
+          archiveReason: reason,
+          canRestore: true,
+          updatedAt: new Date()
+        })
+        .where(eq(quizzes.id, quizId))
+        .returning();
+
+      // Log the archival action
+      await db.insert(archiveHistory).values({
+        itemType: 'quiz',
+        itemId: quizId,
+        itemTitle: quiz.title,
+        action: 'archived',
+        performedBy: userId,
+        reason: reason,
+        originalData: quiz,
+        timestamp: new Date()
+      });
+
+      return archivedQuiz;
+    } catch (error) {
+      console.error('Error archiving quiz:', error);
+      return undefined;
+    }
+  }
+
+  async archiveTestbank(testbankId: string, userId: string, reason: string): Promise<Testbank | undefined> {
+    try {
+      // Get the testbank first to store original data
+      const testbank = await this.getTestbank(testbankId);
+      if (!testbank) return undefined;
+
+      // Archive the testbank
+      const [archivedTestbank] = await db
+        .update(testbanks)
+        .set({
+          isArchived: true,
+          archivedAt: new Date(),
+          archivedBy: userId,
+          archiveReason: reason,
+          canRestore: true,
+          updatedAt: new Date()
+        })
+        .where(eq(testbanks.id, testbankId))
+        .returning();
+
+      // Log the archival action
+      await db.insert(archiveHistory).values({
+        itemType: 'testbank',
+        itemId: testbankId,
+        itemTitle: testbank.title,
+        action: 'archived',
+        performedBy: userId,
+        reason: reason,
+        originalData: testbank,
+        timestamp: new Date()
+      });
+
+      return archivedTestbank;
+    } catch (error) {
+      console.error('Error archiving testbank:', error);
+      return undefined;
+    }
+  }
+
+  async restoreQuestion(questionId: string, userId: string): Promise<Question | undefined> {
+    try {
+      // Restore the question
+      const [restoredQuestion] = await db
+        .update(questions)
+        .set({
+          isArchived: false,
+          archivedAt: null,
+          archivedBy: null,
+          archiveReason: null,
+          updatedAt: new Date()
+        })
+        .where(eq(questions.id, questionId))
+        .returning();
+
+      // Log the restoration action
+      await db.insert(archiveHistory).values({
+        itemType: 'question',
+        itemId: questionId,
+        itemTitle: restoredQuestion?.questionText.substring(0, 100) || 'Restored Question',
+        action: 'restored',
+        performedBy: userId,
+        reason: 'Item restored from archive',
+        timestamp: new Date()
+      });
+
+      return restoredQuestion;
+    } catch (error) {
+      console.error('Error restoring question:', error);
+      return undefined;
+    }
+  }
+
+  async restoreQuiz(quizId: string, userId: string): Promise<Quiz | undefined> {
+    try {
+      // Restore the quiz
+      const [restoredQuiz] = await db
+        .update(quizzes)
+        .set({
+          isArchived: false,
+          archivedAt: null,
+          archivedBy: null,
+          archiveReason: null,
+          updatedAt: new Date()
+        })
+        .where(eq(quizzes.id, quizId))
+        .returning();
+
+      // Log the restoration action
+      await db.insert(archiveHistory).values({
+        itemType: 'quiz',
+        itemId: quizId,
+        itemTitle: restoredQuiz?.title || 'Restored Quiz',
+        action: 'restored',
+        performedBy: userId,
+        reason: 'Item restored from archive',
+        timestamp: new Date()
+      });
+
+      return restoredQuiz;
+    } catch (error) {
+      console.error('Error restoring quiz:', error);
+      return undefined;
+    }
+  }
+
+  async restoreTestbank(testbankId: string, userId: string): Promise<Testbank | undefined> {
+    try {
+      // Restore the testbank
+      const [restoredTestbank] = await db
+        .update(testbanks)
+        .set({
+          isArchived: false,
+          archivedAt: null,
+          archivedBy: null,
+          archiveReason: null,
+          updatedAt: new Date()
+        })
+        .where(eq(testbanks.id, testbankId))
+        .returning();
+
+      // Log the restoration action
+      await db.insert(archiveHistory).values({
+        itemType: 'testbank',
+        itemId: testbankId,
+        itemTitle: restoredTestbank?.title || 'Restored Testbank',
+        action: 'restored',
+        performedBy: userId,
+        reason: 'Item restored from archive',
+        timestamp: new Date()
+      });
+
+      return restoredTestbank;
+    } catch (error) {
+      console.error('Error restoring testbank:', error);
+      return undefined;
+    }
+  }
+
+  async getArchivedQuestions(accountId: string): Promise<Question[]> {
+    try {
+      return await db
+        .select()
+        .from(questions)
+        .innerJoin(testbanks, eq(questions.testbankId, testbanks.id))
+        .where(and(
+          eq(questions.isArchived, true),
+          eq(testbanks.accountId, accountId)
+        ))
+        .then(results => results.map(r => r.questions));
+    } catch (error) {
+      console.error('Error fetching archived questions:', error);
+      return [];
+    }
+  }
+
+  async getArchivedQuizzes(accountId: string): Promise<Quiz[]> {
+    try {
+      return await db
+        .select()
+        .from(quizzes)
+        .where(and(
+          eq(quizzes.isArchived, true),
+          eq(quizzes.accountId, accountId)
+        ))
+        .orderBy(desc(quizzes.archivedAt));
+    } catch (error) {
+      console.error('Error fetching archived quizzes:', error);
+      return [];
+    }
+  }
+
+  async getArchivedTestbanks(accountId: string): Promise<Testbank[]> {
+    try {
+      return await db
+        .select()
+        .from(testbanks)
+        .where(and(
+          eq(testbanks.isArchived, true),
+          eq(testbanks.accountId, accountId)
+        ))
+        .orderBy(desc(testbanks.archivedAt));
+    } catch (error) {
+      console.error('Error fetching archived testbanks:', error);
+      return [];
+    }
+  }
+
+  async getArchiveHistory(itemType?: string, itemId?: string): Promise<any[]> {
+    try {
+      let query = db.select().from(archiveHistory);
+      
+      if (itemType && itemId) {
+        query = query.where(and(
+          eq(archiveHistory.itemType, itemType),
+          eq(archiveHistory.itemId, itemId)
+        ));
+      } else if (itemType) {
+        query = query.where(eq(archiveHistory.itemType, itemType));
+      }
+      
+      return await query.orderBy(desc(archiveHistory.timestamp));
+    } catch (error) {
+      console.error('Error fetching archive history:', error);
+      return [];
+    }
+  }
+
+  async permanentlyDeleteQuestion(questionId: string, userId: string): Promise<boolean> {
+    try {
+      const question = await this.getQuestion(questionId);
+      if (!question) return false;
+
+      // Log the permanent deletion
+      await db.insert(archiveHistory).values({
+        itemType: 'question',
+        itemId: questionId,
+        itemTitle: question.questionText.substring(0, 100),
+        action: 'permanently_deleted',
+        performedBy: userId,
+        reason: 'Permanently deleted from archive',
+        originalData: question,
+        timestamp: new Date()
+      });
+
+      // Delete all answer options first
+      await db.delete(answerOptions).where(eq(answerOptions.questionId, questionId));
+      
+      // Delete the question
+      const result = await db.delete(questions).where(eq(questions.id, questionId));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error permanently deleting question:', error);
+      return false;
+    }
+  }
+
+  async permanentlyDeleteQuiz(quizId: string, userId: string): Promise<boolean> {
+    try {
+      const quiz = await this.getQuiz(quizId);
+      if (!quiz) return false;
+
+      // Log the permanent deletion
+      await db.insert(archiveHistory).values({
+        itemType: 'quiz',
+        itemId: quizId,
+        itemTitle: quiz.title,
+        action: 'permanently_deleted',
+        performedBy: userId,
+        reason: 'Permanently deleted from archive',
+        originalData: quiz,
+        timestamp: new Date()
+      });
+
+      // Delete quiz responses first
+      await db.delete(quizResponses).where(
+        sql`${quizResponses.attemptId} IN (
+          SELECT id FROM ${quizAttempts} WHERE quiz_id = ${quizId}
+        )`
+      );
+
+      // Delete quiz attempts
+      await db.delete(quizAttempts).where(eq(quizAttempts.quizId, quizId));
+      
+      // Delete the quiz
+      const result = await db.delete(quizzes).where(eq(quizzes.id, quizId));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error permanently deleting quiz:', error);
+      return false;
+    }
+  }
+
+  async permanentlyDeleteTestbank(testbankId: string, userId: string): Promise<boolean> {
+    try {
+      const testbank = await this.getTestbank(testbankId);
+      if (!testbank) return false;
+
+      // Log the permanent deletion
+      await db.insert(archiveHistory).values({
+        itemType: 'testbank',
+        itemId: testbankId,
+        itemTitle: testbank.title,
+        action: 'permanently_deleted',
+        performedBy: userId,
+        reason: 'Permanently deleted from archive',
+        originalData: testbank,
+        timestamp: new Date()
+      });
+
+      // Get all questions in this testbank
+      const testbankQuestions = await db
+        .select({ id: questions.id })
+        .from(questions)
+        .where(eq(questions.testbankId, testbankId));
+
+      // Delete all answer options for questions in this testbank
+      if (testbankQuestions.length > 0) {
+        const questionIds = testbankQuestions.map(q => q.id);
+        await db.delete(answerOptions).where(
+          inArray(answerOptions.questionId, questionIds)
+        );
+      }
+
+      // Delete all questions in this testbank
+      await db.delete(questions).where(eq(questions.testbankId, testbankId));
+      
+      // Delete the testbank
+      const result = await db.delete(testbanks).where(eq(testbanks.id, testbankId));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error permanently deleting testbank:', error);
+      return false;
     }
   }
 }

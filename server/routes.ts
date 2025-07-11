@@ -1264,13 +1264,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/testbanks/:id',  async (req: any, res) => {
+  app.delete('/api/testbanks/:id', mockAuth, async (req: any, res) => {
     try {
-      await storage.deleteTestbank(req.params.id);
-      res.json({ message: "Testbank deleted successfully" });
+      const userId = req.user?.id || "test-user";
+      const reason = req.body?.reason || "User initiated deletion";
+      
+      await storage.deleteTestbank(req.params.id, userId, reason);
+      res.json({ message: "Testbank archived successfully" });
     } catch (error) {
-      console.error("Error deleting testbank:", error);
-      res.status(500).json({ message: "Failed to delete testbank" });
+      console.error("Error archiving testbank:", error);
+      res.status(500).json({ message: "Failed to archive testbank" });
     }
   });
 
@@ -1496,13 +1499,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/questions/:id',  async (req: any, res) => {
+  app.delete('/api/questions/:id', mockAuth, async (req: any, res) => {
     try {
-      await storage.deleteQuestion(req.params.id);
-      res.json({ message: "Question deleted successfully" });
+      const userId = req.user?.id || "test-user";
+      const reason = req.body?.reason || "User initiated deletion";
+      
+      await storage.deleteQuestion(req.params.id, userId, reason);
+      res.json({ message: "Question archived successfully" });
     } catch (error) {
-      console.error("Error deleting question:", error);
-      res.status(500).json({ message: "Failed to delete question" });
+      console.error("Error archiving question:", error);
+      res.status(500).json({ message: "Failed to archive question" });
     }
   });
 
@@ -2171,6 +2177,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating quiz:", error);
       res.status(500).json({ message: "Failed to update quiz" });
+    }
+  });
+
+  // Delete quiz
+  app.delete('/api/quizzes/:id', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const reason = req.body?.reason || "User initiated deletion";
+      
+      await storage.deleteQuiz(req.params.id, userId, reason);
+      res.json({ message: "Quiz archived successfully" });
+    } catch (error) {
+      console.error("Error archiving quiz:", error);
+      res.status(500).json({ message: "Failed to archive quiz" });
     }
   });
 
@@ -7991,6 +8011,216 @@ Initialize all interactions with these principles as your foundation.`,
     } catch (error) {
       console.error('Error fetching CAT models:', error);
       res.status(500).json({ error: 'Failed to fetch CAT models' });
+    }
+  });
+
+  // Archive Management API Endpoints
+  // Archive a question
+  app.post('/api/archive/question/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const userId = req.user?.id || "test-user";
+      
+      if (!reason) {
+        return res.status(400).json({ message: "Archive reason is required" });
+      }
+      
+      const archivedQuestion = await storage.archiveQuestion(id, userId, reason);
+      if (!archivedQuestion) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+      
+      res.json({ message: "Question archived successfully", question: archivedQuestion });
+    } catch (error) {
+      console.error("Error archiving question:", error);
+      res.status(500).json({ message: "Failed to archive question" });
+    }
+  });
+
+  // Archive a quiz
+  app.post('/api/archive/quiz/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const userId = req.user?.id || "test-user";
+      
+      if (!reason) {
+        return res.status(400).json({ message: "Archive reason is required" });
+      }
+      
+      const archivedQuiz = await storage.archiveQuiz(id, userId, reason);
+      if (!archivedQuiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      
+      res.json({ message: "Quiz archived successfully", quiz: archivedQuiz });
+    } catch (error) {
+      console.error("Error archiving quiz:", error);
+      res.status(500).json({ message: "Failed to archive quiz" });
+    }
+  });
+
+  // Archive a testbank
+  app.post('/api/archive/testbank/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const userId = req.user?.id || "test-user";
+      
+      if (!reason) {
+        return res.status(400).json({ message: "Archive reason is required" });
+      }
+      
+      const archivedTestbank = await storage.archiveTestbank(id, userId, reason);
+      if (!archivedTestbank) {
+        return res.status(404).json({ message: "Testbank not found" });
+      }
+      
+      res.json({ message: "Testbank archived successfully", testbank: archivedTestbank });
+    } catch (error) {
+      console.error("Error archiving testbank:", error);
+      res.status(500).json({ message: "Failed to archive testbank" });
+    }
+  });
+
+  // Restore a question
+  app.post('/api/restore/question/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id || "test-user";
+      
+      const restoredQuestion = await storage.restoreQuestion(id, userId);
+      if (!restoredQuestion) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+      
+      res.json({ message: "Question restored successfully", question: restoredQuestion });
+    } catch (error) {
+      console.error("Error restoring question:", error);
+      res.status(500).json({ message: "Failed to restore question" });
+    }
+  });
+
+  // Restore a quiz
+  app.post('/api/restore/quiz/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id || "test-user";
+      
+      const restoredQuiz = await storage.restoreQuiz(id, userId);
+      if (!restoredQuiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      
+      res.json({ message: "Quiz restored successfully", quiz: restoredQuiz });
+    } catch (error) {
+      console.error("Error restoring quiz:", error);
+      res.status(500).json({ message: "Failed to restore quiz" });
+    }
+  });
+
+  // Restore a testbank
+  app.post('/api/restore/testbank/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id || "test-user";
+      
+      const restoredTestbank = await storage.restoreTestbank(id, userId);
+      if (!restoredTestbank) {
+        return res.status(404).json({ message: "Testbank not found" });
+      }
+      
+      res.json({ message: "Testbank restored successfully", testbank: restoredTestbank });
+    } catch (error) {
+      console.error("Error restoring testbank:", error);
+      res.status(500).json({ message: "Failed to restore testbank" });
+    }
+  });
+
+  // Get archived items
+  app.get('/api/archive/:type', mockAuth, async (req: any, res) => {
+    try {
+      const { type } = req.params;
+      const userId = req.user?.id || "test-user";
+      const accountId = req.user?.accountId || "default-account";
+      
+      let archivedItems = [];
+      
+      switch (type) {
+        case 'questions':
+          archivedItems = await storage.getArchivedQuestions(accountId);
+          break;
+        case 'quizzes':
+          archivedItems = await storage.getArchivedQuizzes(accountId);
+          break;
+        case 'testbanks':
+          archivedItems = await storage.getArchivedTestbanks(accountId);
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid archive type" });
+      }
+      
+      res.json(archivedItems);
+    } catch (error) {
+      console.error("Error fetching archived items:", error);
+      res.status(500).json({ message: "Failed to fetch archived items" });
+    }
+  });
+
+  // Get archive history
+  app.get('/api/archive/history', mockAuth, async (req: any, res) => {
+    try {
+      const { itemType, itemId } = req.query;
+      
+      const history = await storage.getArchiveHistory(
+        itemType as string,
+        itemId as string
+      );
+      
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching archive history:", error);
+      res.status(500).json({ message: "Failed to fetch archive history" });
+    }
+  });
+
+  // Permanently delete archived items (admin only)
+  app.delete('/api/archive/permanent/:type/:id', mockAuth, async (req: any, res) => {
+    try {
+      const { type, id } = req.params;
+      const userId = req.user?.id || "test-user";
+      const userRole = req.user?.role || "admin";
+      
+      // Check if user has permission to permanently delete
+      if (!["admin", "super_admin"].includes(userRole)) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+      
+      let deleted = false;
+      
+      switch (type) {
+        case 'question':
+          deleted = await storage.permanentlyDeleteQuestion(id, userId);
+          break;
+        case 'quiz':
+          deleted = await storage.permanentlyDeleteQuiz(id, userId);
+          break;
+        case 'testbank':
+          deleted = await storage.permanentlyDeleteTestbank(id, userId);
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid item type" });
+      }
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      
+      res.json({ message: `${type} permanently deleted` });
+    } catch (error) {
+      console.error("Error permanently deleting item:", error);
+      res.status(500).json({ message: "Failed to permanently delete item" });
     }
   });
 

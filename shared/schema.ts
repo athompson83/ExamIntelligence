@@ -76,6 +76,14 @@ export const testbanks = pgTable("testbanks", {
   tags: jsonb("tags").$type<string[]>().default([]),
   learningObjectives: jsonb("learning_objectives").$type<string[]>().default([]),
   lastRevalidatedAt: timestamp("last_revalidated_at"),
+  
+  // Safety deletion protocol - Archive instead of delete
+  isArchived: boolean("is_archived").default(false),
+  archivedAt: timestamp("archived_at"),
+  archivedBy: varchar("archived_by").references(() => users.id),
+  archiveReason: text("archive_reason"),
+  canRestore: boolean("can_restore").default(true),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -175,6 +183,14 @@ export const questions = pgTable("questions", {
   
   // Additional Canvas features
   additionalData: jsonb("additional_data"),
+  
+  // Safety deletion protocol - Archive instead of delete
+  isArchived: boolean("is_archived").default(false),
+  archivedAt: timestamp("archived_at"),
+  archivedBy: varchar("archived_by").references(() => users.id),
+  archiveReason: text("archive_reason"),
+  canRestore: boolean("can_restore").default(true),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -275,6 +291,13 @@ export const quizzes = pgTable("quizzes", {
   availabilityStart: timestamp("availability_start"),
   availabilityEnd: timestamp("availability_end"),
   alwaysAvailable: boolean("always_available").default(true),
+  
+  // Safety deletion protocol - Archive instead of delete
+  isArchived: boolean("is_archived").default(false),
+  archivedAt: timestamp("archived_at"),
+  archivedBy: varchar("archived_by").references(() => users.id),
+  archiveReason: text("archive_reason"),
+  canRestore: boolean("can_restore").default(true),
   
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
@@ -422,6 +445,22 @@ export const referenceBanks = pgTable("reference_banks", {
   creatorId: varchar("creator_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Archive History table - tracks all archival actions
+export const archiveHistory = pgTable("archive_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  itemType: varchar("item_type", { enum: ["question", "quiz", "testbank"] }).notNull(),
+  itemId: uuid("item_id").notNull(),
+  itemTitle: varchar("item_title").notNull(),
+  action: varchar("action", { enum: ["archived", "restored", "permanently_deleted"] }).notNull(),
+  performedBy: varchar("performed_by").references(() => users.id).notNull(),
+  reason: text("reason"),
+  metadata: jsonb("metadata"),
+  timestamp: timestamp("timestamp").defaultNow(),
+  
+  // Reference to original item for cross-checking
+  originalData: jsonb("original_data"), // Store snapshot of item at time of archival
 });
 
 export const references = pgTable("references", {

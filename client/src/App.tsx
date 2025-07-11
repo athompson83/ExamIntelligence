@@ -79,6 +79,7 @@ const ProgressTracking = lazy(() => import("@/pages/progress-tracking"));
 const CustomerSupport = lazy(() => import("@/pages/customer-support"));
 const ProfileEnhancement = lazy(() => import("@/pages/profile-enhancement"));
 const OfflineSyncPage = lazy(() => import("@/pages/OfflineSyncPage"));
+const ArchiveManagement = lazy(() => import("@/pages/archive-management"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -177,6 +178,9 @@ function Router() {
           </Route>
           <Route path="/super-admin-settings">
             {() => <Suspense fallback={<LoadingSpinner />}><SuperAdminSettings /></Suspense>}
+          </Route>
+          <Route path="/archive-management">
+            {() => <Suspense fallback={<LoadingSpinner />}><ArchiveManagement /></Suspense>}
           </Route>
           <Route path="/reference-banks">
             {() => <Suspense fallback={<LoadingSpinner />}><ReferenceBanks /></Suspense>}

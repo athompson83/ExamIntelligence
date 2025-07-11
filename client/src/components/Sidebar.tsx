@@ -24,7 +24,8 @@ import {
   MessageSquare,
   HelpCircle,
   Smartphone,
-  Cloud
+  Cloud,
+  Archive
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -55,6 +56,7 @@ export default function Sidebar() {
   const systemItems = [
     ...(['admin', 'teacher', 'super_admin'].includes(user?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
     { href: "/offline-sync", label: "Offline Sync", icon: Cloud, tourId: "offline-sync" },
+    { href: "/archive-management", label: "Archive Management", icon: Archive, tourId: "archive-management" },
     { href: "/settings", label: "Settings", icon: Settings, tourId: "settings" },
   ];
 
