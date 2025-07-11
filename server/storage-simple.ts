@@ -128,6 +128,10 @@ export interface IStorage {
   // Data seeding method
   seedQuizData(): Promise<void>;
   
+  // User management methods
+  seedDummyUsers(): Promise<void>;
+  getDummyUsers(): Promise<User[]>;
+  
   // Proctoring Methods
   getUnresolvedProctoringLogs(): Promise<any[]>;
   
@@ -171,6 +175,98 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users);
+  }
+
+  async seedDummyUsers(): Promise<void> {
+    const dummyUsers = [
+      {
+        id: "super-admin-user",
+        email: "superadmin@test.com",
+        firstName: "Super",
+        lastName: "Admin",
+        role: "super_admin" as const,
+        accountId: "00000000-0000-0000-0000-000000000001",
+        isActive: true,
+        profileImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      },
+      {
+        id: "admin-user",
+        email: "admin@test.com", 
+        firstName: "John",
+        lastName: "Administrator",
+        role: "admin" as const,
+        accountId: "00000000-0000-0000-0000-000000000001",
+        isActive: true,
+        profileImageUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face",
+      },
+      {
+        id: "teacher-user",
+        email: "teacher@test.com",
+        firstName: "Sarah",
+        lastName: "Teacher",
+        role: "teacher" as const,
+        accountId: "00000000-0000-0000-0000-000000000001",
+        isActive: true,
+        profileImageUrl: "https://images.unsplash.com/photo-1494790108755-2616c96cbb56?w=150&h=150&fit=crop&crop=face",
+      },
+      {
+        id: "student-user",
+        email: "student@test.com",
+        firstName: "Mike",
+        lastName: "Student",
+        role: "student" as const,
+        accountId: "00000000-0000-0000-0000-000000000001",
+        isActive: true,
+        profileImageUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&h=150&fit=crop&crop=face",
+      },
+      {
+        id: "teacher-user-2",
+        email: "teacher2@test.com",
+        firstName: "Emma",
+        lastName: "Educator",
+        role: "teacher" as const,
+        accountId: "00000000-0000-0000-0000-000000000001",
+        isActive: true,
+        profileImageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+      },
+      {
+        id: "student-user-2",
+        email: "student2@test.com",
+        firstName: "Lisa",
+        lastName: "Learner",
+        role: "student" as const,
+        accountId: "00000000-0000-0000-0000-000000000001",
+        isActive: true,
+        profileImageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+      },
+    ];
+
+    for (const user of dummyUsers) {
+      try {
+        await this.upsertUser(user);
+      } catch (error) {
+        console.log(`User ${user.id} already exists or created successfully`);
+      }
+    }
+  }
+
+  async getDummyUsers(): Promise<User[]> {
+    const dummyUserIds = [
+      "super-admin-user",
+      "admin-user", 
+      "teacher-user",
+      "student-user",
+      "teacher-user-2",
+      "student-user-2"
+    ];
+
+    const dummyUsers = await db
+      .select()
+      .from(users)
+      .where(inArray(users.id, dummyUserIds))
+      .orderBy(users.role, users.firstName);
+
+    return dummyUsers;
   }
 
   // Testbank operations

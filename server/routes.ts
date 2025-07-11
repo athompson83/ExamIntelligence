@@ -2097,6 +2097,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User role switching for testing
+  app.post('/api/seed-dummy-users', mockAuth, async (req, res) => {
+    try {
+      await storage.seedDummyUsers();
+      res.json({ message: 'Dummy users seeded successfully' });
+    } catch (error) {
+      console.error('Error seeding dummy users:', error);
+      res.status(500).json({ error: 'Failed to seed dummy users' });
+    }
+  });
+
+  app.get('/api/dummy-users', mockAuth, async (req, res) => {
+    try {
+      const dummyUsers = await storage.getDummyUsers();
+      res.json(dummyUsers);
+    } catch (error) {
+      console.error('Error fetching dummy users:', error);
+      res.status(500).json({ error: 'Failed to fetch dummy users' });
+    }
+  });
+
+  app.post('/api/switch-user/:userId', mockAuth, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Get the user to switch to
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // In a real implementation, you'd update the session here
+      // For now, we'll return the user data for the frontend to handle
+      res.json({ 
+        message: 'User switched successfully', 
+        user: targetUser 
+      });
+    } catch (error) {
+      console.error('Error switching user:', error);
+      res.status(500).json({ error: 'Failed to switch user' });
+    }
+  });
+
   app.get('/api/quizzes/available', mockAuth, async (req: any, res) => {
     try {
       // Use proper user ID extraction with fallback

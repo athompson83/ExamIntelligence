@@ -14,13 +14,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Search, LogOut, User, Settings, GraduationCap, BookOpen, Bot, Bug, Megaphone, Flag, MessageSquare } from "lucide-react";
+import { Bell, Search, LogOut, User, Settings, GraduationCap, BookOpen, Bot, Bug, Megaphone, Flag, MessageSquare, Users } from "lucide-react";
 import TourControl from "./TourControl";
+import UserRoleSwitcher from "./UserRoleSwitcher";
+import { useUserSwitching } from "@/hooks/useUserSwitching";
 
 export default function TopBar() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, navigate] = useLocation();
+  const { switchedUser, switchUser, clearUserSwitch, isSwitched } = useUserSwitching();
+
+  // Use switched user if available, otherwise use the regular user
+  const currentUser = switchedUser || user;
 
   const { data: notifications } = useQuery({
     queryKey: ["/api/notifications"],
@@ -104,22 +110,39 @@ export default function TopBar() {
         {/* Tour Control */}
         <TourControl />
         
+        {/* User Switcher */}
+        <UserRoleSwitcher 
+          currentUser={currentUser} 
+          onUserSwitch={switchUser}
+          trigger={
+            <Button variant="outline" size="sm" className="text-xs">
+              <Users className="h-4 w-4 mr-1" />
+              {isSwitched ? 'Test User' : 'Switch User'}
+            </Button>
+          }
+        />
+        
         {/* User Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-3 p-2">
               <div className="text-right">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {user?.firstName} {user?.lastName}
+                  {currentUser?.firstName} {currentUser?.lastName}
+                  {isSwitched && (
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      Test
+                    </Badge>
+                  )}
                 </div>
                 <div className="text-xs text-gray-500 capitalize">
-                  {user?.role || 'User'}
+                  {currentUser?.role?.replace('_', ' ') || 'User'}
                 </div>
               </div>
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.profileImageUrl || ''} alt="Profile" />
+                <AvatarImage src={currentUser?.profileImageUrl || ''} alt="Profile" />
                 <AvatarFallback>
-                  {getUserInitials(user?.firstName, user?.lastName)}
+                  {getUserInitials(currentUser?.firstName, currentUser?.lastName)}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -127,6 +150,18 @@ export default function TopBar() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            
+            {/* Clear User Switch if active */}
+            {isSwitched && (
+              <>
+                <DropdownMenuItem onClick={clearUserSwitch}>
+                  <Users className="mr-2 h-4 w-4" />
+                  Return to Original User
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            
             <DropdownMenuItem onClick={handleViewToggle}>
               {isStudentView ? (
                 <>
