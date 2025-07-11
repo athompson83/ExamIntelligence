@@ -89,9 +89,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     role: "super_admin"
   };
 
+  // Function to get current user (supporting user switching)
+  const getCurrentUser = async (req: any) => {
+    // Check if user switching is active
+    if (req.session && req.session.switchedUserId) {
+      try {
+        const switchedUser = await storage.getUserById(req.session.switchedUserId);
+        return switchedUser;
+      } catch (error) {
+        console.error('Error fetching switched user:', error);
+        // Fall back to default user
+      }
+    }
+    
+    // Default to mock user for testing
+    return mockUser;
+  };
+
   // Mock authentication middleware
-  const mockAuth = (req: any, res: any, next: any) => {
-    req.user = mockUser;
+  const mockAuth = async (req: any, res: any, next: any) => {
+    req.user = await getCurrentUser(req);
     next();
   };
 
@@ -1766,12 +1783,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced question creation route for testbanks
-  app.post('/api/testbanks/:id/questions',  async (req: any, res) => {
+  app.post('/api/testbanks/:id/questions', async (req: any, res) => {
     try {
+      // Get current user from session or switched context
+      const currentUser = await getCurrentUser(req);
+      if (!currentUser) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      
       const questionData = insertQuestionSchema.parse({
         ...req.body,
         testbankId: req.params.id,
-        creatorId: req.user.claims?.sub || req.user.id,
+        creatorId: currentUser.id,
       });
       
       const question = await storage.createQuestion(questionData);
@@ -2128,8 +2151,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // In a real implementation, you'd update the session here
-      // For now, we'll return the user data for the frontend to handle
+      // Store the switched user ID in the session
+      req.session.switchedUserId = userId;
+      
       res.json({ 
         message: 'User switched successfully', 
         user: targetUser 
@@ -2137,6 +2161,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error switching user:', error);
       res.status(500).json({ error: 'Failed to switch user' });
+    }
+  });
+
+  app.post('/api/reset-user-switch', mockAuth, async (req: any, res) => {
+    try {
+      // Clear the switched user ID from the session
+      delete req.session.switchedUserId;
+      
+      res.json({ 
+        message: 'User switching reset successfully', 
+        user: mockUser 
+      });
+    } catch (error) {
+      console.error('Error resetting user switch:', error);
+      res.status(500).json({ error: 'Failed to reset user switch' });
     }
   });
 
