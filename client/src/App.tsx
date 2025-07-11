@@ -73,6 +73,7 @@ const ComprehensiveTest = lazy(() => import("@/pages/ComprehensiveTest"));
 const SectionManagementTest = lazy(() => import("@/pages/SectionManagementTest"));
 const Test = lazy(() => import("@/pages/Test"));
 const AccountRegistration = lazy(() => import("@/pages/account-registration"));
+const ProctoringTest = lazy(() => import("@/pages/proctoring-test"));
 const Gradebook = lazy(() => import("@/pages/gradebook"));
 const Prerequisites = lazy(() => import("@/pages/prerequisites"));
 const ProgressTracking = lazy(() => import("@/pages/progress-tracking"));
@@ -283,6 +284,9 @@ function Router() {
           </Route>
           <Route path="/test">
             {() => <Suspense fallback={<LoadingSpinner />}><Test /></Suspense>}
+          </Route>
+          <Route path="/proctoring-test">
+            {() => <Suspense fallback={<LoadingSpinner />}><ProctoringTest /></Suspense>}
           </Route>
           <Route path="/system-test">
             {() => <Suspense fallback={<LoadingSpinner />}><SystemTest /></Suspense>}
