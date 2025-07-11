@@ -211,7 +211,7 @@ export class DatabaseStorage implements IStorage {
       },
       {
         id: "student-user",
-        email: "student@test.com",
+        email: "mike.student@test.com",
         firstName: "Mike",
         lastName: "Student",
         role: "student" as const,
@@ -256,6 +256,7 @@ export class DatabaseStorage implements IStorage {
       "admin-user", 
       "teacher-user",
       "student-user",
+      "student-test-user-001", // Include the existing one too
       "teacher-user-2",
       "student-user-2"
     ];

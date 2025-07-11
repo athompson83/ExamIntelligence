@@ -5,7 +5,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger 
+  DialogTrigger,
+  DialogDescription 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription } from '@/components/ui/card';
@@ -95,7 +96,7 @@ export default function UserRoleSwitcher({
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to switch user",
+        description: `Failed to switch user: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     },
@@ -159,6 +160,9 @@ export default function UserRoleSwitcher({
             <User className="h-5 w-5" />
             User Role Switcher
           </DialogTitle>
+          <DialogDescription>
+            Switch between different user roles to test features across permission levels.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
