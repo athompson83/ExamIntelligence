@@ -2276,6 +2276,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Copy quiz
+  app.post('/api/quizzes/:id/copy', mockAuth, async (req: any, res) => {
+    try {
+      const originalQuizId = req.params.id;
+      const { newTitle } = req.body;
+      const userId = req.user?.id || "test-user";
+      
+      const newQuiz = await storage.copyQuiz(originalQuizId, newTitle, userId);
+      res.json(newQuiz);
+    } catch (error) {
+      console.error("Error copying quiz:", error);
+      res.status(500).json({ message: "Failed to copy quiz" });
+    }
+  });
+
+  // Assign quiz to students
+  app.post('/api/quizzes/:id/assign', mockAuth, async (req: any, res) => {
+    try {
+      const quizId = req.params.id;
+      const { studentIds, dueDate } = req.body;
+      
+      const result = await storage.assignQuizToStudents(quizId, studentIds, dueDate ? new Date(dueDate) : undefined);
+      res.json(result);
+    } catch (error) {
+      console.error("Error assigning quiz:", error);
+      res.status(500).json({ message: "Failed to assign quiz" });
+    }
+  });
+
+  // Start live exam
+  app.post('/api/quizzes/:id/start-live', mockAuth, async (req: any, res) => {
+    try {
+      const quizId = req.params.id;
+      const teacherId = req.user?.id || "test-user";
+      
+      const liveExamSession = await storage.startLiveExam(quizId, teacherId);
+      res.json(liveExamSession);
+    } catch (error) {
+      console.error("Error starting live exam:", error);
+      res.status(500).json({ message: "Failed to start live exam" });
+    }
+  });
+
   // Add questions to quiz
   app.post('/api/quizzes/:id/questions',  async (req: any, res) => {
     try {

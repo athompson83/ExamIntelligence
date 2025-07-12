@@ -4,6 +4,7 @@ import {
   questions,
   answerOptions,
   quizzes,
+  quizQuestions,
   quizAttempts,
   quizResponses,
   accounts,
@@ -74,6 +75,11 @@ export interface IStorage {
   updateQuizQuestions(quizId: string, questions: any[]): Promise<void>;
   updateQuizGroups(quizId: string, groups: any[]): Promise<void>;
   deleteQuiz(id: string): Promise<boolean>;
+  
+  // Quiz management operations
+  copyQuiz(originalQuizId: string, newTitle: string, userId: string): Promise<Quiz>;
+  assignQuizToStudents(quizId: string, studentIds: string[], dueDate?: Date): Promise<any>;
+  startLiveExam(quizId: string, teacherId: string): Promise<any>;
   
   // Quiz attempt operations
   createQuizAttempt(attempt: InsertQuizAttempt): Promise<QuizAttempt>;
@@ -871,52 +877,6 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getQuizzesByUser(userId: string): Promise<any[]> {
-    try {
-      // Get all quizzes for the user
-      const userQuizzes = await db.select().from(quizzes).where(eq(quizzes.creatorId, userId));
-      
-      // For each quiz, get the actual question count and other details
-      const enrichedQuizzes = await Promise.all(
-        userQuizzes.map(async (quiz) => {
-          // Get actual question count by checking quiz questions
-          const questionCount = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(questions)
-            .where(quiz.testbankId ? eq(questions.testbankId, quiz.testbankId) : sql`1=0`)
-            .then(result => result[0]?.count || 0);
-          
-          // Get quiz attempts to determine max attempts and other stats
-          const attempts = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(quizAttempts)
-            .where(eq(quizAttempts.quizId, quiz.id))
-            .then(result => result[0]?.count || 0);
-          
-          return {
-            ...quiz,
-            questionCount: questionCount,
-            attempts: attempts,
-            maxAttempts: quiz.maxAttempts || 3,
-            timeLimit: quiz.timeLimit || 60,
-            difficulty: quiz.difficulty || 5,
-            status: quiz.status || 'draft',
-            tags: quiz.tags || [],
-            allowCalculator: quiz.allowCalculator || false,
-            calculatorType: quiz.calculatorType || 'basic',
-            proctoringEnabled: quiz.proctoringEnabled || false,
-            bestScore: null, // Would need to calculate from attempts
-          };
-        })
-      );
-      
-      return enrichedQuizzes;
-    } catch (error) {
-      console.error('Error fetching quizzes by user:', error);
-      return [];
-    }
-  }
-
   async getTestbanksByUser(userId: string): Promise<any[]> {
     try {
       const userTestbanks = await db.select().from(testbanks).where(eq(testbanks.creatorId, userId));
@@ -1197,11 +1157,11 @@ export class DatabaseStorage implements IStorage {
       // For each quiz, get the actual question count and other details
       const enrichedQuizzes = await Promise.all(
         userQuizzes.map(async (quiz) => {
-          // Get actual question count by checking quiz questions
+          // Get actual question count by checking quiz_questions junction table
           const questionCount = await db
             .select({ count: sql<number>`count(*)` })
-            .from(questions)
-            .where(quiz.testbankId ? eq(questions.testbankId, quiz.testbankId) : sql`1=0`)
+            .from(quizQuestions)
+            .where(eq(quizQuestions.quizId, quiz.id))
             .then(result => result[0]?.count || 0);
           
           // Get quiz attempts to determine max attempts and other stats
@@ -1218,11 +1178,11 @@ export class DatabaseStorage implements IStorage {
             maxAttempts: quiz.maxAttempts || 3,
             timeLimit: quiz.timeLimit || 60,
             difficulty: quiz.difficulty || 5,
-            status: quiz.status || 'draft',
+            status: quiz.publishedAt ? 'published' : 'draft',
             tags: quiz.tags || [],
             allowCalculator: quiz.allowCalculator || false,
             calculatorType: quiz.calculatorType || 'basic',
-            proctoringEnabled: quiz.proctoringEnabled || false,
+            proctoringEnabled: quiz.proctoring || false,
             bestScore: null, // Would need to calculate from attempts
           };
         })
@@ -2747,6 +2707,121 @@ Return JSON with the new question data:
     } catch (error) {
       console.error('Error permanently deleting testbank:', error);
       return false;
+    }
+  }
+
+  // Quiz management methods
+  async copyQuiz(originalQuizId: string, newTitle: string, userId: string): Promise<Quiz> {
+    try {
+      // Get the original quiz
+      const originalQuiz = await this.getQuiz(originalQuizId);
+      if (!originalQuiz) {
+        throw new Error('Original quiz not found');
+      }
+
+      // Create new quiz with copied data
+      const newQuizData = {
+        title: newTitle,
+        description: originalQuiz.description,
+        instructions: originalQuiz.instructions,
+        creatorId: userId,
+        accountId: originalQuiz.accountId,
+        timeLimit: originalQuiz.timeLimit,
+        startTime: originalQuiz.startTime,
+        endTime: originalQuiz.endTime,
+        shuffleAnswers: originalQuiz.shuffleAnswers,
+        shuffleQuestions: originalQuiz.shuffleQuestions,
+        allowMultipleAttempts: originalQuiz.allowMultipleAttempts,
+        maxAttempts: originalQuiz.maxAttempts,
+        scoreKeepingMethod: originalQuiz.scoreKeepingMethod,
+        passwordProtected: originalQuiz.passwordProtected,
+        password: originalQuiz.password,
+        ipLocking: originalQuiz.ipLocking,
+        proctoring: originalQuiz.proctoring,
+        proctoringSettings: originalQuiz.proctoringSettings,
+        publishedAt: null, // New quiz should be draft
+      };
+
+      const newQuiz = await this.createQuiz(newQuizData);
+
+      // Copy quiz questions
+      const originalQuestions = await db
+        .select()
+        .from(quizQuestions)
+        .where(eq(quizQuestions.quizId, originalQuizId));
+
+      if (originalQuestions.length > 0) {
+        const questionsToInsert = originalQuestions.map(q => ({
+          quizId: newQuiz.id,
+          questionId: q.questionId,
+          questionGroupId: q.questionGroupId,
+          displayOrder: q.displayOrder,
+          points: q.points,
+          isRequired: q.isRequired,
+          showFeedback: q.showFeedback,
+          partialCredit: q.partialCredit,
+        }));
+
+        await db.insert(quizQuestions).values(questionsToInsert);
+      }
+
+      return newQuiz;
+    } catch (error) {
+      console.error('Error copying quiz:', error);
+      throw error;
+    }
+  }
+
+  async assignQuizToStudents(quizId: string, studentIds: string[], dueDate?: Date): Promise<any> {
+    try {
+      const assignments = studentIds.map(studentId => ({
+        quizId,
+        studentId,
+        assignedBy: 'test-user', // Would use actual teacher ID
+        assignedAt: new Date(),
+        dueDate: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        status: 'assigned' as const
+      }));
+
+      await db.insert(quizAssignments).values(assignments);
+
+      return {
+        success: true,
+        assignedCount: studentIds.length,
+        assignments
+      };
+    } catch (error) {
+      console.error('Error assigning quiz to students:', error);
+      throw error;
+    }
+  }
+
+  async startLiveExam(quizId: string, teacherId: string): Promise<any> {
+    try {
+      // Update quiz to live exam mode
+      await this.updateQuiz(quizId, {
+        startTime: new Date(),
+        endTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
+        publishedAt: new Date()
+      });
+
+      // Create a live exam session
+      const liveExamSession = {
+        id: `live-exam-${Date.now()}`,
+        quizId,
+        teacherId,
+        startTime: new Date(),
+        status: 'active',
+        participants: [],
+        monitoringEnabled: true,
+        proctoringEnabled: true,
+        accessCode: Math.random().toString(36).substring(2, 8).toUpperCase()
+      };
+
+      return liveExamSession;
+    } catch (error) {
+      console.error('Error starting live exam:', error);
+      throw error;
     }
   }
 }

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Plus, 
   Edit, 
@@ -20,7 +21,8 @@ import {
   Home,
   ChevronRight,
   Search,
-  UserPlus
+  UserPlus,
+  Play
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -68,6 +70,64 @@ export default function QuizManager() {
     },
   });
 
+  const copyQuizMutation = useMutation({
+    mutationFn: async ({ quizId, newTitle }: { quizId: string; newTitle: string }) => {
+      return await apiRequest("POST", `/api/quizzes/${quizId}/copy`, { newTitle });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
+      toast({
+        title: "Success",
+        description: "Quiz copied successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to copy quiz",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const assignQuizMutation = useMutation({
+    mutationFn: async ({ quizId, studentIds, dueDate }: { quizId: string; studentIds: string[]; dueDate?: string }) => {
+      return await apiRequest("POST", `/api/quizzes/${quizId}/assign`, { studentIds, dueDate });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Quiz assigned successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to assign quiz",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const startLiveExamMutation = useMutation({
+    mutationFn: async (quizId: string) => {
+      return await apiRequest("POST", `/api/quizzes/${quizId}/start-live`);
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: `Live exam started! Access code: ${data.accessCode}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to start live exam",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateNew = () => {
     setLocation('/enhanced-quiz-builder');
   };
@@ -81,8 +141,10 @@ export default function QuizManager() {
   };
 
   const handleDuplicate = (quiz: Quiz) => {
-    // TODO: Implement quiz duplication
-    console.log('Duplicate quiz:', quiz.id);
+    const newTitle = window.prompt('Enter a title for the copied quiz:', `Copy of ${quiz.title}`);
+    if (newTitle && newTitle.trim()) {
+      copyQuizMutation.mutate({ quizId: quiz.id, newTitle: newTitle.trim() });
+    }
   };
 
   const handleDelete = (quizId: string) => {
@@ -96,7 +158,23 @@ export default function QuizManager() {
   };
 
   const handleAssign = (quiz: Quiz) => {
-    setLocation(`/assignments?quiz=${quiz.id}`);
+    const studentIds = window.prompt('Enter student IDs (comma-separated):', '');
+    if (studentIds && studentIds.trim()) {
+      const ids = studentIds.split(',').map(id => id.trim()).filter(id => id);
+      const dueDate = window.prompt('Enter due date (optional, YYYY-MM-DD format):', '');
+      assignQuizMutation.mutate({ 
+        quizId: quiz.id, 
+        studentIds: ids, 
+        dueDate: dueDate && dueDate.trim() ? dueDate.trim() : undefined 
+      });
+    }
+  };
+
+  const handleStartLiveExam = (quiz: Quiz) => {
+    const confirmed = window.confirm(`Are you sure you want to start a live exam for "${quiz.title}"?`);
+    if (confirmed) {
+      startLiveExamMutation.mutate(quiz.id);
+    }
   };
 
   if (isLoading) {
@@ -293,28 +371,70 @@ export default function QuizManager() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleAssign(quiz)}>
-                            <UserPlus className="h-4 w-4" />
-                          </Button>
-                          {quiz.publishedAt && (
-                            <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)}>
-                              <BarChart3 className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <TooltipProvider>
+                          <div className="flex items-center gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit Quiz</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)}>
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Preview Quiz</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={() => handleAssign(quiz)}>
+                                  <UserPlus className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Assign to Students</TooltipContent>
+                            </Tooltip>
+                            {quiz.publishedAt && (
+                              <>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)}>
+                                      <BarChart3 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>View Analytics</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="default" size="sm" onClick={() => handleStartLiveExam(quiz)}>
+                                      <Users className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Start Live Exam</TooltipContent>
+                                </Tooltip>
+                              </>
+                            )}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Copy Quiz</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete Quiz</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TooltipProvider>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -487,6 +607,9 @@ export default function QuizManager() {
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)}>
                             <BarChart3 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="default" size="sm" onClick={() => handleStartLiveExam(quiz)}>
+                            <Users className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
                             <Copy className="h-4 w-4" />
