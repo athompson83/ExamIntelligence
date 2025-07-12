@@ -220,6 +220,8 @@ export default function EnhancedQuizBuilder() {
   const [quizId, setQuizId] = useState<string | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [editingGroup, setEditingGroup] = useState<EnhancedQuestionGroup | null>(null);
+  const [isEditGroupDialogOpen, setIsEditGroupDialogOpen] = useState(false);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -1117,7 +1119,8 @@ export default function EnhancedQuizBuilder() {
                                       size="sm"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        // TODO: Edit group functionality
+                                        setEditingGroup(group);
+                                        setIsEditGroupDialogOpen(true);
                                       }}
                                     >
                                       Edit
@@ -1835,6 +1838,89 @@ export default function EnhancedQuizBuilder() {
               disabled={!selectedGroupId || (selectedGroupId === "create-new" && !newGroupName.trim())}
             >
               Add Questions
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Group Dialog */}
+      <Dialog open={isEditGroupDialogOpen} onOpenChange={setIsEditGroupDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Group</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editGroupName">Group Name</Label>
+              <Input
+                id="editGroupName"
+                value={editingGroup?.name || ""}
+                onChange={(e) => setEditingGroup(prev => prev ? { ...prev, name: e.target.value } : null)}
+                placeholder="Enter group name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editGroupDescription">Description</Label>
+              <Input
+                id="editGroupDescription"
+                value={editingGroup?.description || ""}
+                onChange={(e) => setEditingGroup(prev => prev ? { ...prev, description: e.target.value } : null)}
+                placeholder="Enter description (optional)"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editGroupPickCount">Pick Count</Label>
+              <Input
+                id="editGroupPickCount"
+                type="number"
+                min="1"
+                value={editingGroup?.pickCount || 1}
+                onChange={(e) => setEditingGroup(prev => prev ? { ...prev, pickCount: parseInt(e.target.value) || 1 } : null)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="editGroupPoints">Points per Question</Label>
+              <Input
+                id="editGroupPoints"
+                type="number"
+                min="1"
+                value={editingGroup?.pointsPerQuestion || 1}
+                onChange={(e) => setEditingGroup(prev => prev ? { ...prev, pointsPerQuestion: parseInt(e.target.value) || 1 } : null)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsEditGroupDialogOpen(false);
+                setEditingGroup(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (editingGroup && editingGroup.name.trim()) {
+                  // Update the group in the state
+                  setQuestionGroups(prev => prev.map(group => 
+                    group.id === editingGroup.id 
+                      ? { ...group, ...editingGroup }
+                      : group
+                  ));
+                  
+                  setIsEditGroupDialogOpen(false);
+                  setEditingGroup(null);
+                  
+                  toast({
+                    title: "Success",
+                    description: "Group updated successfully",
+                  });
+                }
+              }}
+              disabled={!editingGroup?.name.trim()}
+            >
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
