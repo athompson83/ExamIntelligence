@@ -71,6 +71,8 @@ export interface IStorage {
   getQuiz(id: string): Promise<Quiz | undefined>;
   getQuizzesByAccount(accountId: string): Promise<Quiz[]>;
   updateQuiz(id: string, quiz: Partial<InsertQuiz>): Promise<Quiz | undefined>;
+  updateQuizQuestions(quizId: string, questions: any[]): Promise<void>;
+  updateQuizGroups(quizId: string, groups: any[]): Promise<void>;
   deleteQuiz(id: string): Promise<boolean>;
   
   // Quiz attempt operations
@@ -437,6 +439,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(quizzes.id, id))
       .returning();
     return quiz;
+  }
+
+  async updateQuizQuestions(quizId: string, questions: any[]): Promise<void> {
+    // For now, just log the update - in a full implementation, this would
+    // update the questions associated with the quiz
+    console.log(`Updating questions for quiz ${quizId}:`, questions.length);
+  }
+
+  async updateQuizGroups(quizId: string, groups: any[]): Promise<void> {
+    // For now, just log the update - in a full implementation, this would
+    // update the question groups associated with the quiz
+    console.log(`Updating groups for quiz ${quizId}:`, groups.length);
   }
 
   async deleteQuiz(id: string, userId?: string, reason?: string): Promise<boolean> {

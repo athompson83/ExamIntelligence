@@ -362,7 +362,8 @@ export default function Assignments() {
   );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="h-full overflow-y-auto">
+      <div className="p-6 max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
         <Home className="h-4 w-4" />
@@ -540,6 +541,7 @@ export default function Assignments() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
