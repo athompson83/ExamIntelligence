@@ -191,19 +191,6 @@ function DraggableQuestion({ question, onRemove, isSelected, onSelect, showCheck
     </motion.div>
   );
 }
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(question.id);
-        }}
-      >
-        Remove
-      </Button>
-    </div>
-  );
-}
 
 // Droppable component for groups
 function Droppable({ children, id }: { children: React.ReactNode; id: string }) {
