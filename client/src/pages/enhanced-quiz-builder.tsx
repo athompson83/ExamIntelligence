@@ -61,7 +61,13 @@ import {
   RotateCcw,
   Lock,
   Home,
-  ChevronRightIcon
+  ChevronRightIcon,
+  GripVertical,
+  Move3D,
+  Check,
+  X,
+  FolderPlus,
+  Folder
 } from "lucide-react";
 import type { Quiz, Question, QuestionGroup, Testbank, AnswerOption } from "@shared/schema";
 import { insertQuizSchema, insertQuestionSchema, insertQuestionGroupSchema, insertAnswerOptionSchema } from "@shared/schema";
@@ -113,15 +119,19 @@ interface EnhancedQuestionGroup {
 interface DraggableQuestionProps {
   question: QuizQuestion;
   onRemove: (questionId: string) => void;
+  isSelected?: boolean;
+  onSelect?: (questionId: string, selected: boolean) => void;
+  showCheckbox?: boolean;
 }
 
-function DraggableQuestion({ question, onRemove }: DraggableQuestionProps) {
+function DraggableQuestion({ question, onRemove, isSelected, onSelect, showCheckbox = false }: DraggableQuestionProps) {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
+    isDragging,
   } = useSortable({ id: question.id });
 
   const style = {
@@ -130,19 +140,57 @@ function DraggableQuestion({ question, onRemove }: DraggableQuestionProps) {
   };
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="flex items-center justify-between p-3 border rounded-lg bg-background cursor-move hover:bg-accent/50"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      className={cn(
+        "flex items-center gap-3 p-3 border rounded-lg bg-background transition-all duration-200",
+        isDragging && "opacity-50 rotate-2 shadow-lg",
+        isSelected && "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20",
+        !isDragging && "hover:bg-accent/50 hover:shadow-md"
+      )}
     >
-      <div className="flex-1">
-        <div className="font-medium">{question.questionText}</div>
-        <div className="text-sm text-muted-foreground mt-1">
-          {question.questionType} • Difficulty: {question.difficulty}/10 • Points: {question.points}
+      {showCheckbox && (
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={(checked) => onSelect?.(question.id, checked as boolean)}
+          className="flex-shrink-0"
+        />
+      )}
+      
+      <div {...attributes} {...listeners} className="flex-shrink-0 cursor-move p-1 rounded hover:bg-accent">
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="font-medium truncate">{question.questionText}</div>
+        <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+          <span className="capitalize">{question.questionType?.replace('_', ' ')}</span>
+          <span>•</span>
+          <span>Difficulty: {question.difficulty}/10</span>
+          <span>•</span>
+          <span>Points: {question.points}</span>
         </div>
       </div>
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove(question.id);
+        }}
+        className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </motion.div>
+  );
+}
       <Button
         variant="outline"
         size="sm"
@@ -233,6 +281,110 @@ export default function EnhancedQuizBuilder() {
   );
 
   // Drag end handler for reordering questions and moving between groups
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    if (activeId === overId) return;
+
+    // Handle reordering within the same list
+    setQuizQuestions((items) => {
+      const oldIndex = items.findIndex((item) => item.id === activeId);
+      const newIndex = items.findIndex((item) => item.id === overId);
+      
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      
+      // Update display order
+      return newItems.map((item, index) => ({
+        ...item,
+        displayOrder: index + 1,
+      }));
+    });
+  };
+
+  // Handle question selection
+  const handleSelectQuestion = (questionId: string, selected: boolean) => {
+    setSelectedQuestions(prev => 
+      selected 
+        ? [...prev, questionId]
+        : prev.filter(id => id !== questionId)
+    );
+  };
+
+  // Handle select all questions
+  const handleSelectAllQuestions = (selected: boolean) => {
+    if (selected) {
+      setSelectedQuestions(quizQuestions.map(q => q.id));
+    } else {
+      setSelectedQuestions([]);
+    }
+  };
+
+  // Add selected questions to a new group
+  const handleAddSelectedToNewGroup = async () => {
+    if (selectedQuestions.length === 0 || !newGroupName.trim()) return;
+
+    const newGroup: EnhancedQuestionGroup = {
+      id: `group-${Date.now()}`,
+      name: newGroupName.trim(),
+      description: "",
+      pickCount: selectedQuestions.length,
+      pointsPerQuestion: 1,
+      displayOrder: questionGroups.length + 1,
+      questions: []
+    };
+
+    setQuestionGroups(prev => [...prev, newGroup]);
+    
+    // Move selected questions to the new group
+    setQuizQuestions(prev => 
+      prev.map(q => 
+        selectedQuestions.includes(q.id) 
+          ? { ...q, groupId: newGroup.id }
+          : q
+      )
+    );
+
+    setSelectedQuestions([]);
+    setNewGroupName("");
+    setIsAddToGroupDialogOpen(false);
+  };
+
+  // Add selected questions to existing group
+  const handleAddSelectedToExistingGroup = () => {
+    if (selectedQuestions.length === 0 || !selectedExistingGroupId) return;
+
+    setQuizQuestions(prev => 
+      prev.map(q => 
+        selectedQuestions.includes(q.id) 
+          ? { ...q, groupId: selectedExistingGroupId }
+          : q
+      )
+    );
+
+    setSelectedQuestions([]);
+    setSelectedExistingGroupId(null);
+    setIsAddToGroupDialogOpen(false);
+  };
+
+  // Delete selected questions
+  const handleDeleteSelectedQuestions = () => {
+    if (selectedQuestions.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'}?`
+    );
+
+    if (confirmed) {
+      setQuizQuestions(prev => prev.filter(q => !selectedQuestions.includes(q.id)));
+      setSelectedQuestions([]);
+    }
+  };
+
   // Load Existing Quiz Dialog Component
   const LoadExistingQuizDialog = () => {
     const { data: existingQuizzes } = useQuery({
@@ -1083,9 +1235,55 @@ export default function EnhancedQuizBuilder() {
                         </p>
                       </div>
                     ) : (
-                      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                        <SortableContext items={quizQuestions.map(q => q.id)} strategy={verticalListSortingStrategy}>
-                          <div className="space-y-4">
+                      <div className="space-y-4">
+                        {/* Selection Controls */}
+                        {quizQuestions.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                checked={selectedQuestions.length === quizQuestions.length}
+                                onCheckedChange={handleSelectAllQuestions}
+                              />
+                              <Label className="text-sm font-medium">
+                                {selectedQuestions.length > 0 
+                                  ? `${selectedQuestions.length} of ${quizQuestions.length} questions selected`
+                                  : 'Select All Questions'
+                                }
+                              </Label>
+                            </div>
+                            
+                            {selectedQuestions.length > 0 && (
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setIsAddToGroupDialogOpen(true)}
+                                >
+                                  <FolderPlus className="h-4 w-4 mr-2" />
+                                  Add to Group
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleDeleteSelectedQuestions}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Selected
+                                </Button>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+
+                        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                          <SortableContext items={quizQuestions.map(q => q.id)} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-4">
                             {/* Question Groups */}
                             {questionGroups.map((group) => {
                             // Get quiz questions that belong to this group
@@ -1180,6 +1378,9 @@ export default function EnhancedQuizBuilder() {
                                               onRemove={(questionId) => {
                                                 setQuizQuestions(prev => prev.filter(q => q.id !== questionId));
                                               }}
+                                              showCheckbox={true}
+                                              isSelected={selectedQuestions.includes(question.id)}
+                                              onSelect={handleSelectQuestion}
                                             />
                                           </motion.div>
                                         ))}
@@ -1224,23 +1425,16 @@ export default function EnhancedQuizBuilder() {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.1 + index * 0.05, duration: 0.2 }}
-                                    className="flex items-center justify-between p-3 border rounded-lg"
                                   >
-                                    <div className="flex-1">
-                                      <div className="font-medium">{question.questionText}</div>
-                                      <div className="text-sm text-muted-foreground mt-1">
-                                        {question.questionType}
-                                      </div>
-                                    </div>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setQuizQuestions(prev => prev.filter(q => q.id !== question.id));
+                                    <DraggableQuestion
+                                      question={question}
+                                      onRemove={(questionId) => {
+                                        setQuizQuestions(prev => prev.filter(q => q.id !== questionId));
                                       }}
-                                    >
-                                      Remove
-                                    </Button>
+                                      showCheckbox={true}
+                                      isSelected={selectedQuestions.includes(question.id)}
+                                      onSelect={handleSelectQuestion}
+                                    />
                                   </motion.div>
                                 ))}
                               </div>

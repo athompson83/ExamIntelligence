@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, 
   Users, 
@@ -88,9 +89,19 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+      >
         {/* Welcome Header */}
-        <div className="flex items-center justify-between">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          className="flex items-center justify-between"
+        >
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Welcome back, {user?.firstName || 'User'}!
@@ -99,76 +110,149 @@ export default function Dashboard() {
               Here's what's happening with your assessments today
             </p>
           </div>
-          <div className="flex items-center space-x-3">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+            className="flex items-center space-x-3"
+          >
             <Badge variant="secondary" className="bg-green-100 text-green-800">
               {user?.role === 'admin' ? 'Administrator' : user?.role === 'teacher' ? 'Teacher' : 'Student'}
             </Badge>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="stats-card">
-            <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Exams</p>
-                <p className="text-3xl font-bold text-primary">
-                  {dashboardStats?.activeExams || 0}
-                </p>
-              </div>
-              <div className="stats-icon bg-primary/10">
-                <PlayCircle className="h-6 w-6 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+            whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Card className="stats-card hover:shadow-lg transition-shadow">
+              <CardContent className="flex items-center justify-between p-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Exams</p>
+                  <p className="text-3xl font-bold text-primary">
+                    {dashboardStats?.activeExams || 0}
+                  </p>
+                </div>
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.5, duration: 0.3 }}
+                  className="stats-icon bg-primary/10"
+                >
+                  <PlayCircle className="h-6 w-6 text-primary" />
+                </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card className="stats-card">
-            <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Students</p>
-                <p className="text-3xl font-bold text-secondary">
-                  {dashboardStats?.totalStudents || 0}
-                </p>
-              </div>
-              <div className="stats-icon bg-secondary/10">
-                <Users className="h-6 w-6 text-secondary" />
-              </div>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+            whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Card className="stats-card hover:shadow-lg transition-shadow">
+              <CardContent className="flex items-center justify-between p-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Students</p>
+                  <p className="text-3xl font-bold text-secondary">
+                    {dashboardStats?.totalStudents || 0}
+                  </p>
+                </div>
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.6, duration: 0.3 }}
+                  className="stats-icon bg-secondary/10"
+                >
+                  <Users className="h-6 w-6 text-secondary" />
+                </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card className="stats-card">
-            <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Item Banks</p>
-                <p className="text-3xl font-bold text-accent">
-                  {dashboardStats?.itemBanks || 0}
-                </p>
-              </div>
-              <div className="stats-icon bg-accent/10">
-                <BookOpen className="h-6 w-6 text-accent" />
-              </div>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+            whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Card className="stats-card hover:shadow-lg transition-shadow">
+              <CardContent className="flex items-center justify-between p-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Item Banks</p>
+                  <p className="text-3xl font-bold text-accent">
+                    {dashboardStats?.itemBanks || 0}
+                  </p>
+                </div>
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.7, duration: 0.3 }}
+                  className="stats-icon bg-accent/10"
+                >
+                  <BookOpen className="h-6 w-6 text-accent" />
+                </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card className="stats-card">
-            <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">AI Validations</p>
-                <p className="text-3xl font-bold text-purple-600">
-                  {dashboardStats?.aiValidations || 0}
-                </p>
-              </div>
-              <div className="stats-icon bg-purple-100">
-                <Brain className="h-6 w-6 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
+            whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Card className="stats-card hover:shadow-lg transition-shadow">
+              <CardContent className="flex items-center justify-between p-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">AI Validations</p>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {dashboardStats?.aiValidations || 0}
+                  </p>
+                </div>
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.8, duration: 0.3 }}
+                  className="stats-icon bg-purple-100"
+                >
+                  <Brain className="h-6 w-6 text-purple-600" />
+                </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        >
           {/* Live Exam Monitoring */}
-          <Card className="lg:col-span-2">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="lg:col-span-2"
+          >
+            <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center">
@@ -236,62 +320,89 @@ export default function Dashboard() {
                 </div>
               )}
             </CardContent>
-          </Card>
+            </Card>
+          </motion.div>
 
           {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="bg-primary/10 p-2 rounded-full flex-shrink-0">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">AI Validation Complete</p>
-                    <p className="text-xs text-gray-500">Chemistry Item Bank - 15 questions validated</p>
-                    <p className="text-xs text-gray-400">2 minutes ago</p>
-                  </div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.9, duration: 0.5 }}
+          >
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.0, duration: 0.3 }}
+                    className="flex items-start space-x-3"
+                  >
+                    <div className="bg-primary/10 p-2 rounded-full flex-shrink-0">
+                      <CheckCircle className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">AI Validation Complete</p>
+                      <p className="text-xs text-gray-500">Chemistry Item Bank - 15 questions validated</p>
+                      <p className="text-xs text-gray-400">2 minutes ago</p>
+                    </div>
+                  </motion.div>
+                  
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.1, duration: 0.3 }}
+                    className="flex items-start space-x-3"
+                  >
+                    <div className="bg-secondary/10 p-2 rounded-full flex-shrink-0">
+                      <Users className="h-4 w-4 text-secondary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">New User Registration</p>
+                      <p className="text-xs text-gray-500">Prof. Michael Chen joined as Teacher</p>
+                      <p className="text-xs text-gray-400">15 minutes ago</p>
+                    </div>
+                  </motion.div>
+                  
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.2, duration: 0.3 }}
+                    className="flex items-start space-x-3"
+                  >
+                    <div className="bg-accent/10 p-2 rounded-full flex-shrink-0">
+                      <AlertTriangle className="h-4 w-4 text-accent" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Proctoring Alert</p>
+                      <p className="text-xs text-gray-500">Suspicious activity detected in Biology Exam</p>
+                      <p className="text-xs text-gray-400">32 minutes ago</p>
+                    </div>
+                  </motion.div>
+                  
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.3, duration: 0.3 }}
+                    className="flex items-start space-x-3"
+                  >
+                    <div className="bg-purple-100 p-2 rounded-full flex-shrink-0">
+                      <Brain className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">AI Content Generated</p>
+                      <p className="text-xs text-gray-500">Study guide created for Physics Quiz</p>
+                      <p className="text-xs text-gray-400">1 hour ago</p>
+                    </div>
+                  </motion.div>
                 </div>
-                
-                <div className="flex items-start space-x-3">
-                  <div className="bg-secondary/10 p-2 rounded-full flex-shrink-0">
-                    <Users className="h-4 w-4 text-secondary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">New User Registration</p>
-                    <p className="text-xs text-gray-500">Prof. Michael Chen joined as Teacher</p>
-                    <p className="text-xs text-gray-400">15 minutes ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <div className="bg-accent/10 p-2 rounded-full flex-shrink-0">
-                    <AlertTriangle className="h-4 w-4 text-accent" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Proctoring Alert</p>
-                    <p className="text-xs text-gray-500">Suspicious activity detected in Biology Exam</p>
-                    <p className="text-xs text-gray-400">32 minutes ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <div className="bg-purple-100 p-2 rounded-full flex-shrink-0">
-                    <Brain className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">AI Content Generated</p>
-                    <p className="text-xs text-gray-500">Study guide created for Physics Quiz</p>
-                    <p className="text-xs text-gray-400">1 hour ago</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
 
         {/* Analytics Overview */}
         <Card>
@@ -419,7 +530,7 @@ export default function Dashboard() {
             <span>Monitor Exams</span>
           </Button>
         </div>
-      </div>
+      </motion.div>
     </Layout>
   );
 }
