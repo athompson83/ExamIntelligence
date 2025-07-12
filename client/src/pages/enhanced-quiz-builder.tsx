@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1093,17 +1094,21 @@ export default function EnhancedQuizBuilder() {
                             
                             return (
                               <div key={group.id} className="border rounded-lg">
-                                <div 
+                                <motion.div 
                                   className="flex items-center justify-between p-4 cursor-pointer bg-muted/50 hover:bg-muted/70 transition-colors"
                                   onClick={() => toggleGroupExpansion(group.id)}
+                                  whileHover={{ scale: 1.005 }}
+                                  whileTap={{ scale: 0.995 }}
+                                  transition={{ duration: 0.1 }}
                                 >
                                   <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-2">
-                                      {isExpanded ? (
+                                      <motion.div
+                                        animate={{ rotate: isExpanded ? 0 : -90 }}
+                                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                                      >
                                         <ChevronDown className="h-4 w-4" />
-                                      ) : (
-                                        <ChevronRight className="h-4 w-4" />
-                                      )}
+                                      </motion.div>
                                       <Target className="h-4 w-4" />
                                     </div>
                                     <div>
@@ -1136,29 +1141,53 @@ export default function EnhancedQuizBuilder() {
                                     Delete
                                   </Button>
                                 </div>
-                              </div>
+                              </motion.div>
                               
-                              {isExpanded && (
-                                <div className="border-t bg-background">
-                                  {groupQuestions.length === 0 ? (
-                                    <div className="p-4 text-center text-muted-foreground">
-                                      No questions in this group yet
-                                    </div>
-                                  ) : (
-                                    <div className="space-y-2 p-4">
-                                      {groupQuestions.map((question) => (
-                                        <DraggableQuestion
-                                          key={question.id}
-                                          question={question}
-                                          onRemove={(questionId) => {
-                                            setQuizQuestions(prev => prev.filter(q => q.id !== questionId));
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                              <AnimatePresence>
+                                {isExpanded && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                    className="border-t bg-background overflow-hidden"
+                                  >
+                                    {groupQuestions.length === 0 ? (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.1, duration: 0.2 }}
+                                        className="p-4 text-center text-muted-foreground"
+                                      >
+                                        No questions in this group yet
+                                      </motion.div>
+                                    ) : (
+                                      <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.1, duration: 0.2 }}
+                                        className="space-y-2 p-4"
+                                      >
+                                        {groupQuestions.map((question, index) => (
+                                          <motion.div
+                                            key={question.id}
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.1 + index * 0.05, duration: 0.2 }}
+                                          >
+                                            <DraggableQuestion
+                                              question={question}
+                                              onRemove={(questionId) => {
+                                                setQuizQuestions(prev => prev.filter(q => q.id !== questionId));
+                                              }}
+                                            />
+                                          </motion.div>
+                                        ))}
+                                      </motion.div>
+                                    )}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           );
                         })}
@@ -1169,17 +1198,34 @@ export default function EnhancedQuizBuilder() {
                           if (ungroupedQuestions.length === 0) return null;
                           
                           return (
-                            <div className="border rounded-lg">
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="border rounded-lg"
+                            >
                               <div className="p-4 bg-muted/30">
                                 <div className="flex items-center gap-2">
                                   <FileText className="h-4 w-4" />
                                   <h4 className="font-medium">Individual Questions</h4>
-                                  <Badge variant="secondary">{ungroupedQuestions.length}</Badge>
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 0.2, duration: 0.2 }}
+                                  >
+                                    <Badge variant="secondary">{ungroupedQuestions.length}</Badge>
+                                  </motion.div>
                                 </div>
                               </div>
                               <div className="space-y-2 p-4">
-                                {ungroupedQuestions.map((question) => (
-                                  <div key={question.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                {ungroupedQuestions.map((question, index) => (
+                                  <motion.div
+                                    key={question.id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.1 + index * 0.05, duration: 0.2 }}
+                                    className="flex items-center justify-between p-3 border rounded-lg"
+                                  >
                                     <div className="flex-1">
                                       <div className="font-medium">{question.questionText}</div>
                                       <div className="text-sm text-muted-foreground mt-1">
@@ -1195,10 +1241,10 @@ export default function EnhancedQuizBuilder() {
                                     >
                                       Remove
                                     </Button>
-                                  </div>
+                                  </motion.div>
                                 ))}
                               </div>
-                            </div>
+                            </motion.div>
                           );
                         })()}
                           </div>

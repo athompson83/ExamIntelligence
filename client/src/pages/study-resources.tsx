@@ -747,6 +747,7 @@ export default function StudyResources() {
                       </Card>
                     );
                   })}
+                  </div>
                 </div>
               ) : (
                 <Card className="text-center py-12">
