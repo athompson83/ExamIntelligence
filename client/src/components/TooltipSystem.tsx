@@ -429,7 +429,6 @@ export const TooltipSystem: React.FC = () => {
               ? 'bg-gray-100 border-gray-300 text-gray-500 hover:bg-gray-200 hover:border-gray-400' 
               : 'bg-blue-600 border-blue-500 text-white hover:bg-blue-700 hover:border-blue-600'
             }
-            ${!isTooltipSystemMuted && !activeTooltip ? 'animate-pulse' : ''}
           `}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
