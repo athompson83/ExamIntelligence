@@ -43,13 +43,15 @@ interface User {
 }
 
 interface SectionMember {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  joinedAt: string;
-  isActive: boolean;
+  id?: string;
+  studentId?: string;
+  email?: string;
+  studentEmail?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: string;
+  joinedAt?: string;
+  isActive?: boolean;
 }
 
 export default function SectionManagementFixed() {
@@ -208,10 +210,10 @@ export default function SectionManagementFixed() {
   // Get students who are not in the selected section
   const availableStudents = users.filter(user => 
     user.role === 'student' && 
-    !sectionMembers.some(member => member.id === user.id) &&
-    (user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    !sectionMembers.some(member => (member.id || member.studentId) === user.id) &&
+    ((user.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+     (user.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+     (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -331,26 +333,26 @@ export default function SectionManagementFixed() {
                     <div className="space-y-2">
                       {sectionMembers.map((member: SectionMember) => (
                         <div
-                          key={member.id}
+                          key={member.id || member.studentId}
                           className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                         >
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                               <span className="text-blue-600 font-medium text-sm">
-                                {member.firstName.charAt(0)}{member.lastName.charAt(0)}
+                                {(member.firstName || '').charAt(0)}{(member.lastName || '').charAt(0)}
                               </span>
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">
-                                {member.firstName} {member.lastName}
+                                {member.firstName || ''} {member.lastName || ''}
                               </p>
-                              <p className="text-sm text-gray-500">{member.email}</p>
+                              <p className="text-sm text-gray-500">{member.email || member.studentEmail || ''}</p>
                             </div>
                           </div>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleRemoveStudent(member.id)}
+                            onClick={() => handleRemoveStudent(member.id || member.studentId || '')}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             <UserMinus className="h-4 w-4" />
@@ -456,9 +458,9 @@ export default function SectionManagementFixed() {
                         />
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">
-                            {student.firstName} {student.lastName}
+                            {student.firstName || ''} {student.lastName || ''}
                           </p>
-                          <p className="text-sm text-gray-500">{student.email}</p>
+                          <p className="text-sm text-gray-500">{student.email || ''}</p>
                         </div>
                       </div>
                     ))}

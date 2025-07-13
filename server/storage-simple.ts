@@ -1100,27 +1100,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getSectionMembers(sectionId: string): Promise<any[]> {
-    try {
-      const members = await db
-        .select({
-          studentId: sectionMemberships.studentId,
-          studentName: sql<string>`COALESCE(${users.firstName} || ' ' || ${users.lastName}, ${users.email})`,
-          studentEmail: users.email,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          joinedAt: sectionMemberships.joinedAt,
-        })
-        .from(sectionMemberships)
-        .innerJoin(users, eq(sectionMemberships.studentId, users.id))
-        .where(eq(sectionMemberships.sectionId, sectionId));
-      
-      return members;
-    } catch (error) {
-      console.error('Error fetching section members:', error);
-      return [];
-    }
-  }
+
 
   async addStudentsToSection(sectionId: string, studentIds: string[]): Promise<void> {
     try {
