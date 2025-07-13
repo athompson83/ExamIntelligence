@@ -81,6 +81,9 @@ const CustomerSupport = lazy(() => import("@/pages/customer-support"));
 const ProfileEnhancement = lazy(() => import("@/pages/profile-enhancement"));
 const OfflineSyncPage = lazy(() => import("@/pages/OfflineSyncPage"));
 const ArchiveManagement = lazy(() => import("@/pages/archive-management"));
+const Pricing = lazy(() => import("@/pages/pricing"));
+const Subscribe = lazy(() => import("@/pages/subscribe"));
+const Billing = lazy(() => import("@/pages/billing"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -314,6 +317,15 @@ function Router() {
           </Route>
           <Route path="/offline-sync">
             {() => <Suspense fallback={<LoadingSpinner />}><OfflineSyncPage /></Suspense>}
+          </Route>
+          <Route path="/pricing">
+            {() => <Suspense fallback={<LoadingSpinner />}><Pricing /></Suspense>}
+          </Route>
+          <Route path="/subscribe">
+            {() => <Suspense fallback={<LoadingSpinner />}><Subscribe /></Suspense>}
+          </Route>
+          <Route path="/billing">
+            {() => <Suspense fallback={<LoadingSpinner />}><Billing /></Suspense>}
           </Route>
         </>
       )}

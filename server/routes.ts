@@ -56,6 +56,15 @@ import {
   generateBlackboardExport
 } from "./exportService";
 import { z } from "zod";
+import Stripe from "stripe";
+
+// Stripe setup
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2023-10-16",
+});
 
 // Configure multer for file uploads
 const upload = multer({ 
@@ -8347,6 +8356,337 @@ Initialize all interactions with these principles as your foundation.`,
       console.error("Error permanently deleting item:", error);
       res.status(500).json({ message: "Failed to permanently delete item" });
     }
+  });
+
+  // ========== STRIPE SUBSCRIPTION ROUTES ==========
+
+  // Get subscription plans
+  app.get('/api/subscription-plans', async (req, res) => {
+    try {
+      // Default subscription plans
+      const plans = [
+        {
+          id: 'free',
+          name: 'Free',
+          description: 'Perfect for getting started',
+          priceMonthly: 0,
+          priceYearly: 0,
+          stripePriceIdMonthly: '',
+          stripePriceIdYearly: '',
+          maxUsers: 5,
+          maxQuizzes: 10,
+          maxQuestions: 100,
+          maxStorage: 1000, // 1GB
+          features: {
+            aiQuestionGeneration: false,
+            liveProctoring: false,
+            advancedAnalytics: false,
+            customBranding: false,
+            apiAccess: false,
+            ssoIntegration: false,
+            prioritySupport: false,
+            mobileApp: true,
+            bulkImport: false,
+            whiteLabel: false,
+          },
+          isActive: true,
+          sortOrder: 0,
+        },
+        {
+          id: 'basic',
+          name: 'Basic',
+          description: 'Essential features for small teams',
+          priceMonthly: 2900, // $29
+          priceYearly: 29000, // $290 (save $58)
+          stripePriceIdMonthly: 'price_basic_monthly',
+          stripePriceIdYearly: 'price_basic_yearly',
+          maxUsers: 25,
+          maxQuizzes: 100,
+          maxQuestions: 1000,
+          maxStorage: 5000, // 5GB
+          features: {
+            aiQuestionGeneration: true,
+            liveProctoring: true,
+            advancedAnalytics: false,
+            customBranding: false,
+            apiAccess: false,
+            ssoIntegration: false,
+            prioritySupport: false,
+            mobileApp: true,
+            bulkImport: true,
+            whiteLabel: false,
+          },
+          isActive: true,
+          sortOrder: 1,
+        },
+        {
+          id: 'premium',
+          name: 'Premium',
+          description: 'Advanced features for growing organizations',
+          priceMonthly: 7900, // $79
+          priceYearly: 79000, // $790 (save $158)
+          stripePriceIdMonthly: 'price_premium_monthly',
+          stripePriceIdYearly: 'price_premium_yearly',
+          maxUsers: 100,
+          maxQuizzes: 500,
+          maxQuestions: 10000,
+          maxStorage: 25000, // 25GB
+          features: {
+            aiQuestionGeneration: true,
+            liveProctoring: true,
+            advancedAnalytics: true,
+            customBranding: true,
+            apiAccess: true,
+            ssoIntegration: false,
+            prioritySupport: true,
+            mobileApp: true,
+            bulkImport: true,
+            whiteLabel: false,
+          },
+          isActive: true,
+          sortOrder: 2,
+        },
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          description: 'Full-featured solution for large organizations',
+          priceMonthly: 19900, // $199
+          priceYearly: 199000, // $1990 (save $398)
+          stripePriceIdMonthly: 'price_enterprise_monthly',
+          stripePriceIdYearly: 'price_enterprise_yearly',
+          maxUsers: -1, // Unlimited
+          maxQuizzes: -1, // Unlimited
+          maxQuestions: -1, // Unlimited
+          maxStorage: -1, // Unlimited
+          features: {
+            aiQuestionGeneration: true,
+            liveProctoring: true,
+            advancedAnalytics: true,
+            customBranding: true,
+            apiAccess: true,
+            ssoIntegration: true,
+            prioritySupport: true,
+            mobileApp: true,
+            bulkImport: true,
+            whiteLabel: true,
+          },
+          isActive: true,
+          sortOrder: 3,
+        },
+      ];
+      
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+
+  // Create subscription
+  app.post('/api/create-subscription', async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const { planId, billingCycle, priceId } = req.body;
+      
+      // Get or create Stripe customer
+      let stripeCustomerId = user.stripeCustomerId;
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.username,
+        });
+        stripeCustomerId = customer.id;
+        
+        // Update user with Stripe customer ID
+        await storage.updateUser(userId, { stripeCustomerId });
+      }
+      
+      // Create subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeCustomerId,
+        items: [{ price: priceId }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+      });
+      
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+      });
+    } catch (error: any) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "Failed to create subscription: " + error.message });
+    }
+  });
+
+  // Get billing information
+  app.get('/api/billing', async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get current subscription info
+      let currentPlan = {
+        name: 'Free',
+        price: 0,
+        billingCycle: 'monthly',
+        status: 'active',
+        nextBillingDate: new Date().toISOString(),
+        features: {},
+      };
+      
+      if (user.stripeSubscriptionId) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          currentPlan = {
+            name: subscription.metadata.planName || 'Premium',
+            price: subscription.items.data[0]?.price.unit_amount || 0,
+            billingCycle: subscription.items.data[0]?.price.recurring?.interval || 'monthly',
+            status: subscription.status,
+            nextBillingDate: new Date(subscription.current_period_end * 1000).toISOString(),
+            features: JSON.parse(subscription.metadata.features || '{}'),
+          };
+        } catch (error) {
+          console.error("Error fetching Stripe subscription:", error);
+        }
+      }
+      
+      // Get usage statistics
+      const usage = {
+        users: { current: 1, limit: 5 },
+        quizzes: { current: 0, limit: 10 },
+        questions: { current: 0, limit: 100 },
+        storage: { current: 50, limit: 1000 }, // MB
+      };
+      
+      // Get billing history
+      const billingHistory = [];
+      if (user.stripeCustomerId) {
+        try {
+          const invoices = await stripe.invoices.list({
+            customer: user.stripeCustomerId,
+            limit: 10,
+          });
+          
+          billingHistory.push(...invoices.data.map(invoice => ({
+            id: invoice.id,
+            amount: invoice.amount_paid,
+            status: invoice.status,
+            date: new Date(invoice.created * 1000).toISOString(),
+            invoiceUrl: invoice.hosted_invoice_url,
+          })));
+        } catch (error) {
+          console.error("Error fetching billing history:", error);
+        }
+      }
+      
+      res.json({
+        currentPlan,
+        usage,
+        billingHistory,
+      });
+    } catch (error) {
+      console.error("Error fetching billing info:", error);
+      res.status(500).json({ message: "Failed to fetch billing information" });
+    }
+  });
+
+  // Cancel subscription
+  app.post('/api/billing/cancel-subscription', async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.stripeSubscriptionId) {
+        return res.status(404).json({ message: "No active subscription found" });
+      }
+      
+      await stripe.subscriptions.update(user.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      });
+      
+      res.json({ message: "Subscription cancelled successfully" });
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      res.status(500).json({ message: "Failed to cancel subscription" });
+    }
+  });
+
+  // Download invoice
+  app.get('/api/billing/invoice/:invoiceId/download', async (req: any, res) => {
+    try {
+      const { invoiceId } = req.params;
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.stripeCustomerId) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const invoice = await stripe.invoices.retrieve(invoiceId);
+      
+      if (invoice.customer !== user.stripeCustomerId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json({ invoiceUrl: invoice.hosted_invoice_url });
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      res.status(500).json({ message: "Failed to download invoice" });
+    }
+  });
+
+  // Stripe webhook
+  app.post('/api/webhooks/stripe', async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+    
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    } catch (err: any) {
+      console.log(`Webhook signature verification failed.`, err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    // Handle the event
+    switch (event.type) {
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+        const subscription = event.data.object;
+        // Update user's subscription status
+        await storage.updateUserByStripeCustomerId(subscription.customer, {
+          stripeSubscriptionId: subscription.id,
+          subscriptionStatus: subscription.status,
+        });
+        break;
+      
+      case 'invoice.payment_succeeded':
+        const invoice = event.data.object;
+        // Record successful payment
+        console.log('Payment succeeded:', invoice.id);
+        break;
+      
+      case 'invoice.payment_failed':
+        const failedInvoice = event.data.object;
+        // Handle failed payment
+        console.log('Payment failed:', failedInvoice.id);
+        break;
+      
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+    
+    res.json({ received: true });
   });
 
   // Setup WebSocket

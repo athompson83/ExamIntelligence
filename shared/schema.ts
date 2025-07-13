@@ -34,6 +34,24 @@ export const accounts = pgTable("accounts", {
   description: text("description"),
   subscriptionPlan: varchar("subscription_plan", { enum: ["free", "basic", "premium", "enterprise"] }).notNull().default("free"),
   maxUsers: integer("max_users").default(10),
+  
+  // Stripe integration
+  stripeCustomerId: varchar("stripe_customer_id").unique(),
+  stripeSubscriptionId: varchar("stripe_subscription_id").unique(),
+  stripeCurrentPeriodStart: timestamp("stripe_current_period_start"),
+  stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
+  stripeStatus: varchar("stripe_status", { enum: ["active", "canceled", "incomplete", "incomplete_expired", "past_due", "trialing", "unpaid"] }),
+  
+  // Usage tracking
+  monthlyQuizzes: integer("monthly_quizzes").default(0),
+  monthlyUsers: integer("monthly_users").default(0),
+  monthlyQuestions: integer("monthly_questions").default(0),
+  monthlyStorage: integer("monthly_storage").default(0), // in MB
+  
+  // Billing
+  billingEmail: varchar("billing_email"),
+  billingAddress: jsonb("billing_address"),
+  
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -462,6 +480,103 @@ export const archiveHistory = pgTable("archive_history", {
   // Reference to original item for cross-checking
   originalData: jsonb("original_data"), // Store snapshot of item at time of archival
 });
+
+// Subscription Plans table
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  priceMonthly: integer("price_monthly").notNull(), // in cents
+  priceYearly: integer("price_yearly").notNull(), // in cents
+  stripePriceIdMonthly: varchar("stripe_price_id_monthly"),
+  stripePriceIdYearly: varchar("stripe_price_id_yearly"),
+  
+  // Feature limits
+  maxUsers: integer("max_users").notNull(),
+  maxQuizzes: integer("max_quizzes").notNull(),
+  maxQuestions: integer("max_questions").notNull(),
+  maxStorage: integer("max_storage").notNull(), // in MB
+  
+  // Feature flags
+  features: jsonb("features").$type<{
+    aiQuestionGeneration: boolean;
+    liveProctoring: boolean;
+    advancedAnalytics: boolean;
+    customBranding: boolean;
+    apiAccess: boolean;
+    ssoIntegration: boolean;
+    prioritySupport: boolean;
+    mobileApp: boolean;
+    bulkImport: boolean;
+    whiteLabel: boolean;
+  }>().notNull(),
+  
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Billing History table
+export const billingHistory = pgTable("billing_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  stripeInvoiceId: varchar("stripe_invoice_id"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  
+  // Invoice details
+  amount: integer("amount").notNull(), // in cents
+  currency: varchar("currency").notNull().default("usd"),
+  status: varchar("status", { enum: ["pending", "paid", "failed", "canceled", "refunded"] }).notNull(),
+  
+  // Billing period
+  billingPeriodStart: timestamp("billing_period_start"),
+  billingPeriodEnd: timestamp("billing_period_end"),
+  
+  // Plan details at time of billing
+  planName: varchar("plan_name"),
+  planType: varchar("plan_type", { enum: ["monthly", "yearly"] }),
+  
+  // Payment details
+  paymentMethod: varchar("payment_method"), // card, bank_transfer, etc.
+  paidAt: timestamp("paid_at"),
+  
+  // Metadata
+  metadata: jsonb("metadata"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Usage Tracking table
+export const usageTracking = pgTable("usage_tracking", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  
+  // Usage metrics
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  
+  // Tracked usage
+  quizzesCreated: integer("quizzes_created").default(0),
+  questionsCreated: integer("questions_created").default(0),
+  activeUsers: integer("active_users").default(0),
+  storageUsed: integer("storage_used").default(0), // in MB
+  
+  // Feature usage
+  aiQuestionsGenerated: integer("ai_questions_generated").default(0),
+  proctoringSessions: integer("proctoring_sessions").default(0),
+  analyticsViews: integer("analytics_views").default(0),
+  
+  // Overage tracking
+  overageCharges: integer("overage_charges").default(0), // in cents
+  overageDetails: jsonb("overage_details"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("usage_tracking_account_period").on(table.accountId, table.year, table.month),
+]);
 
 export const references = pgTable("references", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -1178,6 +1293,9 @@ export const insertBadgeTemplateSchema = createInsertSchema(badgeTemplates).omit
 export const insertSectionSchema = createInsertSchema(sections).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertSectionMembershipSchema = createInsertSchema(sectionMemberships).omit({ id: true, joinedAt: true });
 export const insertQuizAssignmentSchema = createInsertSchema(quizAssignments).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertBillingHistorySchema = createInsertSchema(billingHistory).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertUsageTrackingSchema = createInsertSchema(usageTracking).omit({ id: true, createdAt: true, updatedAt: true });
 
 
 
@@ -1250,6 +1368,12 @@ export type InsertSectionMembership = z.infer<typeof insertSectionMembershipSche
 export type SectionMembership = typeof sectionMemberships.$inferSelect;
 export type InsertQuizAssignment = z.infer<typeof insertQuizAssignmentSchema>;
 export type QuizAssignment = typeof quizAssignments.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertBillingHistory = z.infer<typeof insertBillingHistorySchema>;
+export type BillingHistory = typeof billingHistory.$inferSelect;
+export type InsertUsageTracking = z.infer<typeof insertUsageTrackingSchema>;
+export type UsageTracking = typeof usageTracking.$inferSelect;
 
 // Offline sync types
 export type InsertOfflineSyncQueue = z.infer<typeof insertOfflineSyncQueueSchema>;
