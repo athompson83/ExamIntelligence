@@ -33,12 +33,16 @@ interface Quiz {
   id: string;
   title: string;
   description?: string;
-  questions: any[];
+  questionCount?: number;
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
   timeLimit?: number;
   maxAttempts?: number;
+  attempts?: number;
+  difficulty?: number;
+  status?: string;
+  tags?: string[];
 }
 
 export default function QuizManager() {
@@ -274,7 +278,7 @@ export default function QuizManager() {
               <BarChart3 className="h-8 w-8 text-purple-600" />
               <div>
                 <p className="text-2xl font-bold">
-                  {quizzesArray.reduce((sum, quiz) => sum + (quiz.questions?.length || 0), 0)}
+                  {quizzesArray.reduce((sum, quiz) => sum + (quiz.questionCount || 0), 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">Total Questions</p>
               </div>
@@ -342,7 +346,7 @@ export default function QuizManager() {
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <FileText className="h-4 w-4" />
-                          <span>{quiz.questionCount || quiz.questions?.length || 0}</span>
+                          <span>{quiz.questionCount || 0}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -479,7 +483,7 @@ export default function QuizManager() {
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <FileText className="h-4 w-4" />
-                          <span>{quiz.questionCount || quiz.questions?.length || 0}</span>
+                          <span>{quiz.questionCount || 0}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -566,7 +570,7 @@ export default function QuizManager() {
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <FileText className="h-4 w-4" />
-                          <span>{quiz.questionCount || quiz.questions?.length || 0}</span>
+                          <span>{quiz.questionCount || 0}</span>
                         </div>
                       </TableCell>
                       <TableCell>
