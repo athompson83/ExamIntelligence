@@ -43,15 +43,13 @@ interface User {
 }
 
 interface SectionMember {
-  id?: string;
-  studentId?: string;
-  email?: string;
-  studentEmail?: string;
-  firstName?: string;
-  lastName?: string;
-  role?: string;
-  joinedAt?: string;
-  isActive?: boolean;
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  joinedAt: string;
+  isActive: boolean;
 }
 
 export default function SectionManagementFixed() {
@@ -79,7 +77,7 @@ export default function SectionManagementFixed() {
   });
 
   // Fetch section members
-  const { data: sectionMembers = [], isLoading: membersLoading } = useQuery({
+  const { data: sectionMembers = [], isLoading: membersLoading, error: membersError } = useQuery({
     queryKey: ['/api/sections', selectedSection?.id, 'members'],
     enabled: !!selectedSection,
     staleTime: 30000,
@@ -210,7 +208,7 @@ export default function SectionManagementFixed() {
   // Get students who are not in the selected section
   const availableStudents = users.filter(user => 
     user.role === 'student' && 
-    !sectionMembers.some(member => (member.id || member.studentId) === user.id) &&
+    !sectionMembers.some(member => member.id === user.id) &&
     ((user.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
      (user.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()))
@@ -317,7 +315,19 @@ export default function SectionManagementFixed() {
                   <p className="text-gray-600">{selectedSection.description}</p>
                 </CardHeader>
                 <CardContent>
-                  {membersLoading ? (
+                  {membersError ? (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                        <div>
+                          <h3 className="font-medium text-red-800">Error</h3>
+                          <p className="text-sm text-red-700 mt-1">
+                            {membersError.message || "Method is not a valid HTTP token."}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : membersLoading ? (
                     <div className="space-y-3">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="h-16 bg-gray-200 rounded animate-pulse"></div>
@@ -333,26 +343,26 @@ export default function SectionManagementFixed() {
                     <div className="space-y-2">
                       {sectionMembers.map((member: SectionMember) => (
                         <div
-                          key={member.id || member.studentId}
+                          key={member.id}
                           className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                         >
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                               <span className="text-blue-600 font-medium text-sm">
-                                {(member.firstName || '').charAt(0)}{(member.lastName || '').charAt(0)}
+                                {member.firstName.charAt(0)}{member.lastName.charAt(0)}
                               </span>
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">
-                                {member.firstName || ''} {member.lastName || ''}
+                                {member.firstName} {member.lastName}
                               </p>
-                              <p className="text-sm text-gray-500">{member.email || member.studentEmail || ''}</p>
+                              <p className="text-sm text-gray-500">{member.email}</p>
                             </div>
                           </div>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleRemoveStudent(member.id || member.studentId || '')}
+                            onClick={() => handleRemoveStudent(member.id)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             <UserMinus className="h-4 w-4" />
