@@ -87,7 +87,12 @@ export default function DifficultyTrackingPage() {
           isPilotQuestion: false,
           pilotResponsesNeeded: 30,
           pilotResponsesCount: 100,
-          pilotValidated: true
+          pilotValidated: true,
+          questionType: "multiple_choice",
+          testbankName: "Sample Bank",
+          lastUpdated: new Date(),
+          difficultyTrend: "stable" as const,
+          confidenceScore: 0.85
         },
         {
           questionId: "2", 
@@ -100,7 +105,12 @@ export default function DifficultyTrackingPage() {
           isPilotQuestion: true,
           pilotResponsesNeeded: 30,
           pilotResponsesCount: 15,
-          pilotValidated: false
+          pilotValidated: false,
+          questionType: "essay",
+          testbankName: "Advanced Topics",
+          lastUpdated: new Date(),
+          difficultyTrend: "increasing" as const,
+          confidenceScore: 0.62
         },
         {
           questionId: "3",
@@ -113,10 +123,24 @@ export default function DifficultyTrackingPage() {
           isPilotQuestion: false,
           pilotResponsesNeeded: 30,
           pilotResponsesCount: 80,
-          pilotValidated: true
+          pilotValidated: true,
+          questionType: "fill_blank",
+          testbankName: "Mathematics",
+          lastUpdated: new Date(),
+          difficultyTrend: "stable" as const,
+          confidenceScore: 0.78
         }
       ];
       
+      return mockData;
+  };
+
+  const fetchQuestionStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const mockData = getMockData();
       setQuestions(mockData);
     } catch (err) {
       setError('Failed to load question statistics');
