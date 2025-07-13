@@ -11,8 +11,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'wouter';
 import { 
   Home, 
   ChevronRight, 
@@ -58,7 +60,22 @@ export default function Assignments() {
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
+  const [location] = useLocation();
   const queryClient = useQueryClient();
+
+  // Parse URL parameters for pre-selected quiz
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const preSelectedQuizId = urlParams.get('quizId');
+  const preSelectedQuizTitle = urlParams.get('quizTitle');
+
+  // Auto-open create modal if coming from quiz manager
+  useEffect(() => {
+    if (preSelectedQuizId && location.includes('/assignments/create')) {
+      setShowCreateModal(true);
+    }
+  }, [preSelectedQuizId, location]);
 
   // Fetch assignments
   const { data: assignments = [], isLoading } = useQuery({
@@ -70,6 +87,18 @@ export default function Assignments() {
   const { data: quizzes = [] } = useQuery({
     queryKey: ['/api/quizzes'],
     queryFn: () => apiRequest('/api/quizzes'),
+  });
+
+  // Fetch students for assignment
+  const { data: students = [] } = useQuery({
+    queryKey: ['/api/users'],
+    queryFn: () => apiRequest('/api/users'),
+  });
+
+  // Fetch sections for assignment
+  const { data: sections = [] } = useQuery({
+    queryKey: ['/api/sections'],
+    queryFn: () => apiRequest('/api/sections'),
   });
 
   // Create assignment mutation
@@ -162,6 +191,8 @@ export default function Assignments() {
       showCorrectAnswers: formData.get('showCorrectAnswers') === 'on',
       requireProctoring: formData.get('requireProctoring') === 'on',
       allowCalculator: formData.get('allowCalculator') === 'on',
+      selectedStudents: selectedStudents,
+      selectedSections: selectedSections,
       status: 'draft'
     };
     createAssignmentMutation.mutate(data);
@@ -211,20 +242,20 @@ export default function Assignments() {
     <form onSubmit={(e) => {
       e.preventDefault();
       onSubmit(new FormData(e.target as HTMLFormElement));
-    }} className="space-y-4">
+    }} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="title">Title</Label>
           <Input
             id="title"
             name="title"
-            defaultValue={assignment?.title}
+            defaultValue={assignment?.title || (preSelectedQuizTitle ? `Assignment: ${preSelectedQuizTitle}` : '')}
             required
           />
         </div>
         <div>
           <Label htmlFor="quizId">Quiz</Label>
-          <Select name="quizId" defaultValue={assignment?.quizId}>
+          <Select name="quizId" defaultValue={assignment?.quizId || preSelectedQuizId || ''}>
             <SelectTrigger>
               <SelectValue placeholder="Select a quiz" />
             </SelectTrigger>
@@ -236,6 +267,74 @@ export default function Assignments() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      {/* Student and Section Selection */}
+      <div className="space-y-4">
+        <div>
+          <Label className="text-base font-medium">Assign to Students</Label>
+          <p className="text-sm text-muted-foreground mb-3">Select individual students or entire sections</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Individual Students */}
+            <div>
+              <Label className="text-sm font-medium">Individual Students</Label>
+              <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
+                {students.filter((student: any) => student.role === 'student').map((student: any) => (
+                  <div key={student.id} className="flex items-center space-x-2 py-1">
+                    <Checkbox
+                      id={`student-${student.id}`}
+                      checked={selectedStudents.includes(student.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedStudents([...selectedStudents, student.id]);
+                        } else {
+                          setSelectedStudents(selectedStudents.filter(id => id !== student.id));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`student-${student.id}`} className="text-sm">
+                      {student.name || student.email}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sections */}
+            <div>
+              <Label className="text-sm font-medium">Sections</Label>
+              <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
+                {sections.map((section: any) => (
+                  <div key={section.id} className="flex items-center space-x-2 py-1">
+                    <Checkbox
+                      id={`section-${section.id}`}
+                      checked={selectedSections.includes(section.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedSections([...selectedSections, section.id]);
+                        } else {
+                          setSelectedSections(selectedSections.filter(id => id !== section.id));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`section-${section.id}`} className="text-sm">
+                      {section.name} ({section.memberCount || 0} students)
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {(selectedStudents.length > 0 || selectedSections.length > 0) && (
+            <div className="mt-3 p-3 bg-blue-50 rounded-md">
+              <p className="text-sm text-blue-700">
+                Selected: {selectedStudents.length} individual students, {selectedSections.length} sections
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

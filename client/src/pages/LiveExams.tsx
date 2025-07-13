@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -11,6 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useLocation } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
+import { toast } from '@/hooks/use-toast';
 import { 
   Eye, 
   Play, 
@@ -28,7 +36,10 @@ import {
   MousePointer,
   Keyboard,
   Maximize,
-  Navigation
+  Navigation,
+  Plus,
+  Home,
+  ChevronRight
 } from "lucide-react";
 
 interface StudentSession {
@@ -83,6 +94,62 @@ export default function LiveExams() {
   const [proctoringAlerts, setProctoringAlerts] = useState<ProctoringAlert[]>([]);
   const [liveData, setLiveData] = useState<{ [key: string]: any }>({});
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
+  const [location] = useLocation();
+  const queryClient = useQueryClient();
+
+  // Parse URL parameters for pre-selected quiz
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const preSelectedQuizId = urlParams.get('quizId');
+  const preSelectedQuizTitle = urlParams.get('quizTitle');
+
+  // Auto-open create modal if coming from quiz manager
+  useEffect(() => {
+    if (preSelectedQuizId && location.includes('/live-exam/create')) {
+      setShowCreateModal(true);
+    }
+  }, [preSelectedQuizId, location]);
+
+  // Fetch data for live exam setup
+  const { data: quizzes = [] } = useQuery({
+    queryKey: ['/api/quizzes'],
+    queryFn: () => apiRequest('/api/quizzes'),
+  });
+
+  const { data: students = [] } = useQuery({
+    queryKey: ['/api/users'],
+    queryFn: () => apiRequest('/api/users'),
+  });
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ['/api/sections'],
+    queryFn: () => apiRequest('/api/sections'),
+  });
+
+  // Create live exam mutation
+  const createLiveExamMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/live-exams', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    onSuccess: (data) => {
+      setShowCreateModal(false);
+      toast({
+        title: "Success",
+        description: `Live exam started! Access code: ${data.accessCode}`,
+      });
+      setSelectedExam(data.id);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to start live exam",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Mock live exam sessions data
   const [liveSessions] = useState<LiveExamSession[]>([
@@ -283,6 +350,173 @@ export default function LiveExams() {
     });
   };
 
+  const handleCreateLiveExam = (formData: FormData) => {
+    const data = {
+      quizId: formData.get('quizId'),
+      title: formData.get('title'),
+      duration: parseInt(formData.get('duration') as string),
+      selectedStudents: selectedStudents,
+      selectedSections: selectedSections,
+      proctoringSettings: {
+        requireCamera: formData.get('requireCamera') === 'on',
+        requireMicrophone: formData.get('requireMicrophone') === 'on',
+        lockdownBrowser: formData.get('lockdownBrowser') === 'on',
+        preventTabSwitching: formData.get('preventTabSwitching') === 'on',
+        recordSession: formData.get('recordSession') === 'on',
+        flagSuspiciousActivity: formData.get('flagSuspiciousActivity') === 'on',
+      }
+    };
+    createLiveExamMutation.mutate(data);
+  };
+
+  const LiveExamForm = () => (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      handleCreateLiveExam(new FormData(e.target as HTMLFormElement));
+    }} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="title">Exam Title</Label>
+          <Input
+            id="title"
+            name="title"
+            defaultValue={preSelectedQuizTitle ? `Live Exam: ${preSelectedQuizTitle}` : ''}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="quizId">Quiz</Label>
+          <Select name="quizId" defaultValue={preSelectedQuizId || ''}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a quiz" />
+            </SelectTrigger>
+            <SelectContent>
+              {quizzes.map((quiz: any) => (
+                <SelectItem key={quiz.id} value={quiz.id}>
+                  {quiz.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="duration">Duration (minutes)</Label>
+        <Input
+          id="duration"
+          name="duration"
+          type="number"
+          defaultValue={120}
+          min={1}
+          required
+        />
+      </div>
+
+      {/* Student and Section Selection */}
+      <div className="space-y-4">
+        <div>
+          <Label className="text-base font-medium">Select Participants</Label>
+          <p className="text-sm text-muted-foreground mb-3">Choose students or sections for this live exam</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm font-medium">Individual Students</Label>
+              <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
+                {students.filter((student: any) => student.role === 'student').map((student: any) => (
+                  <div key={student.id} className="flex items-center space-x-2 py-1">
+                    <Checkbox
+                      id={`student-${student.id}`}
+                      checked={selectedStudents.includes(student.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedStudents([...selectedStudents, student.id]);
+                        } else {
+                          setSelectedStudents(selectedStudents.filter(id => id !== student.id));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`student-${student.id}`} className="text-sm">
+                      {student.name || student.email}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">Sections</Label>
+              <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
+                {sections.map((section: any) => (
+                  <div key={section.id} className="flex items-center space-x-2 py-1">
+                    <Checkbox
+                      id={`section-${section.id}`}
+                      checked={selectedSections.includes(section.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedSections([...selectedSections, section.id]);
+                        } else {
+                          setSelectedSections(selectedSections.filter(id => id !== section.id));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`section-${section.id}`} className="text-sm">
+                      {section.name} ({section.memberCount || 0} students)
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Proctoring Settings */}
+      <div className="space-y-4">
+        <Label className="text-base font-medium">Proctoring Settings</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox id="requireCamera" name="requireCamera" defaultChecked />
+              <Label htmlFor="requireCamera">Require Camera</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="requireMicrophone" name="requireMicrophone" defaultChecked />
+              <Label htmlFor="requireMicrophone">Require Microphone</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="lockdownBrowser" name="lockdownBrowser" defaultChecked />
+              <Label htmlFor="lockdownBrowser">Lockdown Browser</Label>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox id="preventTabSwitching" name="preventTabSwitching" defaultChecked />
+              <Label htmlFor="preventTabSwitching">Prevent Tab Switching</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="recordSession" name="recordSession" />
+              <Label htmlFor="recordSession">Record Session</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="flagSuspiciousActivity" name="flagSuspiciousActivity" defaultChecked />
+              <Label htmlFor="flagSuspiciousActivity">Flag Suspicious Activity</Label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-2">
+        <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={createLiveExamMutation.isPending}>
+          {createLiveExamMutation.isPending ? 'Starting...' : 'Start Live Exam'}
+        </Button>
+      </div>
+    </form>
+  );
+
   if (authLoading || !isAuthenticated) {
     return <div className="flex items-center justify-center min-h-screen">
       <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -292,19 +526,44 @@ export default function LiveExams() {
   return (
     <Layout>
       <div className="p-6 space-y-6">
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center space-x-1 text-sm text-muted-foreground mb-6">
+          <Button variant="ghost" size="sm" onClick={() => window.location.href = '/dashboard'}>
+            <Home className="h-4 w-4" />
+          </Button>
+          <ChevronRight className="h-4 w-4" />
+          <span>Live Exams</span>
+        </nav>
+
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Live Exam Monitoring</h1>
             <p className="text-gray-600 dark:text-gray-300">Real-time proctoring and exam oversight</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`h-3 w-3 rounded-full ${ws ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className="text-sm text-gray-600 dark:text-gray-300">
-              {ws ? 'Connected' : 'Disconnected'}
-            </span>
+          <div className="flex items-center gap-4">
+            <Button onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Start Live Exam
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className={`h-3 w-3 rounded-full ${ws ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm text-gray-600 dark:text-gray-300">
+                {ws ? 'Connected' : 'Disconnected'}
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* Create Live Exam Dialog */}
+        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Start Live Exam</DialogTitle>
+            </DialogHeader>
+            <LiveExamForm />
+          </DialogContent>
+        </Dialog>
 
         {/* Live Sessions Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

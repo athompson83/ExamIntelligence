@@ -158,23 +158,13 @@ export default function QuizManager() {
   };
 
   const handleAssign = (quiz: Quiz) => {
-    const studentIds = window.prompt('Enter student IDs (comma-separated):', '');
-    if (studentIds && studentIds.trim()) {
-      const ids = studentIds.split(',').map(id => id.trim()).filter(id => id);
-      const dueDate = window.prompt('Enter due date (optional, YYYY-MM-DD format):', '');
-      assignQuizMutation.mutate({ 
-        quizId: quiz.id, 
-        studentIds: ids, 
-        dueDate: dueDate && dueDate.trim() ? dueDate.trim() : undefined 
-      });
-    }
+    // Navigate to assignment page with pre-selected quiz
+    setLocation(`/assignments/create?quizId=${quiz.id}&quizTitle=${encodeURIComponent(quiz.title)}`);
   };
 
   const handleStartLiveExam = (quiz: Quiz) => {
-    const confirmed = window.confirm(`Are you sure you want to start a live exam for "${quiz.title}"?`);
-    if (confirmed) {
-      startLiveExamMutation.mutate(quiz.id);
-    }
+    // Navigate to live exam setup page with pre-selected quiz
+    setLocation(`/live-exam/create?quizId=${quiz.id}&quizTitle=${encodeURIComponent(quiz.title)}`);
   };
 
   if (isLoading) {
