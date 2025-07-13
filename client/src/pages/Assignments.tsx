@@ -447,7 +447,7 @@ export default function Assignments() {
         </div>
       </div>
 
-      <div className="flex justify-end space-x-2">
+      <div className="flex justify-end space-x-2 pt-4 border-t mt-6">
         <Button type="button" variant="outline" onClick={() => {
           setShowCreateModal(false);
           setEditingAssignment(null);
@@ -620,26 +620,30 @@ export default function Assignments() {
 
       {/* Create Assignment Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Assignment</DialogTitle>
           </DialogHeader>
-          <AssignmentForm onSubmit={handleCreateAssignment} />
+          <div className="overflow-y-auto flex-1 px-2">
+            <AssignmentForm onSubmit={handleCreateAssignment} />
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Edit Assignment Modal */}
       <Dialog open={!!editingAssignment} onOpenChange={() => setEditingAssignment(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Assignment</DialogTitle>
           </DialogHeader>
-          {editingAssignment && (
-            <AssignmentForm
-              assignment={editingAssignment}
-              onSubmit={handleUpdateAssignment}
-            />
-          )}
+          <div className="overflow-y-auto flex-1 px-2">
+            {editingAssignment && (
+              <AssignmentForm
+                assignment={editingAssignment}
+                onSubmit={handleUpdateAssignment}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
         </div>
