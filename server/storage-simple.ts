@@ -1212,18 +1212,40 @@ export class DatabaseStorage implements IStorage {
       const enrichedQuizzes = await Promise.all(
         userQuizzes.map(async (quiz) => {
           // Get actual question count by checking quiz_questions junction table
-          const questionCount = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(quizQuestions)
-            .where(eq(quizQuestions.quizId, quiz.id))
-            .then(result => result[0]?.count || 0);
+          let questionCount = 0;
+          try {
+            const result = await db
+              .select({ count: sql<number>`count(*)` })
+              .from(quizQuestions)
+              .where(eq(quizQuestions.quizId, quiz.id));
+            
+            const rawCount = result[0]?.count;
+            if (rawCount !== undefined && rawCount !== null) {
+              const parsedCount = typeof rawCount === 'number' ? rawCount : parseInt(String(rawCount));
+              questionCount = isNaN(parsedCount) ? 0 : Math.max(0, Math.min(parsedCount, 1000)); // Cap at 1000
+            }
+          } catch (error) {
+            console.error(`Error counting questions for quiz ${quiz.id}:`, error);
+            questionCount = 0;
+          }
           
           // Get quiz attempts to determine max attempts and other stats
-          const attempts = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(quizAttempts)
-            .where(eq(quizAttempts.quizId, quiz.id))
-            .then(result => result[0]?.count || 0);
+          let attempts = 0;
+          try {
+            const result = await db
+              .select({ count: sql<number>`count(*)` })
+              .from(quizAttempts)
+              .where(eq(quizAttempts.quizId, quiz.id));
+            
+            const rawCount = result[0]?.count;
+            if (rawCount !== undefined && rawCount !== null) {
+              const parsedCount = typeof rawCount === 'number' ? rawCount : parseInt(String(rawCount));
+              attempts = isNaN(parsedCount) ? 0 : Math.max(0, Math.min(parsedCount, 10000)); // Cap at 10000
+            }
+          } catch (error) {
+            console.error(`Error counting attempts for quiz ${quiz.id}:`, error);
+            attempts = 0;
+          }
           
           return {
             ...quiz,
