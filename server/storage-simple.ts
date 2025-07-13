@@ -1088,9 +1088,21 @@ export class DatabaseStorage implements IStorage {
 
   async createQuizAssignment(assignmentData: any): Promise<any> {
     try {
+      // Convert date strings to Date objects if present
+      const processedData = { ...assignmentData };
+      if (processedData.dueDate && typeof processedData.dueDate === 'string') {
+        processedData.dueDate = new Date(processedData.dueDate);
+      }
+      if (processedData.availableFrom && typeof processedData.availableFrom === 'string') {
+        processedData.availableFrom = new Date(processedData.availableFrom);
+      }
+      if (processedData.availableUntil && typeof processedData.availableUntil === 'string') {
+        processedData.availableUntil = new Date(processedData.availableUntil);
+      }
+      
       const [assignment] = await db
         .insert(quizAssignments)
-        .values(assignmentData)
+        .values(processedData)
         .returning();
       return assignment;
     } catch (error) {
@@ -1151,19 +1163,6 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error fetching quiz assignments:', error);
       return [];
-    }
-  }
-
-  async createQuizAssignment(assignmentData: any): Promise<any> {
-    try {
-      const [assignment] = await db
-        .insert(quizAssignments)
-        .values(assignmentData)
-        .returning();
-      return assignment;
-    } catch (error) {
-      console.error('Error creating quiz assignment:', error);
-      throw error;
     }
   }
 

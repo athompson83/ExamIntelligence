@@ -216,17 +216,12 @@ export default function EnhancedQuizBuilder() {
     title: "",
     description: "",
     instructions: "",
-    timeLimit: 60,
-    shuffleQuestions: false,
-    shuffleAnswers: false,
     maxAttempts: 1,
     allowMultipleAttempts: false,
     proctoring: false,
     adaptiveTesting: false,
     enableQuestionFeedback: false,
     enableLearningPrescription: false,
-    passwordProtected: false,
-    password: "",
     ipLocking: false,
     showCorrectAnswers: false,
     showCorrectAnswersAt: "after_submission",
@@ -384,17 +379,12 @@ export default function EnhancedQuizBuilder() {
         title: selectedQuiz.title || "",
         description: selectedQuiz.description || "",
         instructions: selectedQuiz.instructions || "",
-        timeLimit: selectedQuiz.timeLimit || 60,
-        shuffleQuestions: selectedQuiz.shuffleQuestions || false,
-        shuffleAnswers: selectedQuiz.shuffleAnswers || false,
         maxAttempts: selectedQuiz.maxAttempts || 1,
         allowMultipleAttempts: selectedQuiz.allowMultipleAttempts || false,
         proctoring: selectedQuiz.proctoring || false,
         adaptiveTesting: selectedQuiz.adaptiveTesting || false,
         enableQuestionFeedback: selectedQuiz.enableQuestionFeedback || false,
         enableLearningPrescription: selectedQuiz.enableLearningPrescription || false,
-        passwordProtected: selectedQuiz.passwordProtected || false,
-        password: selectedQuiz.password || "",
         ipLocking: selectedQuiz.ipLocking || false,
         showCorrectAnswers: selectedQuiz.showCorrectAnswers || false,
         showCorrectAnswersAt: selectedQuiz.showCorrectAnswersAt || "after_submission",
@@ -658,9 +648,6 @@ export default function EnhancedQuizBuilder() {
             title: quizData.title || "",
             description: quizData.description || "",
             instructions: quizData.instructions || "",
-            timeLimit: quizData.timeLimit || 60,
-            shuffleQuestions: quizData.shuffleQuestions || false,
-            shuffleAnswers: quizData.shuffleAnswers || false,
             maxAttempts: quizData.maxAttempts || 1,
             allowMultipleAttempts: quizData.allowMultipleAttempts || false,
             passingGrade: quizData.passingGrade || 70,
@@ -677,8 +664,6 @@ export default function EnhancedQuizBuilder() {
             adaptiveTesting: quizData.adaptiveTesting || false,
             enableQuestionFeedback: quizData.enableQuestionFeedback || false,
             enableLearningPrescription: quizData.enableLearningPrescription || false,
-            passwordProtected: quizData.passwordProtected || false,
-            password: quizData.password || "",
             ipLocking: quizData.ipLocking || false,
             oneQuestionAtATime: quizData.oneQuestionAtATime !== false,
           });
@@ -739,9 +724,6 @@ export default function EnhancedQuizBuilder() {
             title: quizData.title || "",
             description: quizData.description || "",
             instructions: quizData.instructions || "",
-            timeLimit: quizData.timeLimit || 60,
-            shuffleQuestions: quizData.shuffleQuestions || false,
-            shuffleAnswers: quizData.shuffleAnswers || false,
             maxAttempts: quizData.maxAttempts || 1,
             allowMultipleAttempts: quizData.allowMultipleAttempts || false,
             passingGrade: quizData.passingGrade || 70,
@@ -758,8 +740,6 @@ export default function EnhancedQuizBuilder() {
             adaptiveTesting: quizData.adaptiveTesting || false,
             enableQuestionFeedback: quizData.enableQuestionFeedback || false,
             enableLearningPrescription: quizData.enableLearningPrescription || false,
-            passwordProtected: quizData.passwordProtected || false,
-            password: quizData.password || "",
             ipLocking: quizData.ipLocking || false,
             oneQuestionAtATime: quizData.oneQuestionAtATime !== false,
           });
@@ -1587,35 +1567,6 @@ export default function EnhancedQuizBuilder() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center space-x-2">
                     <Switch
-                      id="untimed"
-                      checked={quiz.timeLimit === null}
-                      onCheckedChange={(checked) => setQuiz(prev => ({
-                        ...prev,
-                        timeLimit: checked ? null : 60
-                      }))}
-                    />
-                    <Label htmlFor="untimed">Untimed Quiz</Label>
-                  </div>
-                  
-                  {quiz.timeLimit !== null && (
-                    <div className="space-y-2">
-                      <Label htmlFor="time-limit">Time Limit (minutes)</Label>
-                      <Input
-                        id="time-limit"
-                        type="number"
-                        min="1"
-                        value={quiz.timeLimit || 60}
-                        onChange={(e) => setQuiz(prev => ({
-                          ...prev,
-                          timeLimit: parseInt(e.target.value) || 60
-                        }))}
-                        placeholder="Enter time limit in minutes"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
                       id="always-available"
                       checked={quiz.alwaysAvailable ?? true}
                       onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, alwaysAvailable: checked }))}
@@ -1756,37 +1707,7 @@ export default function EnhancedQuizBuilder() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5" />
-                    Security Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="password-protected"
-                      checked={quiz.passwordProtected || false}
-                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, passwordProtected: checked }))}
-                    />
-                    <Label htmlFor="password-protected">Password Protection</Label>
-                  </div>
 
-                  {quiz.passwordProtected && (
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Quiz Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={quiz.password || ""}
-                        onChange={(e) => setQuiz(prev => ({ ...prev, password: e.target.value }))}
-                        placeholder="Enter password for quiz access"
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 
@@ -1801,23 +1722,7 @@ export default function EnhancedQuizBuilder() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="shuffle-questions"
-                      checked={quiz.shuffleQuestions || false}
-                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, shuffleQuestions: checked }))}
-                    />
-                    <Label htmlFor="shuffle-questions">Shuffle Questions</Label>
-                  </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="shuffle-answers"
-                      checked={quiz.shuffleAnswers || false}
-                      onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, shuffleAnswers: checked }))}
-                    />
-                    <Label htmlFor="shuffle-answers">Shuffle Answer Options</Label>
-                  </div>
 
                   <div className="flex items-center space-x-2">
                     <Switch

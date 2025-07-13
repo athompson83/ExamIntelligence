@@ -4636,17 +4636,26 @@ Initialize all interactions with these principles as your foundation.`,
 
   app.post('/api/quiz-assignments', mockAuth, async (req, res) => {
     try {
-      const { quizId, assignedToUserId, assignedToSectionId, dueDate, maxAttempts, timeLimit } = req.body;
+      const { quizId, assignedToUserId, assignedToSectionId, dueDate, maxAttempts, timeLimit, title, description, allowLateSubmissions, lateGradingOptions } = req.body;
       const userId = req.user.id;
+      const userAccountId = req.user.accountId || "00000000-0000-0000-0000-000000000001";
+      
+      // Convert string date to Date object
+      const parsedDueDate = dueDate ? new Date(dueDate) : null;
+      
       const assignment = await storage.createQuizAssignment({
         quizId,
         assignedToUserId,
         assignedToSectionId,
         assignedById: userId,
-        accountId: 'default-account',
-        dueDate,
-        maxAttempts,
-        timeLimit,
+        accountId: userAccountId,
+        dueDate: parsedDueDate,
+        maxAttempts: maxAttempts || 1,
+        timeLimit: timeLimit || 60,
+        title,
+        description,
+        allowLateSubmissions: allowLateSubmissions || false,
+        lateGradingOptions: lateGradingOptions || null,
       });
 
       // Auto-generate study aids when quiz is assigned
@@ -5105,6 +5114,10 @@ Initialize all interactions with these principles as your foundation.`,
   app.post('/api/quiz-assignments', async (req, res) => {
     try {
       const assignmentData = req.body;
+      // Convert string date to Date object if present
+      if (assignmentData.dueDate) {
+        assignmentData.dueDate = new Date(assignmentData.dueDate);
+      }
       const assignment = await storage.createQuizAssignment(assignmentData);
       res.json(assignment);
     } catch (error) {

@@ -272,6 +272,9 @@ export default function Assignments() {
     const dueDate = formData.get('dueDate') as string;
     const timeLimit = parseInt(formData.get('timeLimit') as string);
     const maxAttempts = parseInt(formData.get('maxAttempts') as string);
+    const allowLateSubmissions = formData.get('allowLateSubmission') === 'on';
+    const percentLostPerDay = parseInt(formData.get('percentLostPerDay') as string) || 10;
+    const maxLateDays = parseInt(formData.get('maxLateDays') as string) || 7;
     
     // Validate required fields
     if (!quizId || quizId === 'add-new' || quizId === 'no-quizzes') {
@@ -301,6 +304,12 @@ export default function Assignments() {
       return;
     }
     
+    // Prepare late grading options
+    const lateGradingOptions = allowLateSubmissions ? {
+      percentLostPerDay,
+      maxLateDays
+    } : null;
+    
     // Create multiple assignments - one for each student and section
     const assignments = [];
     
@@ -313,6 +322,8 @@ export default function Assignments() {
         dueDate,
         timeLimit,
         maxAttempts,
+        allowLateSubmissions,
+        lateGradingOptions,
         assignedToUserId: studentId,
         assignedToSectionId: null,
       });
@@ -327,6 +338,8 @@ export default function Assignments() {
         dueDate,
         timeLimit,
         maxAttempts,
+        allowLateSubmissions,
+        lateGradingOptions,
         assignedToUserId: null,
         assignedToSectionId: sectionId,
       });
@@ -675,6 +688,39 @@ export default function Assignments() {
           />
           <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
         </div>
+        
+        {/* Late Submission Grading Options */}
+        <div className="ml-6 space-y-2 border-l-2 border-gray-200 pl-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="percentLostPerDay">Percentage Lost Per Day Late</Label>
+              <Input
+                id="percentLostPerDay"
+                name="percentLostPerDay"
+                type="number"
+                defaultValue={assignment?.lateGradingOptions?.percentLostPerDay || 10}
+                min={0}
+                max={100}
+                placeholder="10"
+              />
+            </div>
+            <div>
+              <Label htmlFor="maxLateDays">Maximum Late Days Allowed</Label>
+              <Input
+                id="maxLateDays"
+                name="maxLateDays"
+                type="number"
+                defaultValue={assignment?.lateGradingOptions?.maxLateDays || 7}
+                min={1}
+                placeholder="7"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500">
+            Example: 10% lost per day for up to 7 days (after 7 days, assignment cannot be submitted)
+          </p>
+        </div>
+        
         <div className="flex items-center space-x-2">
           <Switch
             id="shuffleQuestions"

@@ -842,6 +842,8 @@ export const quizAssignments = pgTable("quiz_assignments", {
   // Assignment metadata
   assignedById: varchar("assigned_by_id").references(() => users.id),
   accountId: uuid("account_id").references(() => accounts.id),
+  title: varchar("title"),
+  description: text("description"),
   
   // Availability settings
   availableFrom: timestamp("available_from"),
@@ -851,6 +853,8 @@ export const quizAssignments = pgTable("quiz_assignments", {
   // Assignment settings
   maxAttempts: integer("max_attempts").default(1),
   timeLimit: integer("time_limit"), // in minutes
+  allowLateSubmissions: boolean("allow_late_submissions").default(false),
+  lateGradingOptions: jsonb("late_grading_options"), // { percentLostPerDay: number, maxLateDays: number }
   
   // Status
   isActive: boolean("is_active").default(true),
