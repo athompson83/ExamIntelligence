@@ -4538,6 +4538,9 @@ Initialize all interactions with these principles as your foundation.`,
   // Section Management API routes
   app.get('/api/sections', mockAuth, async (req, res) => {
     try {
+      // Clean up any invalid section memberships first
+      await storage.cleanupInvalidSectionMemberships();
+      
       const sections = await storage.getSections();
       res.json(sections);
     } catch (error) {
@@ -4563,10 +4566,23 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
+  // Add cleanup endpoint for debugging
+  app.post('/api/sections/cleanup', mockAuth, async (req, res) => {
+    try {
+      await storage.cleanupInvalidSectionMemberships();
+      res.json({ success: true, message: 'Invalid section memberships cleaned up' });
+    } catch (error) {
+      console.error('Error cleaning up section memberships:', error);
+      res.status(500).json({ message: 'Failed to cleanup section memberships' });
+    }
+  });
+
   app.get('/api/sections/:sectionId/members', mockAuth, async (req, res) => {
     try {
       const { sectionId } = req.params;
+      console.log(`Fetching members for section: ${sectionId}`);
       const members = await storage.getSectionMembers(sectionId);
+      console.log(`Returning ${members.length} members:`, members.map(m => ({ id: m.id, name: `${m.firstName} ${m.lastName}`, email: m.email })));
       res.json(members);
     } catch (error) {
       console.error('Error fetching section members:', error);
@@ -4589,11 +4605,22 @@ Initialize all interactions with these principles as your foundation.`,
   app.delete('/api/sections/:sectionId/members/:studentId', mockAuth, async (req, res) => {
     try {
       const { sectionId, studentId } = req.params;
+      console.log(`Removing student ${studentId} from section ${sectionId}`);
+      
+      // First check if the student exists
+      const user = await storage.getUser(studentId);
+      if (!user) {
+        console.log(`User ${studentId} not found`);
+        return res.status(404).json({ message: 'Student not found' });
+      }
+      
+      // Then remove the student from the section
       await storage.removeStudentFromSection(sectionId, studentId);
-      res.json({ success: true });
+      console.log(`Successfully removed student ${studentId} from section ${sectionId}`);
+      res.json({ success: true, message: 'Student removed successfully' });
     } catch (error) {
       console.error('Error removing student from section:', error);
-      res.status(500).json({ message: 'Failed to remove student from section' });
+      res.status(500).json({ message: 'Failed to remove student from section', error: error.message });
     }
   });
 

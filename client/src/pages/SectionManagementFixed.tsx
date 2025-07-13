@@ -81,6 +81,18 @@ export default function SectionManagementFixed() {
     queryKey: ['/api/sections', selectedSection?.id, 'members'],
     enabled: !!selectedSection,
     staleTime: 30000,
+    select: (data) => {
+      console.log('Section members data received:', data);
+      // Filter out any invalid entries on the client side as well
+      const validMembers = data.filter((member: any) => 
+        member.id && 
+        member.email && 
+        member.firstName && 
+        member.lastName
+      );
+      console.log('Valid members:', validMembers);
+      return validMembers;
+    }
   });
 
   // Create section mutation
@@ -152,10 +164,14 @@ export default function SectionManagementFixed() {
         title: "Success",
         description: "Student removed from section successfully",
       });
+      // Force cache invalidation to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/sections', selectedSection?.id, 'members'] });
       queryClient.invalidateQueries({ queryKey: ['/api/sections'] });
+      // Remove from cache entirely to force fresh fetch
+      queryClient.removeQueries({ queryKey: ['/api/sections', selectedSection?.id, 'members'] });
     },
     onError: (error: any) => {
+      console.error('Error removing student:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to remove student from section",
@@ -193,6 +209,7 @@ export default function SectionManagementFixed() {
 
   const handleRemoveStudent = (studentId: string) => {
     if (selectedSection) {
+      console.log(`Removing student ${studentId} from section ${selectedSection.id}`);
       removeStudentMutation.mutate({ sectionId: selectedSection.id, studentId });
     }
   };

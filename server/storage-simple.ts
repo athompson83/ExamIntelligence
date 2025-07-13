@@ -1014,7 +1014,16 @@ export class DatabaseStorage implements IStorage {
         .innerJoin(users, eq(sectionMemberships.studentId, users.id))
         .where(eq(sectionMemberships.sectionId, sectionId));
       
-      return result;
+      // Filter out any entries with null/empty names or emails
+      const validMembers = result.filter(member => 
+        member.id && 
+        member.email && 
+        member.firstName && 
+        member.lastName
+      );
+      
+      console.log(`Found ${result.length} total members, ${validMembers.length} valid members for section ${sectionId}`);
+      return validMembers;
     } catch (error) {
       console.error('Error fetching section members:', error);
       return [];
@@ -1037,16 +1046,32 @@ export class DatabaseStorage implements IStorage {
 
   async removeStudentFromSection(sectionId: string, studentId: string): Promise<void> {
     try {
-      await db.delete(sectionMemberships)
+      const result = await db.delete(sectionMemberships)
         .where(
           and(
             eq(sectionMemberships.sectionId, sectionId),
             eq(sectionMemberships.studentId, studentId)
           )
         );
+      
+      console.log(`Removed student ${studentId} from section ${sectionId}`);
     } catch (error) {
       console.error('Error removing student from section:', error);
       throw error;
+    }
+  }
+
+  async cleanupInvalidSectionMemberships(): Promise<void> {
+    try {
+      // Remove memberships where the user no longer exists
+      await db.delete(sectionMemberships)
+        .where(
+          sql`${sectionMemberships.studentId} NOT IN (SELECT id FROM ${users})`
+        );
+      
+      console.log('Cleaned up invalid section memberships');
+    } catch (error) {
+      console.error('Error cleaning up invalid section memberships:', error);
     }
   }
 
