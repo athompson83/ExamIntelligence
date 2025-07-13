@@ -8,6 +8,7 @@ import { OnboardingTourProvider } from "@/contexts/OnboardingTourContext";
 import { AITooltipProvider } from "@/contexts/AITooltipContext";
 import OnboardingTour from "@/components/OnboardingTour";
 import AITooltipMascot from "@/components/AITooltipMascot";
+import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -342,19 +343,21 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <CustomTooltipProvider>
-          <AITooltipProvider>
-            <OnboardingTourProvider>
-              <Toaster />
-              <Router />
-              <OnboardingTour />
-            </OnboardingTourProvider>
-          </AITooltipProvider>
-        </CustomTooltipProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <CustomTooltipProvider>
+            <AITooltipProvider>
+              <OnboardingTourProvider>
+                <Toaster />
+                <Router />
+                <OnboardingTour />
+              </OnboardingTourProvider>
+            </AITooltipProvider>
+          </CustomTooltipProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 
