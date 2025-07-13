@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
@@ -140,18 +140,9 @@ export default function Assignments() {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
-      setShowCreateModal(false);
-      toast({
-        title: "Success",
-        description: "Assignment created successfully",
-      });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to create assignment",
-        variant: "destructive",
-      });
+      console.error('Assignment creation error:', error);
     },
   });
 
@@ -231,25 +222,90 @@ export default function Assignments() {
   });
 
   const handleCreateAssignment = (formData: FormData) => {
-    const data = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      quizId: formData.get('quizId'),
-      dueDate: formData.get('dueDate'),
-      availableFrom: formData.get('availableFrom'),
-      availableTo: formData.get('availableTo'),
-      timeLimit: parseInt(formData.get('timeLimit') as string),
-      maxAttempts: parseInt(formData.get('maxAttempts') as string),
-      allowLateSubmission: formData.get('allowLateSubmission') === 'on',
-      shuffleQuestions: formData.get('shuffleQuestions') === 'on',
-      showCorrectAnswers: formData.get('showCorrectAnswers') === 'on',
-      requireProctoring: formData.get('requireProctoring') === 'on',
-      allowCalculator: formData.get('allowCalculator') === 'on',
-      selectedStudents: selectedStudents,
-      selectedSections: selectedSections,
-      status: 'draft'
-    };
-    createAssignmentMutation.mutate(data);
+    const quizId = formData.get('quizId') as string;
+    const title = formData.get('title') as string;
+    const dueDate = formData.get('dueDate') as string;
+    const timeLimit = parseInt(formData.get('timeLimit') as string);
+    const maxAttempts = parseInt(formData.get('maxAttempts') as string);
+    
+    // Validate required fields
+    if (!quizId || quizId === 'add-new' || quizId === 'no-quizzes') {
+      toast({
+        title: "Error",
+        description: "Please select a valid quiz",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!title || !dueDate) {
+      toast({
+        title: "Error", 
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (selectedStudents.length === 0 && selectedSections.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one student or section",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Create multiple assignments - one for each student and section
+    const assignments = [];
+    
+    // Create assignments for individual students
+    for (const studentId of selectedStudents) {
+      assignments.push({
+        quizId,
+        title,
+        description: formData.get('description'),
+        dueDate,
+        timeLimit,
+        maxAttempts,
+        assignedToUserId: studentId,
+        assignedToSectionId: null,
+      });
+    }
+    
+    // Create assignments for sections
+    for (const sectionId of selectedSections) {
+      assignments.push({
+        quizId,
+        title,
+        description: formData.get('description'),
+        dueDate,
+        timeLimit,
+        maxAttempts,
+        assignedToUserId: null,
+        assignedToSectionId: sectionId,
+      });
+    }
+    
+    // Create all assignments
+    Promise.all(assignments.map(data => createAssignmentMutation.mutateAsync(data)))
+      .then(() => {
+        toast({
+          title: "Success",
+          description: `Created ${assignments.length} assignment(s) successfully`,
+        });
+        setShowCreateModal(false);
+        setSelectedStudents([]);
+        setSelectedSections([]);
+      })
+      .catch((error) => {
+        console.error('Error creating assignments:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create some assignments",
+          variant: "destructive",
+        });
+      });
   };
 
   const handleUpdateAssignment = (formData: FormData) => {
@@ -321,7 +377,7 @@ export default function Assignments() {
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="" disabled>No quizzes available</SelectItem>
+                <SelectItem value="no-quizzes" disabled>No quizzes available</SelectItem>
               )}
               <SelectItem value="add-new" className="text-primary">
                 <div className="flex items-center">
@@ -784,6 +840,9 @@ export default function Assignments() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Assignment</DialogTitle>
+            <DialogDescription>
+              Create a new assignment by selecting a quiz and configuring the assignment details.
+            </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto flex-1 px-2">
             <AssignmentForm onSubmit={handleCreateAssignment} />
@@ -796,6 +855,9 @@ export default function Assignments() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Assignment</DialogTitle>
+            <DialogDescription>
+              Edit the assignment details and update the configuration.
+            </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto flex-1 px-2">
             {editingAssignment && (
@@ -813,6 +875,9 @@ export default function Assignments() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Create New Section</DialogTitle>
+            <DialogDescription>
+              Create a new section to organize your students into groups.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => {
             e.preventDefault();
