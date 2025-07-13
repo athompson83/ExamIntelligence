@@ -107,7 +107,7 @@ export default function LiveExams() {
 
   // Auto-open create modal if coming from quiz manager
   useEffect(() => {
-    if (preSelectedQuizId && location.includes('/live-exam/create')) {
+    if (preSelectedQuizId && location.includes('/live-exams')) {
       setShowCreateModal(true);
     }
   }, [preSelectedQuizId, location]);

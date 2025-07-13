@@ -72,7 +72,7 @@ export default function Assignments() {
 
   // Auto-open create modal if coming from quiz manager
   useEffect(() => {
-    if (preSelectedQuizId && location.includes('/assignments/create')) {
+    if (preSelectedQuizId && location.includes('/assignments')) {
       setShowCreateModal(true);
     }
   }, [preSelectedQuizId, location]);

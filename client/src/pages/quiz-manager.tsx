@@ -159,12 +159,12 @@ export default function QuizManager() {
 
   const handleAssign = (quiz: Quiz) => {
     // Navigate to assignment page with pre-selected quiz
-    setLocation(`/assignments/create?quizId=${quiz.id}&quizTitle=${encodeURIComponent(quiz.title)}`);
+    setLocation(`/assignments?quizId=${quiz.id}&quizTitle=${encodeURIComponent(quiz.title)}`);
   };
 
   const handleStartLiveExam = (quiz: Quiz) => {
     // Navigate to live exam setup page with pre-selected quiz
-    setLocation(`/live-exam/create?quizId=${quiz.id}&quizTitle=${encodeURIComponent(quiz.title)}`);
+    setLocation(`/live-exams?quizId=${quiz.id}&quizTitle=${encodeURIComponent(quiz.title)}`);
   };
 
   if (isLoading) {
