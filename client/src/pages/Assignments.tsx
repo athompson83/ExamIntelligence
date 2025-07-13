@@ -103,41 +103,86 @@ export default function Assignments() {
   // Fetch assignments
   const { data: assignments = [], isLoading } = useQuery({
     queryKey: ['/api/quiz-assignments'],
-    queryFn: () => apiRequest('/api/quiz-assignments'),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('/api/quiz-assignments');
+        const result = await response.json();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error('Error fetching assignments:', error);
+        return [];
+      }
+    },
   });
 
   // Fetch quizzes for assignment creation
   const { data: quizzes = [] } = useQuery({
     queryKey: ['/api/quizzes'],
-    queryFn: () => apiRequest('/api/quizzes'),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('/api/quizzes');
+        const result = await response.json();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error('Error fetching quizzes:', error);
+        return [];
+      }
+    },
   });
 
   // Fetch students for assignment
-  const { data: students = [] } = useQuery({
+  const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ['/api/users'],
-    queryFn: () => apiRequest('/api/users'),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('/api/users');
+        const result = await response.json();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error('Error fetching students:', error);
+        return [];
+      }
+    },
   });
 
   // Fetch sections for assignment
   const { data: sections = [] } = useQuery({
     queryKey: ['/api/sections'],
-    queryFn: () => apiRequest('/api/sections'),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('/api/sections');
+        const result = await response.json();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error('Error fetching sections:', error);
+        return [];
+      }
+    },
   });
 
   // Filter students by search term
-  const filteredStudents = students.filter((student: any) => 
+  const filteredStudents = Array.isArray(students) ? students.filter((student: any) => 
+    student && 
     student.role === 'student' && 
     (student.firstName?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
      student.lastName?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
      student.email?.toLowerCase().includes(studentSearchTerm.toLowerCase()))
-  );
+  ) : [];
 
   // Create assignment mutation
   const createAssignmentMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/quiz-assignments', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: any) => {
+      try {
+        const response = await apiRequest('/api/quiz-assignments', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        });
+        return await response.json();
+      } catch (error) {
+        console.error('Assignment creation error:', error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
     },
