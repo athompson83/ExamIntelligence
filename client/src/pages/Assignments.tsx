@@ -30,7 +30,11 @@ import {
   Search,
   Filter,
   Send,
-  Settings
+  Settings,
+  X,
+  Check,
+  UserPlus,
+  UsersIcon
 } from 'lucide-react';
 
 interface Assignment {
@@ -62,6 +66,8 @@ export default function Assignments() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
+  const [showCreateSection, setShowCreateSection] = useState(false);
+  const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
@@ -76,6 +82,23 @@ export default function Assignments() {
       setShowCreateModal(true);
     }
   }, [preSelectedQuizId, location]);
+
+  // Reset form states when modals are closed
+  useEffect(() => {
+    if (!showCreateModal && !editingAssignment) {
+      setSelectedStudents([]);
+      setSelectedSections([]);
+      setStudentSearchTerm('');
+    }
+  }, [showCreateModal, editingAssignment]);
+
+  // Handle quiz selection change
+  const handleQuizSelection = (value: string) => {
+    if (value === 'add-new') {
+      // Navigate to quiz builder
+      window.location.href = '/quiz-builder';
+    }
+  };
 
   // Fetch assignments
   const { data: assignments = [], isLoading } = useQuery({
@@ -100,6 +123,14 @@ export default function Assignments() {
     queryKey: ['/api/sections'],
     queryFn: () => apiRequest('/api/sections'),
   });
+
+  // Filter students by search term
+  const filteredStudents = students.filter((student: any) => 
+    student.role === 'student' && 
+    (student.firstName?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+     student.lastName?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+     student.email?.toLowerCase().includes(studentSearchTerm.toLowerCase()))
+  );
 
   // Create assignment mutation
   const createAssignmentMutation = useMutation({
@@ -163,6 +194,29 @@ export default function Assignments() {
       toast({
         title: "Error",
         description: "Failed to delete assignment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create section mutation
+  const createSectionMutation = useMutation({
+    mutationFn: (data: { name: string; description: string }) => apiRequest('/api/sections', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sections'] });
+      setShowCreateSection(false);
+      toast({
+        title: "Success",
+        description: "Section created successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create section",
         variant: "destructive",
       });
     },
@@ -255,16 +309,26 @@ export default function Assignments() {
         </div>
         <div>
           <Label htmlFor="quizId">Quiz</Label>
-          <Select name="quizId" defaultValue={assignment?.quizId || preSelectedQuizId || ''}>
+          <Select name="quizId" defaultValue={assignment?.quizId || preSelectedQuizId || ''} onValueChange={handleQuizSelection}>
             <SelectTrigger>
               <SelectValue placeholder="Select a quiz" />
             </SelectTrigger>
             <SelectContent>
-              {quizzes.map((quiz: any) => (
-                <SelectItem key={quiz.id} value={quiz.id}>
-                  {quiz.title}
-                </SelectItem>
-              ))}
+              {quizzes.length > 0 ? (
+                quizzes.map((quiz: any) => (
+                  <SelectItem key={quiz.id} value={quiz.id}>
+                    {quiz.title}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="" disabled>No quizzes available</SelectItem>
+              )}
+              <SelectItem value="add-new" className="text-primary">
+                <div className="flex items-center">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Quiz
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -279,60 +343,157 @@ export default function Assignments() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Individual Students */}
             <div>
-              <Label className="text-sm font-medium">Individual Students</Label>
-              <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
-                {students.filter((student: any) => student.role === 'student').map((student: any) => (
-                  <div key={student.id} className="flex items-center space-x-2 py-1">
-                    <Checkbox
-                      id={`student-${student.id}`}
-                      checked={selectedStudents.includes(student.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedStudents([...selectedStudents, student.id]);
-                        } else {
-                          setSelectedStudents(selectedStudents.filter(id => id !== student.id));
-                        }
-                      }}
-                    />
-                    <Label htmlFor={`student-${student.id}`} className="text-sm">
-                      {student.name || student.email}
-                    </Label>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-medium">Individual Students</Label>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setSelectedStudents([])}
+                  disabled={selectedStudents.length === 0}
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear
+                </Button>
               </div>
+              
+              {/* Student Search */}
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search students..."
+                  value={studentSearchTerm}
+                  onChange={(e) => setStudentSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <div className="border rounded-md max-h-48 overflow-y-auto">
+                {filteredStudents.length > 0 ? (
+                  filteredStudents.map((student: any) => (
+                    <div key={student.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 border-b last:border-b-0">
+                      <Checkbox
+                        id={`student-${student.id}`}
+                        checked={selectedStudents.includes(student.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedStudents([...selectedStudents, student.id]);
+                          } else {
+                            setSelectedStudents(selectedStudents.filter(id => id !== student.id));
+                          }
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <Label htmlFor={`student-${student.id}`} className="text-sm font-medium cursor-pointer">
+                          {student.firstName && student.lastName ? `${student.firstName} ${student.lastName}` : student.email}
+                        </Label>
+                        <p className="text-xs text-gray-500 truncate">{student.email}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    <UserPlus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">No students found</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Selected Students Summary */}
+              {selectedStudents.length > 0 && (
+                <div className="mt-2 p-2 bg-blue-50 rounded-md">
+                  <p className="text-xs text-blue-700">
+                    {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Sections */}
             <div>
-              <Label className="text-sm font-medium">Sections</Label>
-              <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
-                {sections.map((section: any) => (
-                  <div key={section.id} className="flex items-center space-x-2 py-1">
-                    <Checkbox
-                      id={`section-${section.id}`}
-                      checked={selectedSections.includes(section.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedSections([...selectedSections, section.id]);
-                        } else {
-                          setSelectedSections(selectedSections.filter(id => id !== section.id));
-                        }
-                      }}
-                    />
-                    <Label htmlFor={`section-${section.id}`} className="text-sm">
-                      {section.name} ({section.memberCount || 0} students)
-                    </Label>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-medium">Sections</Label>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setSelectedSections([])}
+                    disabled={selectedSections.length === 0}
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowCreateSection(true)}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Section
+                  </Button>
+                </div>
               </div>
+              
+              <div className="border rounded-md max-h-48 overflow-y-auto">
+                {sections.length > 0 ? (
+                  sections.map((section: any) => (
+                    <div key={section.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 border-b last:border-b-0">
+                      <Checkbox
+                        id={`section-${section.id}`}
+                        checked={selectedSections.includes(section.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedSections([...selectedSections, section.id]);
+                          } else {
+                            setSelectedSections(selectedSections.filter(id => id !== section.id));
+                          }
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <Label htmlFor={`section-${section.id}`} className="text-sm font-medium cursor-pointer">
+                          {section.name}
+                        </Label>
+                        <p className="text-xs text-gray-500">
+                          {section.memberCount || 0} student{section.memberCount !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm mb-2">No sections available</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowCreateSection(true)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Create First Section
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Selected Sections Summary */}
+              {selectedSections.length > 0 && (
+                <div className="mt-2 p-2 bg-blue-50 rounded-md">
+                  <p className="text-xs text-blue-700">
+                    {selectedSections.length} section{selectedSections.length !== 1 ? 's' : ''} selected
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           
+          {/* Overall Selection Summary */}
           {(selectedStudents.length > 0 || selectedSections.length > 0) && (
-            <div className="mt-3 p-3 bg-blue-50 rounded-md">
-              <p className="text-sm text-blue-700">
-                Selected: {selectedStudents.length} individual students, {selectedSections.length} sections
-              </p>
+            <div className="mt-3 p-3 bg-green-50 rounded-md border border-green-200">
+              <div className="flex items-center space-x-2">
+                <Check className="h-4 w-4 text-green-600" />
+                <p className="text-sm text-green-700 font-medium">
+                  Assignment will be sent to: {selectedStudents.length} individual students and {selectedSections.length} sections
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -644,6 +805,55 @@ export default function Assignments() {
               />
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Section Modal */}
+      <Dialog open={showCreateSection} onOpenChange={setShowCreateSection}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Section</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target as HTMLFormElement);
+            const name = formData.get('name') as string;
+            const description = formData.get('description') as string;
+            
+            if (name.trim()) {
+              createSectionMutation.mutate({
+                name: name.trim(),
+                description: description.trim()
+              });
+            }
+          }} className="space-y-4">
+            <div>
+              <Label htmlFor="sectionName">Section Name</Label>
+              <Input
+                id="sectionName"
+                name="name"
+                placeholder="Enter section name..."
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="sectionDescription">Description (Optional)</Label>
+              <Textarea
+                id="sectionDescription"
+                name="description"
+                placeholder="Enter section description..."
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button type="button" variant="outline" onClick={() => setShowCreateSection(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createSectionMutation.isPending}>
+                {createSectionMutation.isPending ? 'Creating...' : 'Create Section'}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
         </div>
