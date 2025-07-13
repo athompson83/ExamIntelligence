@@ -349,14 +349,14 @@ export default function SectionManagementFixed() {
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                               <span className="text-blue-600 font-medium text-sm">
-                                {member.firstName.charAt(0)}{member.lastName.charAt(0)}
+                                {(member.firstName || '').charAt(0)}{(member.lastName || '').charAt(0)}
                               </span>
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">
-                                {member.firstName} {member.lastName}
+                                {(member.firstName || '')} {(member.lastName || '')}
                               </p>
-                              <p className="text-sm text-gray-500">{member.email}</p>
+                              <p className="text-sm text-gray-500">{member.email || ''}</p>
                             </div>
                           </div>
                           <Button
