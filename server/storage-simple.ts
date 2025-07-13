@@ -1141,18 +1141,31 @@ export class DatabaseStorage implements IStorage {
       const assignments = await db
         .select({
           id: quizAssignments.id,
+          title: sql<string>`COALESCE(${quizAssignments.title}, 'Untitled Assignment')`,
+          description: sql<string>`COALESCE(${quizAssignments.description}, '')`,
           quizId: quizAssignments.quizId,
-          quizTitle: quizzes.title,
+          quizTitle: sql<string>`COALESCE(${quizzes.title}, 'Unknown Quiz')`,
           assignedToUserId: quizAssignments.assignedToUserId,
           assignedToSectionId: quizAssignments.assignedToSectionId,
-          assignedToSectionName: sections.name,
-          assignedToUserName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+          assignedToSectionName: sql<string>`COALESCE(${sections.name}, 'Individual')`,
+          assignedToUserName: sql<string>`COALESCE(${users.firstName} || ' ' || ${users.lastName}, 'Unknown User')`,
           assignedById: quizAssignments.assignedById,
           dueDate: quizAssignments.dueDate,
-          maxAttempts: quizAssignments.maxAttempts,
-          timeLimit: quizAssignments.timeLimit,
-          isActive: quizAssignments.isActive,
+          availableFrom: quizAssignments.availableFrom,
+          availableUntil: quizAssignments.availableUntil,
+          maxAttempts: sql<number>`COALESCE(${quizAssignments.maxAttempts}, 1)`,
+          timeLimit: sql<number>`COALESCE(${quizAssignments.timeLimit}, 60)`,
+          allowLateSubmissions: sql<boolean>`COALESCE(${quizAssignments.allowLateSubmissions}, false)`,
+          lateGradingOptions: quizAssignments.lateGradingOptions,
+          isActive: sql<boolean>`COALESCE(${quizAssignments.isActive}, true)`,
+          status: sql<string>`CASE 
+            WHEN COALESCE(${quizAssignments.isActive}, true) = true THEN 'published'
+            ELSE 'draft'
+          END`,
           createdAt: quizAssignments.createdAt,
+          updatedAt: quizAssignments.updatedAt,
+          submissions: sql<number>`0`, // TODO: Calculate actual submissions
+          averageScore: sql<number>`0`, // TODO: Calculate actual average score
         })
         .from(quizAssignments)
         .leftJoin(quizzes, eq(quizAssignments.quizId, quizzes.id))

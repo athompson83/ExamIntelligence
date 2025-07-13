@@ -260,8 +260,8 @@ export default function Assignments() {
 
   // Filter assignments
   const filteredAssignments = assignments.filter((assignment: Assignment) => {
-    const matchesSearch = assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         assignment.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (assignment.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (assignment.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || assignment.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
