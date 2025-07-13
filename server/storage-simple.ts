@@ -1000,7 +1000,7 @@ export class DatabaseStorage implements IStorage {
   // Section Membership Methods
   async getSectionMembers(sectionId: string): Promise<any[]> {
     try {
-      const members = await db
+      const result = await db
         .select({
           id: users.id,
           email: users.email,
@@ -1008,12 +1008,13 @@ export class DatabaseStorage implements IStorage {
           lastName: users.lastName,
           role: users.role,
           joinedAt: sectionMemberships.joinedAt,
-          isActive: sectionMemberships.isActive,
+          isActive: users.isActive,
         })
         .from(sectionMemberships)
         .innerJoin(users, eq(sectionMemberships.studentId, users.id))
         .where(eq(sectionMemberships.sectionId, sectionId));
-      return members;
+      
+      return result;
     } catch (error) {
       console.error('Error fetching section members:', error);
       return [];
@@ -1025,8 +1026,6 @@ export class DatabaseStorage implements IStorage {
       const memberships = studentIds.map(studentId => ({
         sectionId,
         studentId,
-        joinedAt: new Date(),
-        isActive: true,
       }));
       
       await db.insert(sectionMemberships).values(memberships);
@@ -1096,22 +1095,6 @@ export class DatabaseStorage implements IStorage {
         .where(eq(quizAssignments.id, id));
     } catch (error) {
       console.error('Error deleting quiz assignment:', error);
-      throw error;
-    }
-  }
-
-
-
-  async addStudentsToSection(sectionId: string, studentIds: string[]): Promise<void> {
-    try {
-      const memberships = studentIds.map(studentId => ({
-        sectionId,
-        studentId,
-      }));
-      
-      await db.insert(sectionMemberships).values(memberships);
-    } catch (error) {
-      console.error('Error adding students to section:', error);
       throw error;
     }
   }
