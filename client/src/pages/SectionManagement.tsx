@@ -123,25 +123,27 @@ export default function SectionManagement() {
   // Create section mutation
   const createSectionMutation = useMutation({
     mutationFn: async (sectionData: { name: string; description: string }) => {
-      await apiRequest('/api/sections', {
+      const response = await apiRequest('/api/sections', {
         method: 'POST',
         body: JSON.stringify(sectionData),
       });
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/sections'] });
       setShowCreateSection(false);
       setSectionName('');
       setSectionDescription('');
       toast({
         title: "Section created",
-        description: "The section has been created successfully.",
+        description: `Section "${data.name}" has been created successfully.`,
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Section creation error:', error);
       toast({
         title: "Error",
-        description: "Failed to create section. Please try again.",
+        description: error?.message || "Failed to create section. Please try again.",
         variant: "destructive",
       });
     },
