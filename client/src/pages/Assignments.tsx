@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -91,6 +91,35 @@ export default function Assignments() {
   });
   const [location] = useLocation();
   const queryClient = useQueryClient();
+
+  // Optimized input handlers to prevent keyboard issues
+  const handleFormChange = useCallback((field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFormChange('title', e.target.value);
+  }, [handleFormChange]);
+
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    handleFormChange('description', e.target.value);
+  }, [handleFormChange]);
+
+  const handleDateChange = useCallback((field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFormChange(field, e.target.value);
+  }, [handleFormChange]);
+
+  const handleNumberChange = useCallback((field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (field === 'catDifficultyTarget') {
+      handleFormChange(field, parseFloat(e.target.value) || 0.5);
+    } else {
+      handleFormChange(field, parseInt(e.target.value) || (field === 'timeLimit' ? 60 : field === 'percentLostPerDay' ? 10 : field === 'maxLateDays' ? 7 : field === 'catMinQuestions' ? 10 : field === 'catMaxQuestions' ? 50 : 1));
+    }
+  }, [handleFormChange]);
+
+  const handleSwitchChange = useCallback((field: string) => (checked: boolean) => {
+    handleFormChange(field, checked);
+  }, [handleFormChange]);
 
   // Parse URL parameters for pre-selected quiz
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -514,8 +543,9 @@ export default function Assignments() {
             id="title"
             name="title"
             value={formData.title}
-            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+            onChange={handleTitleChange}
             required
+            placeholder="Enter assignment title"
           />
         </div>
         <div>
@@ -561,7 +591,7 @@ export default function Assignments() {
           id="description"
           name="description"
           value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          onChange={handleDescriptionChange}
           className="w-full p-2 border border-gray-300 rounded-md"
           rows={3}
           placeholder="Assignment description..."
@@ -752,7 +782,7 @@ export default function Assignments() {
             name="availableFrom"
             type="datetime-local"
             value={formData.availableFrom}
-            onChange={(e) => setFormData(prev => ({ ...prev, availableFrom: e.target.value }))}
+            onChange={handleDateChange('availableFrom')}
           />
         </div>
         <div>
@@ -762,7 +792,7 @@ export default function Assignments() {
             name="availableTo"
             type="datetime-local"
             value={formData.availableTo}
-            onChange={(e) => setFormData(prev => ({ ...prev, availableTo: e.target.value }))}
+            onChange={handleDateChange('availableTo')}
           />
         </div>
         <div>
@@ -772,7 +802,7 @@ export default function Assignments() {
             name="dueDate"
             type="datetime-local"
             value={formData.dueDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+            onChange={handleDateChange('dueDate')}
             required
           />
         </div>
@@ -786,7 +816,7 @@ export default function Assignments() {
             name="timeLimit"
             type="number"
             value={formData.timeLimit}
-            onChange={(e) => setFormData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }))}
+            onChange={handleNumberChange('timeLimit')}
             min={1}
             required
           />
@@ -798,7 +828,7 @@ export default function Assignments() {
             name="maxAttempts"
             type="number"
             value={formData.maxAttempts}
-            onChange={(e) => setFormData(prev => ({ ...prev, maxAttempts: parseInt(e.target.value) || 1 }))}
+            onChange={handleNumberChange('maxAttempts')}
             min={1}
             required
           />
@@ -811,7 +841,7 @@ export default function Assignments() {
             id="allowLateSubmission"
             name="allowLateSubmission"
             checked={formData.allowLateSubmission}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, allowLateSubmission: checked }))}
+            onCheckedChange={handleSwitchChange('allowLateSubmission')}
           />
           <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
         </div>
@@ -827,7 +857,7 @@ export default function Assignments() {
                   name="percentLostPerDay"
                   type="number"
                   value={formData.percentLostPerDay}
-                  onChange={(e) => setFormData(prev => ({ ...prev, percentLostPerDay: parseInt(e.target.value) || 10 }))}
+                  onChange={handleNumberChange('percentLostPerDay')}
                   min={0}
                   max={100}
                   placeholder="10"
@@ -840,7 +870,7 @@ export default function Assignments() {
                   name="maxLateDays"
                   type="number"
                   value={formData.maxLateDays}
-                  onChange={(e) => setFormData(prev => ({ ...prev, maxLateDays: parseInt(e.target.value) || 7 }))}
+                  onChange={handleNumberChange('maxLateDays')}
                   min={1}
                   placeholder="7"
                 />
@@ -857,7 +887,7 @@ export default function Assignments() {
             id="showCorrectAnswers"
             name="showCorrectAnswers"
             checked={formData.showCorrectAnswers}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, showCorrectAnswers: checked }))}
+            onCheckedChange={handleSwitchChange('showCorrectAnswers')}
           />
           <Label htmlFor="showCorrectAnswers">Show Correct Answers After Submission</Label>
         </div>
@@ -867,7 +897,7 @@ export default function Assignments() {
             id="enableQuestionFeedback"
             name="enableQuestionFeedback"
             checked={formData.enableQuestionFeedback}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, enableQuestionFeedback: checked }))}
+            onCheckedChange={handleSwitchChange('enableQuestionFeedback')}
           />
           <Label htmlFor="enableQuestionFeedback">Show Feedback for Answers and Questions</Label>
         </div>
@@ -877,7 +907,7 @@ export default function Assignments() {
             id="requireProctoring"
             name="requireProctoring"
             checked={formData.requireProctoring}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requireProctoring: checked }))}
+            onCheckedChange={handleSwitchChange('requireProctoring')}
           />
           <Label htmlFor="requireProctoring">Require Proctoring</Label>
         </div>
@@ -887,7 +917,7 @@ export default function Assignments() {
             id="allowCalculator"
             name="allowCalculator"
             checked={formData.allowCalculator}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, allowCalculator: checked }))}
+            onCheckedChange={handleSwitchChange('allowCalculator')}
           />
           <Label htmlFor="allowCalculator">Allow Calculator</Label>
         </div>
@@ -899,7 +929,7 @@ export default function Assignments() {
               id="catEnabled"
               name="catEnabled"
               checked={formData.catEnabled}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, catEnabled: checked }))}
+              onCheckedChange={handleSwitchChange('catEnabled')}
             />
             <Label htmlFor="catEnabled">Enable Computer Adaptive Testing (CAT)</Label>
           </div>
@@ -915,7 +945,7 @@ export default function Assignments() {
                     name="catMinQuestions"
                     type="number"
                     value={formData.catMinQuestions}
-                    onChange={(e) => setFormData(prev => ({ ...prev, catMinQuestions: parseInt(e.target.value) || 10 }))}
+                    onChange={handleNumberChange('catMinQuestions')}
                     min={5}
                     max={50}
                     placeholder="10"
@@ -928,7 +958,7 @@ export default function Assignments() {
                     name="catMaxQuestions"
                     type="number"
                     value={formData.catMaxQuestions}
-                    onChange={(e) => setFormData(prev => ({ ...prev, catMaxQuestions: parseInt(e.target.value) || 50 }))}
+                    onChange={handleNumberChange('catMaxQuestions')}
                     min={10}
                     max={100}
                     placeholder="50"
@@ -943,7 +973,7 @@ export default function Assignments() {
                   type="number"
                   step="0.1"
                   value={formData.catDifficultyTarget}
-                  onChange={(e) => setFormData(prev => ({ ...prev, catDifficultyTarget: parseFloat(e.target.value) || 0.5 }))}
+                  onChange={handleNumberChange('catDifficultyTarget')}
                   min={0.1}
                   max={1.0}
                   placeholder="0.5"
