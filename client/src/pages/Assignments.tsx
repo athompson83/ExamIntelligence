@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -95,10 +95,23 @@ export default function Assignments() {
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
-  // Simple form input handler
+  // Refs for text inputs to prevent re-render issues
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  // Simple form input handler for non-text inputs
   const handleInputChange = useCallback((field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
+
+  // Function to get current form data including text inputs
+  const getCurrentFormData = useCallback(() => {
+    return {
+      ...formData,
+      title: titleRef.current?.value || '',
+      description: descriptionRef.current?.value || ''
+    };
+  }, [formData]);
 
   // Parse URL parameters for pre-selected quiz
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -108,12 +121,17 @@ export default function Assignments() {
   // Auto-open create modal if coming from quiz manager
   useEffect(() => {
     if (preSelectedQuizId && location.includes('/assignments')) {
+      const assignmentTitle = preSelectedQuizTitle ? `Assignment: ${preSelectedQuizTitle}` : '';
       setShowCreateModal(true);
       setFormData(prev => ({
         ...prev,
         quizId: preSelectedQuizId,
-        title: preSelectedQuizTitle ? `Assignment: ${preSelectedQuizTitle}` : '',
+        title: assignmentTitle,
       }));
+      // Set text input values
+      setTimeout(() => {
+        if (titleRef.current) titleRef.current.value = assignmentTitle;
+      }, 0);
     }
   }, [preSelectedQuizId, preSelectedQuizTitle, location]);
 
@@ -144,6 +162,9 @@ export default function Assignments() {
         catMaxQuestions: 50,
         catDifficultyTarget: 0.5
       });
+      // Reset text inputs
+      if (titleRef.current) titleRef.current.value = '';
+      if (descriptionRef.current) descriptionRef.current.value = '';
     }
   }, [showCreateModal, editingAssignment]);
 
@@ -171,6 +192,9 @@ export default function Assignments() {
         catMaxQuestions: editingAssignment.catMaxQuestions || 50,
         catDifficultyTarget: editingAssignment.catDifficultyTarget || 0.5
       });
+      // Populate text inputs
+      if (titleRef.current) titleRef.current.value = editingAssignment.title || '';
+      if (descriptionRef.current) descriptionRef.current.value = editingAssignment.description || '';
     }
   }, [editingAssignment]);
 
@@ -249,8 +273,8 @@ export default function Assignments() {
 
   // Clean assignment creation handler
   const handleCreateAssignment = useCallback(() => {
-    // Use current form data directly
-    const assignmentData = formData;
+    // Get current form data including text inputs from refs
+    const assignmentData = getCurrentFormData();
     
     // Validate required fields
     if (!assignmentData.quizId || assignmentData.quizId === 'add-new' || assignmentData.quizId === 'no-quizzes') {
@@ -334,6 +358,9 @@ export default function Assignments() {
           catMaxQuestions: 50,
           catDifficultyTarget: 0.5
         });
+        // Reset text inputs
+        if (titleRef.current) titleRef.current.value = '';
+        if (descriptionRef.current) descriptionRef.current.value = '';
       })
       .catch(error => {
         console.error('Error creating assignments:', error);
@@ -343,7 +370,7 @@ export default function Assignments() {
           variant: "destructive",
         });
       });
-  }, [formData, selectedStudents, selectedSections, createAssignmentMutation]);
+  }, [getCurrentFormData, selectedStudents, selectedSections, createAssignmentMutation]);
 
   // Filter assignments with safety check
   const filteredAssignments = Array.isArray(assignments) ? assignments.filter((assignment: Assignment) => {
@@ -364,9 +391,9 @@ export default function Assignments() {
         <div>
           <Label htmlFor="title">Assignment Title *</Label>
           <Input
+            ref={titleRef}
             id="title"
-            value={formData.title}
-            onChange={(e) => handleInputChange('title', e.target.value)}
+            defaultValue={formData.title}
             placeholder="Enter assignment title"
             className="mt-1"
           />
@@ -375,9 +402,9 @@ export default function Assignments() {
         <div>
           <Label htmlFor="description">Description</Label>
           <Textarea
+            ref={descriptionRef}
             id="description"
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
+            defaultValue={formData.description}
             placeholder="Enter assignment description"
             className="mt-1"
           />
