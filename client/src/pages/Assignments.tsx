@@ -125,6 +125,8 @@ export default function Assignments() {
   const maxAttemptsRef = useRef<HTMLInputElement>(null);
   const percentLostPerDayRef = useRef<HTMLInputElement>(null);
   const maxLateDaysRef = useRef<HTMLInputElement>(null);
+  const accessCodeRef = useRef<HTMLInputElement>(null);
+  const allowedIPsRef = useRef<HTMLTextAreaElement>(null);
 
   // Function to capture all current input values
   const captureInputValues = useCallback(() => {
@@ -134,7 +136,9 @@ export default function Assignments() {
       timeLimit: parseInt(timeLimitRef.current?.value || '60'),
       maxAttempts: parseInt(maxAttemptsRef.current?.value || '1'),
       percentLostPerDay: parseInt(percentLostPerDayRef.current?.value || '10'),
-      maxLateDays: parseInt(maxLateDaysRef.current?.value || '7')
+      maxLateDays: parseInt(maxLateDaysRef.current?.value || '7'),
+      accessCode: accessCodeRef.current?.value || '',
+      allowedIPs: allowedIPsRef.current?.value || ''
     };
     
     // Update form data with captured values
@@ -164,7 +168,9 @@ export default function Assignments() {
       timeLimit: parseInt(timeLimitRef.current?.value || '60'),
       maxAttempts: parseInt(maxAttemptsRef.current?.value || '1'),
       percentLostPerDay: parseInt(percentLostPerDayRef.current?.value || '10'),
-      maxLateDays: parseInt(maxLateDaysRef.current?.value || '7')
+      maxLateDays: parseInt(maxLateDaysRef.current?.value || '7'),
+      accessCode: accessCodeRef.current?.value || '',
+      allowedIPs: allowedIPsRef.current?.value || ''
     };
   }, [formData]);
 
@@ -317,9 +323,8 @@ export default function Assignments() {
     queryFn: async () => {
       try {
         const response = await apiRequest('/api/quizzes');
-        const data = await response.json();
-        console.log('Quizzes response:', data);
-        return Array.isArray(data) ? data : [];
+        console.log('Quizzes response:', response);
+        return Array.isArray(response) ? response : [];
       } catch (error) {
         console.error('Error fetching quizzes:', error);
         return [];
@@ -332,6 +337,7 @@ export default function Assignments() {
     queryFn: async () => {
       try {
         const response = await apiRequest('/api/users');
+        console.log('Students response:', response);
         return Array.isArray(response) ? response : [];
       } catch (error) {
         console.error('Error fetching students:', error);
@@ -345,6 +351,7 @@ export default function Assignments() {
     queryFn: async () => {
       try {
         const response = await apiRequest('/api/sections');
+        console.log('Sections response:', response);
         return Array.isArray(response) ? response : [];
       } catch (error) {
         console.error('Error fetching sections:', error);
@@ -492,21 +499,26 @@ export default function Assignments() {
   // Assignment Form Component
   const AssignmentForm = () => {
     console.log('AssignmentForm rendering with quizzes:', quizzes, 'loading:', quizzesLoading);
+    console.log('Students data:', students, 'loading:', studentsLoading);
+    console.log('Sections data:', sections, 'loading:', sectionsLoading);
     
-    // Convert students and sections to multiselect format
-    const studentOptions = students.map((student: any) => ({
+    // Convert students and sections to multiselect format with null checks
+    const studentOptions = Array.isArray(students) ? students.map((student: any) => ({
       id: student.id,
-      label: `${student.firstName} ${student.lastName}`,
+      label: `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.email || 'Unknown User',
       value: student.id,
-      description: student.email
-    }));
+      description: student.email || ''
+    })) : [];
 
-    const sectionOptions = sections.map((section: any) => ({
+    const sectionOptions = Array.isArray(sections) ? sections.map((section: any) => ({
       id: section.id,
-      label: section.name,
+      label: section.name || 'Unnamed Section',
       value: section.id,
       description: `${section.memberCount || 0} students`
-    }));
+    })) : [];
+
+    console.log('Student options:', studentOptions);
+    console.log('Section options:', sectionOptions);
 
     return (
       <div className="space-y-8">
@@ -729,11 +741,11 @@ export default function Assignments() {
                   <div className="ml-6">
                     <Label htmlFor="accessCode">Access Code</Label>
                     <Input
+                      ref={accessCodeRef}
                       id="accessCode"
                       type="text"
                       placeholder="Enter access code"
-                      value={formData.accessCode}
-                      onChange={(e) => handleInputChange('accessCode', e.target.value)}
+                      defaultValue={formData.accessCode}
                       className="mt-1"
                     />
                   </div>
@@ -757,10 +769,10 @@ export default function Assignments() {
                   <div className="ml-6">
                     <Label htmlFor="allowedIPs">Allowed IP Addresses</Label>
                     <Textarea
+                      ref={allowedIPsRef}
                       id="allowedIPs"
                       placeholder="Enter IP addresses (one per line)"
-                      value={formData.allowedIPs}
-                      onChange={(e) => handleInputChange('allowedIPs', e.target.value)}
+                      defaultValue={formData.allowedIPs}
                       className="mt-1"
                       rows={3}
                     />
