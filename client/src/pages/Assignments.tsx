@@ -151,41 +151,41 @@ export default function Assignments() {
     };
   }, []);
 
+  // Capture input values before any state changes
+  const captureInputValues = useCallback(() => {
+    const titleInput = titleRef.current;
+    const descriptionInput = descriptionRef.current;
+    
+    if (titleInput) {
+      formDataRef.current = { ...formDataRef.current, title: titleInput.value };
+    }
+    if (descriptionInput) {
+      formDataRef.current = { ...formDataRef.current, description: descriptionInput.value };
+    }
+  }, []);
+
   // Preserve input values when component re-renders due to other state changes
   useEffect(() => {
-    const preserveValues = () => {
+    // Capture current values before any rendering occurs
+    captureInputValues();
+    
+    const restoreValues = () => {
       const titleInput = titleRef.current;
       const descriptionInput = descriptionRef.current;
 
-      // Always preserve current input values from DOM when state changes
-      if (titleInput) {
-        // If user is currently typing, update the ref from DOM
-        if (document.activeElement === titleInput) {
-          formDataRef.current = { ...formDataRef.current, title: titleInput.value };
-        } else {
-          // If user is not typing, restore from ref
-          if (formDataRef.current.title !== titleInput.value) {
-            titleInput.value = formDataRef.current.title;
-          }
-        }
+      // Always restore from ref after state changes
+      if (titleInput && titleInput.value !== formDataRef.current.title) {
+        titleInput.value = formDataRef.current.title;
       }
       
-      if (descriptionInput) {
-        // If user is currently typing, update the ref from DOM
-        if (document.activeElement === descriptionInput) {
-          formDataRef.current = { ...formDataRef.current, description: descriptionInput.value };
-        } else {
-          // If user is not typing, restore from ref
-          if (formDataRef.current.description !== descriptionInput.value) {
-            descriptionInput.value = formDataRef.current.description;
-          }
-        }
+      if (descriptionInput && descriptionInput.value !== formDataRef.current.description) {
+        descriptionInput.value = formDataRef.current.description;
       }
     };
 
-    // Use requestAnimationFrame to avoid interrupting active typing
-    requestAnimationFrame(preserveValues);
-  }, [selectedStudents, selectedSections, formData.quizId]);
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(restoreValues);
+  }, [selectedStudents, selectedSections, formData.quizId, captureInputValues]);
 
   // Initialize input values when form opens - but don't interfere with active typing
   useEffect(() => {
@@ -727,7 +727,10 @@ export default function Assignments() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setSelectedStudents([])}
+                  onClick={() => {
+                    captureInputValues();
+                    setSelectedStudents([]);
+                  }}
                   disabled={selectedStudents.length === 0}
                 >
                   <X className="h-3 w-3 mr-1" />
@@ -754,6 +757,9 @@ export default function Assignments() {
                         id={`student-${student.id}`}
                         checked={selectedStudents.includes(student.id)}
                         onCheckedChange={(checked) => {
+                          // Capture input values before state change
+                          captureInputValues();
+                          
                           if (checked) {
                             setSelectedStudents([...selectedStudents, student.id]);
                           } else {
@@ -795,7 +801,10 @@ export default function Assignments() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => setSelectedSections([])}
+                    onClick={() => {
+                      captureInputValues();
+                      setSelectedSections([]);
+                    }}
                     disabled={selectedSections.length === 0}
                   >
                     <X className="h-3 w-3 mr-1" />
@@ -820,6 +829,9 @@ export default function Assignments() {
                         id={`section-${section.id}`}
                         checked={selectedSections.includes(section.id)}
                         onCheckedChange={(checked) => {
+                          // Capture input values before state change
+                          captureInputValues();
+                          
                           if (checked) {
                             setSelectedSections([...selectedSections, section.id]);
                           } else {
