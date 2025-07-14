@@ -285,8 +285,9 @@ export default function Assignments() {
     queryFn: async () => {
       try {
         const response = await apiRequest('/api/quizzes');
-        console.log('Quizzes response:', response);
-        return Array.isArray(response) ? response : [];
+        const data = await response.json();
+        console.log('Quizzes response:', data);
+        return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching quizzes:', error);
         return [];
