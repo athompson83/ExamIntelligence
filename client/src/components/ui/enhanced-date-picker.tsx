@@ -58,7 +58,8 @@ export const EnhancedDatePicker: React.FC<EnhancedDatePickerProps> = ({
   const handleContainerClick = () => {
     if (!disabled && inputRef.current) {
       inputRef.current.focus();
-      inputRef.current.showPicker?.();
+      // Don't use showPicker() due to cross-origin iframe issues
+      // The input will handle the picker natively when focused
     }
   };
 
@@ -111,11 +112,7 @@ export const EnhancedDatePicker: React.FC<EnhancedDatePickerProps> = ({
           required={required}
           min={minDate}
           max={maxDate}
-          className="border-0 shadow-none focus-visible:ring-0 pr-10"
-          style={{ 
-            colorScheme: 'dark',
-            WebkitAppearance: 'none'
-          }}
+          className="border-0 shadow-none focus-visible:ring-0 pr-10 cursor-pointer"
         />
         
         <div className="absolute right-3 flex items-center pointer-events-none">
