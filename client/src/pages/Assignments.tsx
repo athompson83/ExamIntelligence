@@ -97,30 +97,54 @@ export default function Assignments() {
   const formDataRef = useRef(formData);
   const titleRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const dateRefs = useRef<{
+    availableFrom: HTMLInputElement | null;
+    availableTo: HTMLInputElement | null;
+    dueDate: HTMLInputElement | null;
+  }>({
+    availableFrom: null,
+    availableTo: null,
+    dueDate: null
+  });
   
   // Stable value preservation state - only used for restoration
-  const [preservedValues, setPreservedValues] = useState({ title: '', description: '' });
+  const [preservedValues, setPreservedValues] = useState({ 
+    title: '', 
+    description: '', 
+    availableFrom: '', 
+    availableTo: '', 
+    dueDate: '' 
+  });
 
   // Initialize input values when form opens
   useEffect(() => {
     if (showCreateModal || editingAssignment) {
       const title = formData.title || '';
       const description = formData.description || '';
+      const availableFrom = formData.availableFrom || '';
+      const availableTo = formData.availableTo || '';
+      const dueDate = formData.dueDate || '';
       
       // Set preserved values
-      setPreservedValues({ title, description });
+      setPreservedValues({ title, description, availableFrom, availableTo, dueDate });
       
       // Set DOM values directly (uncontrolled)
       if (titleRef.current) titleRef.current.value = title;
       if (descriptionRef.current) descriptionRef.current.value = description;
+      if (dateRefs.current.availableFrom) dateRefs.current.availableFrom.value = availableFrom;
+      if (dateRefs.current.availableTo) dateRefs.current.availableTo.value = availableTo;
+      if (dateRefs.current.dueDate) dateRefs.current.dueDate.value = dueDate;
     }
-  }, [showCreateModal, editingAssignment, formData.title, formData.description]);
+  }, [showCreateModal, editingAssignment, formData.title, formData.description, formData.availableFrom, formData.availableTo, formData.dueDate]);
 
   // Capture current input values before any state changes
   const captureInputValues = useCallback(() => {
     const currentValues = {
       title: titleRef.current?.value || '',
-      description: descriptionRef.current?.value || ''
+      description: descriptionRef.current?.value || '',
+      availableFrom: dateRefs.current.availableFrom?.value || '',
+      availableTo: dateRefs.current.availableTo?.value || '',
+      dueDate: dateRefs.current.dueDate?.value || ''
     };
     
     // Update preserved values and formDataRef
@@ -133,13 +157,22 @@ export default function Assignments() {
   // Restore input values after state changes
   useEffect(() => {
     // Only restore if form is open and we have preserved values
-    if ((showCreateModal || editingAssignment) && (preservedValues.title || preservedValues.description)) {
+    if ((showCreateModal || editingAssignment) && (preservedValues.title || preservedValues.description || preservedValues.availableFrom || preservedValues.availableTo || preservedValues.dueDate)) {
       requestAnimationFrame(() => {
         if (titleRef.current && titleRef.current.value !== preservedValues.title) {
           titleRef.current.value = preservedValues.title;
         }
         if (descriptionRef.current && descriptionRef.current.value !== preservedValues.description) {
           descriptionRef.current.value = preservedValues.description;
+        }
+        if (dateRefs.current.availableFrom && dateRefs.current.availableFrom.value !== preservedValues.availableFrom) {
+          dateRefs.current.availableFrom.value = preservedValues.availableFrom;
+        }
+        if (dateRefs.current.availableTo && dateRefs.current.availableTo.value !== preservedValues.availableTo) {
+          dateRefs.current.availableTo.value = preservedValues.availableTo;
+        }
+        if (dateRefs.current.dueDate && dateRefs.current.dueDate.value !== preservedValues.dueDate) {
+          dateRefs.current.dueDate.value = preservedValues.dueDate;
         }
       });
     }
@@ -477,7 +510,10 @@ export default function Assignments() {
     const assignmentData = {
       ...formData,
       title: titleRef.current?.value || formData.title,
-      description: descriptionRef.current?.value || formData.description
+      description: descriptionRef.current?.value || formData.description,
+      availableFrom: dateRefs.current.availableFrom?.value || formData.availableFrom,
+      availableTo: dateRefs.current.availableTo?.value || formData.availableTo,
+      dueDate: dateRefs.current.dueDate?.value || formData.dueDate
     };
     
     console.log('Assignment data prepared:', assignmentData);
@@ -604,11 +640,14 @@ export default function Assignments() {
         });
         
         // Reset preserved values
-        setPreservedValues({ title: '', description: '' });
+        setPreservedValues({ title: '', description: '', availableFrom: '', availableTo: '', dueDate: '' });
         
         // Clear input fields
         if (titleRef.current) titleRef.current.value = '';
         if (descriptionRef.current) descriptionRef.current.value = '';
+        if (dateRefs.current.availableFrom) dateRefs.current.availableFrom.value = '';
+        if (dateRefs.current.availableTo) dateRefs.current.availableTo.value = '';
+        if (dateRefs.current.dueDate) dateRefs.current.dueDate.value = '';
       })
       .catch((error) => {
         console.error('Error creating assignments:', error);
@@ -929,36 +968,99 @@ export default function Assignments() {
         <div>
           <Label htmlFor="availableFrom">Available From</Label>
           <Input
+            ref={(el) => {
+              if (el) {
+                dateRefs.current.availableFrom = el;
+              }
+            }}
             id="availableFrom"
             name="availableFrom"
             type="datetime-local"
-            value={formData.availableFrom}
-            onChange={stableHandlers.availableFrom}
-            onFocus={(e) => e.target.showPicker?.()}
+            defaultValue={formData.availableFrom}
+            onChange={(e) => {
+              // Capture all input values before state change
+              captureInputValues();
+              // Update form data
+              setFormData(prev => ({ ...prev, availableFrom: e.target.value }));
+            }}
+            onFocus={(e) => {
+              // Prevent keyboard from triggering picker on mobile
+              if (window.innerWidth <= 768) {
+                e.target.blur();
+                setTimeout(() => e.target.focus(), 100);
+              }
+            }}
+            style={{ 
+              // Ensure the date picker remains visible on mobile
+              position: 'relative',
+              zIndex: 10
+            }}
           />
           <p className="text-xs text-gray-500 mt-1">When students can start</p>
         </div>
         <div>
           <Label htmlFor="availableTo">Available To</Label>
           <Input
+            ref={(el) => {
+              if (el) {
+                dateRefs.current.availableTo = el;
+              }
+            }}
             id="availableTo"
             name="availableTo"
             type="datetime-local"
-            value={formData.availableTo}
-            onChange={stableHandlers.availableTo}
-            onFocus={(e) => e.target.showPicker?.()}
+            defaultValue={formData.availableTo}
+            onChange={(e) => {
+              // Capture all input values before state change
+              captureInputValues();
+              // Update form data
+              setFormData(prev => ({ ...prev, availableTo: e.target.value }));
+            }}
+            onFocus={(e) => {
+              // Prevent keyboard from triggering picker on mobile
+              if (window.innerWidth <= 768) {
+                e.target.blur();
+                setTimeout(() => e.target.focus(), 100);
+              }
+            }}
+            style={{ 
+              // Ensure the date picker remains visible on mobile
+              position: 'relative',
+              zIndex: 10
+            }}
           />
           <p className="text-xs text-gray-500 mt-1">When access expires</p>
         </div>
         <div>
           <Label htmlFor="dueDate">Due Date *</Label>
           <Input
+            ref={(el) => {
+              if (el) {
+                dateRefs.current.dueDate = el;
+              }
+            }}
             id="dueDate"
             name="dueDate"
             type="datetime-local"
-            value={formData.dueDate}
-            onChange={stableHandlers.dueDate}
-            onFocus={(e) => e.target.showPicker?.()}
+            defaultValue={formData.dueDate}
+            onChange={(e) => {
+              // Capture all input values before state change
+              captureInputValues();
+              // Update form data
+              setFormData(prev => ({ ...prev, dueDate: e.target.value }));
+            }}
+            onFocus={(e) => {
+              // Prevent keyboard from triggering picker on mobile
+              if (window.innerWidth <= 768) {
+                e.target.blur();
+                setTimeout(() => e.target.focus(), 100);
+              }
+            }}
+            style={{ 
+              // Ensure the date picker remains visible on mobile
+              position: 'relative',
+              zIndex: 10
+            }}
             required
           />
           <p className="text-xs text-gray-500 mt-1">Assignment deadline</p>
