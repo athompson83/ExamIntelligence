@@ -200,53 +200,53 @@ export default function Assignments() {
     return currentValues;
   }, []);
 
-  // Restore input values after state changes
+  // Restore input values after state changes - only when preservedValues actually changes
   useEffect(() => {
-    // Only restore if form is open and we have preserved values
-    if ((showCreateModal || editingAssignment) && Object.values(preservedValues).some(val => val !== '')) {
+    // Only restore if form is open and we have preserved values with actual content
+    if ((showCreateModal || editingAssignment) && (preservedValues.title || preservedValues.description)) {
       console.log('Restoration effect triggered. Preserved values:', preservedValues);
       requestAnimationFrame(() => {
-        if (titleRef.current && titleRef.current.value !== preservedValues.title) {
+        if (titleRef.current && preservedValues.title && titleRef.current.value !== preservedValues.title) {
           console.log('Restoring title:', preservedValues.title);
           titleRef.current.value = preservedValues.title;
         }
-        if (descriptionRef.current && descriptionRef.current.value !== preservedValues.description) {
+        if (descriptionRef.current && preservedValues.description && descriptionRef.current.value !== preservedValues.description) {
           console.log('Restoring description:', preservedValues.description);
           descriptionRef.current.value = preservedValues.description;
         }
-        if (dateRefs.current.availableFrom && dateRefs.current.availableFrom.value !== preservedValues.availableFrom) {
+        if (dateRefs.current.availableFrom && preservedValues.availableFrom && dateRefs.current.availableFrom.value !== preservedValues.availableFrom) {
           dateRefs.current.availableFrom.value = preservedValues.availableFrom;
         }
-        if (dateRefs.current.availableTo && dateRefs.current.availableTo.value !== preservedValues.availableTo) {
+        if (dateRefs.current.availableTo && preservedValues.availableTo && dateRefs.current.availableTo.value !== preservedValues.availableTo) {
           dateRefs.current.availableTo.value = preservedValues.availableTo;
         }
-        if (dateRefs.current.dueDate && dateRefs.current.dueDate.value !== preservedValues.dueDate) {
+        if (dateRefs.current.dueDate && preservedValues.dueDate && dateRefs.current.dueDate.value !== preservedValues.dueDate) {
           dateRefs.current.dueDate.value = preservedValues.dueDate;
         }
-        if (dateRefs.current.timeLimit && dateRefs.current.timeLimit.value !== preservedValues.timeLimit) {
+        if (dateRefs.current.timeLimit && preservedValues.timeLimit && dateRefs.current.timeLimit.value !== preservedValues.timeLimit) {
           dateRefs.current.timeLimit.value = preservedValues.timeLimit;
         }
-        if (dateRefs.current.maxAttempts && dateRefs.current.maxAttempts.value !== preservedValues.maxAttempts) {
+        if (dateRefs.current.maxAttempts && preservedValues.maxAttempts && dateRefs.current.maxAttempts.value !== preservedValues.maxAttempts) {
           dateRefs.current.maxAttempts.value = preservedValues.maxAttempts;
         }
-        if (dateRefs.current.percentLostPerDay && dateRefs.current.percentLostPerDay.value !== preservedValues.percentLostPerDay) {
+        if (dateRefs.current.percentLostPerDay && preservedValues.percentLostPerDay && dateRefs.current.percentLostPerDay.value !== preservedValues.percentLostPerDay) {
           dateRefs.current.percentLostPerDay.value = preservedValues.percentLostPerDay;
         }
-        if (dateRefs.current.maxLateDays && dateRefs.current.maxLateDays.value !== preservedValues.maxLateDays) {
+        if (dateRefs.current.maxLateDays && preservedValues.maxLateDays && dateRefs.current.maxLateDays.value !== preservedValues.maxLateDays) {
           dateRefs.current.maxLateDays.value = preservedValues.maxLateDays;
         }
-        if (dateRefs.current.catMinQuestions && dateRefs.current.catMinQuestions.value !== preservedValues.catMinQuestions) {
+        if (dateRefs.current.catMinQuestions && preservedValues.catMinQuestions && dateRefs.current.catMinQuestions.value !== preservedValues.catMinQuestions) {
           dateRefs.current.catMinQuestions.value = preservedValues.catMinQuestions;
         }
-        if (dateRefs.current.catMaxQuestions && dateRefs.current.catMaxQuestions.value !== preservedValues.catMaxQuestions) {
+        if (dateRefs.current.catMaxQuestions && preservedValues.catMaxQuestions && dateRefs.current.catMaxQuestions.value !== preservedValues.catMaxQuestions) {
           dateRefs.current.catMaxQuestions.value = preservedValues.catMaxQuestions;
         }
-        if (dateRefs.current.catDifficultyTarget && dateRefs.current.catDifficultyTarget.value !== preservedValues.catDifficultyTarget) {
+        if (dateRefs.current.catDifficultyTarget && preservedValues.catDifficultyTarget && dateRefs.current.catDifficultyTarget.value !== preservedValues.catDifficultyTarget) {
           dateRefs.current.catDifficultyTarget.value = preservedValues.catDifficultyTarget;
         }
       });
     }
-  }, [selectedStudents, selectedSections, formData, preservedValues, showCreateModal, editingAssignment]);
+  }, [preservedValues, showCreateModal, editingAssignment]);
 
   // Native event listeners for input tracking (no re-renders)
   useEffect(() => {
@@ -836,7 +836,50 @@ export default function Assignments() {
                 console.log('Quiz selection - capturing input values...');
                 const captured = captureInputValues();
                 console.log('Captured values:', captured);
+                
+                // Update state
                 setFormData(prev => ({ ...prev, quizId: value }));
+                
+                // Immediately restore values after state change
+                requestAnimationFrame(() => {
+                  if (titleRef.current && captured.title) {
+                    titleRef.current.value = captured.title;
+                  }
+                  if (descriptionRef.current && captured.description) {
+                    descriptionRef.current.value = captured.description;
+                  }
+                  if (dateRefs.current.availableFrom && captured.availableFrom) {
+                    dateRefs.current.availableFrom.value = captured.availableFrom;
+                  }
+                  if (dateRefs.current.availableTo && captured.availableTo) {
+                    dateRefs.current.availableTo.value = captured.availableTo;
+                  }
+                  if (dateRefs.current.dueDate && captured.dueDate) {
+                    dateRefs.current.dueDate.value = captured.dueDate;
+                  }
+                  if (dateRefs.current.timeLimit && captured.timeLimit) {
+                    dateRefs.current.timeLimit.value = captured.timeLimit;
+                  }
+                  if (dateRefs.current.maxAttempts && captured.maxAttempts) {
+                    dateRefs.current.maxAttempts.value = captured.maxAttempts;
+                  }
+                  if (dateRefs.current.percentLostPerDay && captured.percentLostPerDay) {
+                    dateRefs.current.percentLostPerDay.value = captured.percentLostPerDay;
+                  }
+                  if (dateRefs.current.maxLateDays && captured.maxLateDays) {
+                    dateRefs.current.maxLateDays.value = captured.maxLateDays;
+                  }
+                  if (dateRefs.current.catMinQuestions && captured.catMinQuestions) {
+                    dateRefs.current.catMinQuestions.value = captured.catMinQuestions;
+                  }
+                  if (dateRefs.current.catMaxQuestions && captured.catMaxQuestions) {
+                    dateRefs.current.catMaxQuestions.value = captured.catMaxQuestions;
+                  }
+                  if (dateRefs.current.catDifficultyTarget && captured.catDifficultyTarget) {
+                    dateRefs.current.catDifficultyTarget.value = captured.catDifficultyTarget;
+                  }
+                  console.log('Quiz selection - values restored immediately');
+                });
               }
             }}
           >
