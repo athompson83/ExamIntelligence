@@ -137,7 +137,7 @@ export default function Assignments() {
     catDifficultyTarget: ''
   });
 
-  // Initialize input values when form opens
+  // Initialize input values when form opens - ONLY run when modal state changes
   useEffect(() => {
     if (showCreateModal || editingAssignment) {
       const title = formData.title || '';
@@ -160,21 +160,23 @@ export default function Assignments() {
         catMinQuestions, catMaxQuestions, catDifficultyTarget
       });
       
-      // Set DOM values directly (uncontrolled)
-      if (titleRef.current) titleRef.current.value = title;
-      if (descriptionRef.current) descriptionRef.current.value = description;
-      if (dateRefs.current.availableFrom) dateRefs.current.availableFrom.value = availableFrom;
-      if (dateRefs.current.availableTo) dateRefs.current.availableTo.value = availableTo;
-      if (dateRefs.current.dueDate) dateRefs.current.dueDate.value = dueDate;
-      if (dateRefs.current.timeLimit) dateRefs.current.timeLimit.value = timeLimit;
-      if (dateRefs.current.maxAttempts) dateRefs.current.maxAttempts.value = maxAttempts;
-      if (dateRefs.current.percentLostPerDay) dateRefs.current.percentLostPerDay.value = percentLostPerDay;
-      if (dateRefs.current.maxLateDays) dateRefs.current.maxLateDays.value = maxLateDays;
-      if (dateRefs.current.catMinQuestions) dateRefs.current.catMinQuestions.value = catMinQuestions;
-      if (dateRefs.current.catMaxQuestions) dateRefs.current.catMaxQuestions.value = catMaxQuestions;
-      if (dateRefs.current.catDifficultyTarget) dateRefs.current.catDifficultyTarget.value = catDifficultyTarget;
+      // Set DOM values directly (uncontrolled) - only on modal open
+      setTimeout(() => {
+        if (titleRef.current) titleRef.current.value = title;
+        if (descriptionRef.current) descriptionRef.current.value = description;
+        if (dateRefs.current.availableFrom) dateRefs.current.availableFrom.value = availableFrom;
+        if (dateRefs.current.availableTo) dateRefs.current.availableTo.value = availableTo;
+        if (dateRefs.current.dueDate) dateRefs.current.dueDate.value = dueDate;
+        if (dateRefs.current.timeLimit) dateRefs.current.timeLimit.value = timeLimit;
+        if (dateRefs.current.maxAttempts) dateRefs.current.maxAttempts.value = maxAttempts;
+        if (dateRefs.current.percentLostPerDay) dateRefs.current.percentLostPerDay.value = percentLostPerDay;
+        if (dateRefs.current.maxLateDays) dateRefs.current.maxLateDays.value = maxLateDays;
+        if (dateRefs.current.catMinQuestions) dateRefs.current.catMinQuestions.value = catMinQuestions;
+        if (dateRefs.current.catMaxQuestions) dateRefs.current.catMaxQuestions.value = catMaxQuestions;
+        if (dateRefs.current.catDifficultyTarget) dateRefs.current.catDifficultyTarget.value = catDifficultyTarget;
+      }, 0);
     }
-  }, [showCreateModal, editingAssignment, formData]);
+  }, [showCreateModal, editingAssignment]);
 
   // Capture current input values before any state changes
   const captureInputValues = useCallback(() => {
