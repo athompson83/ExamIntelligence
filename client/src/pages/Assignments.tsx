@@ -93,32 +93,89 @@ export default function Assignments() {
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
-  // Track form values stably
+  // Track form values stably with refs for input preservation
   const formDataRef = useRef(formData);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   
-  // Stable input state that won't re-render during selections
-  const [titleValue, setTitleValue] = useState('');
-  const [descriptionValue, setDescriptionValue] = useState('');
+  // Stable value preservation state - only used for restoration
+  const [preservedValues, setPreservedValues] = useState({ title: '', description: '' });
 
   // Initialize input values when form opens
   useEffect(() => {
     if (showCreateModal || editingAssignment) {
-      setTitleValue(formData.title || '');
-      setDescriptionValue(formData.description || '');
+      const title = formData.title || '';
+      const description = formData.description || '';
+      
+      // Set preserved values
+      setPreservedValues({ title, description });
+      
+      // Set DOM values directly (uncontrolled)
+      if (titleRef.current) titleRef.current.value = title;
+      if (descriptionRef.current) descriptionRef.current.value = description;
     }
   }, [showCreateModal, editingAssignment, formData.title, formData.description]);
 
-  // Stable input handlers that never cause re-renders
-  const stableInputHandlers = useMemo(() => ({
-    title: (e: React.ChangeEvent<HTMLInputElement>) => {
-      setTitleValue(e.target.value);
-      formDataRef.current = { ...formDataRef.current, title: e.target.value };
-    },
-    description: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setDescriptionValue(e.target.value);
-      formDataRef.current = { ...formDataRef.current, description: e.target.value };
+  // Capture current input values before any state changes
+  const captureInputValues = useCallback(() => {
+    const currentValues = {
+      title: titleRef.current?.value || '',
+      description: descriptionRef.current?.value || ''
+    };
+    
+    // Update preserved values and formDataRef
+    setPreservedValues(currentValues);
+    formDataRef.current = { ...formDataRef.current, ...currentValues };
+    
+    return currentValues;
+  }, []);
+
+  // Restore input values after state changes
+  useEffect(() => {
+    // Only restore if form is open and we have preserved values
+    if ((showCreateModal || editingAssignment) && (preservedValues.title || preservedValues.description)) {
+      requestAnimationFrame(() => {
+        if (titleRef.current && titleRef.current.value !== preservedValues.title) {
+          titleRef.current.value = preservedValues.title;
+        }
+        if (descriptionRef.current && descriptionRef.current.value !== preservedValues.description) {
+          descriptionRef.current.value = preservedValues.description;
+        }
+      });
     }
-  }), []);
+  }, [selectedStudents, selectedSections, preservedValues, showCreateModal, editingAssignment]);
+
+  // Native event listeners for input tracking (no re-renders)
+  useEffect(() => {
+    const titleInput = titleRef.current;
+    const descriptionInput = descriptionRef.current;
+
+    const handleTitleInput = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      formDataRef.current = { ...formDataRef.current, title: target.value };
+    };
+
+    const handleDescriptionInput = (e: Event) => {
+      const target = e.target as HTMLTextAreaElement;
+      formDataRef.current = { ...formDataRef.current, description: target.value };
+    };
+
+    if (titleInput) {
+      titleInput.addEventListener('input', handleTitleInput);
+    }
+    if (descriptionInput) {
+      descriptionInput.addEventListener('input', handleDescriptionInput);
+    }
+
+    return () => {
+      if (titleInput) {
+        titleInput.removeEventListener('input', handleTitleInput);
+      }
+      if (descriptionInput) {
+        descriptionInput.removeEventListener('input', handleDescriptionInput);
+      }
+    };
+  }, [showCreateModal, editingAssignment]);
 
   // Direct form change handler that doesn't cause re-renders
   const handleFormChange = useCallback((field: string, value: any) => {
@@ -553,11 +610,11 @@ export default function Assignments() {
       
       const formDataObj = new FormData();
       
-      // Collect values from stable state and form data
+      // Collect values from refs and form data
       const currentFormData = {
         ...formData,
-        title: titleValue || formData.title,
-        description: descriptionValue || formData.description
+        title: titleRef.current?.value || formData.title,
+        description: descriptionRef.current?.value || formData.description
       };
       
       // Add all form data
@@ -575,10 +632,10 @@ export default function Assignments() {
         <div>
           <Label htmlFor="title">Title</Label>
           <Input
+            ref={titleRef}
             id="title"
             name="title"
-            value={titleValue}
-            onChange={stableInputHandlers.title}
+            defaultValue={formData.title}
             required
             placeholder="Enter assignment title"
           />
@@ -623,10 +680,10 @@ export default function Assignments() {
       <div>
         <Label htmlFor="description">Description</Label>
         <textarea
+          ref={descriptionRef}
           id="description"
           name="description"
-          value={descriptionValue}
-          onChange={stableInputHandlers.description}
+          defaultValue={formData.description}
           className="w-full p-2 border border-gray-300 rounded-md"
           rows={3}
           placeholder="Assignment description..."
@@ -647,7 +704,10 @@ export default function Assignments() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setSelectedStudents([])}
+                  onClick={() => {
+                    captureInputValues();
+                    setSelectedStudents([]);
+                  }}
                   disabled={selectedStudents.length === 0}
                 >
                   <X className="h-3 w-3 mr-1" />
@@ -674,6 +734,9 @@ export default function Assignments() {
                         id={`student-${student.id}`}
                         checked={selectedStudents.includes(student.id)}
                         onCheckedChange={(checked) => {
+                          // Capture input values before state change
+                          captureInputValues();
+                          
                           if (checked) {
                             setSelectedStudents([...selectedStudents, student.id]);
                           } else {
@@ -715,7 +778,10 @@ export default function Assignments() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => setSelectedSections([])}
+                    onClick={() => {
+                      captureInputValues();
+                      setSelectedSections([]);
+                    }}
                     disabled={selectedSections.length === 0}
                   >
                     <X className="h-3 w-3 mr-1" />
@@ -740,6 +806,9 @@ export default function Assignments() {
                         id={`section-${section.id}`}
                         checked={selectedSections.includes(section.id)}
                         onCheckedChange={(checked) => {
+                          // Capture input values before state change
+                          captureInputValues();
+                          
                           if (checked) {
                             setSelectedSections([...selectedSections, section.id]);
                           } else {
