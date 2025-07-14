@@ -93,6 +93,9 @@ export default function Assignments() {
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
+  // Flag to prevent restoration during date input changes (must be declared first)
+  const [isDateInputActive, setIsDateInputActive] = useState(false);
+  
   // Track form values stably with refs for input preservation
   const formDataRef = useRef(formData);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -147,8 +150,7 @@ export default function Assignments() {
     catDifficultyTarget: ''
   });
   
-  // Flag to prevent restoration during date input changes
-  const [isDateInputActive, setIsDateInputActive] = useState(false);
+
 
   // Initialize input values when form opens - ONLY run when modal state changes
   useEffect(() => {
