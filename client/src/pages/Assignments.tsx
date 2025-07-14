@@ -1092,7 +1092,10 @@ export default function Assignments() {
             name="availableFrom"
             type="datetime-local"
             defaultValue={formData.availableFrom}
-            onFocus={() => setIsDateInputActive(true)}
+            onFocus={(e) => {
+              setIsDateInputActive(true);
+              e.stopPropagation();
+            }}
             onBlur={(e) => {
               // Only update when focus leaves the input - WITHOUT triggering preservation
               const value = e.target.value;
@@ -1102,10 +1105,6 @@ export default function Assignments() {
                 setFormData(prev => ({ ...prev, availableFrom: value }));
               }
               setIsDateInputActive(false);
-            }}
-            onFocus={(e) => {
-              // Prevent event bubbling on focus
-              e.stopPropagation();
             }}
             onClick={(e) => {
               // Prevent event bubbling on click
@@ -1138,7 +1137,10 @@ export default function Assignments() {
             name="availableTo"
             type="datetime-local"
             defaultValue={formData.availableTo}
-            onFocus={() => setIsDateInputActive(true)}
+            onFocus={(e) => {
+              setIsDateInputActive(true);
+              e.stopPropagation();
+            }}
             onBlur={(e) => {
               // Only update when focus leaves the input - WITHOUT triggering preservation
               const value = e.target.value;
@@ -1148,10 +1150,6 @@ export default function Assignments() {
                 setFormData(prev => ({ ...prev, availableTo: value }));
               }
               setIsDateInputActive(false);
-            }}
-            onFocus={(e) => {
-              // Prevent event bubbling on focus
-              e.stopPropagation();
             }}
             onClick={(e) => {
               // Prevent event bubbling on click
@@ -1184,7 +1182,10 @@ export default function Assignments() {
             name="dueDate"
             type="datetime-local"
             defaultValue={formData.dueDate}
-            onFocus={() => setIsDateInputActive(true)}
+            onFocus={(e) => {
+              setIsDateInputActive(true);
+              e.stopPropagation();
+            }}
             onBlur={(e) => {
               // Only update when focus leaves the input - WITHOUT triggering preservation
               const value = e.target.value;
@@ -1194,10 +1195,6 @@ export default function Assignments() {
                 setFormData(prev => ({ ...prev, dueDate: value }));
               }
               setIsDateInputActive(false);
-            }}
-            onFocus={(e) => {
-              // Prevent event bubbling on focus
-              e.stopPropagation();
             }}
             onClick={(e) => {
               // Prevent event bubbling on click
@@ -1235,7 +1232,9 @@ export default function Assignments() {
             type="number"
             defaultValue={formData.timeLimit}
             onChange={(e) => {
-              captureInputValues();
+              if (!isDateInputActive) {
+                captureInputValues();
+              }
               setFormData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }));
             }}
             min={1}
@@ -1255,7 +1254,9 @@ export default function Assignments() {
             type="number"
             defaultValue={formData.maxAttempts}
             onChange={(e) => {
-              captureInputValues();
+              if (!isDateInputActive) {
+                captureInputValues();
+              }
               setFormData(prev => ({ ...prev, maxAttempts: parseInt(e.target.value) || 1 }));
             }}
             min={1}
@@ -1271,7 +1272,7 @@ export default function Assignments() {
             name="allowLateSubmission"
             checked={formData.allowLateSubmission}
             onCheckedChange={(checked) => {
-              const captured = captureInputValues();
+              const captured = !isDateInputActive ? captureInputValues() : {};
               setFormData(prev => ({ ...prev, allowLateSubmission: checked }));
               if (!isDateInputActive) {
                 restoreValues(captured);
@@ -1298,7 +1299,9 @@ export default function Assignments() {
                   type="number"
                   defaultValue={formData.percentLostPerDay}
                   onChange={(e) => {
-                    captureInputValues();
+                    if (!isDateInputActive) {
+                      captureInputValues();
+                    }
                     setFormData(prev => ({ ...prev, percentLostPerDay: parseInt(e.target.value) || 10 }));
                   }}
                   min={0}
@@ -1319,7 +1322,9 @@ export default function Assignments() {
                   type="number"
                   defaultValue={formData.maxLateDays}
                   onChange={(e) => {
-                    captureInputValues();
+                    if (!isDateInputActive) {
+                      captureInputValues();
+                    }
                     setFormData(prev => ({ ...prev, maxLateDays: parseInt(e.target.value) || 7 }));
                   }}
                   min={1}
@@ -1339,7 +1344,7 @@ export default function Assignments() {
             name="showCorrectAnswers"
             checked={formData.showCorrectAnswers}
             onCheckedChange={(checked) => {
-              const captured = captureInputValues();
+              const captured = !isDateInputActive ? captureInputValues() : {};
               setFormData(prev => ({ ...prev, showCorrectAnswers: checked }));
               if (!isDateInputActive) {
                 restoreValues(captured);
@@ -1355,7 +1360,7 @@ export default function Assignments() {
             name="enableQuestionFeedback"
             checked={formData.enableQuestionFeedback}
             onCheckedChange={(checked) => {
-              const captured = captureInputValues();
+              const captured = !isDateInputActive ? captureInputValues() : {};
               setFormData(prev => ({ ...prev, enableQuestionFeedback: checked }));
               if (!isDateInputActive) {
                 restoreValues(captured);
@@ -1371,7 +1376,7 @@ export default function Assignments() {
             name="requireProctoring"
             checked={formData.requireProctoring}
             onCheckedChange={(checked) => {
-              const captured = captureInputValues();
+              const captured = !isDateInputActive ? captureInputValues() : {};
               setFormData(prev => ({ ...prev, requireProctoring: checked }));
               if (!isDateInputActive) {
                 restoreValues(captured);
@@ -1387,7 +1392,7 @@ export default function Assignments() {
             name="allowCalculator"
             checked={formData.allowCalculator}
             onCheckedChange={(checked) => {
-              const captured = captureInputValues();
+              const captured = !isDateInputActive ? captureInputValues() : {};
               setFormData(prev => ({ ...prev, allowCalculator: checked }));
               if (!isDateInputActive) {
                 restoreValues(captured);
@@ -1405,7 +1410,7 @@ export default function Assignments() {
               name="catEnabled"
               checked={formData.catEnabled}
               onCheckedChange={(checked) => {
-                const captured = captureInputValues();
+                const captured = !isDateInputActive ? captureInputValues() : {};
                 setFormData(prev => ({ ...prev, catEnabled: checked }));
                 if (!isDateInputActive) {
                   restoreValues(captured);
@@ -1432,7 +1437,9 @@ export default function Assignments() {
                     type="number"
                     defaultValue={formData.catMinQuestions}
                     onChange={(e) => {
-                      captureInputValues();
+                      if (!isDateInputActive) {
+                        captureInputValues();
+                      }
                       setFormData(prev => ({ ...prev, catMinQuestions: parseInt(e.target.value) || 10 }));
                     }}
                     min={5}
@@ -1453,7 +1460,9 @@ export default function Assignments() {
                     type="number"
                     defaultValue={formData.catMaxQuestions}
                     onChange={(e) => {
-                      captureInputValues();
+                      if (!isDateInputActive) {
+                        captureInputValues();
+                      }
                       setFormData(prev => ({ ...prev, catMaxQuestions: parseInt(e.target.value) || 50 }));
                     }}
                     min={10}
@@ -1476,7 +1485,9 @@ export default function Assignments() {
                   step="0.1"
                   defaultValue={formData.catDifficultyTarget}
                   onChange={(e) => {
-                    captureInputValues();
+                    if (!isDateInputActive) {
+                      captureInputValues();
+                    }
                     setFormData(prev => ({ ...prev, catDifficultyTarget: parseFloat(e.target.value) || 0.5 }));
                   }}
                   min={0.1}
