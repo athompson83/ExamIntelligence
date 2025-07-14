@@ -310,7 +310,8 @@ export default function Assignments() {
     queryFn: async () => {
       try {
         const response = await apiRequest('/api/quiz-assignments');
-        return Array.isArray(response) ? response : [];
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching assignments:', error);
         return [];
@@ -323,8 +324,9 @@ export default function Assignments() {
     queryFn: async () => {
       try {
         const response = await apiRequest('/api/quizzes');
-        console.log('Quizzes response:', response);
-        return Array.isArray(response) ? response : [];
+        const data = await response.json();
+        console.log('Quizzes response:', data);
+        return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching quizzes:', error);
         return [];
@@ -337,8 +339,9 @@ export default function Assignments() {
     queryFn: async () => {
       try {
         const response = await apiRequest('/api/users');
-        console.log('Students response:', response);
-        return Array.isArray(response) ? response : [];
+        const data = await response.json();
+        console.log('Students response:', data);
+        return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching students:', error);
         return [];
@@ -351,8 +354,9 @@ export default function Assignments() {
     queryFn: async () => {
       try {
         const response = await apiRequest('/api/sections');
-        console.log('Sections response:', response);
-        return Array.isArray(response) ? response : [];
+        const data = await response.json();
+        console.log('Sections response:', data);
+        return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching sections:', error);
         return [];

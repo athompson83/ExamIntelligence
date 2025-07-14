@@ -2115,10 +2115,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Fetching quizzes for user:', userId);
       const quizzes = await storage.getQuizzesByUser(userId);
       console.log('Fetched quizzes:', quizzes.length, 'quizzes');
-      res.json(quizzes || []);
+      console.log('Quiz data sample:', quizzes.slice(0, 2));
+      res.json(Array.isArray(quizzes) ? quizzes : []);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
-      res.status(500).json({ message: "Failed to fetch quizzes" });
+      res.status(500).json([]);
     }
   });
 
@@ -4530,10 +4531,11 @@ Initialize all interactions with these principles as your foundation.`,
   app.get('/api/users', mockAuth, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
-      res.json(users);
+      console.log('Fetched users:', users.length, 'users');
+      res.json(Array.isArray(users) ? users : []);
     } catch (error) {
       console.error('Error fetching users:', error);
-      res.status(500).json({ message: 'Failed to fetch users' });
+      res.status(500).json([]);
     }
   });
 
@@ -4544,10 +4546,11 @@ Initialize all interactions with these principles as your foundation.`,
       await storage.cleanupInvalidSectionMemberships();
       
       const sections = await storage.getSections();
-      res.json(sections);
+      console.log('Fetched sections:', sections.length, 'sections');
+      res.json(Array.isArray(sections) ? sections : []);
     } catch (error) {
       console.error('Error fetching sections:', error);
-      res.status(500).json({ message: 'Failed to fetch sections' });
+      res.status(500).json([]);
     }
   });
 
