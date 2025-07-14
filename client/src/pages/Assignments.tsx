@@ -363,21 +363,32 @@ export default function Assignments() {
   const createAssignmentMutation = useMutation({
     mutationFn: async (data: any) => {
       try {
+        console.log('Creating assignment with data:', data);
         const response = await apiRequest('/api/quiz-assignments', {
           method: 'POST',
           body: JSON.stringify(data),
         });
-        return await response.json();
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Assignment creation failed:', response.status, errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('Assignment created successfully:', result);
+        return result;
       } catch (error) {
         console.error('Assignment creation error:', error);
         throw error;
       }
     },
     onSuccess: () => {
+      console.log('Assignment creation success - invalidating cache');
       queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
     },
     onError: (error) => {
-      console.error('Assignment creation error:', error);
+      console.error('Assignment creation mutation error:', error);
     },
   });
 
@@ -457,12 +468,19 @@ export default function Assignments() {
   });
 
   const handleCreateAssignment = (formDataParam: FormData) => {
+    console.log('handleCreateAssignment called');
+    console.log('Form state:', formData);
+    console.log('Selected students:', selectedStudents);
+    console.log('Selected sections:', selectedSections);
+    
     // Collect current values from form inputs and state
     const assignmentData = {
       ...formData,
       title: titleRef.current?.value || formData.title,
       description: descriptionRef.current?.value || formData.description
     };
+    
+    console.log('Assignment data prepared:', assignmentData);
     
     // Validate required fields
     if (!assignmentData.quizId || assignmentData.quizId === 'add-new' || assignmentData.quizId === 'no-quizzes') {
