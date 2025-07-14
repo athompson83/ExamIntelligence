@@ -829,7 +829,9 @@ export default function Assignments() {
               if (value === 'add-new') {
                 window.location.href = '/quiz-builder';
               } else {
-                stableHandlers.quizId(value);
+                // Capture input values before state change
+                captureInputValues();
+                setFormData(prev => ({ ...prev, quizId: value }));
               }
             }}
           >
@@ -1201,7 +1203,10 @@ export default function Assignments() {
             id="allowLateSubmission"
             name="allowLateSubmission"
             checked={formData.allowLateSubmission}
-            onCheckedChange={stableHandlers.allowLateSubmission}
+            onCheckedChange={(checked) => {
+              captureInputValues();
+              setFormData(prev => ({ ...prev, allowLateSubmission: checked }));
+            }}
           />
           <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
         </div>
@@ -1263,7 +1268,10 @@ export default function Assignments() {
             id="showCorrectAnswers"
             name="showCorrectAnswers"
             checked={formData.showCorrectAnswers}
-            onCheckedChange={stableHandlers.showCorrectAnswers}
+            onCheckedChange={(checked) => {
+              captureInputValues();
+              setFormData(prev => ({ ...prev, showCorrectAnswers: checked }));
+            }}
           />
           <Label htmlFor="showCorrectAnswers">Show Correct Answers After Submission</Label>
         </div>
@@ -1273,7 +1281,10 @@ export default function Assignments() {
             id="enableQuestionFeedback"
             name="enableQuestionFeedback"
             checked={formData.enableQuestionFeedback}
-            onCheckedChange={stableHandlers.enableQuestionFeedback}
+            onCheckedChange={(checked) => {
+              captureInputValues();
+              setFormData(prev => ({ ...prev, enableQuestionFeedback: checked }));
+            }}
           />
           <Label htmlFor="enableQuestionFeedback">Show Feedback for Answers and Questions</Label>
         </div>
@@ -1283,7 +1294,10 @@ export default function Assignments() {
             id="requireProctoring"
             name="requireProctoring"
             checked={formData.requireProctoring}
-            onCheckedChange={stableHandlers.requireProctoring}
+            onCheckedChange={(checked) => {
+              captureInputValues();
+              setFormData(prev => ({ ...prev, requireProctoring: checked }));
+            }}
           />
           <Label htmlFor="requireProctoring">Require Proctoring</Label>
         </div>
@@ -1293,7 +1307,10 @@ export default function Assignments() {
             id="allowCalculator"
             name="allowCalculator"
             checked={formData.allowCalculator}
-            onCheckedChange={stableHandlers.allowCalculator}
+            onCheckedChange={(checked) => {
+              captureInputValues();
+              setFormData(prev => ({ ...prev, allowCalculator: checked }));
+            }}
           />
           <Label htmlFor="allowCalculator">Allow Calculator</Label>
         </div>
@@ -1305,7 +1322,10 @@ export default function Assignments() {
               id="catEnabled"
               name="catEnabled"
               checked={formData.catEnabled}
-              onCheckedChange={stableHandlers.catEnabled}
+              onCheckedChange={(checked) => {
+                captureInputValues();
+                setFormData(prev => ({ ...prev, catEnabled: checked }));
+              }}
             />
             <Label htmlFor="catEnabled">Enable Computer Adaptive Testing (CAT)</Label>
           </div>
