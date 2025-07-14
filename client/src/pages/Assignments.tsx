@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
-import { flushSync } from 'react-dom';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
@@ -69,6 +68,8 @@ export default function Assignments() {
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const [showCreateSection, setShowCreateSection] = useState(false);
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
+  
+  // Clean, simple form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -90,286 +91,14 @@ export default function Assignments() {
     catMaxQuestions: 50,
     catDifficultyTarget: 0.5
   });
+  
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
-  // Flag to prevent restoration during date input changes (must be declared first)
-  const [isDateInputActive, setIsDateInputActive] = useState(false);
-  
-  // Track form values stably with refs for input preservation
-  const formDataRef = useRef(formData);
-  const titleRef = useRef<HTMLInputElement>(null);
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  const originalSetFormData = useRef(setFormData);
-  
-  // Override setFormData to block during date input operations
-  const setFormDataProtected = useCallback((updater: any) => {
-    // COMPLETELY BLOCK all form data updates during date input operations
-    if (isDateInputActive) {
-      return;
-    }
-    originalSetFormData.current(updater);
-  }, [isDateInputActive]);
-  const dateRefs = useRef<{
-    availableFrom: HTMLInputElement | null;
-    availableTo: HTMLInputElement | null;
-    dueDate: HTMLInputElement | null;
-    timeLimit: HTMLInputElement | null;
-    maxAttempts: HTMLInputElement | null;
-    percentLostPerDay: HTMLInputElement | null;
-    maxLateDays: HTMLInputElement | null;
-    catMinQuestions: HTMLInputElement | null;
-    catMaxQuestions: HTMLInputElement | null;
-    catDifficultyTarget: HTMLInputElement | null;
-  }>({
-    availableFrom: null,
-    availableTo: null,
-    dueDate: null,
-    timeLimit: null,
-    maxAttempts: null,
-    percentLostPerDay: null,
-    maxLateDays: null,
-    catMinQuestions: null,
-    catMaxQuestions: null,
-    catDifficultyTarget: null
-  });
-  
-  // Stable value preservation state - only used for restoration
-  const [preservedValues, setPreservedValues] = useState({ 
-    title: '', 
-    description: '', 
-    availableFrom: '', 
-    availableTo: '', 
-    dueDate: '',
-    timeLimit: '',
-    maxAttempts: '',
-    percentLostPerDay: '',
-    maxLateDays: '',
-    catMinQuestions: '',
-    catMaxQuestions: '',
-    catDifficultyTarget: ''
-  });
-  
-
-
-  // Initialize input values when form opens - ONLY run when modal state changes
-  useEffect(() => {
-    if (showCreateModal || editingAssignment) {
-      const title = formData.title || '';
-      const description = formData.description || '';
-      const availableFrom = formData.availableFrom || '';
-      const availableTo = formData.availableTo || '';
-      const dueDate = formData.dueDate || '';
-      const timeLimit = String(formData.timeLimit || 60);
-      const maxAttempts = String(formData.maxAttempts || 1);
-      const percentLostPerDay = String(formData.percentLostPerDay || 10);
-      const maxLateDays = String(formData.maxLateDays || 7);
-      const catMinQuestions = String(formData.catMinQuestions || 10);
-      const catMaxQuestions = String(formData.catMaxQuestions || 50);
-      const catDifficultyTarget = String(formData.catDifficultyTarget || 0.5);
-      
-      // Set preserved values
-      setPreservedValues({ 
-        title, description, availableFrom, availableTo, dueDate,
-        timeLimit, maxAttempts, percentLostPerDay, maxLateDays,
-        catMinQuestions, catMaxQuestions, catDifficultyTarget
-      });
-      
-      // Set DOM values directly (uncontrolled) - only on modal open
-      setTimeout(() => {
-        if (titleRef.current) titleRef.current.value = title;
-        if (descriptionRef.current) descriptionRef.current.value = description;
-        if (dateRefs.current.availableFrom) dateRefs.current.availableFrom.value = availableFrom;
-        if (dateRefs.current.availableTo) dateRefs.current.availableTo.value = availableTo;
-        if (dateRefs.current.dueDate) dateRefs.current.dueDate.value = dueDate;
-        if (dateRefs.current.timeLimit) dateRefs.current.timeLimit.value = timeLimit;
-        if (dateRefs.current.maxAttempts) dateRefs.current.maxAttempts.value = maxAttempts;
-        if (dateRefs.current.percentLostPerDay) dateRefs.current.percentLostPerDay.value = percentLostPerDay;
-        if (dateRefs.current.maxLateDays) dateRefs.current.maxLateDays.value = maxLateDays;
-        if (dateRefs.current.catMinQuestions) dateRefs.current.catMinQuestions.value = catMinQuestions;
-        if (dateRefs.current.catMaxQuestions) dateRefs.current.catMaxQuestions.value = catMaxQuestions;
-        if (dateRefs.current.catDifficultyTarget) dateRefs.current.catDifficultyTarget.value = catDifficultyTarget;
-      }, 0);
-    }
-  }, [showCreateModal, editingAssignment]);
-
-  // Capture current input values before any state changes
-  const captureInputValues = useCallback(() => {
-    // COMPLETELY DISABLE capture during date input operations
-    if (isDateInputActive) {
-      return;
-    }
-    
-    const currentValues = {
-      title: titleRef.current?.value || '',
-      description: descriptionRef.current?.value || '',
-      availableFrom: dateRefs.current.availableFrom?.value || '',
-      availableTo: dateRefs.current.availableTo?.value || '',
-      dueDate: dateRefs.current.dueDate?.value || '',
-      timeLimit: dateRefs.current.timeLimit?.value || '',
-      maxAttempts: dateRefs.current.maxAttempts?.value || '',
-      percentLostPerDay: dateRefs.current.percentLostPerDay?.value || '',
-      maxLateDays: dateRefs.current.maxLateDays?.value || '',
-      catMinQuestions: dateRefs.current.catMinQuestions?.value || '',
-      catMaxQuestions: dateRefs.current.catMaxQuestions?.value || '',
-      catDifficultyTarget: dateRefs.current.catDifficultyTarget?.value || ''
-    };
-    
-    // Update preserved values and formDataRef (only if not during date input)
-    if (!isDateInputActive) {
-      setPreservedValues(currentValues);
-      formDataRef.current = { ...formDataRef.current, ...currentValues };
-    }
-    
-    return currentValues;
-  }, [isDateInputActive]);
-
-  // Helper function to restore values directly
-  const restoreValues = useCallback((values: any) => {
-    // COMPLETELY BLOCK restoration during date input operations
-    if (isDateInputActive) {
-      return;
-    }
-    
-    requestAnimationFrame(() => {
-      if (titleRef.current && values.title) {
-        titleRef.current.value = values.title;
-      }
-      if (descriptionRef.current && values.description) {
-        descriptionRef.current.value = values.description;
-      }
-      if (dateRefs.current.availableFrom && values.availableFrom) {
-        dateRefs.current.availableFrom.value = values.availableFrom;
-      }
-      if (dateRefs.current.availableTo && values.availableTo) {
-        dateRefs.current.availableTo.value = values.availableTo;
-      }
-      if (dateRefs.current.dueDate && values.dueDate) {
-        dateRefs.current.dueDate.value = values.dueDate;
-      }
-      if (dateRefs.current.timeLimit && values.timeLimit) {
-        dateRefs.current.timeLimit.value = values.timeLimit;
-      }
-      if (dateRefs.current.maxAttempts && values.maxAttempts) {
-        dateRefs.current.maxAttempts.value = values.maxAttempts;
-      }
-      if (dateRefs.current.percentLostPerDay && values.percentLostPerDay) {
-        dateRefs.current.percentLostPerDay.value = values.percentLostPerDay;
-      }
-      if (dateRefs.current.maxLateDays && values.maxLateDays) {
-        dateRefs.current.maxLateDays.value = values.maxLateDays;
-      }
-      if (dateRefs.current.catMinQuestions && values.catMinQuestions) {
-        dateRefs.current.catMinQuestions.value = values.catMinQuestions;
-      }
-      if (dateRefs.current.catMaxQuestions && values.catMaxQuestions) {
-        dateRefs.current.catMaxQuestions.value = values.catMaxQuestions;
-      }
-      if (dateRefs.current.catDifficultyTarget && values.catDifficultyTarget) {
-        dateRefs.current.catDifficultyTarget.value = values.catDifficultyTarget;
-      }
-    });
-  }, [isDateInputActive]);
-
-  // Native event listeners for input tracking (no re-renders)
-  useEffect(() => {
-    const titleInput = titleRef.current;
-    const descriptionInput = descriptionRef.current;
-
-    const handleTitleInput = (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      formDataRef.current = { ...formDataRef.current, title: target.value };
-    };
-
-    const handleDescriptionInput = (e: Event) => {
-      const target = e.target as HTMLTextAreaElement;
-      formDataRef.current = { ...formDataRef.current, description: target.value };
-    };
-
-    if (titleInput) {
-      titleInput.addEventListener('input', handleTitleInput);
-    }
-    if (descriptionInput) {
-      descriptionInput.addEventListener('input', handleDescriptionInput);
-    }
-
-    return () => {
-      if (titleInput) {
-        titleInput.removeEventListener('input', handleTitleInput);
-      }
-      if (descriptionInput) {
-        descriptionInput.removeEventListener('input', handleDescriptionInput);
-      }
-    };
-  }, [showCreateModal, editingAssignment]);
-
-  // Block all form restoration and preservation while date inputs are active
-  useEffect(() => {
-    if (isDateInputActive) {
-      // Capture current values to prevent loss
-      const currentTitle = titleRef.current?.value || '';
-      const currentDescription = descriptionRef.current?.value || '';
-      
-      // Save them to formDataRef
-      formDataRef.current = { 
-        ...formDataRef.current, 
-        title: currentTitle,
-        description: currentDescription
-      };
-      
-      // Override any restoration attempts
-      const blockRestore = () => {
-        if (titleRef.current && titleRef.current.value !== currentTitle) {
-          titleRef.current.value = currentTitle;
-        }
-        if (descriptionRef.current && descriptionRef.current.value !== currentDescription) {
-          descriptionRef.current.value = currentDescription;
-        }
-      };
-      
-      // Set up protection interval
-      const protectionInterval = setInterval(blockRestore, 10);
-      
-      return () => {
-        clearInterval(protectionInterval);
-      };
-    }
-  }, [isDateInputActive]);
-
-  // Direct form change handler that doesn't cause re-renders
-  const handleFormChange = useCallback((field: string, value: any) => {
-    // COMPLETELY BLOCK form changes during date input operations
-    if (isDateInputActive) {
-      return; // Do nothing during date input
-    }
-    
-    // Only capture input values if NOT during date input
-    captureInputValues();
-    setFormDataProtected(prev => ({ ...prev, [field]: value }));
-  }, [captureInputValues, isDateInputActive, setFormDataProtected]);
-
-
-
-  // Create stable handlers for all form fields
-  const stableHandlers = useMemo(() => ({
-    quizId: (value: string) => handleFormChange('quizId', value),
-    availableFrom: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('availableFrom', e.target.value),
-    availableTo: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('availableTo', e.target.value),
-    dueDate: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('dueDate', e.target.value),
-    timeLimit: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('timeLimit', parseInt(e.target.value) || 60),
-    maxAttempts: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('maxAttempts', parseInt(e.target.value) || 1),
-    allowLateSubmission: (checked: boolean) => handleFormChange('allowLateSubmission', checked),
-    percentLostPerDay: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('percentLostPerDay', parseInt(e.target.value) || 10),
-    maxLateDays: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('maxLateDays', parseInt(e.target.value) || 7),
-    showCorrectAnswers: (checked: boolean) => handleFormChange('showCorrectAnswers', checked),
-    enableQuestionFeedback: (checked: boolean) => handleFormChange('enableQuestionFeedback', checked),
-    requireProctoring: (checked: boolean) => handleFormChange('requireProctoring', checked),
-    allowCalculator: (checked: boolean) => handleFormChange('allowCalculator', checked),
-    catEnabled: (checked: boolean) => handleFormChange('catEnabled', checked),
-    catMinQuestions: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catMinQuestions', parseInt(e.target.value) || 10),
-    catMaxQuestions: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catMaxQuestions', parseInt(e.target.value) || 50),
-    catDifficultyTarget: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catDifficultyTarget', parseFloat(e.target.value) || 0.5)
-  }), [handleFormChange]);
+  // Simple form input handler
+  const handleInputChange = useCallback((field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   // Parse URL parameters for pre-selected quiz
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -380,7 +109,7 @@ export default function Assignments() {
   useEffect(() => {
     if (preSelectedQuizId && location.includes('/assignments')) {
       setShowCreateModal(true);
-      setFormDataProtected(prev => ({
+      setFormData(prev => ({
         ...prev,
         quizId: preSelectedQuizId,
         title: preSelectedQuizTitle ? `Assignment: ${preSelectedQuizTitle}` : '',
@@ -388,14 +117,13 @@ export default function Assignments() {
     }
   }, [preSelectedQuizId, preSelectedQuizTitle, location]);
 
-  // Reset form states when modals are closed or populate with editing data
+  // Reset form when modal closes
   useEffect(() => {
     if (!showCreateModal && !editingAssignment) {
       setSelectedStudents([]);
       setSelectedSections([]);
       setStudentSearchTerm('');
-      // Reset form data to defaults
-      setFormDataProtected({
+      setFormData({
         title: '',
         description: '',
         quizId: '',
@@ -419,10 +147,10 @@ export default function Assignments() {
     }
   }, [showCreateModal, editingAssignment]);
 
-  // Populate form when editing an assignment
+  // Populate form when editing
   useEffect(() => {
     if (editingAssignment) {
-      setFormDataProtected({
+      setFormData({
         title: editingAssignment.title || '',
         description: editingAssignment.description || '',
         quizId: editingAssignment.quizId || '',
@@ -446,215 +174,51 @@ export default function Assignments() {
     }
   }, [editingAssignment]);
 
-  // Handle quiz selection change
-  const handleQuizSelection = (value: string) => {
-    if (value === 'add-new') {
-      // Navigate to quiz builder
-      window.location.href = '/quiz-builder';
-    }
-  };
-
-  // Fetch assignments
-  const { data: assignments = [], isLoading } = useQuery({
+  // Fetch data queries
+  const { data: assignments = [] } = useQuery({
     queryKey: ['/api/quiz-assignments'],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest('/api/quiz-assignments');
-        const result = await response.json();
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.error('Error fetching assignments:', error);
-        return [];
-      }
-    },
+    queryFn: () => apiRequest('/api/quiz-assignments'),
   });
 
-  // Fetch quizzes for assignment creation
   const { data: quizzes = [] } = useQuery({
     queryKey: ['/api/quizzes'],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest('/api/quizzes');
-        const result = await response.json();
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.error('Error fetching quizzes:', error);
-        return [];
-      }
-    },
+    queryFn: () => apiRequest('/api/quizzes'),
   });
 
-  // Fetch students for assignment
-  const { data: students = [], isLoading: studentsLoading } = useQuery({
+  const { data: students = [] } = useQuery({
     queryKey: ['/api/users'],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest('/api/users');
-        const result = await response.json();
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.error('Error fetching students:', error);
-        return [];
-      }
-    },
+    queryFn: () => apiRequest('/api/users'),
   });
 
-  // Fetch sections for assignment
   const { data: sections = [] } = useQuery({
     queryKey: ['/api/sections'],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest('/api/sections');
-        const result = await response.json();
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.error('Error fetching sections:', error);
-        return [];
-      }
-    },
+    queryFn: () => apiRequest('/api/sections'),
   });
-
-  // Filter students by search term
-  const filteredStudents = Array.isArray(students) ? students.filter((student: any) => 
-    student && 
-    student.role === 'student' && 
-    (student.firstName?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
-     student.lastName?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
-     student.email?.toLowerCase().includes(studentSearchTerm.toLowerCase()))
-  ) : [];
 
   // Create assignment mutation
   const createAssignmentMutation = useMutation({
     mutationFn: async (data: any) => {
-      try {
-        console.log('Creating assignment with data:', data);
-        const response = await apiRequest('/api/quiz-assignments', {
-          method: 'POST',
-          body: JSON.stringify(data),
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Assignment creation failed:', response.status, errorText);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('Assignment created successfully:', result);
-        return result;
-      } catch (error) {
-        console.error('Assignment creation error:', error);
-        throw error;
+      const response = await apiRequest('/api/quiz-assignments', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
+      
+      return response.json();
     },
     onSuccess: () => {
-      console.log('Assignment creation success - invalidating cache');
       queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
     },
-    onError: (error) => {
-      console.error('Assignment creation mutation error:', error);
-    },
   });
 
-  // Update assignment mutation
-  const updateAssignmentMutation = useMutation({
-    mutationFn: ({ id, ...data }: any) => apiRequest(`/api/quiz-assignments/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
-      setEditingAssignment(null);
-      toast({
-        title: "Success",
-        description: "Assignment updated successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update assignment",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Delete assignment mutation
-  const deleteAssignmentMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/quiz-assignments/${id}`, {
-      method: 'DELETE',
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
-      toast({
-        title: "Success",
-        description: "Assignment deleted successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to delete assignment",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Create section mutation
-  const createSectionMutation = useMutation({
-    mutationFn: (data: { name: string; description: string }) => apiRequest('/api/sections', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sections'] });
-      setShowCreateSection(false);
-      toast({
-        title: "Success",
-        description: "Section created successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to create section",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Filter assignments
-  const filteredAssignments = assignments.filter((assignment: Assignment) => {
-    const matchesSearch = (assignment.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (assignment.description || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || assignment.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const handleCreateAssignment = (formDataParam: FormData) => {
-    console.log('handleCreateAssignment called');
-    console.log('Form state:', formData);
-    console.log('Selected students:', selectedStudents);
-    console.log('Selected sections:', selectedSections);
-    
-    // Collect current values from form inputs and state
-    const assignmentData = {
-      ...formData,
-      title: titleRef.current?.value || formData.title,
-      description: descriptionRef.current?.value || formData.description,
-      availableFrom: dateRefs.current.availableFrom?.value || formData.availableFrom,
-      availableTo: dateRefs.current.availableTo?.value || formData.availableTo,
-      dueDate: dateRefs.current.dueDate?.value || formData.dueDate,
-      timeLimit: parseInt(dateRefs.current.timeLimit?.value || '') || formData.timeLimit,
-      maxAttempts: parseInt(dateRefs.current.maxAttempts?.value || '') || formData.maxAttempts,
-      percentLostPerDay: parseInt(dateRefs.current.percentLostPerDay?.value || '') || formData.percentLostPerDay,
-      maxLateDays: parseInt(dateRefs.current.maxLateDays?.value || '') || formData.maxLateDays,
-      catMinQuestions: parseInt(dateRefs.current.catMinQuestions?.value || '') || formData.catMinQuestions,
-      catMaxQuestions: parseInt(dateRefs.current.catMaxQuestions?.value || '') || formData.catMaxQuestions,
-      catDifficultyTarget: parseFloat(dateRefs.current.catDifficultyTarget?.value || '') || formData.catDifficultyTarget
-    };
-    
-    console.log('Assignment data prepared:', assignmentData);
+  // Clean assignment creation handler
+  const handleCreateAssignment = useCallback(() => {
+    // Use current form data directly
+    const assignmentData = formData;
     
     // Validate required fields
     if (!assignmentData.quizId || assignmentData.quizId === 'add-new' || assignmentData.quizId === 'no-quizzes') {
@@ -684,58 +248,22 @@ export default function Assignments() {
       return;
     }
     
-    // Create multiple assignments - one for each student and section
+    // Create assignments
     const assignments = [];
     
-    // Create assignments for individual students
+    // Individual student assignments
     for (const studentId of selectedStudents) {
       assignments.push({
-        quizId: assignmentData.quizId,
-        title: assignmentData.title,
-        description: assignmentData.description,
-        dueDate: assignmentData.dueDate,
-        availableFrom: assignmentData.availableFrom,
-        availableTo: assignmentData.availableTo,
-        timeLimit: assignmentData.timeLimit,
-        maxAttempts: assignmentData.maxAttempts,
-        allowLateSubmission: assignmentData.allowLateSubmission,
-        percentLostPerDay: assignmentData.percentLostPerDay,
-        maxLateDays: assignmentData.maxLateDays,
-        showCorrectAnswers: assignmentData.showCorrectAnswers,
-        enableQuestionFeedback: assignmentData.enableQuestionFeedback,
-        requireProctoring: assignmentData.requireProctoring,
-        allowCalculator: assignmentData.allowCalculator,
-        catEnabled: assignmentData.catEnabled,
-        catMinQuestions: assignmentData.catMinQuestions,
-        catMaxQuestions: assignmentData.catMaxQuestions,
-        catDifficultyTarget: assignmentData.catDifficultyTarget,
+        ...assignmentData,
         assignedToUserId: studentId,
         assignedToSectionId: null,
       });
     }
     
-    // Create assignments for sections
+    // Section assignments
     for (const sectionId of selectedSections) {
       assignments.push({
-        quizId: assignmentData.quizId,
-        title: assignmentData.title,
-        description: assignmentData.description,
-        dueDate: assignmentData.dueDate,
-        availableFrom: assignmentData.availableFrom,
-        availableTo: assignmentData.availableTo,
-        timeLimit: assignmentData.timeLimit,
-        maxAttempts: assignmentData.maxAttempts,
-        allowLateSubmission: assignmentData.allowLateSubmission,
-        percentLostPerDay: assignmentData.percentLostPerDay,
-        maxLateDays: assignmentData.maxLateDays,
-        showCorrectAnswers: assignmentData.showCorrectAnswers,
-        enableQuestionFeedback: assignmentData.enableQuestionFeedback,
-        requireProctoring: assignmentData.requireProctoring,
-        allowCalculator: assignmentData.allowCalculator,
-        catEnabled: assignmentData.catEnabled,
-        catMinQuestions: assignmentData.catMinQuestions,
-        catMaxQuestions: assignmentData.catMaxQuestions,
-        catDifficultyTarget: assignmentData.catDifficultyTarget,
+        ...assignmentData,
         assignedToUserId: null,
         assignedToSectionId: sectionId,
       });
@@ -749,12 +277,10 @@ export default function Assignments() {
           description: `Created ${assignments.length} assignment(s) successfully`,
         });
         
-        // Close modal and reset form
+        // Reset and close
         setShowCreateModal(false);
         setSelectedStudents([]);
         setSelectedSections([]);
-        
-        // Reset form data
         setFormData({
           title: '',
           description: '',
@@ -776,843 +302,278 @@ export default function Assignments() {
           catMaxQuestions: 50,
           catDifficultyTarget: 0.5
         });
-        
-        // Reset preserved values
-        setPreservedValues({ 
-          title: '', description: '', availableFrom: '', availableTo: '', dueDate: '',
-          timeLimit: '', maxAttempts: '', percentLostPerDay: '', maxLateDays: '',
-          catMinQuestions: '', catMaxQuestions: '', catDifficultyTarget: ''
-        });
-        
-        // Clear input fields
-        if (titleRef.current) titleRef.current.value = '';
-        if (descriptionRef.current) descriptionRef.current.value = '';
-        if (dateRefs.current.availableFrom) dateRefs.current.availableFrom.value = '';
-        if (dateRefs.current.availableTo) dateRefs.current.availableTo.value = '';
-        if (dateRefs.current.dueDate) dateRefs.current.dueDate.value = '';
-        if (dateRefs.current.timeLimit) dateRefs.current.timeLimit.value = '';
-        if (dateRefs.current.maxAttempts) dateRefs.current.maxAttempts.value = '';
-        if (dateRefs.current.percentLostPerDay) dateRefs.current.percentLostPerDay.value = '';
-        if (dateRefs.current.maxLateDays) dateRefs.current.maxLateDays.value = '';
-        if (dateRefs.current.catMinQuestions) dateRefs.current.catMinQuestions.value = '';
-        if (dateRefs.current.catMaxQuestions) dateRefs.current.catMaxQuestions.value = '';
-        if (dateRefs.current.catDifficultyTarget) dateRefs.current.catDifficultyTarget.value = '';
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('Error creating assignments:', error);
         toast({
           title: "Error",
-          description: "Failed to create some assignments",
+          description: "Failed to create assignment. Please try again.",
           variant: "destructive",
         });
       });
-  };
+  }, [formData, selectedStudents, selectedSections, createAssignmentMutation]);
 
-  const handleUpdateAssignment = (formData: FormData) => {
-    if (!editingAssignment) return;
-    
-    const data = {
-      id: editingAssignment.id,
-      title: formData.get('title'),
-      description: formData.get('description'),
-      quizId: formData.get('quizId'),
-      dueDate: formData.get('dueDate'),
-      availableFrom: formData.get('availableFrom'),
-      availableTo: formData.get('availableTo'),
-      timeLimit: parseInt(formData.get('timeLimit') as string),
-      maxAttempts: parseInt(formData.get('maxAttempts') as string),
-      allowLateSubmission: formData.get('allowLateSubmission') === 'on',
-      shuffleQuestions: formData.get('shuffleQuestions') === 'on',
-      showCorrectAnswers: formData.get('showCorrectAnswers') === 'on',
-      requireProctoring: formData.get('requireProctoring') === 'on',
-      allowCalculator: formData.get('allowCalculator') === 'on',
-      status: editingAssignment.status
-    };
-    updateAssignmentMutation.mutate(data);
-  };
+  // Filter assignments
+  const filteredAssignments = assignments.filter((assignment: Assignment) => {
+    const matchesSearch = assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         assignment.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || assignment.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-  const publishAssignment = (id: string) => {
-    updateAssignmentMutation.mutate({ id, status: 'published' });
-  };
-
-  const archiveAssignment = (id: string) => {
-    updateAssignmentMutation.mutate({ id, status: 'archived' });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'published': return 'bg-green-100 text-green-800';
-      case 'draft': return 'bg-yellow-100 text-yellow-800';
-      case 'archived': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const AssignmentForm = ({ assignment, onSubmit }: { assignment?: Assignment; onSubmit: (data: FormData) => void }) => (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      
-      const formDataObj = new FormData();
-      
-      // Collect values from refs and form data
-      const currentFormData = {
-        ...formData,
-        title: titleRef.current?.value || formData.title,
-        description: descriptionRef.current?.value || formData.description
-      };
-      
-      // Add all form data
-      Object.entries(currentFormData).forEach(([key, value]) => {
-        formDataObj.append(key, value.toString());
-      });
-      
-      // Add selected students and sections
-      formDataObj.append('selectedStudents', JSON.stringify(selectedStudents));
-      formDataObj.append('selectedSections', JSON.stringify(selectedSections));
-      
-      onSubmit(formDataObj);
-    }} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  // Assignment Form Component
+  const AssignmentForm = () => (
+    <div className="space-y-6">
+      {/* Basic Information */}
+      <div className="space-y-4">
         <div>
-          <Label htmlFor="title">Title</Label>
+          <Label htmlFor="title">Assignment Title *</Label>
           <Input
-            ref={titleRef}
             id="title"
-            name="title"
-            defaultValue={formData.title}
-            required
+            value={formData.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
             placeholder="Enter assignment title"
+            className="mt-1"
           />
         </div>
+
         <div>
-          <Label htmlFor="quizId">Quiz</Label>
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            placeholder="Enter assignment description"
+            className="mt-1"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="quizId">Select Quiz *</Label>
           <Select 
-            name="quizId" 
-            value={formData.quizId}
-            onValueChange={(value) => {
-              if (value === 'add-new') {
-                window.location.href = '/quiz-builder';
-              } else {
-                // Capture input values before state change
-                const captured = captureInputValues();
-                
-                // Update state
-                setFormData(prev => ({ ...prev, quizId: value }));
-                
-                // Immediately restore values after state change (but not during date input)
-                if (!isDateInputActive) {
-                  restoreValues(captured);
-                }
-              }
-            }}
+            value={formData.quizId} 
+            onValueChange={(value) => handleInputChange('quizId', value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="mt-1">
               <SelectValue placeholder="Select a quiz" />
             </SelectTrigger>
             <SelectContent>
-              {quizzes.length > 0 ? (
-                quizzes.map((quiz: any) => (
-                  <SelectItem key={quiz.id} value={quiz.id}>
-                    {quiz.title}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="no-quizzes" disabled>No quizzes available</SelectItem>
-              )}
-              <SelectItem value="add-new" className="text-primary">
-                <div className="flex items-center">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Quiz
-                </div>
-              </SelectItem>
+              {quizzes.map((quiz: any) => (
+                <SelectItem key={quiz.id} value={quiz.id}>
+                  {quiz.title}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <textarea
-          ref={descriptionRef}
-          id="description"
-          name="description"
-          defaultValue={formData.description}
-          className="w-full p-2 border border-gray-300 rounded-md"
-          rows={3}
-          placeholder="Assignment description..."
-        />
-      </div>
-
-      {/* Student and Section Selection */}
+      {/* Date Settings */}
       <div className="space-y-4">
-        <div>
-          <Label className="text-base font-medium">Assign to Students</Label>
-          <p className="text-sm text-muted-foreground mb-3">Select individual students or entire sections</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Individual Students */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm font-medium">Individual Students</Label>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const captured = captureInputValues();
-                    setSelectedStudents([]);
-                    if (!isDateInputActive) {
-                      restoreValues(captured);
-                    }
-                  }}
-                  disabled={selectedStudents.length === 0}
-                >
-                  <X className="h-3 w-3 mr-1" />
-                  Clear
-                </Button>
-              </div>
-              
-              {/* Student Search */}
-              <div className="relative mb-2">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search students..."
-                  value={studentSearchTerm}
-                  onChange={(e) => setStudentSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
-              <div className="border rounded-md max-h-48 overflow-y-auto">
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.map((student: any) => (
-                    <div key={student.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 border-b last:border-b-0">
-                      <Checkbox
-                        id={`student-${student.id}`}
-                        checked={selectedStudents.includes(student.id)}
-                        onCheckedChange={(checked) => {
-                          // Capture input values before state change
-                          const captured = captureInputValues();
-                          
-                          if (checked) {
-                            setSelectedStudents([...selectedStudents, student.id]);
-                          } else {
-                            setSelectedStudents(selectedStudents.filter(id => id !== student.id));
-                          }
-                          
-                          // Restore values after state change (but not during date input)
-                          if (!isDateInputActive) {
-                            restoreValues(captured);
-                          }
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <Label htmlFor={`student-${student.id}`} className="text-sm font-medium cursor-pointer">
-                          {student.firstName && student.lastName ? `${student.firstName} ${student.lastName}` : student.email}
-                        </Label>
-                        <p className="text-xs text-gray-500 truncate">{student.email}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-gray-500">
-                    <UserPlus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm">No students found</p>
-                  </div>
-                )}
-              </div>
-              
-              {/* Selected Students Summary */}
-              {selectedStudents.length > 0 && (
-                <div className="mt-2 p-2 bg-blue-50 rounded-md">
-                  <p className="text-xs text-blue-700">
-                    {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Sections */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm font-medium">Sections</Label>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      const captured = captureInputValues();
-                      setSelectedSections([]);
-                      if (!isDateInputActive) {
-                        restoreValues(captured);
-                      }
-                    }}
-                    disabled={selectedSections.length === 0}
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Clear
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setShowCreateSection(true)}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add Section
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="border rounded-md max-h-48 overflow-y-auto">
-                {sections.length > 0 ? (
-                  sections.map((section: any) => (
-                    <div key={section.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 border-b last:border-b-0">
-                      <Checkbox
-                        id={`section-${section.id}`}
-                        checked={selectedSections.includes(section.id)}
-                        onCheckedChange={(checked) => {
-                          // Capture input values before state change
-                          const captured = captureInputValues();
-                          
-                          if (checked) {
-                            setSelectedSections([...selectedSections, section.id]);
-                          } else {
-                            setSelectedSections(selectedSections.filter(id => id !== section.id));
-                          }
-                          
-                          // Restore values after state change (but not during date input)
-                          if (!isDateInputActive) {
-                            restoreValues(captured);
-                          }
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <Label htmlFor={`section-${section.id}`} className="text-sm font-medium cursor-pointer">
-                          {section.name}
-                        </Label>
-                        <p className="text-xs text-gray-500">
-                          {section.memberCount || 0} student{section.memberCount !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-gray-500">
-                    <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm mb-2">No sections available</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setShowCreateSection(true)}
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Create First Section
-                    </Button>
-                  </div>
-                )}
-              </div>
-              
-              {/* Selected Sections Summary */}
-              {selectedSections.length > 0 && (
-                <div className="mt-2 p-2 bg-blue-50 rounded-md">
-                  <p className="text-xs text-blue-700">
-                    {selectedSections.length} section{selectedSections.length !== 1 ? 's' : ''} selected
-                  </p>
-                </div>
-              )}
-            </div>
+        <h3 className="font-medium">Date Settings</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="availableFrom">Available From</Label>
+            <Input
+              id="availableFrom"
+              type="datetime-local"
+              value={formData.availableFrom}
+              onChange={(e) => handleInputChange('availableFrom', e.target.value)}
+              className="mt-1"
+            />
           </div>
-          
-          {/* Overall Selection Summary */}
-          {(selectedStudents.length > 0 || selectedSections.length > 0) && (
-            <div className="mt-3 p-3 bg-green-50 rounded-md border border-green-200">
-              <div className="flex items-center space-x-2">
-                <Check className="h-4 w-4 text-green-600" />
-                <p className="text-sm text-green-700 font-medium">
-                  Assignment will be sent to: {selectedStudents.length} individual students and {selectedSections.length} sections
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
-
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="availableFrom">Available From</Label>
-          <Input
-            ref={(el) => {
-              if (el) {
-                dateRefs.current.availableFrom = el;
-              }
-            }}
-            id="availableFrom"
-            name="availableFrom"
-            type="datetime-local"
-            defaultValue={formData.availableFrom}
-            onFocus={(e) => {
-              setIsDateInputActive(true);
-              e.stopPropagation();
-            }}
-            onChange={(e) => {
-              // Only update formDataRef during date input, NOT form state
-              const value = e.target.value;
-              formDataRef.current = { ...formDataRef.current, availableFrom: value };
-              // Don't update form state during date input - prevents re-renders
-            }}
-            onBlur={(e) => {
-              // Update form state only when date input is complete
-              const value = e.target.value;
-              setFormDataProtected(prev => ({ ...prev, availableFrom: value }));
-              setIsDateInputActive(false);
-            }}
-            onClick={(e) => {
-              // Prevent event bubbling on click
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              // Prevent any mouse events from triggering state changes
-              e.stopPropagation();
-            }}
-            onKeyDown={(e) => {
-              // Prevent keyboard events from triggering state changes
-              e.stopPropagation();
-            }}
-            style={{ 
-              position: 'relative',
-              zIndex: 10
-            }}
-          />
-          <p className="text-xs text-gray-500 mt-1">When students can start</p>
-        </div>
-        <div>
-          <Label htmlFor="availableTo">Available To</Label>
-          <Input
-            ref={(el) => {
-              if (el) {
-                dateRefs.current.availableTo = el;
-              }
-            }}
-            id="availableTo"
-            name="availableTo"
-            type="datetime-local"
-            defaultValue={formData.availableTo}
-            onFocus={(e) => {
-              setIsDateInputActive(true);
-              e.stopPropagation();
-            }}
-            onChange={(e) => {
-              // Only update formDataRef during date input, NOT form state
-              const value = e.target.value;
-              formDataRef.current = { ...formDataRef.current, availableTo: value };
-              // Don't update form state during date input - prevents re-renders
-            }}
-            onBlur={(e) => {
-              // Update form state only when date input is complete
-              const value = e.target.value;
-              setFormDataProtected(prev => ({ ...prev, availableTo: value }));
-              setIsDateInputActive(false);
-            }}
-            onClick={(e) => {
-              // Prevent event bubbling on click
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              // Prevent any mouse events from triggering state changes
-              e.stopPropagation();
-            }}
-            onKeyDown={(e) => {
-              // Prevent keyboard events from triggering state changes
-              e.stopPropagation();
-            }}
-            style={{ 
-              position: 'relative',
-              zIndex: 10
-            }}
-          />
-          <p className="text-xs text-gray-500 mt-1">When access expires</p>
-        </div>
-        <div>
-          <Label htmlFor="dueDate">Due Date *</Label>
-          <Input
-            ref={(el) => {
-              if (el) {
-                dateRefs.current.dueDate = el;
-              }
-            }}
-            id="dueDate"
-            name="dueDate"
-            type="datetime-local"
-            defaultValue={formData.dueDate}
-            onFocus={(e) => {
-              setIsDateInputActive(true);
-              e.stopPropagation();
-            }}
-            onChange={(e) => {
-              // Only update formDataRef during date input, NOT form state
-              const value = e.target.value;
-              formDataRef.current = { ...formDataRef.current, dueDate: value };
-              // Don't update form state during date input - prevents re-renders
-            }}
-            onBlur={(e) => {
-              // Update form state only when date input is complete
-              const value = e.target.value;
-              setFormDataProtected(prev => ({ ...prev, dueDate: value }));
-              setIsDateInputActive(false);
-            }}
-            onClick={(e) => {
-              // Prevent event bubbling on click
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              // Prevent any mouse events from triggering state changes
-              e.stopPropagation();
-            }}
-            onKeyDown={(e) => {
-              // Prevent keyboard events from triggering state changes
-              e.stopPropagation();
-            }}
-            style={{ 
-              position: 'relative',
-              zIndex: 10
-            }}
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">Assignment deadline</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
-          <Input
-            ref={(el) => {
-              if (el) {
-                dateRefs.current.timeLimit = el;
-              }
-            }}
-            id="timeLimit"
-            name="timeLimit"
-            type="number"
-            defaultValue={formData.timeLimit}
-            onChange={(e) => {
-              if (!isDateInputActive) {
-                captureInputValues();
-              }
-              setFormData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }));
-            }}
-            min={1}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="maxAttempts">Max Attempts</Label>
-          <Input
-            ref={(el) => {
-              if (el) {
-                dateRefs.current.maxAttempts = el;
-              }
-            }}
-            id="maxAttempts"
-            name="maxAttempts"
-            type="number"
-            defaultValue={formData.maxAttempts}
-            onChange={(e) => {
-              if (!isDateInputActive) {
-                captureInputValues();
-              }
-              setFormData(prev => ({ ...prev, maxAttempts: parseInt(e.target.value) || 1 }));
-            }}
-            min={1}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="allowLateSubmission"
-            name="allowLateSubmission"
-            checked={formData.allowLateSubmission}
-            onCheckedChange={(checked) => {
-              const captured = !isDateInputActive ? captureInputValues() : {};
-              setFormData(prev => ({ ...prev, allowLateSubmission: checked }));
-              if (!isDateInputActive) {
-                restoreValues(captured);
-              }
-            }}
-          />
-          <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
-        </div>
-        
-        {/* Late Submission Grading Options - Only show when late submission is enabled */}
-        {formData.allowLateSubmission && (
-          <div className="ml-6 space-y-2 border-l-2 border-gray-200 pl-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="percentLostPerDay">Percentage Lost Per Day Late</Label>
-                <Input
-                  ref={(el) => {
-                    if (el) {
-                      dateRefs.current.percentLostPerDay = el;
-                    }
-                  }}
-                  id="percentLostPerDay"
-                  name="percentLostPerDay"
-                  type="number"
-                  defaultValue={formData.percentLostPerDay}
-                  onChange={(e) => {
-                    if (!isDateInputActive) {
-                      captureInputValues();
-                    }
-                    setFormData(prev => ({ ...prev, percentLostPerDay: parseInt(e.target.value) || 10 }));
-                  }}
-                  min={0}
-                  max={100}
-                  placeholder="10"
-                />
-              </div>
-              <div>
-                <Label htmlFor="maxLateDays">Maximum Late Days Allowed</Label>
-                <Input
-                  ref={(el) => {
-                    if (el) {
-                      dateRefs.current.maxLateDays = el;
-                    }
-                  }}
-                  id="maxLateDays"
-                  name="maxLateDays"
-                  type="number"
-                  defaultValue={formData.maxLateDays}
-                  onChange={(e) => {
-                    if (!isDateInputActive) {
-                      captureInputValues();
-                    }
-                    setFormData(prev => ({ ...prev, maxLateDays: parseInt(e.target.value) || 7 }));
-                  }}
-                  min={1}
-                  placeholder="7"
-                />
-              </div>
-            </div>
-            <p className="text-xs text-gray-500">
-              Example: {formData.percentLostPerDay}% lost per day for up to {formData.maxLateDays} days (after {formData.maxLateDays} days, assignment cannot be submitted)
-            </p>
+          <div>
+            <Label htmlFor="availableTo">Available To</Label>
+            <Input
+              id="availableTo"
+              type="datetime-local"
+              value={formData.availableTo}
+              onChange={(e) => handleInputChange('availableTo', e.target.value)}
+              className="mt-1"
+            />
           </div>
-        )}
-        
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="showCorrectAnswers"
-            name="showCorrectAnswers"
-            checked={formData.showCorrectAnswers}
-            onCheckedChange={(checked) => {
-              const captured = !isDateInputActive ? captureInputValues() : {};
-              setFormData(prev => ({ ...prev, showCorrectAnswers: checked }));
-              if (!isDateInputActive) {
-                restoreValues(captured);
-              }
-            }}
-          />
-          <Label htmlFor="showCorrectAnswers">Show Correct Answers After Submission</Label>
+
+          <div>
+            <Label htmlFor="dueDate">Due Date *</Label>
+            <Input
+              id="dueDate"
+              type="datetime-local"
+              value={formData.dueDate}
+              onChange={(e) => handleInputChange('dueDate', e.target.value)}
+              className="mt-1"
+            />
+          </div>
         </div>
+      </div>
+
+      {/* Assignment Settings */}
+      <div className="space-y-4">
+        <h3 className="font-medium">Assignment Settings</h3>
         
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="enableQuestionFeedback"
-            name="enableQuestionFeedback"
-            checked={formData.enableQuestionFeedback}
-            onCheckedChange={(checked) => {
-              const captured = !isDateInputActive ? captureInputValues() : {};
-              setFormData(prev => ({ ...prev, enableQuestionFeedback: checked }));
-              if (!isDateInputActive) {
-                restoreValues(captured);
-              }
-            }}
-          />
-          <Label htmlFor="enableQuestionFeedback">Show Feedback for Answers and Questions</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
+            <Input
+              id="timeLimit"
+              type="number"
+              value={formData.timeLimit}
+              onChange={(e) => handleInputChange('timeLimit', parseInt(e.target.value) || 60)}
+              className="mt-1"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="maxAttempts">Max Attempts</Label>
+            <Input
+              id="maxAttempts"
+              type="number"
+              value={formData.maxAttempts}
+              onChange={(e) => handleInputChange('maxAttempts', parseInt(e.target.value) || 1)}
+              className="mt-1"
+            />
+          </div>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="requireProctoring"
-            name="requireProctoring"
-            checked={formData.requireProctoring}
-            onCheckedChange={(checked) => {
-              const captured = !isDateInputActive ? captureInputValues() : {};
-              setFormData(prev => ({ ...prev, requireProctoring: checked }));
-              if (!isDateInputActive) {
-                restoreValues(captured);
-              }
-            }}
-          />
-          <Label htmlFor="requireProctoring">Require Proctoring</Label>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="allowCalculator"
-            name="allowCalculator"
-            checked={formData.allowCalculator}
-            onCheckedChange={(checked) => {
-              const captured = !isDateInputActive ? captureInputValues() : {};
-              setFormData(prev => ({ ...prev, allowCalculator: checked }));
-              if (!isDateInputActive) {
-                restoreValues(captured);
-              }
-            }}
-          />
-          <Label htmlFor="allowCalculator">Allow Calculator</Label>
-        </div>
-        
-        {/* CAT (Computer Adaptive Testing) Options */}
-        <div className="space-y-3 border-t pt-4">
+
+        <div className="space-y-3">
           <div className="flex items-center space-x-2">
             <Switch
-              id="catEnabled"
-              name="catEnabled"
-              checked={formData.catEnabled}
-              onCheckedChange={(checked) => {
-                const captured = !isDateInputActive ? captureInputValues() : {};
-                setFormData(prev => ({ ...prev, catEnabled: checked }));
-                if (!isDateInputActive) {
-                  restoreValues(captured);
-                }
-              }}
+              id="allowLateSubmission"
+              checked={formData.allowLateSubmission}
+              onCheckedChange={(checked) => handleInputChange('allowLateSubmission', checked)}
             />
-            <Label htmlFor="catEnabled">Enable Computer Adaptive Testing (CAT)</Label>
+            <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
           </div>
-          
-          {/* CAT Settings - Only show when CAT is enabled */}
-          {formData.catEnabled && (
-            <div className="ml-6 space-y-3 border-l-2 border-gray-200 pl-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="catMinQuestions">Minimum Questions</Label>
-                  <Input
-                    ref={(el) => {
-                      if (el) {
-                        dateRefs.current.catMinQuestions = el;
-                      }
-                    }}
-                    id="catMinQuestions"
-                    name="catMinQuestions"
-                    type="number"
-                    defaultValue={formData.catMinQuestions}
-                    onChange={(e) => {
-                      if (!isDateInputActive) {
-                        captureInputValues();
-                      }
-                      setFormData(prev => ({ ...prev, catMinQuestions: parseInt(e.target.value) || 10 }));
-                    }}
-                    min={5}
-                    max={50}
-                    placeholder="10"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="catMaxQuestions">Maximum Questions</Label>
-                  <Input
-                    ref={(el) => {
-                      if (el) {
-                        dateRefs.current.catMaxQuestions = el;
-                      }
-                    }}
-                    id="catMaxQuestions"
-                    name="catMaxQuestions"
-                    type="number"
-                    defaultValue={formData.catMaxQuestions}
-                    onChange={(e) => {
-                      if (!isDateInputActive) {
-                        captureInputValues();
-                      }
-                      setFormData(prev => ({ ...prev, catMaxQuestions: parseInt(e.target.value) || 50 }));
-                    }}
-                    min={10}
-                    max={100}
-                    placeholder="50"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="catDifficultyTarget">Target Difficulty (0.0 - 1.0)</Label>
-                <Input
-                  ref={(el) => {
-                    if (el) {
-                      dateRefs.current.catDifficultyTarget = el;
-                    }
-                  }}
-                  id="catDifficultyTarget"
-                  name="catDifficultyTarget"
-                  type="number"
-                  step="0.1"
-                  defaultValue={formData.catDifficultyTarget}
-                  onChange={(e) => {
-                    if (!isDateInputActive) {
-                      captureInputValues();
-                    }
-                    setFormData(prev => ({ ...prev, catDifficultyTarget: parseFloat(e.target.value) || 0.5 }));
-                  }}
-                  min={0.1}
-                  max={1.0}
-                  placeholder="0.5"
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                CAT will adapt question difficulty based on student performance, using between {formData.catMinQuestions} and {formData.catMaxQuestions} questions.
-              </p>
-            </div>
-          )}
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="showCorrectAnswers"
+              checked={formData.showCorrectAnswers}
+              onCheckedChange={(checked) => handleInputChange('showCorrectAnswers', checked)}
+            />
+            <Label htmlFor="showCorrectAnswers">Show Correct Answers</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="requireProctoring"
+              checked={formData.requireProctoring}
+              onCheckedChange={(checked) => handleInputChange('requireProctoring', checked)}
+            />
+            <Label htmlFor="requireProctoring">Require Proctoring</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="allowCalculator"
+              checked={formData.allowCalculator}
+              onCheckedChange={(checked) => handleInputChange('allowCalculator', checked)}
+            />
+            <Label htmlFor="allowCalculator">Allow Calculator</Label>
+          </div>
         </div>
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4 border-t mt-6">
-        <Button type="button" variant="outline" onClick={() => {
-          setShowCreateModal(false);
-          setEditingAssignment(null);
-        }}>
+      {/* Student Selection */}
+      <div className="space-y-4">
+        <h3 className="font-medium">Assign To</h3>
+        
+        <div className="max-h-60 overflow-y-auto border rounded-md p-4">
+          <div className="space-y-2">
+            <h4 className="font-medium">Students</h4>
+            {students.map((student: any) => (
+              <div key={student.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`student-${student.id}`}
+                  checked={selectedStudents.includes(student.id)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedStudents(prev => [...prev, student.id]);
+                    } else {
+                      setSelectedStudents(prev => prev.filter(id => id !== student.id));
+                    }
+                  }}
+                />
+                <Label htmlFor={`student-${student.id}`}>
+                  {student.firstName} {student.lastName} ({student.email})
+                </Label>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 space-y-2">
+            <h4 className="font-medium">Sections</h4>
+            {sections.map((section: any) => (
+              <div key={section.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`section-${section.id}`}
+                  checked={selectedSections.includes(section.id)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedSections(prev => [...prev, section.id]);
+                    } else {
+                      setSelectedSections(prev => prev.filter(id => id !== section.id));
+                    }
+                  }}
+                />
+                <Label htmlFor={`section-${section.id}`}>
+                  {section.name} ({section.memberCount || 0} students)
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <div className="flex justify-end space-x-2 pt-4 border-t">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={() => setShowCreateModal(false)}
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={createAssignmentMutation.isPending || updateAssignmentMutation.isPending}>
-          {assignment ? 'Update' : 'Create'} Assignment
+        <Button 
+          onClick={handleCreateAssignment}
+          disabled={createAssignmentMutation.isPending}
+        >
+          Create Assignment
         </Button>
       </div>
-    </form>
+    </div>
   );
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 max-w-7xl mx-auto">
-      {/* Breadcrumb */}
-      <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
-        <Link href="/" className="flex items-center hover:text-foreground transition-colors">
-          <Home className="h-4 w-4" />
-        </Link>
-        <ChevronRight className="h-4 w-4" />
-        <span className="font-medium text-foreground">Assignments</span>
-      </nav>
+          {/* Breadcrumb */}
+          <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
+            <Link href="/" className="flex items-center hover:text-foreground transition-colors">
+              <Home className="h-4 w-4" />
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="font-medium text-foreground">Assignments</span>
+          </nav>
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Assignments</h1>
-          <p className="text-gray-600">Create and manage quiz assignments for your students</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Assignment
-        </Button>
-      </div>
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Assignments</h1>
+              <p className="text-gray-600">Create and manage quiz assignments for your students</p>
+            </div>
+            <Button onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Assignment
+            </Button>
+          </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          {/* Search and Filter */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search assignments..."
                 value={searchTerm}
@@ -1620,213 +581,86 @@ export default function Assignments() {
                 className="pl-10"
               />
             </div>
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Assignments Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <ClipboardCheck className="h-5 w-5 mr-2" />
-            Assignments ({filteredAssignments.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading assignments...</div>
-          ) : filteredAssignments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No assignments found. Create your first assignment to get started.
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Submissions</TableHead>
-                    <TableHead>Avg Score</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAssignments.map((assignment: Assignment) => (
-                    <TableRow key={assignment.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{assignment.title}</div>
-                          <div className="text-sm text-gray-500">{assignment.description}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center text-sm">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {new Date(assignment.dueDate).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(assignment.status)}>
+          </div>
+
+          {/* Assignments List */}
+          <div className="grid gap-4">
+            {filteredAssignments.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <ClipboardCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No assignments found.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              filteredAssignments.map((assignment: Assignment) => (
+                <Card key={assignment.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{assignment.title}</CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">{assignment.description}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={assignment.status === 'published' ? 'default' : 'secondary'}>
                           {assignment.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center text-sm">
-                          <Users className="h-4 w-4 mr-1" />
-                          {assignment.submissions || 0}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {assignment.averageScore ? `${assignment.averageScore}%` : 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingAssignment(assignment)}
-                          >
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                          {assignment.status === 'draft' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => publishAssignment(assignment.id)}
-                            >
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {assignment.status === 'published' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => archiveAssignment(assignment.id)}
-                            >
-                              <Settings className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (confirm('Are you sure you want to delete this assignment?')) {
-                                deleteAssignmentMutation.mutate(assignment.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Create Assignment Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Assignment</DialogTitle>
-            <DialogDescription>
-              Create a new assignment by selecting a quiz and configuring the assignment details.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="overflow-y-auto flex-1 px-2">
-            <AssignmentForm onSubmit={handleCreateAssignment} />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Assignment Modal */}
-      <Dialog open={!!editingAssignment} onOpenChange={() => setEditingAssignment(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Assignment</DialogTitle>
-            <DialogDescription>
-              Edit the assignment details and update the configuration.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="overflow-y-auto flex-1 px-2">
-            {editingAssignment && (
-              <AssignmentForm
-                assignment={editingAssignment}
-                onSubmit={handleUpdateAssignment}
-              />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        <span>{assignment.timeLimit} min</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Users className="h-4 w-4 text-gray-400" />
+                        <span>{assignment.submissions} submissions</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <BookOpen className="h-4 w-4 text-gray-400" />
+                        <span>Avg: {assignment.averageScore}%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
             )}
           </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* Create Section Modal */}
-      <Dialog open={showCreateSection} onOpenChange={setShowCreateSection}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create New Section</DialogTitle>
-            <DialogDescription>
-              Create a new section to organize your students into groups.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target as HTMLFormElement);
-            const name = formData.get('name') as string;
-            const description = formData.get('description') as string;
-            
-            if (name.trim()) {
-              createSectionMutation.mutate({
-                name: name.trim(),
-                description: description.trim()
-              });
-            }
-          }} className="space-y-4">
-            <div>
-              <Label htmlFor="sectionName">Section Name</Label>
-              <Input
-                id="sectionName"
-                name="name"
-                placeholder="Enter section name..."
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="sectionDescription">Description (Optional)</Label>
-              <Textarea
-                id="sectionDescription"
-                name="description"
-                placeholder="Enter section description..."
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setShowCreateSection(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createSectionMutation.isPending}>
-                {createSectionMutation.isPending ? 'Creating...' : 'Create Section'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+          {/* Create Assignment Modal */}
+          <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Assignment</DialogTitle>
+                <DialogDescription>
+                  Create a new assignment by selecting a quiz and configuring the assignment details.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="overflow-y-auto flex-1 px-2">
+                <AssignmentForm />
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
