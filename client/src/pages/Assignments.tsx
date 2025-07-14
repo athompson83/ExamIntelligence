@@ -103,37 +103,29 @@ export default function Assignments() {
     formDataRef.current = formData;
   }, [formData]);
 
-  // Prevent component re-renders during input changes
-  const [localInputs, setLocalInputs] = useState({
-    title: formData.title,
-    description: formData.description
-  });
+  // Use uncontrolled inputs to prevent keyboard issues
+  const [isFormSubmitting, setIsFormSubmitting] = useState(false);
 
-  // Synchronous input handlers that prevent keyboard issues
+  // Direct form change handler without state updates during typing
   const handleFormChange = useCallback((field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Only update state if not actively typing
+    if (!isFormSubmitting) {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+  }, [isFormSubmitting]);
+
+  // Uncontrolled input handlers that prevent re-renders
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // Direct DOM manipulation to prevent re-renders
+    const value = e.target.value;
+    formDataRef.current = { ...formDataRef.current, title: value };
   }, []);
 
-  // Sync local inputs with form data
-  useEffect(() => {
-    setLocalInputs({
-      title: formData.title,
-      description: formData.description
-    });
-  }, [formData.title, formData.description]);
-
-  // Local input handlers that prevent keyboard issues
-  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLocalInputs(prev => ({ ...prev, title: value }));
-    handleFormChange('title', value);
-  }, [handleFormChange]);
-
   const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    // Direct DOM manipulation to prevent re-renders
     const value = e.target.value;
-    setLocalInputs(prev => ({ ...prev, description: value }));
-    handleFormChange('description', value);
-  }, [handleFormChange]);
+    formDataRef.current = { ...formDataRef.current, description: value };
+  }, []);
 
   // Create stable handlers for all form fields
   const stableHandlers = useMemo(() => ({
@@ -558,10 +550,19 @@ export default function Assignments() {
   const AssignmentForm = ({ assignment, onSubmit }: { assignment?: Assignment; onSubmit: (data: FormData) => void }) => (
     <form onSubmit={(e) => {
       e.preventDefault();
+      setIsFormSubmitting(true);
+      
       const formDataObj = new FormData();
       
-      // Add all form data from controlled state
-      Object.entries(formData).forEach(([key, value]) => {
+      // Collect values from uncontrolled inputs
+      const currentFormData = {
+        ...formData,
+        title: titleRef.current?.value || formData.title,
+        description: descriptionRef.current?.value || formData.description
+      };
+      
+      // Add all form data
+      Object.entries(currentFormData).forEach(([key, value]) => {
         formDataObj.append(key, value.toString());
       });
       
@@ -570,6 +571,7 @@ export default function Assignments() {
       formDataObj.append('selectedSections', JSON.stringify(selectedSections));
       
       onSubmit(formDataObj);
+      setIsFormSubmitting(false);
     }} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -578,7 +580,7 @@ export default function Assignments() {
             ref={titleRef}
             id="title"
             name="title"
-            value={localInputs.title}
+            defaultValue={formData.title}
             onChange={handleTitleChange}
             required
             placeholder="Enter assignment title"
@@ -627,7 +629,7 @@ export default function Assignments() {
           ref={descriptionRef}
           id="description"
           name="description"
-          value={localInputs.description}
+          defaultValue={formData.description}
           onChange={handleDescriptionChange}
           className="w-full p-2 border border-gray-300 rounded-md"
           rows={3}
