@@ -98,12 +98,12 @@ export default function Assignments() {
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const formDataRef = useRef(formData);
 
-  // Update ref when formData changes
+  // Bidirectional sync between formData and formDataRef
   useEffect(() => {
-    formDataRef.current = formData;
+    formDataRef.current = { ...formDataRef.current, ...formData };
   }, [formData]);
 
-  // Setup native event listeners to avoid React re-renders
+  // Setup native event listeners and preserve input values across re-renders
   useEffect(() => {
     const titleInput = titleRef.current;
     const descriptionInput = descriptionRef.current;
@@ -134,6 +134,32 @@ export default function Assignments() {
       }
     };
   }, []);
+
+  // Preserve input values when component re-renders due to other state changes
+  useEffect(() => {
+    const titleInput = titleRef.current;
+    const descriptionInput = descriptionRef.current;
+
+    if (titleInput && formDataRef.current.title !== titleInput.value) {
+      titleInput.value = formDataRef.current.title;
+    }
+    if (descriptionInput && formDataRef.current.description !== descriptionInput.value) {
+      descriptionInput.value = formDataRef.current.description;
+    }
+  }, [selectedStudents, selectedSections, formData.quizId]);
+
+  // Initialize input values when form opens
+  useEffect(() => {
+    const titleInput = titleRef.current;
+    const descriptionInput = descriptionRef.current;
+
+    if (titleInput) {
+      titleInput.value = formData.title || '';
+    }
+    if (descriptionInput) {
+      descriptionInput.value = formData.description || '';
+    }
+  }, [isModalOpen, editingAssignment]);
 
   // Direct form change handler that doesn't cause re-renders
   const handleFormChange = useCallback((field: string, value: any) => {
