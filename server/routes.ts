@@ -2112,8 +2112,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use proper user ID extraction with fallback
       const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      console.log('Fetching quizzes for user:', userId);
       const quizzes = await storage.getQuizzesByUser(userId);
-      res.json(quizzes);
+      console.log('Fetched quizzes:', quizzes.length, 'quizzes');
+      res.json(quizzes || []);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
       res.status(500).json({ message: "Failed to fetch quizzes" });
