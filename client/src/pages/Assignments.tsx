@@ -97,6 +97,16 @@ export default function Assignments() {
   const formDataRef = useRef(formData);
   const titleRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const originalSetFormData = useRef(setFormData);
+  
+  // Override setFormData to block during date input operations
+  const setFormDataProtected = useCallback((updater: any) => {
+    // COMPLETELY BLOCK all form data updates during date input operations
+    if (isDateInputActive) {
+      return;
+    }
+    originalSetFormData.current(updater);
+  }, [isDateInputActive]);
   const dateRefs = useRef<{
     availableFrom: HTMLInputElement | null;
     availableTo: HTMLInputElement | null;
@@ -207,14 +217,12 @@ export default function Assignments() {
 
   // Helper function to restore values directly
   const restoreValues = useCallback((values: any) => {
-    // Don't restore if a date input is currently active
-    if (isDateInputActive) return;
+    // COMPLETELY BLOCK restoration during date input operations
+    if (isDateInputActive) {
+      return;
+    }
     
     requestAnimationFrame(() => {
-      // Always preserve title and description during restoration
-      const currentTitle = titleRef.current?.value || '';
-      const currentDescription = descriptionRef.current?.value || '';
-      
       if (titleRef.current && values.title) {
         titleRef.current.value = values.title;
       }
@@ -250,14 +258,6 @@ export default function Assignments() {
       }
       if (dateRefs.current.catDifficultyTarget && values.catDifficultyTarget) {
         dateRefs.current.catDifficultyTarget.value = values.catDifficultyTarget;
-      }
-      
-      // Restore title and description if they were emptied
-      if (titleRef.current && !titleRef.current.value && currentTitle) {
-        titleRef.current.value = currentTitle;
-      }
-      if (descriptionRef.current && !descriptionRef.current.value && currentDescription) {
-        descriptionRef.current.value = currentDescription;
       }
     });
   }, [isDateInputActive]);
@@ -329,12 +329,15 @@ export default function Assignments() {
 
   // Direct form change handler that doesn't cause re-renders
   const handleFormChange = useCallback((field: string, value: any) => {
-    // Only capture input values if NOT during date input
-    if (!isDateInputActive) {
-      captureInputValues();
+    // COMPLETELY BLOCK form changes during date input operations
+    if (isDateInputActive) {
+      return; // Do nothing during date input
     }
-    setFormData(prev => ({ ...prev, [field]: value }));
-  }, [captureInputValues, isDateInputActive]);
+    
+    // Only capture input values if NOT during date input
+    captureInputValues();
+    setFormDataProtected(prev => ({ ...prev, [field]: value }));
+  }, [captureInputValues, isDateInputActive, setFormDataProtected]);
 
 
 
@@ -368,7 +371,7 @@ export default function Assignments() {
   useEffect(() => {
     if (preSelectedQuizId && location.includes('/assignments')) {
       setShowCreateModal(true);
-      setFormData(prev => ({
+      setFormDataProtected(prev => ({
         ...prev,
         quizId: preSelectedQuizId,
         title: preSelectedQuizTitle ? `Assignment: ${preSelectedQuizTitle}` : '',
@@ -383,7 +386,7 @@ export default function Assignments() {
       setSelectedSections([]);
       setStudentSearchTerm('');
       // Reset form data to defaults
-      setFormData({
+      setFormDataProtected({
         title: '',
         description: '',
         quizId: '',
@@ -410,7 +413,7 @@ export default function Assignments() {
   // Populate form when editing an assignment
   useEffect(() => {
     if (editingAssignment) {
-      setFormData({
+      setFormDataProtected({
         title: editingAssignment.title || '',
         description: editingAssignment.description || '',
         quizId: editingAssignment.quizId || '',
@@ -1147,7 +1150,7 @@ export default function Assignments() {
               // Directly update form data without triggering preservation
               const value = e.target.value;
               formDataRef.current = { ...formDataRef.current, availableFrom: value };
-              setFormData(prev => ({ ...prev, availableFrom: value }));
+              setFormDataProtected(prev => ({ ...prev, availableFrom: value }));
             }}
             onBlur={(e) => {
               setIsDateInputActive(false);
@@ -1191,7 +1194,7 @@ export default function Assignments() {
               // Directly update form data without triggering preservation
               const value = e.target.value;
               formDataRef.current = { ...formDataRef.current, availableTo: value };
-              setFormData(prev => ({ ...prev, availableTo: value }));
+              setFormDataProtected(prev => ({ ...prev, availableTo: value }));
             }}
             onBlur={(e) => {
               setIsDateInputActive(false);
@@ -1235,7 +1238,7 @@ export default function Assignments() {
               // Directly update form data without triggering preservation
               const value = e.target.value;
               formDataRef.current = { ...formDataRef.current, dueDate: value };
-              setFormData(prev => ({ ...prev, dueDate: value }));
+              setFormDataProtected(prev => ({ ...prev, dueDate: value }));
             }}
             onBlur={(e) => {
               setIsDateInputActive(false);
