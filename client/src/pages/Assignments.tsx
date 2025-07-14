@@ -195,6 +195,11 @@ export default function Assignments() {
 
   // Capture current input values before any state changes
   const captureInputValues = useCallback(() => {
+    // COMPLETELY DISABLE capture during date input operations
+    if (isDateInputActive) {
+      return;
+    }
+    
     const currentValues = {
       title: titleRef.current?.value || '',
       description: descriptionRef.current?.value || '',
@@ -210,12 +215,14 @@ export default function Assignments() {
       catDifficultyTarget: dateRefs.current.catDifficultyTarget?.value || ''
     };
     
-    // Update preserved values and formDataRef
-    setPreservedValues(currentValues);
-    formDataRef.current = { ...formDataRef.current, ...currentValues };
+    // Update preserved values and formDataRef (only if not during date input)
+    if (!isDateInputActive) {
+      setPreservedValues(currentValues);
+      formDataRef.current = { ...formDataRef.current, ...currentValues };
+    }
     
     return currentValues;
-  }, []);
+  }, [isDateInputActive]);
 
   // Helper function to restore values directly
   const restoreValues = useCallback((values: any) => {
@@ -1149,12 +1156,15 @@ export default function Assignments() {
               e.stopPropagation();
             }}
             onChange={(e) => {
-              // Directly update form data without triggering preservation
+              // Only update formDataRef during date input, NOT form state
               const value = e.target.value;
               formDataRef.current = { ...formDataRef.current, availableFrom: value };
-              setFormDataProtected(prev => ({ ...prev, availableFrom: value }));
+              // Don't update form state during date input - prevents re-renders
             }}
             onBlur={(e) => {
+              // Update form state only when date input is complete
+              const value = e.target.value;
+              setFormDataProtected(prev => ({ ...prev, availableFrom: value }));
               setIsDateInputActive(false);
             }}
             onClick={(e) => {
@@ -1193,12 +1203,15 @@ export default function Assignments() {
               e.stopPropagation();
             }}
             onChange={(e) => {
-              // Directly update form data without triggering preservation
+              // Only update formDataRef during date input, NOT form state
               const value = e.target.value;
               formDataRef.current = { ...formDataRef.current, availableTo: value };
-              setFormDataProtected(prev => ({ ...prev, availableTo: value }));
+              // Don't update form state during date input - prevents re-renders
             }}
             onBlur={(e) => {
+              // Update form state only when date input is complete
+              const value = e.target.value;
+              setFormDataProtected(prev => ({ ...prev, availableTo: value }));
               setIsDateInputActive(false);
             }}
             onClick={(e) => {
@@ -1237,12 +1250,15 @@ export default function Assignments() {
               e.stopPropagation();
             }}
             onChange={(e) => {
-              // Directly update form data without triggering preservation
+              // Only update formDataRef during date input, NOT form state
               const value = e.target.value;
               formDataRef.current = { ...formDataRef.current, dueDate: value };
-              setFormDataProtected(prev => ({ ...prev, dueDate: value }));
+              // Don't update form state during date input - prevents re-renders
             }}
             onBlur={(e) => {
+              // Update form state only when date input is complete
+              const value = e.target.value;
+              setFormDataProtected(prev => ({ ...prev, dueDate: value }));
               setIsDateInputActive(false);
             }}
             onClick={(e) => {
