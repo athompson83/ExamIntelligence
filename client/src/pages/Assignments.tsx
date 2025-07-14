@@ -759,7 +759,7 @@ export default function Assignments() {
                   <SelectContent>
                     {quizzesLoading ? (
                       <SelectItem value="loading" disabled>Loading...</SelectItem>
-                    ) : quizzes.length === 0 ? (
+                    ) : !quizzes || quizzes.length === 0 ? (
                       <SelectItem value="no-quizzes" disabled>No quizzes available</SelectItem>
                     ) : (
                       quizzes.map((quiz: any) => (
