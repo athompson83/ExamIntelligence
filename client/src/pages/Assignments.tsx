@@ -103,68 +103,44 @@ export default function Assignments() {
     formDataRef.current = formData;
   }, [formData]);
 
-  // Cleanup timeout on unmount
+  // Setup native event listeners to avoid React re-renders
   useEffect(() => {
+    const titleInput = titleRef.current;
+    const descriptionInput = descriptionRef.current;
+
+    const handleTitleInput = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      formDataRef.current = { ...formDataRef.current, title: target.value };
+    };
+
+    const handleDescriptionInput = (e: Event) => {
+      const target = e.target as HTMLTextAreaElement;
+      formDataRef.current = { ...formDataRef.current, description: target.value };
+    };
+
+    if (titleInput) {
+      titleInput.addEventListener('input', handleTitleInput);
+    }
+    if (descriptionInput) {
+      descriptionInput.addEventListener('input', handleDescriptionInput);
+    }
+
     return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
+      if (titleInput) {
+        titleInput.removeEventListener('input', handleTitleInput);
+      }
+      if (descriptionInput) {
+        descriptionInput.removeEventListener('input', handleDescriptionInput);
       }
     };
   }, []);
 
-  // Prevent any state updates during typing to maintain keyboard
-  const [isTyping, setIsTyping] = useState(false);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Direct form change handler with debouncing
+  // Direct form change handler that doesn't cause re-renders
   const handleFormChange = useCallback((field: string, value: any) => {
-    if (!isTyping) {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    }
-  }, [isTyping]);
-
-  // Stable input handlers that never cause re-renders
-  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    
-    // Update ref immediately
-    formDataRef.current = { ...formDataRef.current, title: value };
-    
-    // Set typing state to prevent other updates
-    setIsTyping(true);
-    
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    // Update form data after user stops typing
-    typingTimeoutRef.current = setTimeout(() => {
-      setFormData(prev => ({ ...prev, title: value }));
-      setIsTyping(false);
-    }, 1000);
+    setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    
-    // Update ref immediately
-    formDataRef.current = { ...formDataRef.current, description: value };
-    
-    // Set typing state to prevent other updates
-    setIsTyping(true);
-    
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    // Update form data after user stops typing
-    typingTimeoutRef.current = setTimeout(() => {
-      setFormData(prev => ({ ...prev, description: value }));
-      setIsTyping(false);
-    }, 1000);
-  }, []);
+
 
   // Create stable handlers for all form fields
   const stableHandlers = useMemo(() => ({
@@ -618,7 +594,6 @@ export default function Assignments() {
             id="title"
             name="title"
             defaultValue={formData.title}
-            onChange={handleTitleChange}
             required
             placeholder="Enter assignment title"
           />
@@ -667,7 +642,6 @@ export default function Assignments() {
           id="description"
           name="description"
           defaultValue={formData.description}
-          onChange={handleDescriptionChange}
           className="w-full p-2 border border-gray-300 rounded-md"
           rows={3}
           placeholder="Assignment description..."
