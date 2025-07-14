@@ -1077,17 +1077,8 @@ export default function Assignments() {
             type="datetime-local"
             defaultValue={formData.availableFrom}
             onChange={(e) => {
-              // Capture all input values before state change
-              captureInputValues();
-              // Update form data
+              // Update form data directly without triggering restoration
               setFormData(prev => ({ ...prev, availableFrom: e.target.value }));
-            }}
-            onFocus={(e) => {
-              // Prevent keyboard from triggering picker on mobile
-              if (window.innerWidth <= 768) {
-                e.target.blur();
-                setTimeout(() => e.target.focus(), 100);
-              }
             }}
             style={{ 
               // Ensure the date picker remains visible on mobile
@@ -1110,17 +1101,8 @@ export default function Assignments() {
             type="datetime-local"
             defaultValue={formData.availableTo}
             onChange={(e) => {
-              // Capture all input values before state change
-              captureInputValues();
-              // Update form data
+              // Update form data directly without triggering restoration
               setFormData(prev => ({ ...prev, availableTo: e.target.value }));
-            }}
-            onFocus={(e) => {
-              // Prevent keyboard from triggering picker on mobile
-              if (window.innerWidth <= 768) {
-                e.target.blur();
-                setTimeout(() => e.target.focus(), 100);
-              }
             }}
             style={{ 
               // Ensure the date picker remains visible on mobile
@@ -1143,17 +1125,8 @@ export default function Assignments() {
             type="datetime-local"
             defaultValue={formData.dueDate}
             onChange={(e) => {
-              // Capture all input values before state change
-              captureInputValues();
-              // Update form data
+              // Update form data directly without triggering restoration
               setFormData(prev => ({ ...prev, dueDate: e.target.value }));
-            }}
-            onFocus={(e) => {
-              // Prevent keyboard from triggering picker on mobile
-              if (window.innerWidth <= 768) {
-                e.target.blur();
-                setTimeout(() => e.target.focus(), 100);
-              }
             }}
             style={{ 
               // Ensure the date picker remains visible on mobile
