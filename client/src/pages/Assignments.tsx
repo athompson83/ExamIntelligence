@@ -446,6 +446,40 @@ export default function Assignments() {
   // Edit assignment
   const handleEditAssignment = (assignment: Assignment) => {
     setEditingAssignment(assignment);
+    
+    // Preload assignment data into form
+    setFormData({
+      title: assignment.title || '',
+      description: assignment.description || '',
+      quizId: assignment.quizId || '',
+      dueDate: assignment.dueDate || '',
+      availableFrom: assignment.availableFrom || '',
+      availableTo: assignment.availableTo || '',
+      timeLimit: assignment.timeLimit || 60,
+      maxAttempts: assignment.maxAttempts || 1,
+      allowLateSubmission: assignment.allowLateSubmission || false,
+      percentLostPerDay: assignment.lateGradingOptions?.percentLostPerDay || 10,
+      maxLateDays: assignment.lateGradingOptions?.maxLateDays || 7,
+      showCorrectAnswers: assignment.showCorrectAnswers || false,
+      showCorrectAnswersAt: assignment.showCorrectAnswersAt || 'immediately',
+      showQuestionsAfterAttempt: assignment.showQuestionsAfterAttempt || false,
+      enableQuestionFeedback: assignment.enableQuestionFeedback || false,
+      requireProctoring: assignment.requireProctoring || false,
+      allowCalculator: assignment.allowCalculator || false,
+      calculatorType: assignment.calculatorType || 'basic',
+      catEnabled: assignment.catEnabled || false,
+      catMinQuestions: assignment.catOptions?.minQuestions || 5,
+      catMaxQuestions: assignment.catOptions?.maxQuestions || 20,
+      catDifficultyTarget: assignment.catOptions?.difficultyTarget || 0.5,
+      catStoppingCriteria: assignment.catOptions?.stoppingCriteria || 'standard_error',
+      catStandardError: assignment.catOptions?.standardError || 0.3,
+    });
+    
+    // Set selected students and sections if available
+    // Note: Individual assignments store assignedToUserId/assignedToSectionId
+    setSelectedStudents(assignment.assignedToUserId ? [assignment.assignedToUserId] : []);
+    setSelectedSections(assignment.assignedToSectionId ? [assignment.assignedToSectionId] : []);
+    
     setShowCreateModal(true);
   };
 
@@ -482,6 +516,15 @@ export default function Assignments() {
       return;
     }
     
+    if (selectedStudents.length === 0 && selectedSections.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one student or section",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Prepare update data
     const updateData = {
       title: assignmentData.title,
@@ -510,15 +553,20 @@ export default function Assignments() {
       } : null,
       assignedById: 'test-user',
       accountId: '00000000-0000-0000-0000-000000000001',
-      updatedAt: new Date().toISOString(),
+      // Include student and section assignments
+      studentIds: selectedStudents,
+      sectionIds: selectedSections,
     };
     
     updateAssignmentMutation.mutate(
       { id: editingAssignment.id, data: updateData },
       {
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
           setShowCreateModal(false);
           setEditingAssignment(null);
+          setSelectedStudents([]);
+          setSelectedSections([]);
           toast({
             title: "Success",
             description: "Assignment updated successfully",
@@ -534,7 +582,7 @@ export default function Assignments() {
         }
       }
     );
-  }, [editingAssignment, getCurrentFormData, updateAssignmentMutation]);
+  }, [editingAssignment, getCurrentFormData, updateAssignmentMutation, selectedStudents, selectedSections]);
 
   // Clean assignment creation handler
   const handleCreateAssignment = useCallback(() => {

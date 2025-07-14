@@ -1113,9 +1113,75 @@ export class DatabaseStorage implements IStorage {
 
   async updateQuizAssignment(id: string, updateData: any): Promise<any> {
     try {
+      // Process date fields to ensure they're Date objects
+      const processedData = { ...updateData };
+      
+      // Convert date strings to Date objects if present
+      if (processedData.dueDate && typeof processedData.dueDate === 'string') {
+        processedData.dueDate = new Date(processedData.dueDate);
+      }
+      if (processedData.availableFrom && typeof processedData.availableFrom === 'string') {
+        processedData.availableFrom = new Date(processedData.availableFrom);
+      }
+      if (processedData.availableTo && typeof processedData.availableTo === 'string') {
+        processedData.availableTo = new Date(processedData.availableTo);
+      }
+      
+      // Remove updatedAt if it's a string and let the database handle it
+      if (processedData.updatedAt && typeof processedData.updatedAt === 'string') {
+        delete processedData.updatedAt;
+      }
+
+      // Handle student and section assignment updates
+      if (processedData.studentIds || processedData.sectionIds) {
+        // For updates with student/section assignments, we need to delete the old assignment
+        // and create new ones for each student/section
+        const { studentIds, sectionIds, ...assignmentData } = processedData;
+        
+        // Delete the original assignment
+        await db.delete(quizAssignments).where(eq(quizAssignments.id, id));
+        
+        // Create new assignments for each student
+        const newAssignments = [];
+        if (studentIds && studentIds.length > 0) {
+          for (const studentId of studentIds) {
+            const [newAssignment] = await db
+              .insert(quizAssignments)
+              .values({
+                ...assignmentData,
+                assignedToUserId: studentId,
+                updatedAt: new Date()
+              })
+              .returning();
+            newAssignments.push(newAssignment);
+          }
+        }
+        
+        // Create new assignments for each section
+        if (sectionIds && sectionIds.length > 0) {
+          for (const sectionId of sectionIds) {
+            const [newAssignment] = await db
+              .insert(quizAssignments)
+              .values({
+                ...assignmentData,
+                assignedToSectionId: sectionId,
+                updatedAt: new Date()
+              })
+              .returning();
+            newAssignments.push(newAssignment);
+          }
+        }
+        
+        return newAssignments[0]; // Return the first assignment as representative
+      }
+      
+      // Standard update without student/section changes
       const [assignment] = await db
         .update(quizAssignments)
-        .set(updateData)
+        .set({
+          ...processedData,
+          updatedAt: new Date() // Always set current timestamp
+        })
         .where(eq(quizAssignments.id, id))
         .returning();
       return assignment;
