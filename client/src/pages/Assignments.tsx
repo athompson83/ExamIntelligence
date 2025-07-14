@@ -204,11 +204,14 @@ export default function Assignments() {
   useEffect(() => {
     // Only restore if form is open and we have preserved values
     if ((showCreateModal || editingAssignment) && Object.values(preservedValues).some(val => val !== '')) {
+      console.log('Restoration effect triggered. Preserved values:', preservedValues);
       requestAnimationFrame(() => {
         if (titleRef.current && titleRef.current.value !== preservedValues.title) {
+          console.log('Restoring title:', preservedValues.title);
           titleRef.current.value = preservedValues.title;
         }
         if (descriptionRef.current && descriptionRef.current.value !== preservedValues.description) {
+          console.log('Restoring description:', preservedValues.description);
           descriptionRef.current.value = preservedValues.description;
         }
         if (dateRefs.current.availableFrom && dateRefs.current.availableFrom.value !== preservedValues.availableFrom) {
@@ -830,7 +833,9 @@ export default function Assignments() {
                 window.location.href = '/quiz-builder';
               } else {
                 // Capture input values before state change
-                captureInputValues();
+                console.log('Quiz selection - capturing input values...');
+                const captured = captureInputValues();
+                console.log('Captured values:', captured);
                 setFormData(prev => ({ ...prev, quizId: value }));
               }
             }}
