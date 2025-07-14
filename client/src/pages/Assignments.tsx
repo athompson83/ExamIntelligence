@@ -143,7 +143,7 @@ export default function Assignments() {
         }
       });
     }
-  }, [selectedStudents, selectedSections, preservedValues, showCreateModal, editingAssignment]);
+  }, [selectedStudents, selectedSections, formData, preservedValues, showCreateModal, editingAssignment]);
 
   // Native event listeners for input tracking (no re-renders)
   useEffect(() => {
@@ -179,8 +179,10 @@ export default function Assignments() {
 
   // Direct form change handler that doesn't cause re-renders
   const handleFormChange = useCallback((field: string, value: any) => {
+    // Capture input values before any form state change
+    captureInputValues();
     setFormData(prev => ({ ...prev, [field]: value }));
-  }, []);
+  }, [captureInputValues]);
 
 
 
