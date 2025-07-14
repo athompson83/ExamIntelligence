@@ -101,10 +101,24 @@ export default function Assignments() {
     availableFrom: HTMLInputElement | null;
     availableTo: HTMLInputElement | null;
     dueDate: HTMLInputElement | null;
+    timeLimit: HTMLInputElement | null;
+    maxAttempts: HTMLInputElement | null;
+    percentLostPerDay: HTMLInputElement | null;
+    maxLateDays: HTMLInputElement | null;
+    catMinQuestions: HTMLInputElement | null;
+    catMaxQuestions: HTMLInputElement | null;
+    catDifficultyTarget: HTMLInputElement | null;
   }>({
     availableFrom: null,
     availableTo: null,
-    dueDate: null
+    dueDate: null,
+    timeLimit: null,
+    maxAttempts: null,
+    percentLostPerDay: null,
+    maxLateDays: null,
+    catMinQuestions: null,
+    catMaxQuestions: null,
+    catDifficultyTarget: null
   });
   
   // Stable value preservation state - only used for restoration
@@ -113,7 +127,14 @@ export default function Assignments() {
     description: '', 
     availableFrom: '', 
     availableTo: '', 
-    dueDate: '' 
+    dueDate: '',
+    timeLimit: '',
+    maxAttempts: '',
+    percentLostPerDay: '',
+    maxLateDays: '',
+    catMinQuestions: '',
+    catMaxQuestions: '',
+    catDifficultyTarget: ''
   });
 
   // Initialize input values when form opens
@@ -124,9 +145,20 @@ export default function Assignments() {
       const availableFrom = formData.availableFrom || '';
       const availableTo = formData.availableTo || '';
       const dueDate = formData.dueDate || '';
+      const timeLimit = String(formData.timeLimit || 60);
+      const maxAttempts = String(formData.maxAttempts || 1);
+      const percentLostPerDay = String(formData.percentLostPerDay || 10);
+      const maxLateDays = String(formData.maxLateDays || 7);
+      const catMinQuestions = String(formData.catMinQuestions || 10);
+      const catMaxQuestions = String(formData.catMaxQuestions || 50);
+      const catDifficultyTarget = String(formData.catDifficultyTarget || 0.5);
       
       // Set preserved values
-      setPreservedValues({ title, description, availableFrom, availableTo, dueDate });
+      setPreservedValues({ 
+        title, description, availableFrom, availableTo, dueDate,
+        timeLimit, maxAttempts, percentLostPerDay, maxLateDays,
+        catMinQuestions, catMaxQuestions, catDifficultyTarget
+      });
       
       // Set DOM values directly (uncontrolled)
       if (titleRef.current) titleRef.current.value = title;
@@ -134,8 +166,15 @@ export default function Assignments() {
       if (dateRefs.current.availableFrom) dateRefs.current.availableFrom.value = availableFrom;
       if (dateRefs.current.availableTo) dateRefs.current.availableTo.value = availableTo;
       if (dateRefs.current.dueDate) dateRefs.current.dueDate.value = dueDate;
+      if (dateRefs.current.timeLimit) dateRefs.current.timeLimit.value = timeLimit;
+      if (dateRefs.current.maxAttempts) dateRefs.current.maxAttempts.value = maxAttempts;
+      if (dateRefs.current.percentLostPerDay) dateRefs.current.percentLostPerDay.value = percentLostPerDay;
+      if (dateRefs.current.maxLateDays) dateRefs.current.maxLateDays.value = maxLateDays;
+      if (dateRefs.current.catMinQuestions) dateRefs.current.catMinQuestions.value = catMinQuestions;
+      if (dateRefs.current.catMaxQuestions) dateRefs.current.catMaxQuestions.value = catMaxQuestions;
+      if (dateRefs.current.catDifficultyTarget) dateRefs.current.catDifficultyTarget.value = catDifficultyTarget;
     }
-  }, [showCreateModal, editingAssignment, formData.title, formData.description, formData.availableFrom, formData.availableTo, formData.dueDate]);
+  }, [showCreateModal, editingAssignment, formData]);
 
   // Capture current input values before any state changes
   const captureInputValues = useCallback(() => {
@@ -144,7 +183,14 @@ export default function Assignments() {
       description: descriptionRef.current?.value || '',
       availableFrom: dateRefs.current.availableFrom?.value || '',
       availableTo: dateRefs.current.availableTo?.value || '',
-      dueDate: dateRefs.current.dueDate?.value || ''
+      dueDate: dateRefs.current.dueDate?.value || '',
+      timeLimit: dateRefs.current.timeLimit?.value || '',
+      maxAttempts: dateRefs.current.maxAttempts?.value || '',
+      percentLostPerDay: dateRefs.current.percentLostPerDay?.value || '',
+      maxLateDays: dateRefs.current.maxLateDays?.value || '',
+      catMinQuestions: dateRefs.current.catMinQuestions?.value || '',
+      catMaxQuestions: dateRefs.current.catMaxQuestions?.value || '',
+      catDifficultyTarget: dateRefs.current.catDifficultyTarget?.value || ''
     };
     
     // Update preserved values and formDataRef
@@ -157,7 +203,7 @@ export default function Assignments() {
   // Restore input values after state changes
   useEffect(() => {
     // Only restore if form is open and we have preserved values
-    if ((showCreateModal || editingAssignment) && (preservedValues.title || preservedValues.description || preservedValues.availableFrom || preservedValues.availableTo || preservedValues.dueDate)) {
+    if ((showCreateModal || editingAssignment) && Object.values(preservedValues).some(val => val !== '')) {
       requestAnimationFrame(() => {
         if (titleRef.current && titleRef.current.value !== preservedValues.title) {
           titleRef.current.value = preservedValues.title;
@@ -173,6 +219,27 @@ export default function Assignments() {
         }
         if (dateRefs.current.dueDate && dateRefs.current.dueDate.value !== preservedValues.dueDate) {
           dateRefs.current.dueDate.value = preservedValues.dueDate;
+        }
+        if (dateRefs.current.timeLimit && dateRefs.current.timeLimit.value !== preservedValues.timeLimit) {
+          dateRefs.current.timeLimit.value = preservedValues.timeLimit;
+        }
+        if (dateRefs.current.maxAttempts && dateRefs.current.maxAttempts.value !== preservedValues.maxAttempts) {
+          dateRefs.current.maxAttempts.value = preservedValues.maxAttempts;
+        }
+        if (dateRefs.current.percentLostPerDay && dateRefs.current.percentLostPerDay.value !== preservedValues.percentLostPerDay) {
+          dateRefs.current.percentLostPerDay.value = preservedValues.percentLostPerDay;
+        }
+        if (dateRefs.current.maxLateDays && dateRefs.current.maxLateDays.value !== preservedValues.maxLateDays) {
+          dateRefs.current.maxLateDays.value = preservedValues.maxLateDays;
+        }
+        if (dateRefs.current.catMinQuestions && dateRefs.current.catMinQuestions.value !== preservedValues.catMinQuestions) {
+          dateRefs.current.catMinQuestions.value = preservedValues.catMinQuestions;
+        }
+        if (dateRefs.current.catMaxQuestions && dateRefs.current.catMaxQuestions.value !== preservedValues.catMaxQuestions) {
+          dateRefs.current.catMaxQuestions.value = preservedValues.catMaxQuestions;
+        }
+        if (dateRefs.current.catDifficultyTarget && dateRefs.current.catDifficultyTarget.value !== preservedValues.catDifficultyTarget) {
+          dateRefs.current.catDifficultyTarget.value = preservedValues.catDifficultyTarget;
         }
       });
     }
@@ -513,7 +580,14 @@ export default function Assignments() {
       description: descriptionRef.current?.value || formData.description,
       availableFrom: dateRefs.current.availableFrom?.value || formData.availableFrom,
       availableTo: dateRefs.current.availableTo?.value || formData.availableTo,
-      dueDate: dateRefs.current.dueDate?.value || formData.dueDate
+      dueDate: dateRefs.current.dueDate?.value || formData.dueDate,
+      timeLimit: parseInt(dateRefs.current.timeLimit?.value || '') || formData.timeLimit,
+      maxAttempts: parseInt(dateRefs.current.maxAttempts?.value || '') || formData.maxAttempts,
+      percentLostPerDay: parseInt(dateRefs.current.percentLostPerDay?.value || '') || formData.percentLostPerDay,
+      maxLateDays: parseInt(dateRefs.current.maxLateDays?.value || '') || formData.maxLateDays,
+      catMinQuestions: parseInt(dateRefs.current.catMinQuestions?.value || '') || formData.catMinQuestions,
+      catMaxQuestions: parseInt(dateRefs.current.catMaxQuestions?.value || '') || formData.catMaxQuestions,
+      catDifficultyTarget: parseFloat(dateRefs.current.catDifficultyTarget?.value || '') || formData.catDifficultyTarget
     };
     
     console.log('Assignment data prepared:', assignmentData);
@@ -640,7 +714,11 @@ export default function Assignments() {
         });
         
         // Reset preserved values
-        setPreservedValues({ title: '', description: '', availableFrom: '', availableTo: '', dueDate: '' });
+        setPreservedValues({ 
+          title: '', description: '', availableFrom: '', availableTo: '', dueDate: '',
+          timeLimit: '', maxAttempts: '', percentLostPerDay: '', maxLateDays: '',
+          catMinQuestions: '', catMaxQuestions: '', catDifficultyTarget: ''
+        });
         
         // Clear input fields
         if (titleRef.current) titleRef.current.value = '';
@@ -648,6 +726,13 @@ export default function Assignments() {
         if (dateRefs.current.availableFrom) dateRefs.current.availableFrom.value = '';
         if (dateRefs.current.availableTo) dateRefs.current.availableTo.value = '';
         if (dateRefs.current.dueDate) dateRefs.current.dueDate.value = '';
+        if (dateRefs.current.timeLimit) dateRefs.current.timeLimit.value = '';
+        if (dateRefs.current.maxAttempts) dateRefs.current.maxAttempts.value = '';
+        if (dateRefs.current.percentLostPerDay) dateRefs.current.percentLostPerDay.value = '';
+        if (dateRefs.current.maxLateDays) dateRefs.current.maxLateDays.value = '';
+        if (dateRefs.current.catMinQuestions) dateRefs.current.catMinQuestions.value = '';
+        if (dateRefs.current.catMaxQuestions) dateRefs.current.catMaxQuestions.value = '';
+        if (dateRefs.current.catDifficultyTarget) dateRefs.current.catDifficultyTarget.value = '';
       })
       .catch((error) => {
         console.error('Error creating assignments:', error);
@@ -1071,11 +1156,19 @@ export default function Assignments() {
         <div>
           <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
           <Input
+            ref={(el) => {
+              if (el) {
+                dateRefs.current.timeLimit = el;
+              }
+            }}
             id="timeLimit"
             name="timeLimit"
             type="number"
-            value={formData.timeLimit}
-            onChange={stableHandlers.timeLimit}
+            defaultValue={formData.timeLimit}
+            onChange={(e) => {
+              captureInputValues();
+              setFormData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }));
+            }}
             min={1}
             required
           />
@@ -1083,11 +1176,19 @@ export default function Assignments() {
         <div>
           <Label htmlFor="maxAttempts">Max Attempts</Label>
           <Input
+            ref={(el) => {
+              if (el) {
+                dateRefs.current.maxAttempts = el;
+              }
+            }}
             id="maxAttempts"
             name="maxAttempts"
             type="number"
-            value={formData.maxAttempts}
-            onChange={stableHandlers.maxAttempts}
+            defaultValue={formData.maxAttempts}
+            onChange={(e) => {
+              captureInputValues();
+              setFormData(prev => ({ ...prev, maxAttempts: parseInt(e.target.value) || 1 }));
+            }}
             min={1}
             required
           />
@@ -1112,11 +1213,19 @@ export default function Assignments() {
               <div>
                 <Label htmlFor="percentLostPerDay">Percentage Lost Per Day Late</Label>
                 <Input
+                  ref={(el) => {
+                    if (el) {
+                      dateRefs.current.percentLostPerDay = el;
+                    }
+                  }}
                   id="percentLostPerDay"
                   name="percentLostPerDay"
                   type="number"
-                  value={formData.percentLostPerDay}
-                  onChange={stableHandlers.percentLostPerDay}
+                  defaultValue={formData.percentLostPerDay}
+                  onChange={(e) => {
+                    captureInputValues();
+                    setFormData(prev => ({ ...prev, percentLostPerDay: parseInt(e.target.value) || 10 }));
+                  }}
                   min={0}
                   max={100}
                   placeholder="10"
@@ -1125,11 +1234,19 @@ export default function Assignments() {
               <div>
                 <Label htmlFor="maxLateDays">Maximum Late Days Allowed</Label>
                 <Input
+                  ref={(el) => {
+                    if (el) {
+                      dateRefs.current.maxLateDays = el;
+                    }
+                  }}
                   id="maxLateDays"
                   name="maxLateDays"
                   type="number"
-                  value={formData.maxLateDays}
-                  onChange={stableHandlers.maxLateDays}
+                  defaultValue={formData.maxLateDays}
+                  onChange={(e) => {
+                    captureInputValues();
+                    setFormData(prev => ({ ...prev, maxLateDays: parseInt(e.target.value) || 7 }));
+                  }}
                   min={1}
                   placeholder="7"
                 />
@@ -1200,11 +1317,19 @@ export default function Assignments() {
                 <div>
                   <Label htmlFor="catMinQuestions">Minimum Questions</Label>
                   <Input
+                    ref={(el) => {
+                      if (el) {
+                        dateRefs.current.catMinQuestions = el;
+                      }
+                    }}
                     id="catMinQuestions"
                     name="catMinQuestions"
                     type="number"
-                    value={formData.catMinQuestions}
-                    onChange={stableHandlers.catMinQuestions}
+                    defaultValue={formData.catMinQuestions}
+                    onChange={(e) => {
+                      captureInputValues();
+                      setFormData(prev => ({ ...prev, catMinQuestions: parseInt(e.target.value) || 10 }));
+                    }}
                     min={5}
                     max={50}
                     placeholder="10"
@@ -1213,11 +1338,19 @@ export default function Assignments() {
                 <div>
                   <Label htmlFor="catMaxQuestions">Maximum Questions</Label>
                   <Input
+                    ref={(el) => {
+                      if (el) {
+                        dateRefs.current.catMaxQuestions = el;
+                      }
+                    }}
                     id="catMaxQuestions"
                     name="catMaxQuestions"
                     type="number"
-                    value={formData.catMaxQuestions}
-                    onChange={stableHandlers.catMaxQuestions}
+                    defaultValue={formData.catMaxQuestions}
+                    onChange={(e) => {
+                      captureInputValues();
+                      setFormData(prev => ({ ...prev, catMaxQuestions: parseInt(e.target.value) || 50 }));
+                    }}
                     min={10}
                     max={100}
                     placeholder="50"
@@ -1227,12 +1360,20 @@ export default function Assignments() {
               <div>
                 <Label htmlFor="catDifficultyTarget">Target Difficulty (0.0 - 1.0)</Label>
                 <Input
+                  ref={(el) => {
+                    if (el) {
+                      dateRefs.current.catDifficultyTarget = el;
+                    }
+                  }}
                   id="catDifficultyTarget"
                   name="catDifficultyTarget"
                   type="number"
                   step="0.1"
-                  value={formData.catDifficultyTarget}
-                  onChange={stableHandlers.catDifficultyTarget}
+                  defaultValue={formData.catDifficultyTarget}
+                  onChange={(e) => {
+                    captureInputValues();
+                    setFormData(prev => ({ ...prev, catDifficultyTarget: parseFloat(e.target.value) || 0.5 }));
+                  }}
                   min={0.1}
                   max={1.0}
                   placeholder="0.5"
