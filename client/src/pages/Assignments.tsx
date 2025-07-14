@@ -93,112 +93,32 @@ export default function Assignments() {
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
-  // Use refs to track form values without causing re-renders
-  const titleRef = useRef<HTMLInputElement>(null);
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  // Track form values stably
   const formDataRef = useRef(formData);
+  
+  // Stable input state that won't re-render during selections
+  const [titleValue, setTitleValue] = useState('');
+  const [descriptionValue, setDescriptionValue] = useState('');
 
-  // Bidirectional sync between formData and formDataRef
+  // Initialize input values when form opens
   useEffect(() => {
-    // Only update formDataRef if the values are different and not being actively typed
-    const titleInput = titleRef.current;
-    const descriptionInput = descriptionRef.current;
-    
-    const updatedRef = { ...formDataRef.current, ...formData };
-    
-    // If user is typing in title, preserve the current input value
-    if (titleInput && document.activeElement === titleInput) {
-      updatedRef.title = titleInput.value;
+    if (showCreateModal || editingAssignment) {
+      setTitleValue(formData.title || '');
+      setDescriptionValue(formData.description || '');
     }
-    
-    // If user is typing in description, preserve the current input value  
-    if (descriptionInput && document.activeElement === descriptionInput) {
-      updatedRef.description = descriptionInput.value;
+  }, [showCreateModal, editingAssignment, formData.title, formData.description]);
+
+  // Stable input handlers that never cause re-renders
+  const stableInputHandlers = useMemo(() => ({
+    title: (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTitleValue(e.target.value);
+      formDataRef.current = { ...formDataRef.current, title: e.target.value };
+    },
+    description: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setDescriptionValue(e.target.value);
+      formDataRef.current = { ...formDataRef.current, description: e.target.value };
     }
-    
-    formDataRef.current = updatedRef;
-  }, [formData]);
-
-  // Setup native event listeners and preserve input values across re-renders
-  useEffect(() => {
-    const titleInput = titleRef.current;
-    const descriptionInput = descriptionRef.current;
-
-    const handleTitleInput = (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      formDataRef.current = { ...formDataRef.current, title: target.value };
-    };
-
-    const handleDescriptionInput = (e: Event) => {
-      const target = e.target as HTMLTextAreaElement;
-      formDataRef.current = { ...formDataRef.current, description: target.value };
-    };
-
-    if (titleInput) {
-      titleInput.addEventListener('input', handleTitleInput);
-    }
-    if (descriptionInput) {
-      descriptionInput.addEventListener('input', handleDescriptionInput);
-    }
-
-    return () => {
-      if (titleInput) {
-        titleInput.removeEventListener('input', handleTitleInput);
-      }
-      if (descriptionInput) {
-        descriptionInput.removeEventListener('input', handleDescriptionInput);
-      }
-    };
-  }, []);
-
-  // Capture input values before any state changes
-  const captureInputValues = useCallback(() => {
-    const titleInput = titleRef.current;
-    const descriptionInput = descriptionRef.current;
-    
-    if (titleInput) {
-      formDataRef.current = { ...formDataRef.current, title: titleInput.value };
-    }
-    if (descriptionInput) {
-      formDataRef.current = { ...formDataRef.current, description: descriptionInput.value };
-    }
-  }, []);
-
-  // Preserve input values when component re-renders due to other state changes
-  useEffect(() => {
-    // Capture current values before any rendering occurs
-    captureInputValues();
-    
-    const restoreValues = () => {
-      const titleInput = titleRef.current;
-      const descriptionInput = descriptionRef.current;
-
-      // Always restore from ref after state changes
-      if (titleInput && titleInput.value !== formDataRef.current.title) {
-        titleInput.value = formDataRef.current.title;
-      }
-      
-      if (descriptionInput && descriptionInput.value !== formDataRef.current.description) {
-        descriptionInput.value = formDataRef.current.description;
-      }
-    };
-
-    // Use requestAnimationFrame to ensure DOM is ready
-    requestAnimationFrame(restoreValues);
-  }, [selectedStudents, selectedSections, formData.quizId, captureInputValues]);
-
-  // Initialize input values when form opens - but don't interfere with active typing
-  useEffect(() => {
-    const titleInput = titleRef.current;
-    const descriptionInput = descriptionRef.current;
-
-    if (titleInput && document.activeElement !== titleInput) {
-      titleInput.value = formData.title || '';
-    }
-    if (descriptionInput && document.activeElement !== descriptionInput) {
-      descriptionInput.value = formData.description || '';
-    }
-  }, [showCreateModal, editingAssignment]);
+  }), []);
 
   // Direct form change handler that doesn't cause re-renders
   const handleFormChange = useCallback((field: string, value: any) => {
@@ -633,11 +553,11 @@ export default function Assignments() {
       
       const formDataObj = new FormData();
       
-      // Collect values from refs and form data
+      // Collect values from stable state and form data
       const currentFormData = {
         ...formData,
-        title: titleRef.current?.value || formData.title,
-        description: descriptionRef.current?.value || formData.description
+        title: titleValue || formData.title,
+        description: descriptionValue || formData.description
       };
       
       // Add all form data
@@ -655,10 +575,10 @@ export default function Assignments() {
         <div>
           <Label htmlFor="title">Title</Label>
           <Input
-            ref={titleRef}
             id="title"
             name="title"
-            defaultValue={formData.title}
+            value={titleValue}
+            onChange={stableInputHandlers.title}
             required
             placeholder="Enter assignment title"
           />
@@ -703,10 +623,10 @@ export default function Assignments() {
       <div>
         <Label htmlFor="description">Description</Label>
         <textarea
-          ref={descriptionRef}
           id="description"
           name="description"
-          defaultValue={formData.description}
+          value={descriptionValue}
+          onChange={stableInputHandlers.description}
           className="w-full p-2 border border-gray-300 rounded-md"
           rows={3}
           placeholder="Assignment description..."
@@ -727,10 +647,7 @@ export default function Assignments() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => {
-                    captureInputValues();
-                    setSelectedStudents([]);
-                  }}
+                  onClick={() => setSelectedStudents([])}
                   disabled={selectedStudents.length === 0}
                 >
                   <X className="h-3 w-3 mr-1" />
@@ -757,9 +674,6 @@ export default function Assignments() {
                         id={`student-${student.id}`}
                         checked={selectedStudents.includes(student.id)}
                         onCheckedChange={(checked) => {
-                          // Capture input values before state change
-                          captureInputValues();
-                          
                           if (checked) {
                             setSelectedStudents([...selectedStudents, student.id]);
                           } else {
@@ -801,10 +715,7 @@ export default function Assignments() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => {
-                      captureInputValues();
-                      setSelectedSections([]);
-                    }}
+                    onClick={() => setSelectedSections([])}
                     disabled={selectedSections.length === 0}
                   >
                     <X className="h-3 w-3 mr-1" />
@@ -829,9 +740,6 @@ export default function Assignments() {
                         id={`section-${section.id}`}
                         checked={selectedSections.includes(section.id)}
                         onCheckedChange={(checked) => {
-                          // Capture input values before state change
-                          captureInputValues();
-                          
                           if (checked) {
                             setSelectedSections([...selectedSections, section.id]);
                           } else {
