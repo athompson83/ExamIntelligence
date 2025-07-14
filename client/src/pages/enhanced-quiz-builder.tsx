@@ -254,6 +254,14 @@ export default function EnhancedQuizBuilder() {
   const [editingGroup, setEditingGroup] = useState<EnhancedQuestionGroup | null>(null);
   const [isEditGroupDialogOpen, setIsEditGroupDialogOpen] = useState(false);
 
+  // Smart autosave functionality - only save when quiz actually changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const previousQuizRef = useRef<string>('');
+  const lastSavedQuizRef = useRef<string>('');
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [currentTab, setCurrentTab] = useState<string>('basic');
+  const previousTabRef = useRef<string>('basic');
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -466,31 +474,7 @@ export default function EnhancedQuizBuilder() {
     );
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
 
-    if (!over) return;
-
-    const activeId = String(active.id);
-    const overId = String(over.id);
-
-    // Handle dropping on a group (check if overId is a group ID)
-    const isGroupId = questionGroups.some(group => group.id === overId);
-    if (isGroupId) {
-      moveQuestionToGroup(activeId, overId);
-      return;
-    }
-
-    // Handle reordering within the same container
-    if (activeId !== overId) {
-      setQuizQuestions((items) => {
-        const oldIndex = items.findIndex((item) => item.id === activeId);
-        const newIndex = items.findIndex((item) => item.id === overId);
-
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
 
   // Function to move question to a specific group
   const moveQuestionToGroup = (questionId: string, groupId: string) => {
@@ -541,15 +525,7 @@ export default function EnhancedQuizBuilder() {
   });
 
   const availableQuestions = Array.isArray(questions) ? questions : [];
-  
-  // Smart autosave functionality - only save when quiz actually changes
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const previousQuizRef = useRef<string>('');
-  const lastSavedQuizRef = useRef<string>('');
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [currentTab, setCurrentTab] = useState<string>('basic');
-  const previousTabRef = useRef<string>('basic');
-  
+
   // Track changes to quiz state
   useEffect(() => {
     const currentQuizState = JSON.stringify(quiz);
@@ -569,14 +545,6 @@ export default function EnhancedQuizBuilder() {
     
     previousQuizRef.current = currentQuizState;
   }, [quiz, isInitialLoad]);
-
-  // Auto-save when tab changes and there are unsaved changes
-  useEffect(() => {
-    if (currentTab !== previousTabRef.current && hasUnsavedChanges && quiz.title) {
-      performAutoSave();
-    }
-    previousTabRef.current = currentTab;
-  }, [currentTab, hasUnsavedChanges]);
 
   // Auto-save function
   const performAutoSave = async () => {
@@ -616,6 +584,14 @@ export default function EnhancedQuizBuilder() {
       setIsAutoSaving(false);
     }
   };
+
+  // Auto-save when tab changes and there are unsaved changes
+  useEffect(() => {
+    if (currentTab !== previousTabRef.current && hasUnsavedChanges && quiz.title) {
+      performAutoSave();
+    }
+    previousTabRef.current = currentTab;
+  }, [currentTab, hasUnsavedChanges]);
 
   // Load existing quiz if id parameter is provided
   useEffect(() => {
