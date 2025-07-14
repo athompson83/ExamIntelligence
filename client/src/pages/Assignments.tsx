@@ -200,53 +200,47 @@ export default function Assignments() {
     return currentValues;
   }, []);
 
-  // Restore input values after state changes - only when preservedValues actually changes
-  useEffect(() => {
-    // Only restore if form is open and we have preserved values with actual content
-    if ((showCreateModal || editingAssignment) && (preservedValues.title || preservedValues.description)) {
-      console.log('Restoration effect triggered. Preserved values:', preservedValues);
-      requestAnimationFrame(() => {
-        if (titleRef.current && preservedValues.title && titleRef.current.value !== preservedValues.title) {
-          console.log('Restoring title:', preservedValues.title);
-          titleRef.current.value = preservedValues.title;
-        }
-        if (descriptionRef.current && preservedValues.description && descriptionRef.current.value !== preservedValues.description) {
-          console.log('Restoring description:', preservedValues.description);
-          descriptionRef.current.value = preservedValues.description;
-        }
-        if (dateRefs.current.availableFrom && preservedValues.availableFrom && dateRefs.current.availableFrom.value !== preservedValues.availableFrom) {
-          dateRefs.current.availableFrom.value = preservedValues.availableFrom;
-        }
-        if (dateRefs.current.availableTo && preservedValues.availableTo && dateRefs.current.availableTo.value !== preservedValues.availableTo) {
-          dateRefs.current.availableTo.value = preservedValues.availableTo;
-        }
-        if (dateRefs.current.dueDate && preservedValues.dueDate && dateRefs.current.dueDate.value !== preservedValues.dueDate) {
-          dateRefs.current.dueDate.value = preservedValues.dueDate;
-        }
-        if (dateRefs.current.timeLimit && preservedValues.timeLimit && dateRefs.current.timeLimit.value !== preservedValues.timeLimit) {
-          dateRefs.current.timeLimit.value = preservedValues.timeLimit;
-        }
-        if (dateRefs.current.maxAttempts && preservedValues.maxAttempts && dateRefs.current.maxAttempts.value !== preservedValues.maxAttempts) {
-          dateRefs.current.maxAttempts.value = preservedValues.maxAttempts;
-        }
-        if (dateRefs.current.percentLostPerDay && preservedValues.percentLostPerDay && dateRefs.current.percentLostPerDay.value !== preservedValues.percentLostPerDay) {
-          dateRefs.current.percentLostPerDay.value = preservedValues.percentLostPerDay;
-        }
-        if (dateRefs.current.maxLateDays && preservedValues.maxLateDays && dateRefs.current.maxLateDays.value !== preservedValues.maxLateDays) {
-          dateRefs.current.maxLateDays.value = preservedValues.maxLateDays;
-        }
-        if (dateRefs.current.catMinQuestions && preservedValues.catMinQuestions && dateRefs.current.catMinQuestions.value !== preservedValues.catMinQuestions) {
-          dateRefs.current.catMinQuestions.value = preservedValues.catMinQuestions;
-        }
-        if (dateRefs.current.catMaxQuestions && preservedValues.catMaxQuestions && dateRefs.current.catMaxQuestions.value !== preservedValues.catMaxQuestions) {
-          dateRefs.current.catMaxQuestions.value = preservedValues.catMaxQuestions;
-        }
-        if (dateRefs.current.catDifficultyTarget && preservedValues.catDifficultyTarget && dateRefs.current.catDifficultyTarget.value !== preservedValues.catDifficultyTarget) {
-          dateRefs.current.catDifficultyTarget.value = preservedValues.catDifficultyTarget;
-        }
-      });
-    }
-  }, [preservedValues, showCreateModal, editingAssignment]);
+  // Helper function to restore values directly
+  const restoreValues = useCallback((values: any) => {
+    requestAnimationFrame(() => {
+      if (titleRef.current && values.title) {
+        titleRef.current.value = values.title;
+      }
+      if (descriptionRef.current && values.description) {
+        descriptionRef.current.value = values.description;
+      }
+      if (dateRefs.current.availableFrom && values.availableFrom) {
+        dateRefs.current.availableFrom.value = values.availableFrom;
+      }
+      if (dateRefs.current.availableTo && values.availableTo) {
+        dateRefs.current.availableTo.value = values.availableTo;
+      }
+      if (dateRefs.current.dueDate && values.dueDate) {
+        dateRefs.current.dueDate.value = values.dueDate;
+      }
+      if (dateRefs.current.timeLimit && values.timeLimit) {
+        dateRefs.current.timeLimit.value = values.timeLimit;
+      }
+      if (dateRefs.current.maxAttempts && values.maxAttempts) {
+        dateRefs.current.maxAttempts.value = values.maxAttempts;
+      }
+      if (dateRefs.current.percentLostPerDay && values.percentLostPerDay) {
+        dateRefs.current.percentLostPerDay.value = values.percentLostPerDay;
+      }
+      if (dateRefs.current.maxLateDays && values.maxLateDays) {
+        dateRefs.current.maxLateDays.value = values.maxLateDays;
+      }
+      if (dateRefs.current.catMinQuestions && values.catMinQuestions) {
+        dateRefs.current.catMinQuestions.value = values.catMinQuestions;
+      }
+      if (dateRefs.current.catMaxQuestions && values.catMaxQuestions) {
+        dateRefs.current.catMaxQuestions.value = values.catMaxQuestions;
+      }
+      if (dateRefs.current.catDifficultyTarget && values.catDifficultyTarget) {
+        dateRefs.current.catDifficultyTarget.value = values.catDifficultyTarget;
+      }
+    });
+  }, []);
 
   // Native event listeners for input tracking (no re-renders)
   useEffect(() => {
@@ -833,53 +827,13 @@ export default function Assignments() {
                 window.location.href = '/quiz-builder';
               } else {
                 // Capture input values before state change
-                console.log('Quiz selection - capturing input values...');
                 const captured = captureInputValues();
-                console.log('Captured values:', captured);
                 
                 // Update state
                 setFormData(prev => ({ ...prev, quizId: value }));
                 
                 // Immediately restore values after state change
-                requestAnimationFrame(() => {
-                  if (titleRef.current && captured.title) {
-                    titleRef.current.value = captured.title;
-                  }
-                  if (descriptionRef.current && captured.description) {
-                    descriptionRef.current.value = captured.description;
-                  }
-                  if (dateRefs.current.availableFrom && captured.availableFrom) {
-                    dateRefs.current.availableFrom.value = captured.availableFrom;
-                  }
-                  if (dateRefs.current.availableTo && captured.availableTo) {
-                    dateRefs.current.availableTo.value = captured.availableTo;
-                  }
-                  if (dateRefs.current.dueDate && captured.dueDate) {
-                    dateRefs.current.dueDate.value = captured.dueDate;
-                  }
-                  if (dateRefs.current.timeLimit && captured.timeLimit) {
-                    dateRefs.current.timeLimit.value = captured.timeLimit;
-                  }
-                  if (dateRefs.current.maxAttempts && captured.maxAttempts) {
-                    dateRefs.current.maxAttempts.value = captured.maxAttempts;
-                  }
-                  if (dateRefs.current.percentLostPerDay && captured.percentLostPerDay) {
-                    dateRefs.current.percentLostPerDay.value = captured.percentLostPerDay;
-                  }
-                  if (dateRefs.current.maxLateDays && captured.maxLateDays) {
-                    dateRefs.current.maxLateDays.value = captured.maxLateDays;
-                  }
-                  if (dateRefs.current.catMinQuestions && captured.catMinQuestions) {
-                    dateRefs.current.catMinQuestions.value = captured.catMinQuestions;
-                  }
-                  if (dateRefs.current.catMaxQuestions && captured.catMaxQuestions) {
-                    dateRefs.current.catMaxQuestions.value = captured.catMaxQuestions;
-                  }
-                  if (dateRefs.current.catDifficultyTarget && captured.catDifficultyTarget) {
-                    dateRefs.current.catDifficultyTarget.value = captured.catDifficultyTarget;
-                  }
-                  console.log('Quiz selection - values restored immediately');
-                });
+                restoreValues(captured);
               }
             }}
           >
@@ -1252,8 +1206,9 @@ export default function Assignments() {
             name="allowLateSubmission"
             checked={formData.allowLateSubmission}
             onCheckedChange={(checked) => {
-              captureInputValues();
+              const captured = captureInputValues();
               setFormData(prev => ({ ...prev, allowLateSubmission: checked }));
+              restoreValues(captured);
             }}
           />
           <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
@@ -1317,8 +1272,9 @@ export default function Assignments() {
             name="showCorrectAnswers"
             checked={formData.showCorrectAnswers}
             onCheckedChange={(checked) => {
-              captureInputValues();
+              const captured = captureInputValues();
               setFormData(prev => ({ ...prev, showCorrectAnswers: checked }));
+              restoreValues(captured);
             }}
           />
           <Label htmlFor="showCorrectAnswers">Show Correct Answers After Submission</Label>
@@ -1330,8 +1286,9 @@ export default function Assignments() {
             name="enableQuestionFeedback"
             checked={formData.enableQuestionFeedback}
             onCheckedChange={(checked) => {
-              captureInputValues();
+              const captured = captureInputValues();
               setFormData(prev => ({ ...prev, enableQuestionFeedback: checked }));
+              restoreValues(captured);
             }}
           />
           <Label htmlFor="enableQuestionFeedback">Show Feedback for Answers and Questions</Label>
@@ -1343,8 +1300,9 @@ export default function Assignments() {
             name="requireProctoring"
             checked={formData.requireProctoring}
             onCheckedChange={(checked) => {
-              captureInputValues();
+              const captured = captureInputValues();
               setFormData(prev => ({ ...prev, requireProctoring: checked }));
+              restoreValues(captured);
             }}
           />
           <Label htmlFor="requireProctoring">Require Proctoring</Label>
@@ -1356,8 +1314,9 @@ export default function Assignments() {
             name="allowCalculator"
             checked={formData.allowCalculator}
             onCheckedChange={(checked) => {
-              captureInputValues();
+              const captured = captureInputValues();
               setFormData(prev => ({ ...prev, allowCalculator: checked }));
+              restoreValues(captured);
             }}
           />
           <Label htmlFor="allowCalculator">Allow Calculator</Label>
@@ -1371,8 +1330,9 @@ export default function Assignments() {
               name="catEnabled"
               checked={formData.catEnabled}
               onCheckedChange={(checked) => {
-                captureInputValues();
+                const captured = captureInputValues();
                 setFormData(prev => ({ ...prev, catEnabled: checked }));
+                restoreValues(captured);
               }}
             />
             <Label htmlFor="catEnabled">Enable Computer Adaptive Testing (CAT)</Label>
