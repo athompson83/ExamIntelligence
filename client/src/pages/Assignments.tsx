@@ -34,8 +34,20 @@ import {
   X,
   Check,
   UserPlus,
-  UsersIcon
+  UsersIcon,
+  Shield,
+  Calculator,
+  MessageCircle,
+  Timer,
+  Target,
+  Lock,
+  Key,
+  TrendingDown,
+  Separator as SeparatorIcon
 } from 'lucide-react';
+import { MultiSelect } from '@/components/ui/multi-select';
+import { EnhancedDatePicker } from '@/components/ui/enhanced-date-picker';
+import { Separator } from '@/components/ui/separator';
 
 interface Assignment {
   id: string;
@@ -83,13 +95,23 @@ export default function Assignments() {
     percentLostPerDay: 10,
     maxLateDays: 7,
     showCorrectAnswers: false,
+    showCorrectAnswersAt: 'after_submission',
+    showQuestionsAfterAttempt: false,
+    enableQuestionFeedback: false,
     requireProctoring: false,
     allowCalculator: false,
-    enableQuestionFeedback: false,
+    calculatorType: 'basic',
+    passwordProtected: false,
+    accessCode: '',
+    ipLocking: false,
+    allowedIPs: '',
+    // CAT Settings
     catEnabled: false,
     catMinQuestions: 10,
     catMaxQuestions: 50,
-    catDifficultyTarget: 0.5
+    catDifficultyTarget: 0.5,
+    catTerminationCriteria: 'standard_error',
+    catStandardError: 0.3
   });
   
   const [location] = useLocation();
@@ -186,13 +208,22 @@ export default function Assignments() {
         percentLostPerDay: 10,
         maxLateDays: 7,
         showCorrectAnswers: false,
+        showCorrectAnswersAt: 'after_submission',
+        showQuestionsAfterAttempt: false,
+        enableQuestionFeedback: false,
         requireProctoring: false,
         allowCalculator: false,
-        enableQuestionFeedback: false,
+        calculatorType: 'basic',
+        passwordProtected: false,
+        accessCode: '',
+        ipLocking: false,
+        allowedIPs: '',
         catEnabled: false,
         catMinQuestions: 10,
         catMaxQuestions: 50,
-        catDifficultyTarget: 0.5
+        catDifficultyTarget: 0.5,
+        catTerminationCriteria: 'standard_error',
+        catStandardError: 0.3
       });
       // Reset all input refs
       if (titleRef.current) titleRef.current.value = '';
@@ -461,235 +492,535 @@ export default function Assignments() {
   const AssignmentForm = () => {
     console.log('AssignmentForm rendering with quizzes:', quizzes, 'loading:', quizzesLoading);
     
+    // Convert students and sections to multiselect format
+    const studentOptions = students.map((student: any) => ({
+      id: student.id,
+      label: `${student.firstName} ${student.lastName}`,
+      value: student.id,
+      description: student.email
+    }));
+
+    const sectionOptions = sections.map((section: any) => ({
+      id: section.id,
+      label: section.name,
+      value: section.id,
+      description: `${section.memberCount || 0} students`
+    }));
+
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Basic Information */}
-        <div className="space-y-4">
-        <div>
-          <Label htmlFor="title">Assignment Title *</Label>
-          <Input
-            ref={titleRef}
-            id="title"
-            defaultValue={formData.title}
-            placeholder="Enter assignment title"
-            className="mt-1"
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Assignment Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="title">Assignment Title *</Label>
+                <Input
+                  ref={titleRef}
+                  id="title"
+                  placeholder="Enter assignment title"
+                  defaultValue={formData.title}
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="quiz">Select Quiz *</Label>
+                <Select 
+                  value={formData.quizId} 
+                  onValueChange={(value) => handleInputChange('quizId', value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder={quizzesLoading ? "Loading quizzes..." : "Select a quiz"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {quizzesLoading ? (
+                      <SelectItem value="loading" disabled>Loading...</SelectItem>
+                    ) : quizzes.length === 0 ? (
+                      <SelectItem value="no-quizzes" disabled>No quizzes available</SelectItem>
+                    ) : (
+                      quizzes.map((quiz: any) => (
+                        <SelectItem key={quiz.id} value={quiz.id}>
+                          {quiz.title}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-        <div>
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            ref={descriptionRef}
-            id="description"
-            defaultValue={formData.description}
-            placeholder="Enter assignment description"
-            className="mt-1"
-          />
-        </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                ref={descriptionRef}
+                id="description"
+                placeholder="Enter assignment description"
+                defaultValue={formData.description}
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-        <div>
-          <Label htmlFor="quizId">Select Quiz *</Label>
-          <Select 
-            value={formData.quizId} 
-            onValueChange={(value) => handleInputChange('quizId', value)}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder={quizzesLoading ? "Loading quizzes..." : "Select a quiz"} />
-            </SelectTrigger>
-            <SelectContent>
-              {quizzesLoading ? (
-                <SelectItem value="loading" disabled>Loading...</SelectItem>
-              ) : quizzes.length === 0 ? (
-                <SelectItem value="no-quizzes" disabled>No quizzes available</SelectItem>
-              ) : (
-                quizzes.map((quiz: any) => (
-                  <SelectItem key={quiz.id} value={quiz.id}>
-                    {quiz.title}
-                  </SelectItem>
-                ))
+        {/* Date Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Availability & Due Date
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <EnhancedDatePicker
+                label="Available From"
+                value={formData.availableFrom}
+                onChange={(value) => handleInputChange('availableFrom', value)}
+                showTime={true}
+              />
+              
+              <EnhancedDatePicker
+                label="Available To"
+                value={formData.availableTo}
+                onChange={(value) => handleInputChange('availableTo', value)}
+                showTime={true}
+              />
+              
+              <EnhancedDatePicker
+                label="Due Date *"
+                value={formData.dueDate}
+                onChange={(value) => handleInputChange('dueDate', value)}
+                showTime={true}
+                required={true}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Assignment Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Assignment Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
+                <Input
+                  ref={timeLimitRef}
+                  id="timeLimit"
+                  type="number"
+                  min="1"
+                  defaultValue={formData.timeLimit}
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="maxAttempts">Max Attempts</Label>
+                <Input
+                  ref={maxAttemptsRef}
+                  id="maxAttempts"
+                  type="number"
+                  min="1"
+                  defaultValue={formData.maxAttempts}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="allowLateSubmission"
+                    checked={formData.allowLateSubmission}
+                    onCheckedChange={(checked) => handleInputChange('allowLateSubmission', checked)}
+                  />
+                  <Label htmlFor="allowLateSubmission" className="flex items-center gap-2">
+                    <TrendingDown className="h-4 w-4" />
+                    Allow Late Submission
+                  </Label>
+                </div>
+              </div>
+
+              {/* Late Submission Settings */}
+              {formData.allowLateSubmission && (
+                <div className="ml-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="percentLostPerDay">Grade Decrease per Day (%)</Label>
+                      <Input
+                        ref={percentLostPerDayRef}
+                        id="percentLostPerDay"
+                        type="number"
+                        min="0"
+                        max="100"
+                        defaultValue={formData.percentLostPerDay}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="maxLateDays">Maximum Late Days</Label>
+                      <Input
+                        ref={maxLateDaysRef}
+                        id="maxLateDays"
+                        type="number"
+                        min="1"
+                        defaultValue={formData.maxLateDays}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Date Settings */}
-      <div className="space-y-4">
-        <h3 className="font-medium">Date Settings</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <Label htmlFor="availableFrom">Available From</Label>
-            <Input
-              id="availableFrom"
-              type="datetime-local"
-              value={formData.availableFrom}
-              onChange={(e) => handleInputChange('availableFrom', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+        {/* Security & Access */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Security & Access
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="requireProctoring"
+                    checked={formData.requireProctoring}
+                    onCheckedChange={(checked) => handleInputChange('requireProctoring', checked)}
+                  />
+                  <Label htmlFor="requireProctoring" className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Require Proctoring
+                  </Label>
+                </div>
 
-          <div>
-            <Label htmlFor="availableTo">Available To</Label>
-            <Input
-              id="availableTo"
-              type="datetime-local"
-              value={formData.availableTo}
-              onChange={(e) => handleInputChange('availableTo', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="passwordProtected"
+                    checked={formData.passwordProtected}
+                    onCheckedChange={(checked) => handleInputChange('passwordProtected', checked)}
+                  />
+                  <Label htmlFor="passwordProtected" className="flex items-center gap-2">
+                    <Key className="h-4 w-4" />
+                    Password Protected
+                  </Label>
+                </div>
 
-          <div>
-            <Label htmlFor="dueDate">Due Date *</Label>
-            <Input
-              id="dueDate"
-              type="datetime-local"
-              value={formData.dueDate}
-              onChange={(e) => handleInputChange('dueDate', e.target.value)}
-              className="mt-1"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Assignment Settings */}
-      <div className="space-y-4">
-        <h3 className="font-medium">Assignment Settings</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
-            <Input
-              ref={timeLimitRef}
-              id="timeLimit"
-              type="number"
-              defaultValue={formData.timeLimit}
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="maxAttempts">Max Attempts</Label>
-            <Input
-              ref={maxAttemptsRef}
-              id="maxAttempts"
-              type="number"
-              defaultValue={formData.maxAttempts}
-              className="mt-1"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="allowLateSubmission"
-              checked={formData.allowLateSubmission}
-              onCheckedChange={(checked) => handleInputChange('allowLateSubmission', checked)}
-            />
-            <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="showCorrectAnswers"
-              checked={formData.showCorrectAnswers}
-              onCheckedChange={(checked) => handleInputChange('showCorrectAnswers', checked)}
-            />
-            <Label htmlFor="showCorrectAnswers">Show Correct Answers</Label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="requireProctoring"
-              checked={formData.requireProctoring}
-              onCheckedChange={(checked) => handleInputChange('requireProctoring', checked)}
-            />
-            <Label htmlFor="requireProctoring">Require Proctoring</Label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="allowCalculator"
-              checked={formData.allowCalculator}
-              onCheckedChange={(checked) => handleInputChange('allowCalculator', checked)}
-            />
-            <Label htmlFor="allowCalculator">Allow Calculator</Label>
-          </div>
-        </div>
-      </div>
-
-      {/* Student Selection */}
-      <div className="space-y-4">
-        <h3 className="font-medium">Assign To</h3>
-        
-        <div className="max-h-60 overflow-y-auto border rounded-md p-4">
-          <div className="space-y-2">
-            <h4 className="font-medium">Students</h4>
-            {students.map((student: any) => (
-              <div key={student.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`student-${student.id}`}
-                  checked={selectedStudents.includes(student.id)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedStudents(prev => [...prev, student.id]);
-                    } else {
-                      setSelectedStudents(prev => prev.filter(id => id !== student.id));
-                    }
-                  }}
-                />
-                <Label htmlFor={`student-${student.id}`}>
-                  {student.firstName} {student.lastName} ({student.email})
-                </Label>
+                {formData.passwordProtected && (
+                  <div className="ml-6">
+                    <Label htmlFor="accessCode">Access Code</Label>
+                    <Input
+                      id="accessCode"
+                      type="text"
+                      placeholder="Enter access code"
+                      value={formData.accessCode}
+                      onChange={(e) => handleInputChange('accessCode', e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
 
-          <div className="mt-4 space-y-2">
-            <h4 className="font-medium">Sections</h4>
-            {sections.map((section: any) => (
-              <div key={section.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`section-${section.id}`}
-                  checked={selectedSections.includes(section.id)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedSections(prev => [...prev, section.id]);
-                    } else {
-                      setSelectedSections(prev => prev.filter(id => id !== section.id));
-                    }
-                  }}
-                />
-                <Label htmlFor={`section-${section.id}`}>
-                  {section.name} ({section.memberCount || 0} students)
-                </Label>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="ipLocking"
+                    checked={formData.ipLocking}
+                    onCheckedChange={(checked) => handleInputChange('ipLocking', checked)}
+                  />
+                  <Label htmlFor="ipLocking" className="flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    IP Address Locking
+                  </Label>
+                </div>
+
+                {formData.ipLocking && (
+                  <div className="ml-6">
+                    <Label htmlFor="allowedIPs">Allowed IP Addresses</Label>
+                    <Textarea
+                      id="allowedIPs"
+                      placeholder="Enter IP addresses (one per line)"
+                      value={formData.allowedIPs}
+                      onChange={(e) => handleInputChange('allowedIPs', e.target.value)}
+                      className="mt-1"
+                      rows={3}
+                    />
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Student Experience */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Student Experience
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="showCorrectAnswers"
+                    checked={formData.showCorrectAnswers}
+                    onCheckedChange={(checked) => handleInputChange('showCorrectAnswers', checked)}
+                  />
+                  <Label htmlFor="showCorrectAnswers" className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    Show Correct Answers
+                  </Label>
+                </div>
+
+                {formData.showCorrectAnswers && (
+                  <div className="ml-6">
+                    <Label htmlFor="showCorrectAnswersAt">Show Answers</Label>
+                    <Select
+                      value={formData.showCorrectAnswersAt}
+                      onValueChange={(value) => handleInputChange('showCorrectAnswersAt', value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="immediately">Immediately</SelectItem>
+                        <SelectItem value="after_submission">After Submission</SelectItem>
+                        <SelectItem value="after_due_date">After Due Date</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="showQuestionsAfterAttempt"
+                    checked={formData.showQuestionsAfterAttempt}
+                    onCheckedChange={(checked) => handleInputChange('showQuestionsAfterAttempt', checked)}
+                  />
+                  <Label htmlFor="showQuestionsAfterAttempt">Show Questions After Attempt</Label>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="enableQuestionFeedback"
+                    checked={formData.enableQuestionFeedback}
+                    onCheckedChange={(checked) => handleInputChange('enableQuestionFeedback', checked)}
+                  />
+                  <Label htmlFor="enableQuestionFeedback" className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Enable Question Feedback
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="allowCalculator"
+                    checked={formData.allowCalculator}
+                    onCheckedChange={(checked) => handleInputChange('allowCalculator', checked)}
+                  />
+                  <Label htmlFor="allowCalculator" className="flex items-center gap-2">
+                    <Calculator className="h-4 w-4" />
+                    Allow Calculator
+                  </Label>
+                </div>
+
+                {formData.allowCalculator && (
+                  <div className="ml-6">
+                    <Label htmlFor="calculatorType">Calculator Type</Label>
+                    <Select
+                      value={formData.calculatorType}
+                      onValueChange={(value) => handleInputChange('calculatorType', value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="basic">Basic</SelectItem>
+                        <SelectItem value="scientific">Scientific</SelectItem>
+                        <SelectItem value="graphing">Graphing</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Computer Adaptive Testing */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Computer Adaptive Testing (CAT)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="catEnabled"
+                checked={formData.catEnabled}
+                onCheckedChange={(checked) => handleInputChange('catEnabled', checked)}
+              />
+              <Label htmlFor="catEnabled" className="flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Enable Computer Adaptive Testing
+              </Label>
+            </div>
+
+            {formData.catEnabled && (
+              <div className="ml-6 p-4 bg-blue-50 border border-blue-200 rounded-md space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="catMinQuestions">Minimum Questions</Label>
+                    <Input
+                      id="catMinQuestions"
+                      type="number"
+                      min="1"
+                      value={formData.catMinQuestions}
+                      onChange={(e) => handleInputChange('catMinQuestions', parseInt(e.target.value))}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="catMaxQuestions">Maximum Questions</Label>
+                    <Input
+                      id="catMaxQuestions"
+                      type="number"
+                      min="1"
+                      value={formData.catMaxQuestions}
+                      onChange={(e) => handleInputChange('catMaxQuestions', parseInt(e.target.value))}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="catDifficultyTarget">Difficulty Target</Label>
+                    <Input
+                      id="catDifficultyTarget"
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={formData.catDifficultyTarget}
+                      onChange={(e) => handleInputChange('catDifficultyTarget', parseFloat(e.target.value))}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="catTerminationCriteria">Termination Criteria</Label>
+                    <Select
+                      value={formData.catTerminationCriteria}
+                      onValueChange={(value) => handleInputChange('catTerminationCriteria', value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="standard_error">Standard Error</SelectItem>
+                        <SelectItem value="max_questions">Maximum Questions</SelectItem>
+                        <SelectItem value="confidence_interval">Confidence Interval</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="catStandardError">Standard Error Threshold</Label>
+                    <Input
+                      id="catStandardError"
+                      type="number"
+                      min="0.1"
+                      max="1"
+                      step="0.1"
+                      value={formData.catStandardError}
+                      onChange={(e) => handleInputChange('catStandardError', parseFloat(e.target.value))}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Assignment Recipients */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Assignment Recipients
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label>Students</Label>
+                <MultiSelect
+                  options={studentOptions}
+                  selected={selectedStudents}
+                  onSelectionChange={setSelectedStudents}
+                  placeholder="Select students..."
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label>Sections</Label>
+                <MultiSelect
+                  options={sectionOptions}
+                  selected={selectedSections}
+                  onSelectionChange={setSelectedSections}
+                  placeholder="Select sections..."
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Submit Button */}
+        <div className="flex justify-end space-x-2 pt-4 border-t">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => setShowCreateModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleCreateAssignment}
+            disabled={createAssignmentMutation.isPending}
+          >
+            {createAssignmentMutation.isPending ? 'Creating...' : 'Create Assignment'}
+          </Button>
         </div>
       </div>
-
-      {/* Submit Button */}
-      <div className="flex justify-end space-x-2 pt-4 border-t">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => setShowCreateModal(false)}
-        >
-          Cancel
-        </Button>
-        <Button 
-          onClick={handleCreateAssignment}
-          disabled={createAssignmentMutation.isPending}
-        >
-          Create Assignment
-        </Button>
-      </div>
-    </div>
-  );
-};
+    );
+  };
 
   // Show loading spinner while data is being fetched
   if (isLoading) {
