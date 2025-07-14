@@ -66,6 +66,7 @@ interface Assignment {
   requireProctoring: boolean;
   allowCalculator: boolean;
   status: 'draft' | 'published' | 'archived';
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
   submissions: number;
@@ -383,6 +384,157 @@ export default function Assignments() {
       queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
     },
   });
+
+  // Update assignment mutation
+  const updateAssignmentMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await apiRequest(`/api/quiz-assignments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
+      toast({
+        title: 'Success',
+        description: 'Assignment updated successfully',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to update assignment',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Delete assignment mutation
+  const deleteAssignmentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest(`/api/quiz-assignments/${id}`, {
+        method: 'DELETE',
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/quiz-assignments'] });
+      toast({
+        title: 'Success',
+        description: 'Assignment deleted successfully',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete assignment',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Toggle active status
+  const toggleActiveStatus = (assignment: Assignment) => {
+    updateAssignmentMutation.mutate({
+      id: assignment.id,
+      data: { isActive: !assignment.isActive },
+    });
+  };
+
+  // Edit assignment
+  const handleEditAssignment = (assignment: Assignment) => {
+    setEditingAssignment(assignment);
+    setShowCreateModal(true);
+  };
+
+  // Delete assignment with confirmation
+  const handleDeleteAssignment = (assignment: Assignment) => {
+    if (window.confirm(`Are you sure you want to delete "${assignment.title}"? This action cannot be undone.`)) {
+      deleteAssignmentMutation.mutate(assignment.id);
+    }
+  };
+
+  // Handle updating existing assignment
+  const handleUpdateAssignment = useCallback(() => {
+    if (!editingAssignment) return;
+    
+    // Get current form data including text inputs from refs
+    const assignmentData = getCurrentFormData();
+    
+    // Validate required fields
+    if (!assignmentData.quizId || assignmentData.quizId === 'add-new' || assignmentData.quizId === 'no-quizzes') {
+      toast({
+        title: "Error",
+        description: "Please select a valid quiz",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!assignmentData.title || !assignmentData.dueDate) {
+      toast({
+        title: "Error", 
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Prepare update data
+    const updateData = {
+      title: assignmentData.title,
+      description: assignmentData.description,
+      quizId: assignmentData.quizId,
+      dueDate: assignmentData.dueDate,
+      availableFrom: assignmentData.availableFrom,
+      availableTo: assignmentData.availableTo,
+      timeLimit: assignmentData.timeLimit,
+      maxAttempts: assignmentData.maxAttempts,
+      allowLateSubmission: assignmentData.allowLateSubmission,
+      lateGradingOptions: assignmentData.allowLateSubmission ? {
+        percentLostPerDay: assignmentData.percentLostPerDay,
+        maxLateDays: assignmentData.maxLateDays
+      } : null,
+      showCorrectAnswers: assignmentData.showCorrectAnswers,
+      enableQuestionFeedback: assignmentData.enableQuestionFeedback,
+      requireProctoring: assignmentData.requireProctoring,
+      allowCalculator: assignmentData.allowCalculator,
+      catEnabled: assignmentData.catEnabled,
+      catOptions: assignmentData.catEnabled ? {
+        minQuestions: assignmentData.catMinQuestions,
+        maxQuestions: assignmentData.catMaxQuestions,
+        difficultyTarget: assignmentData.catDifficultyTarget,
+        enabled: true
+      } : null,
+      assignedById: 'test-user',
+      accountId: '00000000-0000-0000-0000-000000000001',
+      updatedAt: new Date().toISOString(),
+    };
+    
+    updateAssignmentMutation.mutate(
+      { id: editingAssignment.id, data: updateData },
+      {
+        onSuccess: () => {
+          setShowCreateModal(false);
+          setEditingAssignment(null);
+          toast({
+            title: "Success",
+            description: "Assignment updated successfully",
+          });
+        },
+        onError: (error) => {
+          console.error('Update assignment error:', error);
+          toast({
+            title: "Error",
+            description: "Failed to update assignment. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }
+    );
+  }, [editingAssignment, getCurrentFormData, updateAssignmentMutation]);
 
   // Clean assignment creation handler
   const handleCreateAssignment = useCallback(() => {
@@ -1029,10 +1181,13 @@ export default function Assignments() {
             Cancel
           </Button>
           <Button 
-            onClick={handleCreateAssignment}
-            disabled={createAssignmentMutation.isPending}
+            onClick={editingAssignment ? handleUpdateAssignment : handleCreateAssignment}
+            disabled={createAssignmentMutation.isPending || updateAssignmentMutation.isPending}
           >
-            {createAssignmentMutation.isPending ? 'Creating...' : 'Create Assignment'}
+            {editingAssignment 
+              ? (updateAssignmentMutation.isPending ? 'Updating...' : 'Update Assignment')
+              : (createAssignmentMutation.isPending ? 'Creating...' : 'Create Assignment')
+            }
           </Button>
         </div>
       </div>
@@ -1120,19 +1275,22 @@ export default function Assignments() {
                 <Card key={assignment.id} className="hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <CardTitle className="text-lg">{assignment.title}</CardTitle>
                         <p className="text-sm text-gray-600 mt-1">{assignment.description}</p>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 ml-4">
                         <Badge variant={assignment.status === 'published' ? 'default' : 'secondary'}>
                           {assignment.status}
+                        </Badge>
+                        <Badge variant={assignment.isActive ? 'default' : 'outline'}>
+                          {assignment.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-gray-400" />
                         <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
@@ -1143,11 +1301,48 @@ export default function Assignments() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Users className="h-4 w-4 text-gray-400" />
-                        <span>{assignment.submissions} submissions</span>
+                        <span>{assignment.submissions || 0} submissions</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <BookOpen className="h-4 w-4 text-gray-400" />
-                        <span>Avg: {assignment.averageScore}%</span>
+                        <span>Avg: {assignment.averageScore || 0}%</span>
+                      </div>
+                    </div>
+                    
+                    {/* Action buttons */}
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor={`active-${assignment.id}`} className="text-sm">
+                          {assignment.isActive ? 'Active' : 'Inactive'}
+                        </Label>
+                        <Switch
+                          id={`active-${assignment.id}`}
+                          checked={assignment.isActive}
+                          onCheckedChange={() => toggleActiveStatus(assignment)}
+                          disabled={updateAssignmentMutation.isPending}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditAssignment(assignment)}
+                          disabled={updateAssignmentMutation.isPending}
+                        >
+                          <Edit3 className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteAssignment(assignment)}
+                          disabled={deleteAssignmentMutation.isPending}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -1156,13 +1351,22 @@ export default function Assignments() {
             )}
           </div>
 
-          {/* Create Assignment Modal */}
-          <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+          {/* Create/Edit Assignment Modal */}
+          <Dialog open={showCreateModal} onOpenChange={(open) => {
+            setShowCreateModal(open);
+            if (!open) {
+              setEditingAssignment(null);
+            }
+          }}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create New Assignment</DialogTitle>
+                <DialogTitle>
+                  {editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
+                </DialogTitle>
                 <DialogDescription>
-                  Create a new assignment by selecting a quiz and configuring the assignment details.
+                  {editingAssignment 
+                    ? 'Update the assignment details and settings.' 
+                    : 'Create a new assignment by selecting a quiz and configuring the assignment details.'}
                 </DialogDescription>
               </DialogHeader>
               <div className="overflow-y-auto flex-1 px-2">
