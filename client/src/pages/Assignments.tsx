@@ -136,30 +136,42 @@ export default function Assignments() {
   }, []);
 
   // Preserve input values when component re-renders due to other state changes
+  // Use requestAnimationFrame to avoid interfering with active typing
   useEffect(() => {
-    const titleInput = titleRef.current;
-    const descriptionInput = descriptionRef.current;
+    const preserveValues = () => {
+      const titleInput = titleRef.current;
+      const descriptionInput = descriptionRef.current;
 
-    if (titleInput && formDataRef.current.title !== titleInput.value) {
-      titleInput.value = formDataRef.current.title;
-    }
-    if (descriptionInput && formDataRef.current.description !== descriptionInput.value) {
-      descriptionInput.value = formDataRef.current.description;
-    }
+      if (titleInput && formDataRef.current.title !== titleInput.value) {
+        // Only update if input is not currently focused (user not typing)
+        if (document.activeElement !== titleInput) {
+          titleInput.value = formDataRef.current.title;
+        }
+      }
+      if (descriptionInput && formDataRef.current.description !== descriptionInput.value) {
+        // Only update if input is not currently focused (user not typing)
+        if (document.activeElement !== descriptionInput) {
+          descriptionInput.value = formDataRef.current.description;
+        }
+      }
+    };
+
+    // Use requestAnimationFrame to avoid interrupting active typing
+    requestAnimationFrame(preserveValues);
   }, [selectedStudents, selectedSections, formData.quizId]);
 
-  // Initialize input values when form opens
+  // Initialize input values when form opens - but don't interfere with active typing
   useEffect(() => {
     const titleInput = titleRef.current;
     const descriptionInput = descriptionRef.current;
 
-    if (titleInput) {
+    if (titleInput && document.activeElement !== titleInput) {
       titleInput.value = formData.title || '';
     }
-    if (descriptionInput) {
+    if (descriptionInput && document.activeElement !== descriptionInput) {
       descriptionInput.value = formData.description || '';
     }
-  }, [isModalOpen, editingAssignment]);
+  }, [showCreateModal, editingAssignment]);
 
   // Direct form change handler that doesn't cause re-renders
   const handleFormChange = useCallback((field: string, value: any) => {
