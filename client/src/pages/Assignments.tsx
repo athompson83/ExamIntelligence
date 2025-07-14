@@ -43,7 +43,8 @@ import {
   Lock,
   Key,
   TrendingDown,
-  Separator as SeparatorIcon
+  Separator as SeparatorIcon,
+  FileText
 } from 'lucide-react';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { EnhancedDatePicker } from '@/components/ui/enhanced-date-picker';
