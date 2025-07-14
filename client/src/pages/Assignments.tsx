@@ -98,18 +98,50 @@ export default function Assignments() {
   // Refs for text inputs to prevent re-render issues
   const titleRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const timeLimitRef = useRef<HTMLInputElement>(null);
+  const maxAttemptsRef = useRef<HTMLInputElement>(null);
+  const percentLostPerDayRef = useRef<HTMLInputElement>(null);
+  const maxLateDaysRef = useRef<HTMLInputElement>(null);
 
-  // Simple form input handler for non-text inputs
-  const handleInputChange = useCallback((field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  // Function to capture all current input values
+  const captureInputValues = useCallback(() => {
+    const currentValues = {
+      title: titleRef.current?.value || '',
+      description: descriptionRef.current?.value || '',
+      timeLimit: parseInt(timeLimitRef.current?.value || '60'),
+      maxAttempts: parseInt(maxAttemptsRef.current?.value || '1'),
+      percentLostPerDay: parseInt(percentLostPerDayRef.current?.value || '10'),
+      maxLateDays: parseInt(maxLateDaysRef.current?.value || '7')
+    };
+    
+    // Update form data with captured values
+    setFormData(prev => ({
+      ...prev,
+      ...currentValues
+    }));
+    
+    return currentValues;
   }, []);
+
+  // Enhanced form input handler that preserves all inputs
+  const handleInputChange = useCallback((field: string, value: any) => {
+    // Capture current input values before state change
+    captureInputValues();
+    
+    // Update the specific field
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, [captureInputValues]);
 
   // Function to get current form data including text inputs
   const getCurrentFormData = useCallback(() => {
     return {
       ...formData,
       title: titleRef.current?.value || '',
-      description: descriptionRef.current?.value || ''
+      description: descriptionRef.current?.value || '',
+      timeLimit: parseInt(timeLimitRef.current?.value || '60'),
+      maxAttempts: parseInt(maxAttemptsRef.current?.value || '1'),
+      percentLostPerDay: parseInt(percentLostPerDayRef.current?.value || '10'),
+      maxLateDays: parseInt(maxLateDaysRef.current?.value || '7')
     };
   }, [formData]);
 
@@ -162,9 +194,13 @@ export default function Assignments() {
         catMaxQuestions: 50,
         catDifficultyTarget: 0.5
       });
-      // Reset text inputs
+      // Reset all input refs
       if (titleRef.current) titleRef.current.value = '';
       if (descriptionRef.current) descriptionRef.current.value = '';
+      if (timeLimitRef.current) timeLimitRef.current.value = '60';
+      if (maxAttemptsRef.current) maxAttemptsRef.current.value = '1';
+      if (percentLostPerDayRef.current) percentLostPerDayRef.current.value = '10';
+      if (maxLateDaysRef.current) maxLateDaysRef.current.value = '7';
     }
   }, [showCreateModal, editingAssignment]);
 
@@ -192,11 +228,43 @@ export default function Assignments() {
         catMaxQuestions: editingAssignment.catMaxQuestions || 50,
         catDifficultyTarget: editingAssignment.catDifficultyTarget || 0.5
       });
-      // Populate text inputs
+      // Populate all input refs
       if (titleRef.current) titleRef.current.value = editingAssignment.title || '';
       if (descriptionRef.current) descriptionRef.current.value = editingAssignment.description || '';
+      if (timeLimitRef.current) timeLimitRef.current.value = String(editingAssignment.timeLimit || 60);
+      if (maxAttemptsRef.current) maxAttemptsRef.current.value = String(editingAssignment.maxAttempts || 1);
+      if (percentLostPerDayRef.current) percentLostPerDayRef.current.value = String(editingAssignment.lateGradingOptions?.percentLostPerDay || 10);
+      if (maxLateDaysRef.current) maxLateDaysRef.current.value = String(editingAssignment.lateGradingOptions?.maxLateDays || 7);
     }
   }, [editingAssignment]);
+
+  // Effect to restore input values after form state changes
+  useEffect(() => {
+    const restoreInputValues = () => {
+      if (titleRef.current && formData.title && titleRef.current.value !== formData.title) {
+        titleRef.current.value = formData.title;
+      }
+      if (descriptionRef.current && formData.description && descriptionRef.current.value !== formData.description) {
+        descriptionRef.current.value = formData.description;
+      }
+      if (timeLimitRef.current && formData.timeLimit && timeLimitRef.current.value !== String(formData.timeLimit)) {
+        timeLimitRef.current.value = String(formData.timeLimit);
+      }
+      if (maxAttemptsRef.current && formData.maxAttempts && maxAttemptsRef.current.value !== String(formData.maxAttempts)) {
+        maxAttemptsRef.current.value = String(formData.maxAttempts);
+      }
+      if (percentLostPerDayRef.current && formData.percentLostPerDay && percentLostPerDayRef.current.value !== String(formData.percentLostPerDay)) {
+        percentLostPerDayRef.current.value = String(formData.percentLostPerDay);
+      }
+      if (maxLateDaysRef.current && formData.maxLateDays && maxLateDaysRef.current.value !== String(formData.maxLateDays)) {
+        maxLateDaysRef.current.value = String(formData.maxLateDays);
+      }
+    };
+
+    // Restore values after any form data change
+    const timeoutId = setTimeout(restoreInputValues, 0);
+    return () => clearTimeout(timeoutId);
+  }, [formData]);
 
   // Fetch data queries with proper error handling
   const { data: assignments = [], isLoading: assignmentsLoading, error: assignmentsError } = useQuery({
@@ -359,9 +427,13 @@ export default function Assignments() {
           catMaxQuestions: 50,
           catDifficultyTarget: 0.5
         });
-        // Reset text inputs
+        // Reset all input refs
         if (titleRef.current) titleRef.current.value = '';
         if (descriptionRef.current) descriptionRef.current.value = '';
+        if (timeLimitRef.current) timeLimitRef.current.value = '60';
+        if (maxAttemptsRef.current) maxAttemptsRef.current.value = '1';
+        if (percentLostPerDayRef.current) percentLostPerDayRef.current.value = '10';
+        if (maxLateDaysRef.current) maxLateDaysRef.current.value = '7';
       })
       .catch(error => {
         console.error('Error creating assignments:', error);
@@ -488,10 +560,10 @@ export default function Assignments() {
           <div>
             <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
             <Input
+              ref={timeLimitRef}
               id="timeLimit"
               type="number"
-              value={formData.timeLimit}
-              onChange={(e) => handleInputChange('timeLimit', parseInt(e.target.value) || 60)}
+              defaultValue={formData.timeLimit}
               className="mt-1"
             />
           </div>
@@ -499,10 +571,10 @@ export default function Assignments() {
           <div>
             <Label htmlFor="maxAttempts">Max Attempts</Label>
             <Input
+              ref={maxAttemptsRef}
               id="maxAttempts"
               type="number"
-              value={formData.maxAttempts}
-              onChange={(e) => handleInputChange('maxAttempts', parseInt(e.target.value) || 1)}
+              defaultValue={formData.maxAttempts}
               className="mt-1"
             />
           </div>
