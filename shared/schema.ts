@@ -847,16 +847,27 @@ export const quizAssignments = pgTable("quiz_assignments", {
   
   // Availability settings
   availableFrom: timestamp("available_from"),
-  availableUntil: timestamp("available_until"),
+  availableTo: timestamp("available_to"),
   dueDate: timestamp("due_date"),
   
   // Assignment settings
   maxAttempts: integer("max_attempts").default(1),
   timeLimit: integer("time_limit"), // in minutes
-  allowLateSubmissions: boolean("allow_late_submissions").default(false),
+  allowLateSubmission: boolean("allow_late_submission").default(false),
   lateGradingOptions: jsonb("late_grading_options"), // { percentLostPerDay: number, maxLateDays: number }
   
+  // Assignment-specific options (moved from quiz builder)
+  showCorrectAnswers: boolean("show_correct_answers").default(false),
+  enableQuestionFeedback: boolean("enable_question_feedback").default(false),
+  requireProctoring: boolean("require_proctoring").default(false),
+  allowCalculator: boolean("allow_calculator").default(false),
+  
+  // CAT (Computer Adaptive Testing) settings
+  catEnabled: boolean("cat_enabled").default(false),
+  catOptions: jsonb("cat_options"), // { minQuestions: number, maxQuestions: number, difficultyTarget: number }
+  
   // Status
+  status: varchar("status", { enum: ["draft", "published", "archived"] }).default("draft"),
   isActive: boolean("is_active").default(true),
   
   createdAt: timestamp("created_at").defaultNow(),

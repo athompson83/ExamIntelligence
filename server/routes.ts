@@ -4636,12 +4636,51 @@ Initialize all interactions with these principles as your foundation.`,
 
   app.post('/api/quiz-assignments', mockAuth, async (req, res) => {
     try {
-      const { quizId, assignedToUserId, assignedToSectionId, dueDate, maxAttempts, timeLimit, title, description, allowLateSubmissions, lateGradingOptions } = req.body;
+      const { 
+        quizId, 
+        assignedToUserId, 
+        assignedToSectionId, 
+        title, 
+        description, 
+        dueDate, 
+        availableFrom, 
+        availableTo,
+        timeLimit, 
+        maxAttempts, 
+        allowLateSubmission, 
+        percentLostPerDay,
+        maxLateDays,
+        showCorrectAnswers,
+        enableQuestionFeedback,
+        requireProctoring,
+        allowCalculator,
+        catEnabled,
+        catMinQuestions,
+        catMaxQuestions,
+        catDifficultyTarget
+      } = req.body;
+      
       const userId = req.user.id;
       const userAccountId = req.user.accountId || "00000000-0000-0000-0000-000000000001";
       
-      // Convert string date to Date object
+      // Convert string dates to Date objects
       const parsedDueDate = dueDate ? new Date(dueDate) : null;
+      const parsedAvailableFrom = availableFrom ? new Date(availableFrom) : null;
+      const parsedAvailableTo = availableTo ? new Date(availableTo) : null;
+      
+      // Prepare late grading options
+      const lateGradingOptions = allowLateSubmission ? {
+        percentLostPerDay: percentLostPerDay || 10,
+        maxLateDays: maxLateDays || 7
+      } : null;
+      
+      // Prepare CAT options
+      const catOptions = catEnabled ? {
+        enabled: true,
+        minQuestions: catMinQuestions || 10,
+        maxQuestions: catMaxQuestions || 50,
+        difficultyTarget: catDifficultyTarget || 0.5
+      } : null;
       
       const assignment = await storage.createQuizAssignment({
         quizId,
@@ -4649,13 +4688,22 @@ Initialize all interactions with these principles as your foundation.`,
         assignedToSectionId,
         assignedById: userId,
         accountId: userAccountId,
-        dueDate: parsedDueDate,
-        maxAttempts: maxAttempts || 1,
-        timeLimit: timeLimit || 60,
         title,
         description,
-        allowLateSubmissions: allowLateSubmissions || false,
-        lateGradingOptions: lateGradingOptions || null,
+        dueDate: parsedDueDate,
+        availableFrom: parsedAvailableFrom,
+        availableTo: parsedAvailableTo,
+        timeLimit: timeLimit || 60,
+        maxAttempts: maxAttempts || 1,
+        allowLateSubmission: allowLateSubmission || false,
+        lateGradingOptions: lateGradingOptions,
+        showCorrectAnswers: showCorrectAnswers || false,
+        enableQuestionFeedback: enableQuestionFeedback || false,
+        requireProctoring: requireProctoring || false,
+        allowCalculator: allowCalculator || false,
+        catEnabled: catEnabled || false,
+        catOptions: catOptions,
+        status: 'draft'
       });
 
       // Auto-generate study aids when quiz is assigned

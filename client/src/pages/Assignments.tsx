@@ -68,6 +68,27 @@ export default function Assignments() {
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const [showCreateSection, setShowCreateSection] = useState(false);
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    quizId: '',
+    dueDate: '',
+    availableFrom: '',
+    availableTo: '',
+    timeLimit: 60,
+    maxAttempts: 1,
+    allowLateSubmission: false,
+    percentLostPerDay: 10,
+    maxLateDays: 7,
+    showCorrectAnswers: false,
+    requireProctoring: false,
+    allowCalculator: false,
+    enableQuestionFeedback: false,
+    catEnabled: false,
+    catMinQuestions: 10,
+    catMaxQuestions: 50,
+    catDifficultyTarget: 0.5
+  });
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
@@ -80,17 +101,71 @@ export default function Assignments() {
   useEffect(() => {
     if (preSelectedQuizId && location.includes('/assignments')) {
       setShowCreateModal(true);
+      setFormData(prev => ({
+        ...prev,
+        quizId: preSelectedQuizId,
+        title: preSelectedQuizTitle ? `Assignment: ${preSelectedQuizTitle}` : '',
+      }));
     }
-  }, [preSelectedQuizId, location]);
+  }, [preSelectedQuizId, preSelectedQuizTitle, location]);
 
-  // Reset form states when modals are closed
+  // Reset form states when modals are closed or populate with editing data
   useEffect(() => {
     if (!showCreateModal && !editingAssignment) {
       setSelectedStudents([]);
       setSelectedSections([]);
       setStudentSearchTerm('');
+      // Reset form data to defaults
+      setFormData({
+        title: '',
+        description: '',
+        quizId: '',
+        dueDate: '',
+        availableFrom: '',
+        availableTo: '',
+        timeLimit: 60,
+        maxAttempts: 1,
+        allowLateSubmission: false,
+        percentLostPerDay: 10,
+        maxLateDays: 7,
+        showCorrectAnswers: false,
+        requireProctoring: false,
+        allowCalculator: false,
+        enableQuestionFeedback: false,
+        catEnabled: false,
+        catMinQuestions: 10,
+        catMaxQuestions: 50,
+        catDifficultyTarget: 0.5
+      });
     }
   }, [showCreateModal, editingAssignment]);
+
+  // Populate form when editing an assignment
+  useEffect(() => {
+    if (editingAssignment) {
+      setFormData({
+        title: editingAssignment.title || '',
+        description: editingAssignment.description || '',
+        quizId: editingAssignment.quizId || '',
+        dueDate: editingAssignment.dueDate?.slice(0, 16) || '',
+        availableFrom: editingAssignment.availableFrom?.slice(0, 16) || '',
+        availableTo: editingAssignment.availableTo?.slice(0, 16) || '',
+        timeLimit: editingAssignment.timeLimit || 60,
+        maxAttempts: editingAssignment.maxAttempts || 1,
+        allowLateSubmission: editingAssignment.allowLateSubmission || false,
+        percentLostPerDay: editingAssignment.lateGradingOptions?.percentLostPerDay || 10,
+        maxLateDays: editingAssignment.lateGradingOptions?.maxLateDays || 7,
+        showCorrectAnswers: editingAssignment.showCorrectAnswers || false,
+        requireProctoring: editingAssignment.requireProctoring || false,
+        allowCalculator: editingAssignment.allowCalculator || false,
+        enableQuestionFeedback: editingAssignment.enableQuestionFeedback || false,
+        catEnabled: editingAssignment.catEnabled || false,
+        catMinQuestions: editingAssignment.catMinQuestions || 10,
+        catMaxQuestions: editingAssignment.catMaxQuestions || 50,
+        catDifficultyTarget: editingAssignment.catDifficultyTarget || 0.5
+      });
+    }
+  }, [editingAssignment]);
 
   // Handle quiz selection change
   const handleQuizSelection = (value: string) => {
@@ -266,18 +341,12 @@ export default function Assignments() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateAssignment = (formData: FormData) => {
-    const quizId = formData.get('quizId') as string;
-    const title = formData.get('title') as string;
-    const dueDate = formData.get('dueDate') as string;
-    const timeLimit = parseInt(formData.get('timeLimit') as string);
-    const maxAttempts = parseInt(formData.get('maxAttempts') as string);
-    const allowLateSubmissions = formData.get('allowLateSubmission') === 'on';
-    const percentLostPerDay = parseInt(formData.get('percentLostPerDay') as string) || 10;
-    const maxLateDays = parseInt(formData.get('maxLateDays') as string) || 7;
+  const handleCreateAssignment = (formDataParam: FormData) => {
+    // Use the controlled form state instead of FormData
+    const assignmentData = formData;
     
     // Validate required fields
-    if (!quizId || quizId === 'add-new' || quizId === 'no-quizzes') {
+    if (!assignmentData.quizId || assignmentData.quizId === 'add-new' || assignmentData.quizId === 'no-quizzes') {
       toast({
         title: "Error",
         description: "Please select a valid quiz",
@@ -286,7 +355,7 @@ export default function Assignments() {
       return;
     }
     
-    if (!title || !dueDate) {
+    if (!assignmentData.title || !assignmentData.dueDate) {
       toast({
         title: "Error", 
         description: "Please fill in all required fields",
@@ -304,26 +373,31 @@ export default function Assignments() {
       return;
     }
     
-    // Prepare late grading options
-    const lateGradingOptions = allowLateSubmissions ? {
-      percentLostPerDay,
-      maxLateDays
-    } : null;
-    
     // Create multiple assignments - one for each student and section
     const assignments = [];
     
     // Create assignments for individual students
     for (const studentId of selectedStudents) {
       assignments.push({
-        quizId,
-        title,
-        description: formData.get('description'),
-        dueDate,
-        timeLimit,
-        maxAttempts,
-        allowLateSubmissions,
-        lateGradingOptions,
+        quizId: assignmentData.quizId,
+        title: assignmentData.title,
+        description: assignmentData.description,
+        dueDate: assignmentData.dueDate,
+        availableFrom: assignmentData.availableFrom,
+        availableTo: assignmentData.availableTo,
+        timeLimit: assignmentData.timeLimit,
+        maxAttempts: assignmentData.maxAttempts,
+        allowLateSubmission: assignmentData.allowLateSubmission,
+        percentLostPerDay: assignmentData.percentLostPerDay,
+        maxLateDays: assignmentData.maxLateDays,
+        showCorrectAnswers: assignmentData.showCorrectAnswers,
+        enableQuestionFeedback: assignmentData.enableQuestionFeedback,
+        requireProctoring: assignmentData.requireProctoring,
+        allowCalculator: assignmentData.allowCalculator,
+        catEnabled: assignmentData.catEnabled,
+        catMinQuestions: assignmentData.catMinQuestions,
+        catMaxQuestions: assignmentData.catMaxQuestions,
+        catDifficultyTarget: assignmentData.catDifficultyTarget,
         assignedToUserId: studentId,
         assignedToSectionId: null,
       });
@@ -332,14 +406,25 @@ export default function Assignments() {
     // Create assignments for sections
     for (const sectionId of selectedSections) {
       assignments.push({
-        quizId,
-        title,
-        description: formData.get('description'),
-        dueDate,
-        timeLimit,
-        maxAttempts,
-        allowLateSubmissions,
-        lateGradingOptions,
+        quizId: assignmentData.quizId,
+        title: assignmentData.title,
+        description: assignmentData.description,
+        dueDate: assignmentData.dueDate,
+        availableFrom: assignmentData.availableFrom,
+        availableTo: assignmentData.availableTo,
+        timeLimit: assignmentData.timeLimit,
+        maxAttempts: assignmentData.maxAttempts,
+        allowLateSubmission: assignmentData.allowLateSubmission,
+        percentLostPerDay: assignmentData.percentLostPerDay,
+        maxLateDays: assignmentData.maxLateDays,
+        showCorrectAnswers: assignmentData.showCorrectAnswers,
+        enableQuestionFeedback: assignmentData.enableQuestionFeedback,
+        requireProctoring: assignmentData.requireProctoring,
+        allowCalculator: assignmentData.allowCalculator,
+        catEnabled: assignmentData.catEnabled,
+        catMinQuestions: assignmentData.catMinQuestions,
+        catMaxQuestions: assignmentData.catMaxQuestions,
+        catDifficultyTarget: assignmentData.catDifficultyTarget,
         assignedToUserId: null,
         assignedToSectionId: sectionId,
       });
@@ -409,7 +494,18 @@ export default function Assignments() {
   const AssignmentForm = ({ assignment, onSubmit }: { assignment?: Assignment; onSubmit: (data: FormData) => void }) => (
     <form onSubmit={(e) => {
       e.preventDefault();
-      onSubmit(new FormData(e.target as HTMLFormElement));
+      const formDataObj = new FormData();
+      
+      // Add all form data from controlled state
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataObj.append(key, value.toString());
+      });
+      
+      // Add selected students and sections
+      formDataObj.append('selectedStudents', JSON.stringify(selectedStudents));
+      formDataObj.append('selectedSections', JSON.stringify(selectedSections));
+      
+      onSubmit(formDataObj);
     }} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -417,13 +513,24 @@ export default function Assignments() {
           <Input
             id="title"
             name="title"
-            defaultValue={assignment?.title || (preSelectedQuizTitle ? `Assignment: ${preSelectedQuizTitle}` : '')}
+            value={formData.title}
+            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
             required
           />
         </div>
         <div>
           <Label htmlFor="quizId">Quiz</Label>
-          <Select name="quizId" defaultValue={assignment?.quizId || preSelectedQuizId || ''} onValueChange={handleQuizSelection}>
+          <Select 
+            name="quizId" 
+            value={formData.quizId}
+            onValueChange={(value) => {
+              if (value === 'add-new') {
+                window.location.href = '/quiz-builder';
+              } else {
+                setFormData(prev => ({ ...prev, quizId: value }));
+              }
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select a quiz" />
             </SelectTrigger>
@@ -446,6 +553,19 @@ export default function Assignments() {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <textarea
+          id="description"
+          name="description"
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          className="w-full p-2 border border-gray-300 rounded-md"
+          rows={3}
+          placeholder="Assignment description..."
+        />
       </div>
 
       {/* Student and Section Selection */}
@@ -618,7 +738,8 @@ export default function Assignments() {
         <Textarea
           id="description"
           name="description"
-          defaultValue={assignment?.description}
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
           rows={3}
         />
       </div>
@@ -630,7 +751,8 @@ export default function Assignments() {
             id="availableFrom"
             name="availableFrom"
             type="datetime-local"
-            defaultValue={assignment?.availableFrom?.slice(0, 16)}
+            value={formData.availableFrom}
+            onChange={(e) => setFormData(prev => ({ ...prev, availableFrom: e.target.value }))}
           />
         </div>
         <div>
@@ -639,7 +761,8 @@ export default function Assignments() {
             id="availableTo"
             name="availableTo"
             type="datetime-local"
-            defaultValue={assignment?.availableTo?.slice(0, 16)}
+            value={formData.availableTo}
+            onChange={(e) => setFormData(prev => ({ ...prev, availableTo: e.target.value }))}
           />
         </div>
         <div>
@@ -648,7 +771,8 @@ export default function Assignments() {
             id="dueDate"
             name="dueDate"
             type="datetime-local"
-            defaultValue={assignment?.dueDate?.slice(0, 16)}
+            value={formData.dueDate}
+            onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
             required
           />
         </div>
@@ -661,7 +785,8 @@ export default function Assignments() {
             id="timeLimit"
             name="timeLimit"
             type="number"
-            defaultValue={assignment?.timeLimit || 60}
+            value={formData.timeLimit}
+            onChange={(e) => setFormData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }))}
             min={1}
             required
           />
@@ -672,7 +797,8 @@ export default function Assignments() {
             id="maxAttempts"
             name="maxAttempts"
             type="number"
-            defaultValue={assignment?.maxAttempts || 3}
+            value={formData.maxAttempts}
+            onChange={(e) => setFormData(prev => ({ ...prev, maxAttempts: parseInt(e.target.value) || 1 }))}
             min={1}
             required
           />
@@ -684,74 +810,150 @@ export default function Assignments() {
           <Switch
             id="allowLateSubmission"
             name="allowLateSubmission"
-            defaultChecked={assignment?.allowLateSubmission}
+            checked={formData.allowLateSubmission}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, allowLateSubmission: checked }))}
           />
           <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
         </div>
         
-        {/* Late Submission Grading Options */}
-        <div className="ml-6 space-y-2 border-l-2 border-gray-200 pl-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="percentLostPerDay">Percentage Lost Per Day Late</Label>
-              <Input
-                id="percentLostPerDay"
-                name="percentLostPerDay"
-                type="number"
-                defaultValue={assignment?.lateGradingOptions?.percentLostPerDay || 10}
-                min={0}
-                max={100}
-                placeholder="10"
-              />
+        {/* Late Submission Grading Options - Only show when late submission is enabled */}
+        {formData.allowLateSubmission && (
+          <div className="ml-6 space-y-2 border-l-2 border-gray-200 pl-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="percentLostPerDay">Percentage Lost Per Day Late</Label>
+                <Input
+                  id="percentLostPerDay"
+                  name="percentLostPerDay"
+                  type="number"
+                  value={formData.percentLostPerDay}
+                  onChange={(e) => setFormData(prev => ({ ...prev, percentLostPerDay: parseInt(e.target.value) || 10 }))}
+                  min={0}
+                  max={100}
+                  placeholder="10"
+                />
+              </div>
+              <div>
+                <Label htmlFor="maxLateDays">Maximum Late Days Allowed</Label>
+                <Input
+                  id="maxLateDays"
+                  name="maxLateDays"
+                  type="number"
+                  value={formData.maxLateDays}
+                  onChange={(e) => setFormData(prev => ({ ...prev, maxLateDays: parseInt(e.target.value) || 7 }))}
+                  min={1}
+                  placeholder="7"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="maxLateDays">Maximum Late Days Allowed</Label>
-              <Input
-                id="maxLateDays"
-                name="maxLateDays"
-                type="number"
-                defaultValue={assignment?.lateGradingOptions?.maxLateDays || 7}
-                min={1}
-                placeholder="7"
-              />
-            </div>
+            <p className="text-xs text-gray-500">
+              Example: {formData.percentLostPerDay}% lost per day for up to {formData.maxLateDays} days (after {formData.maxLateDays} days, assignment cannot be submitted)
+            </p>
           </div>
-          <p className="text-xs text-gray-500">
-            Example: 10% lost per day for up to 7 days (after 7 days, assignment cannot be submitted)
-          </p>
-        </div>
+        )}
         
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="shuffleQuestions"
-            name="shuffleQuestions"
-            defaultChecked={assignment?.shuffleQuestions}
-          />
-          <Label htmlFor="shuffleQuestions">Shuffle Questions</Label>
-        </div>
         <div className="flex items-center space-x-2">
           <Switch
             id="showCorrectAnswers"
             name="showCorrectAnswers"
-            defaultChecked={assignment?.showCorrectAnswers}
+            checked={formData.showCorrectAnswers}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, showCorrectAnswers: checked }))}
           />
           <Label htmlFor="showCorrectAnswers">Show Correct Answers After Submission</Label>
         </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="enableQuestionFeedback"
+            name="enableQuestionFeedback"
+            checked={formData.enableQuestionFeedback}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, enableQuestionFeedback: checked }))}
+          />
+          <Label htmlFor="enableQuestionFeedback">Show Feedback for Answers and Questions</Label>
+        </div>
+        
         <div className="flex items-center space-x-2">
           <Switch
             id="requireProctoring"
             name="requireProctoring"
-            defaultChecked={assignment?.requireProctoring}
+            checked={formData.requireProctoring}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requireProctoring: checked }))}
           />
           <Label htmlFor="requireProctoring">Require Proctoring</Label>
         </div>
+        
         <div className="flex items-center space-x-2">
           <Switch
             id="allowCalculator"
             name="allowCalculator"
-            defaultChecked={assignment?.allowCalculator}
+            checked={formData.allowCalculator}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, allowCalculator: checked }))}
           />
           <Label htmlFor="allowCalculator">Allow Calculator</Label>
+        </div>
+        
+        {/* CAT (Computer Adaptive Testing) Options */}
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="catEnabled"
+              name="catEnabled"
+              checked={formData.catEnabled}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, catEnabled: checked }))}
+            />
+            <Label htmlFor="catEnabled">Enable Computer Adaptive Testing (CAT)</Label>
+          </div>
+          
+          {/* CAT Settings - Only show when CAT is enabled */}
+          {formData.catEnabled && (
+            <div className="ml-6 space-y-3 border-l-2 border-gray-200 pl-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="catMinQuestions">Minimum Questions</Label>
+                  <Input
+                    id="catMinQuestions"
+                    name="catMinQuestions"
+                    type="number"
+                    value={formData.catMinQuestions}
+                    onChange={(e) => setFormData(prev => ({ ...prev, catMinQuestions: parseInt(e.target.value) || 10 }))}
+                    min={5}
+                    max={50}
+                    placeholder="10"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="catMaxQuestions">Maximum Questions</Label>
+                  <Input
+                    id="catMaxQuestions"
+                    name="catMaxQuestions"
+                    type="number"
+                    value={formData.catMaxQuestions}
+                    onChange={(e) => setFormData(prev => ({ ...prev, catMaxQuestions: parseInt(e.target.value) || 50 }))}
+                    min={10}
+                    max={100}
+                    placeholder="50"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="catDifficultyTarget">Target Difficulty (0.0 - 1.0)</Label>
+                <Input
+                  id="catDifficultyTarget"
+                  name="catDifficultyTarget"
+                  type="number"
+                  step="0.1"
+                  value={formData.catDifficultyTarget}
+                  onChange={(e) => setFormData(prev => ({ ...prev, catDifficultyTarget: parseFloat(e.target.value) || 0.5 }))}
+                  min={0.1}
+                  max={1.0}
+                  placeholder="0.5"
+                />
+              </div>
+              <p className="text-xs text-gray-500">
+                CAT will adapt question difficulty based on student performance, using between {formData.catMinQuestions} and {formData.catMaxQuestions} questions.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
