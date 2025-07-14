@@ -103,27 +103,37 @@ export default function Assignments() {
     formDataRef.current = formData;
   }, [formData]);
 
-  // Use uncontrolled inputs to prevent keyboard issues
-  const [isFormSubmitting, setIsFormSubmitting] = useState(false);
+  // Use controlled inputs with input value preservation
+  const [inputValues, setInputValues] = useState({
+    title: formData.title,
+    description: formData.description
+  });
 
-  // Direct form change handler without state updates during typing
-  const handleFormChange = useCallback((field: string, value: any) => {
-    // Only update state if not actively typing
-    if (!isFormSubmitting) {
-      setFormData(prev => ({ ...prev, [field]: value }));
+  // Preserve input values on re-renders
+  useEffect(() => {
+    if (titleRef.current && inputValues.title !== titleRef.current.value) {
+      titleRef.current.value = inputValues.title;
     }
-  }, [isFormSubmitting]);
+    if (descriptionRef.current && inputValues.description !== descriptionRef.current.value) {
+      descriptionRef.current.value = inputValues.description;
+    }
+  }, [inputValues]);
 
-  // Uncontrolled input handlers that prevent re-renders
+  // Direct form change handler
+  const handleFormChange = useCallback((field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Input handlers that preserve values during re-renders
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    // Direct DOM manipulation to prevent re-renders
     const value = e.target.value;
+    setInputValues(prev => ({ ...prev, title: value }));
     formDataRef.current = { ...formDataRef.current, title: value };
   }, []);
 
   const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    // Direct DOM manipulation to prevent re-renders
     const value = e.target.value;
+    setInputValues(prev => ({ ...prev, description: value }));
     formDataRef.current = { ...formDataRef.current, description: value };
   }, []);
 
@@ -550,15 +560,14 @@ export default function Assignments() {
   const AssignmentForm = ({ assignment, onSubmit }: { assignment?: Assignment; onSubmit: (data: FormData) => void }) => (
     <form onSubmit={(e) => {
       e.preventDefault();
-      setIsFormSubmitting(true);
       
       const formDataObj = new FormData();
       
-      // Collect values from uncontrolled inputs
+      // Collect values from inputs with preserved values
       const currentFormData = {
         ...formData,
-        title: titleRef.current?.value || formData.title,
-        description: descriptionRef.current?.value || formData.description
+        title: titleRef.current?.value || inputValues.title,
+        description: descriptionRef.current?.value || inputValues.description
       };
       
       // Add all form data
@@ -571,7 +580,6 @@ export default function Assignments() {
       formDataObj.append('selectedSections', JSON.stringify(selectedSections));
       
       onSubmit(formDataObj);
-      setIsFormSubmitting(false);
     }} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -802,16 +810,7 @@ export default function Assignments() {
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          name="description"
-          value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          rows={3}
-        />
-      </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
