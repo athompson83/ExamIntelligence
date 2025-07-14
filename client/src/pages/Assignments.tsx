@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -92,33 +93,47 @@ export default function Assignments() {
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
-  // Optimized input handlers to prevent keyboard issues
+  // Use refs to track form values without causing re-renders
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const formDataRef = useRef(formData);
+
+  // Update ref when formData changes
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
+  // Prevent component re-renders during input changes
+  const [localInputs, setLocalInputs] = useState({
+    title: formData.title,
+    description: formData.description
+  });
+
+  // Synchronous input handlers that prevent keyboard issues
   const handleFormChange = useCallback((field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  // Create memoized stable handlers to prevent re-renders
-  const stableHandlers = useMemo(() => ({
-    title: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('title', e.target.value),
-    description: (e: React.ChangeEvent<HTMLTextAreaElement>) => handleFormChange('description', e.target.value),
-    quizId: (value: string) => handleFormChange('quizId', value),
-    availableFrom: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('availableFrom', e.target.value),
-    availableTo: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('availableTo', e.target.value),
-    dueDate: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('dueDate', e.target.value),
-    timeLimit: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('timeLimit', parseInt(e.target.value) || 60),
-    maxAttempts: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('maxAttempts', parseInt(e.target.value) || 1),
-    allowLateSubmission: (checked: boolean) => handleFormChange('allowLateSubmission', checked),
-    percentLostPerDay: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('percentLostPerDay', parseInt(e.target.value) || 10),
-    maxLateDays: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('maxLateDays', parseInt(e.target.value) || 7),
-    showCorrectAnswers: (checked: boolean) => handleFormChange('showCorrectAnswers', checked),
-    enableQuestionFeedback: (checked: boolean) => handleFormChange('enableQuestionFeedback', checked),
-    requireProctoring: (checked: boolean) => handleFormChange('requireProctoring', checked),
-    allowCalculator: (checked: boolean) => handleFormChange('allowCalculator', checked),
-    catEnabled: (checked: boolean) => handleFormChange('catEnabled', checked),
-    catMinQuestions: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catMinQuestions', parseInt(e.target.value) || 10),
-    catMaxQuestions: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catMaxQuestions', parseInt(e.target.value) || 50),
-    catDifficultyTarget: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catDifficultyTarget', parseFloat(e.target.value) || 0.5)
-  }), [handleFormChange]);
+  // Sync local inputs with form data
+  useEffect(() => {
+    setLocalInputs({
+      title: formData.title,
+      description: formData.description
+    });
+  }, [formData.title, formData.description]);
+
+  // Local input handlers that prevent keyboard issues
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalInputs(prev => ({ ...prev, title: value }));
+    handleFormChange('title', value);
+  }, [handleFormChange]);
+
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setLocalInputs(prev => ({ ...prev, description: value }));
+    handleFormChange('description', value);
+  }, [handleFormChange]);
 
   // Parse URL parameters for pre-selected quiz
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -539,10 +554,11 @@ export default function Assignments() {
         <div>
           <Label htmlFor="title">Title</Label>
           <Input
+            ref={titleRef}
             id="title"
             name="title"
-            value={formData.title}
-            onChange={stableHandlers.title}
+            value={localInputs.title}
+            onChange={handleTitleChange}
             required
             placeholder="Enter assignment title"
           />
@@ -587,10 +603,11 @@ export default function Assignments() {
       <div>
         <Label htmlFor="description">Description</Label>
         <textarea
+          ref={descriptionRef}
           id="description"
           name="description"
-          value={formData.description}
-          onChange={stableHandlers.description}
+          value={localInputs.description}
+          onChange={handleDescriptionChange}
           className="w-full p-2 border border-gray-300 rounded-md"
           rows={3}
           placeholder="Assignment description..."
