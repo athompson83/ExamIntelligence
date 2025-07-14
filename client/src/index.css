@@ -37,6 +37,28 @@
     outline-offset: 2px;
   }
   
+  /* Enhanced date picker stability */
+  input[type="datetime-local"] {
+    position: relative;
+    z-index: 10;
+  }
+  
+  /* Prevent date picker from closing on navigation */
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    z-index: 11;
+    position: relative;
+  }
+  
+  /* Prevent date picker dropdown from closing during interaction */
+  input[type="datetime-local"]:focus {
+    pointer-events: auto;
+  }
+  
+  /* Ensure date picker dropdown stays open during month navigation */
+  input[type="datetime-local"]:focus-within {
+    pointer-events: auto;
+  }
+  
   /* Reduce motion for users who prefer it */
   @media (prefers-reduced-motion: reduce) {
     * {

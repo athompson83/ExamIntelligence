@@ -1076,12 +1076,30 @@ export default function Assignments() {
             name="availableFrom"
             type="datetime-local"
             defaultValue={formData.availableFrom}
-            onChange={(e) => {
-              // Update form data directly without triggering restoration
-              setFormData(prev => ({ ...prev, availableFrom: e.target.value }));
+            onBlur={(e) => {
+              // Only update when focus leaves the input
+              const value = e.target.value;
+              if (value !== formData.availableFrom) {
+                setFormData(prev => ({ ...prev, availableFrom: value }));
+              }
+            }}
+            onFocus={(e) => {
+              // Prevent event bubbling on focus
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              // Prevent event bubbling on click
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              // Prevent any mouse events from triggering state changes
+              e.stopPropagation();
+            }}
+            onKeyDown={(e) => {
+              // Prevent keyboard events from triggering state changes
+              e.stopPropagation();
             }}
             style={{ 
-              // Ensure the date picker remains visible on mobile
               position: 'relative',
               zIndex: 10
             }}
@@ -1100,12 +1118,30 @@ export default function Assignments() {
             name="availableTo"
             type="datetime-local"
             defaultValue={formData.availableTo}
-            onChange={(e) => {
-              // Update form data directly without triggering restoration
-              setFormData(prev => ({ ...prev, availableTo: e.target.value }));
+            onBlur={(e) => {
+              // Only update when focus leaves the input
+              const value = e.target.value;
+              if (value !== formData.availableTo) {
+                setFormData(prev => ({ ...prev, availableTo: value }));
+              }
+            }}
+            onFocus={(e) => {
+              // Prevent event bubbling on focus
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              // Prevent event bubbling on click
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              // Prevent any mouse events from triggering state changes
+              e.stopPropagation();
+            }}
+            onKeyDown={(e) => {
+              // Prevent keyboard events from triggering state changes
+              e.stopPropagation();
             }}
             style={{ 
-              // Ensure the date picker remains visible on mobile
               position: 'relative',
               zIndex: 10
             }}
@@ -1124,12 +1160,30 @@ export default function Assignments() {
             name="dueDate"
             type="datetime-local"
             defaultValue={formData.dueDate}
-            onChange={(e) => {
-              // Update form data directly without triggering restoration
-              setFormData(prev => ({ ...prev, dueDate: e.target.value }));
+            onBlur={(e) => {
+              // Only update when focus leaves the input
+              const value = e.target.value;
+              if (value !== formData.dueDate) {
+                setFormData(prev => ({ ...prev, dueDate: value }));
+              }
+            }}
+            onFocus={(e) => {
+              // Prevent event bubbling on focus
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              // Prevent event bubbling on click
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              // Prevent any mouse events from triggering state changes
+              e.stopPropagation();
+            }}
+            onKeyDown={(e) => {
+              // Prevent keyboard events from triggering state changes
+              e.stopPropagation();
             }}
             style={{ 
-              // Ensure the date picker remains visible on mobile
               position: 'relative',
               zIndex: 10
             }}

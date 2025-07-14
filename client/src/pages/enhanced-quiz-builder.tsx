@@ -1560,10 +1560,17 @@ export default function EnhancedQuizBuilder() {
                           value={quiz.availabilityStart instanceof Date 
                             ? quiz.availabilityStart.toISOString().slice(0, 16)
                             : quiz.availabilityStart || ""}
-                          onChange={(e) => setQuiz(prev => ({
-                            ...prev,
-                            availabilityStart: new Date(e.target.value)
-                          }))}
+                          onBlur={(e) => {
+                            const value = e.target.value;
+                            if (value) {
+                              setQuiz(prev => ({
+                                ...prev,
+                                availabilityStart: new Date(value)
+                              }));
+                            }
+                          }}
+                          onFocus={(e) => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                       <div className="space-y-2">
@@ -1574,10 +1581,17 @@ export default function EnhancedQuizBuilder() {
                           value={quiz.availabilityEnd instanceof Date 
                             ? quiz.availabilityEnd.toISOString().slice(0, 16)
                             : quiz.availabilityEnd || ""}
-                          onChange={(e) => setQuiz(prev => ({
-                            ...prev,
-                            availabilityEnd: new Date(e.target.value)
-                          }))}
+                          onBlur={(e) => {
+                            const value = e.target.value;
+                            if (value) {
+                              setQuiz(prev => ({
+                                ...prev,
+                                availabilityEnd: new Date(value)
+                              }));
+                            }
+                          }}
+                          onFocus={(e) => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
