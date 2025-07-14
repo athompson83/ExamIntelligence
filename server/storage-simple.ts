@@ -1078,29 +1078,8 @@ export class DatabaseStorage implements IStorage {
   // Quiz Assignment Methods
   async getQuizAssignments(): Promise<any[]> {
     try {
-      const assignments = await db
-        .select({
-          id: quizAssignments.id,
-          title: quizAssignments.title,
-          description: quizAssignments.description,
-          quizId: quizAssignments.quizId,
-          assignedToUserId: quizAssignments.assignedToUserId,
-          assignedToSectionId: quizAssignments.assignedToSectionId,
-          assignedById: quizAssignments.assignedById,
-          dueDate: quizAssignments.dueDate,
-          availableFrom: quizAssignments.availableFrom,
-          availableUntil: quizAssignments.availableUntil,
-          maxAttempts: quizAssignments.maxAttempts,
-          timeLimit: quizAssignments.timeLimit,
-          allowLateSubmissions: quizAssignments.allowLateSubmissions,
-          lateGradingOptions: quizAssignments.lateGradingOptions,
-          isActive: quizAssignments.isActive,
-          createdAt: quizAssignments.createdAt,
-          updatedAt: quizAssignments.updatedAt,
-        })
-        .from(quizAssignments);
-      
-      return assignments;
+      const assignments = await db.select().from(quizAssignments);
+      return assignments || [];
     } catch (error) {
       console.error('Error fetching quiz assignments:', error);
       return [];
@@ -1117,8 +1096,8 @@ export class DatabaseStorage implements IStorage {
       if (processedData.availableFrom && typeof processedData.availableFrom === 'string') {
         processedData.availableFrom = new Date(processedData.availableFrom);
       }
-      if (processedData.availableUntil && typeof processedData.availableUntil === 'string') {
-        processedData.availableUntil = new Date(processedData.availableUntil);
+      if (processedData.availableTo && typeof processedData.availableTo === 'string') {
+        processedData.availableTo = new Date(processedData.availableTo);
       }
       
       const [assignment] = await db
