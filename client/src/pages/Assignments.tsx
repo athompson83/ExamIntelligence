@@ -136,6 +136,9 @@ export default function Assignments() {
     catMaxQuestions: '',
     catDifficultyTarget: ''
   });
+  
+  // Flag to prevent restoration during date input changes
+  const [isDateInputActive, setIsDateInputActive] = useState(false);
 
   // Initialize input values when form opens - ONLY run when modal state changes
   useEffect(() => {
@@ -204,6 +207,9 @@ export default function Assignments() {
 
   // Helper function to restore values directly
   const restoreValues = useCallback((values: any) => {
+    // Don't restore if a date input is currently active
+    if (isDateInputActive) return;
+    
     requestAnimationFrame(() => {
       if (titleRef.current && values.title) {
         titleRef.current.value = values.title;
@@ -242,7 +248,7 @@ export default function Assignments() {
         dateRefs.current.catDifficultyTarget.value = values.catDifficultyTarget;
       }
     });
-  }, []);
+  }, [isDateInputActive]);
 
   // Native event listeners for input tracking (no re-renders)
   useEffect(() => {
@@ -834,8 +840,10 @@ export default function Assignments() {
                 // Update state
                 setFormData(prev => ({ ...prev, quizId: value }));
                 
-                // Immediately restore values after state change
-                restoreValues(captured);
+                // Immediately restore values after state change (but not during date input)
+                if (!isDateInputActive) {
+                  restoreValues(captured);
+                }
               }
             }}
           >
@@ -893,7 +901,9 @@ export default function Assignments() {
                   onClick={() => {
                     const captured = captureInputValues();
                     setSelectedStudents([]);
-                    restoreValues(captured);
+                    if (!isDateInputActive) {
+                      restoreValues(captured);
+                    }
                   }}
                   disabled={selectedStudents.length === 0}
                 >
@@ -930,8 +940,10 @@ export default function Assignments() {
                             setSelectedStudents(selectedStudents.filter(id => id !== student.id));
                           }
                           
-                          // Restore values after state change
-                          restoreValues(captured);
+                          // Restore values after state change (but not during date input)
+                          if (!isDateInputActive) {
+                            restoreValues(captured);
+                          }
                         }}
                       />
                       <div className="flex-1 min-w-0">
@@ -971,7 +983,9 @@ export default function Assignments() {
                     onClick={() => {
                       const captured = captureInputValues();
                       setSelectedSections([]);
-                      restoreValues(captured);
+                      if (!isDateInputActive) {
+                        restoreValues(captured);
+                      }
                     }}
                     disabled={selectedSections.length === 0}
                   >
@@ -1006,8 +1020,10 @@ export default function Assignments() {
                             setSelectedSections(selectedSections.filter(id => id !== section.id));
                           }
                           
-                          // Restore values after state change
-                          restoreValues(captured);
+                          // Restore values after state change (but not during date input)
+                          if (!isDateInputActive) {
+                            restoreValues(captured);
+                          }
                         }}
                       />
                       <div className="flex-1 min-w-0">
@@ -1076,12 +1092,16 @@ export default function Assignments() {
             name="availableFrom"
             type="datetime-local"
             defaultValue={formData.availableFrom}
+            onFocus={() => setIsDateInputActive(true)}
             onBlur={(e) => {
-              // Only update when focus leaves the input
+              // Only update when focus leaves the input - WITHOUT triggering preservation
               const value = e.target.value;
               if (value !== formData.availableFrom) {
+                // Update form data directly without triggering preservation system
+                formDataRef.current = { ...formDataRef.current, availableFrom: value };
                 setFormData(prev => ({ ...prev, availableFrom: value }));
               }
+              setIsDateInputActive(false);
             }}
             onFocus={(e) => {
               // Prevent event bubbling on focus
@@ -1118,12 +1138,16 @@ export default function Assignments() {
             name="availableTo"
             type="datetime-local"
             defaultValue={formData.availableTo}
+            onFocus={() => setIsDateInputActive(true)}
             onBlur={(e) => {
-              // Only update when focus leaves the input
+              // Only update when focus leaves the input - WITHOUT triggering preservation
               const value = e.target.value;
               if (value !== formData.availableTo) {
+                // Update form data directly without triggering preservation system
+                formDataRef.current = { ...formDataRef.current, availableTo: value };
                 setFormData(prev => ({ ...prev, availableTo: value }));
               }
+              setIsDateInputActive(false);
             }}
             onFocus={(e) => {
               // Prevent event bubbling on focus
@@ -1160,12 +1184,16 @@ export default function Assignments() {
             name="dueDate"
             type="datetime-local"
             defaultValue={formData.dueDate}
+            onFocus={() => setIsDateInputActive(true)}
             onBlur={(e) => {
-              // Only update when focus leaves the input
+              // Only update when focus leaves the input - WITHOUT triggering preservation
               const value = e.target.value;
               if (value !== formData.dueDate) {
+                // Update form data directly without triggering preservation system
+                formDataRef.current = { ...formDataRef.current, dueDate: value };
                 setFormData(prev => ({ ...prev, dueDate: value }));
               }
+              setIsDateInputActive(false);
             }}
             onFocus={(e) => {
               // Prevent event bubbling on focus
@@ -1245,7 +1273,9 @@ export default function Assignments() {
             onCheckedChange={(checked) => {
               const captured = captureInputValues();
               setFormData(prev => ({ ...prev, allowLateSubmission: checked }));
-              restoreValues(captured);
+              if (!isDateInputActive) {
+                restoreValues(captured);
+              }
             }}
           />
           <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
@@ -1311,7 +1341,9 @@ export default function Assignments() {
             onCheckedChange={(checked) => {
               const captured = captureInputValues();
               setFormData(prev => ({ ...prev, showCorrectAnswers: checked }));
-              restoreValues(captured);
+              if (!isDateInputActive) {
+                restoreValues(captured);
+              }
             }}
           />
           <Label htmlFor="showCorrectAnswers">Show Correct Answers After Submission</Label>
@@ -1325,7 +1357,9 @@ export default function Assignments() {
             onCheckedChange={(checked) => {
               const captured = captureInputValues();
               setFormData(prev => ({ ...prev, enableQuestionFeedback: checked }));
-              restoreValues(captured);
+              if (!isDateInputActive) {
+                restoreValues(captured);
+              }
             }}
           />
           <Label htmlFor="enableQuestionFeedback">Show Feedback for Answers and Questions</Label>
@@ -1339,7 +1373,9 @@ export default function Assignments() {
             onCheckedChange={(checked) => {
               const captured = captureInputValues();
               setFormData(prev => ({ ...prev, requireProctoring: checked }));
-              restoreValues(captured);
+              if (!isDateInputActive) {
+                restoreValues(captured);
+              }
             }}
           />
           <Label htmlFor="requireProctoring">Require Proctoring</Label>
@@ -1353,7 +1389,9 @@ export default function Assignments() {
             onCheckedChange={(checked) => {
               const captured = captureInputValues();
               setFormData(prev => ({ ...prev, allowCalculator: checked }));
-              restoreValues(captured);
+              if (!isDateInputActive) {
+                restoreValues(captured);
+              }
             }}
           />
           <Label htmlFor="allowCalculator">Allow Calculator</Label>
@@ -1369,7 +1407,9 @@ export default function Assignments() {
               onCheckedChange={(checked) => {
                 const captured = captureInputValues();
                 setFormData(prev => ({ ...prev, catEnabled: checked }));
-                restoreValues(captured);
+                if (!isDateInputActive) {
+                  restoreValues(captured);
+                }
               }}
             />
             <Label htmlFor="catEnabled">Enable Computer Adaptive Testing (CAT)</Label>
