@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -97,29 +97,28 @@ export default function Assignments() {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFormChange('title', e.target.value);
-  }, [handleFormChange]);
-
-  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    handleFormChange('description', e.target.value);
-  }, [handleFormChange]);
-
-  const handleDateChange = useCallback((field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFormChange(field, e.target.value);
-  }, [handleFormChange]);
-
-  const handleNumberChange = useCallback((field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (field === 'catDifficultyTarget') {
-      handleFormChange(field, parseFloat(e.target.value) || 0.5);
-    } else {
-      handleFormChange(field, parseInt(e.target.value) || (field === 'timeLimit' ? 60 : field === 'percentLostPerDay' ? 10 : field === 'maxLateDays' ? 7 : field === 'catMinQuestions' ? 10 : field === 'catMaxQuestions' ? 50 : 1));
-    }
-  }, [handleFormChange]);
-
-  const handleSwitchChange = useCallback((field: string) => (checked: boolean) => {
-    handleFormChange(field, checked);
-  }, [handleFormChange]);
+  // Create memoized stable handlers to prevent re-renders
+  const stableHandlers = useMemo(() => ({
+    title: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('title', e.target.value),
+    description: (e: React.ChangeEvent<HTMLTextAreaElement>) => handleFormChange('description', e.target.value),
+    quizId: (value: string) => handleFormChange('quizId', value),
+    availableFrom: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('availableFrom', e.target.value),
+    availableTo: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('availableTo', e.target.value),
+    dueDate: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('dueDate', e.target.value),
+    timeLimit: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('timeLimit', parseInt(e.target.value) || 60),
+    maxAttempts: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('maxAttempts', parseInt(e.target.value) || 1),
+    allowLateSubmission: (checked: boolean) => handleFormChange('allowLateSubmission', checked),
+    percentLostPerDay: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('percentLostPerDay', parseInt(e.target.value) || 10),
+    maxLateDays: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('maxLateDays', parseInt(e.target.value) || 7),
+    showCorrectAnswers: (checked: boolean) => handleFormChange('showCorrectAnswers', checked),
+    enableQuestionFeedback: (checked: boolean) => handleFormChange('enableQuestionFeedback', checked),
+    requireProctoring: (checked: boolean) => handleFormChange('requireProctoring', checked),
+    allowCalculator: (checked: boolean) => handleFormChange('allowCalculator', checked),
+    catEnabled: (checked: boolean) => handleFormChange('catEnabled', checked),
+    catMinQuestions: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catMinQuestions', parseInt(e.target.value) || 10),
+    catMaxQuestions: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catMaxQuestions', parseInt(e.target.value) || 50),
+    catDifficultyTarget: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catDifficultyTarget', parseFloat(e.target.value) || 0.5)
+  }), [handleFormChange]);
 
   // Parse URL parameters for pre-selected quiz
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -543,7 +542,7 @@ export default function Assignments() {
             id="title"
             name="title"
             value={formData.title}
-            onChange={handleTitleChange}
+            onChange={stableHandlers.title}
             required
             placeholder="Enter assignment title"
           />
@@ -557,7 +556,7 @@ export default function Assignments() {
               if (value === 'add-new') {
                 window.location.href = '/quiz-builder';
               } else {
-                setFormData(prev => ({ ...prev, quizId: value }));
+                stableHandlers.quizId(value);
               }
             }}
           >
@@ -591,7 +590,7 @@ export default function Assignments() {
           id="description"
           name="description"
           value={formData.description}
-          onChange={handleDescriptionChange}
+          onChange={stableHandlers.description}
           className="w-full p-2 border border-gray-300 rounded-md"
           rows={3}
           placeholder="Assignment description..."
@@ -782,7 +781,7 @@ export default function Assignments() {
             name="availableFrom"
             type="datetime-local"
             value={formData.availableFrom}
-            onChange={handleDateChange('availableFrom')}
+            onChange={stableHandlers.availableFrom}
           />
         </div>
         <div>
@@ -792,7 +791,7 @@ export default function Assignments() {
             name="availableTo"
             type="datetime-local"
             value={formData.availableTo}
-            onChange={handleDateChange('availableTo')}
+            onChange={stableHandlers.availableTo}
           />
         </div>
         <div>
@@ -802,7 +801,7 @@ export default function Assignments() {
             name="dueDate"
             type="datetime-local"
             value={formData.dueDate}
-            onChange={handleDateChange('dueDate')}
+            onChange={stableHandlers.dueDate}
             required
           />
         </div>
@@ -816,7 +815,7 @@ export default function Assignments() {
             name="timeLimit"
             type="number"
             value={formData.timeLimit}
-            onChange={handleNumberChange('timeLimit')}
+            onChange={stableHandlers.timeLimit}
             min={1}
             required
           />
@@ -828,7 +827,7 @@ export default function Assignments() {
             name="maxAttempts"
             type="number"
             value={formData.maxAttempts}
-            onChange={handleNumberChange('maxAttempts')}
+            onChange={stableHandlers.maxAttempts}
             min={1}
             required
           />
@@ -841,7 +840,7 @@ export default function Assignments() {
             id="allowLateSubmission"
             name="allowLateSubmission"
             checked={formData.allowLateSubmission}
-            onCheckedChange={handleSwitchChange('allowLateSubmission')}
+            onCheckedChange={stableHandlers.allowLateSubmission}
           />
           <Label htmlFor="allowLateSubmission">Allow Late Submission</Label>
         </div>
@@ -857,7 +856,7 @@ export default function Assignments() {
                   name="percentLostPerDay"
                   type="number"
                   value={formData.percentLostPerDay}
-                  onChange={handleNumberChange('percentLostPerDay')}
+                  onChange={stableHandlers.percentLostPerDay}
                   min={0}
                   max={100}
                   placeholder="10"
@@ -870,7 +869,7 @@ export default function Assignments() {
                   name="maxLateDays"
                   type="number"
                   value={formData.maxLateDays}
-                  onChange={handleNumberChange('maxLateDays')}
+                  onChange={stableHandlers.maxLateDays}
                   min={1}
                   placeholder="7"
                 />
@@ -887,7 +886,7 @@ export default function Assignments() {
             id="showCorrectAnswers"
             name="showCorrectAnswers"
             checked={formData.showCorrectAnswers}
-            onCheckedChange={handleSwitchChange('showCorrectAnswers')}
+            onCheckedChange={stableHandlers.showCorrectAnswers}
           />
           <Label htmlFor="showCorrectAnswers">Show Correct Answers After Submission</Label>
         </div>
@@ -897,7 +896,7 @@ export default function Assignments() {
             id="enableQuestionFeedback"
             name="enableQuestionFeedback"
             checked={formData.enableQuestionFeedback}
-            onCheckedChange={handleSwitchChange('enableQuestionFeedback')}
+            onCheckedChange={stableHandlers.enableQuestionFeedback}
           />
           <Label htmlFor="enableQuestionFeedback">Show Feedback for Answers and Questions</Label>
         </div>
@@ -907,7 +906,7 @@ export default function Assignments() {
             id="requireProctoring"
             name="requireProctoring"
             checked={formData.requireProctoring}
-            onCheckedChange={handleSwitchChange('requireProctoring')}
+            onCheckedChange={stableHandlers.requireProctoring}
           />
           <Label htmlFor="requireProctoring">Require Proctoring</Label>
         </div>
@@ -917,7 +916,7 @@ export default function Assignments() {
             id="allowCalculator"
             name="allowCalculator"
             checked={formData.allowCalculator}
-            onCheckedChange={handleSwitchChange('allowCalculator')}
+            onCheckedChange={stableHandlers.allowCalculator}
           />
           <Label htmlFor="allowCalculator">Allow Calculator</Label>
         </div>
@@ -929,7 +928,7 @@ export default function Assignments() {
               id="catEnabled"
               name="catEnabled"
               checked={formData.catEnabled}
-              onCheckedChange={handleSwitchChange('catEnabled')}
+              onCheckedChange={stableHandlers.catEnabled}
             />
             <Label htmlFor="catEnabled">Enable Computer Adaptive Testing (CAT)</Label>
           </div>
@@ -945,7 +944,7 @@ export default function Assignments() {
                     name="catMinQuestions"
                     type="number"
                     value={formData.catMinQuestions}
-                    onChange={handleNumberChange('catMinQuestions')}
+                    onChange={stableHandlers.catMinQuestions}
                     min={5}
                     max={50}
                     placeholder="10"
@@ -958,7 +957,7 @@ export default function Assignments() {
                     name="catMaxQuestions"
                     type="number"
                     value={formData.catMaxQuestions}
-                    onChange={handleNumberChange('catMaxQuestions')}
+                    onChange={stableHandlers.catMaxQuestions}
                     min={10}
                     max={100}
                     placeholder="50"
@@ -973,7 +972,7 @@ export default function Assignments() {
                   type="number"
                   step="0.1"
                   value={formData.catDifficultyTarget}
-                  onChange={handleNumberChange('catDifficultyTarget')}
+                  onChange={stableHandlers.catDifficultyTarget}
                   min={0.1}
                   max={1.0}
                   placeholder="0.5"
