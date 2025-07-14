@@ -211,6 +211,10 @@ export default function Assignments() {
     if (isDateInputActive) return;
     
     requestAnimationFrame(() => {
+      // Always preserve title and description during restoration
+      const currentTitle = titleRef.current?.value || '';
+      const currentDescription = descriptionRef.current?.value || '';
+      
       if (titleRef.current && values.title) {
         titleRef.current.value = values.title;
       }
@@ -247,6 +251,14 @@ export default function Assignments() {
       if (dateRefs.current.catDifficultyTarget && values.catDifficultyTarget) {
         dateRefs.current.catDifficultyTarget.value = values.catDifficultyTarget;
       }
+      
+      // Restore title and description if they were emptied
+      if (titleRef.current && !titleRef.current.value && currentTitle) {
+        titleRef.current.value = currentTitle;
+      }
+      if (descriptionRef.current && !descriptionRef.current.value && currentDescription) {
+        descriptionRef.current.value = currentDescription;
+      }
     });
   }, [isDateInputActive]);
 
@@ -282,12 +294,47 @@ export default function Assignments() {
     };
   }, [showCreateModal, editingAssignment]);
 
+  // Block all form restoration and preservation while date inputs are active
+  useEffect(() => {
+    if (isDateInputActive) {
+      // Capture current values to prevent loss
+      const currentTitle = titleRef.current?.value || '';
+      const currentDescription = descriptionRef.current?.value || '';
+      
+      // Save them to formDataRef
+      formDataRef.current = { 
+        ...formDataRef.current, 
+        title: currentTitle,
+        description: currentDescription
+      };
+      
+      // Override any restoration attempts
+      const blockRestore = () => {
+        if (titleRef.current && titleRef.current.value !== currentTitle) {
+          titleRef.current.value = currentTitle;
+        }
+        if (descriptionRef.current && descriptionRef.current.value !== currentDescription) {
+          descriptionRef.current.value = currentDescription;
+        }
+      };
+      
+      // Set up protection interval
+      const protectionInterval = setInterval(blockRestore, 10);
+      
+      return () => {
+        clearInterval(protectionInterval);
+      };
+    }
+  }, [isDateInputActive]);
+
   // Direct form change handler that doesn't cause re-renders
   const handleFormChange = useCallback((field: string, value: any) => {
-    // Capture input values before any form state change
-    captureInputValues();
+    // Only capture input values if NOT during date input
+    if (!isDateInputActive) {
+      captureInputValues();
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
-  }, [captureInputValues]);
+  }, [captureInputValues, isDateInputActive]);
 
 
 
@@ -1096,14 +1143,13 @@ export default function Assignments() {
               setIsDateInputActive(true);
               e.stopPropagation();
             }}
-            onBlur={(e) => {
-              // Only update when focus leaves the input - WITHOUT triggering preservation
+            onChange={(e) => {
+              // Directly update form data without triggering preservation
               const value = e.target.value;
-              if (value !== formData.availableFrom) {
-                // Update form data directly without triggering preservation system
-                formDataRef.current = { ...formDataRef.current, availableFrom: value };
-                setFormData(prev => ({ ...prev, availableFrom: value }));
-              }
+              formDataRef.current = { ...formDataRef.current, availableFrom: value };
+              setFormData(prev => ({ ...prev, availableFrom: value }));
+            }}
+            onBlur={(e) => {
               setIsDateInputActive(false);
             }}
             onClick={(e) => {
@@ -1141,14 +1187,13 @@ export default function Assignments() {
               setIsDateInputActive(true);
               e.stopPropagation();
             }}
-            onBlur={(e) => {
-              // Only update when focus leaves the input - WITHOUT triggering preservation
+            onChange={(e) => {
+              // Directly update form data without triggering preservation
               const value = e.target.value;
-              if (value !== formData.availableTo) {
-                // Update form data directly without triggering preservation system
-                formDataRef.current = { ...formDataRef.current, availableTo: value };
-                setFormData(prev => ({ ...prev, availableTo: value }));
-              }
+              formDataRef.current = { ...formDataRef.current, availableTo: value };
+              setFormData(prev => ({ ...prev, availableTo: value }));
+            }}
+            onBlur={(e) => {
               setIsDateInputActive(false);
             }}
             onClick={(e) => {
@@ -1186,14 +1231,13 @@ export default function Assignments() {
               setIsDateInputActive(true);
               e.stopPropagation();
             }}
-            onBlur={(e) => {
-              // Only update when focus leaves the input - WITHOUT triggering preservation
+            onChange={(e) => {
+              // Directly update form data without triggering preservation
               const value = e.target.value;
-              if (value !== formData.dueDate) {
-                // Update form data directly without triggering preservation system
-                formDataRef.current = { ...formDataRef.current, dueDate: value };
-                setFormData(prev => ({ ...prev, dueDate: value }));
-              }
+              formDataRef.current = { ...formDataRef.current, dueDate: value };
+              setFormData(prev => ({ ...prev, dueDate: value }));
+            }}
+            onBlur={(e) => {
               setIsDateInputActive(false);
             }}
             onClick={(e) => {
