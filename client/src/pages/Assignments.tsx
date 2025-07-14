@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { 
   Home, 
   ChevronRight, 
@@ -977,7 +977,9 @@ export default function Assignments() {
         <div className="p-6 max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
-        <Home className="h-4 w-4" />
+        <Link href="/" className="flex items-center hover:text-foreground transition-colors">
+          <Home className="h-4 w-4" />
+        </Link>
         <ChevronRight className="h-4 w-4" />
         <span className="font-medium text-foreground">Assignments</span>
       </nav>
