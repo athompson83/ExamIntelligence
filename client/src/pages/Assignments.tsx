@@ -135,6 +135,27 @@ export default function Assignments() {
     handleFormChange('description', value);
   }, [handleFormChange]);
 
+  // Create stable handlers for all form fields
+  const stableHandlers = useMemo(() => ({
+    quizId: (value: string) => handleFormChange('quizId', value),
+    availableFrom: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('availableFrom', e.target.value),
+    availableTo: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('availableTo', e.target.value),
+    dueDate: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('dueDate', e.target.value),
+    timeLimit: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('timeLimit', parseInt(e.target.value) || 60),
+    maxAttempts: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('maxAttempts', parseInt(e.target.value) || 1),
+    allowLateSubmission: (checked: boolean) => handleFormChange('allowLateSubmission', checked),
+    percentLostPerDay: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('percentLostPerDay', parseInt(e.target.value) || 10),
+    maxLateDays: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('maxLateDays', parseInt(e.target.value) || 7),
+    showCorrectAnswers: (checked: boolean) => handleFormChange('showCorrectAnswers', checked),
+    enableQuestionFeedback: (checked: boolean) => handleFormChange('enableQuestionFeedback', checked),
+    requireProctoring: (checked: boolean) => handleFormChange('requireProctoring', checked),
+    allowCalculator: (checked: boolean) => handleFormChange('allowCalculator', checked),
+    catEnabled: (checked: boolean) => handleFormChange('catEnabled', checked),
+    catMinQuestions: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catMinQuestions', parseInt(e.target.value) || 10),
+    catMaxQuestions: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catMaxQuestions', parseInt(e.target.value) || 50),
+    catDifficultyTarget: (e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('catDifficultyTarget', parseFloat(e.target.value) || 0.5)
+  }), [handleFormChange]);
+
   // Parse URL parameters for pre-selected quiz
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
   const preSelectedQuizId = urlParams.get('quizId');
