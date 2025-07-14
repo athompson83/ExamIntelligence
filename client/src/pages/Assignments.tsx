@@ -47,7 +47,7 @@ import {
   FileText
 } from 'lucide-react';
 import { MultiSelect } from '@/components/ui/multi-select';
-import { EnhancedDatePicker } from '@/components/ui/enhanced-date-picker';
+import { WorkingDatePicker } from '@/components/ui/working-date-picker';
 import { Separator } from '@/components/ui/separator';
 
 interface Assignment {
@@ -581,21 +581,21 @@ export default function Assignments() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <EnhancedDatePicker
+              <WorkingDatePicker
                 label="Available From"
                 value={formData.availableFrom}
                 onChange={(value) => handleInputChange('availableFrom', value)}
                 showTime={true}
               />
               
-              <EnhancedDatePicker
+              <WorkingDatePicker
                 label="Available To"
                 value={formData.availableTo}
                 onChange={(value) => handleInputChange('availableTo', value)}
                 showTime={true}
               />
               
-              <EnhancedDatePicker
+              <WorkingDatePicker
                 label="Due Date *"
                 value={formData.dueDate}
                 onChange={(value) => handleInputChange('dueDate', value)}
