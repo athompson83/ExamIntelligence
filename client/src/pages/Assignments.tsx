@@ -100,7 +100,23 @@ export default function Assignments() {
 
   // Bidirectional sync between formData and formDataRef
   useEffect(() => {
-    formDataRef.current = { ...formDataRef.current, ...formData };
+    // Only update formDataRef if the values are different and not being actively typed
+    const titleInput = titleRef.current;
+    const descriptionInput = descriptionRef.current;
+    
+    const updatedRef = { ...formDataRef.current, ...formData };
+    
+    // If user is typing in title, preserve the current input value
+    if (titleInput && document.activeElement === titleInput) {
+      updatedRef.title = titleInput.value;
+    }
+    
+    // If user is typing in description, preserve the current input value  
+    if (descriptionInput && document.activeElement === descriptionInput) {
+      updatedRef.description = descriptionInput.value;
+    }
+    
+    formDataRef.current = updatedRef;
   }, [formData]);
 
   // Setup native event listeners and preserve input values across re-renders
@@ -136,22 +152,33 @@ export default function Assignments() {
   }, []);
 
   // Preserve input values when component re-renders due to other state changes
-  // Use requestAnimationFrame to avoid interfering with active typing
   useEffect(() => {
     const preserveValues = () => {
       const titleInput = titleRef.current;
       const descriptionInput = descriptionRef.current;
 
-      if (titleInput && formDataRef.current.title !== titleInput.value) {
-        // Only update if input is not currently focused (user not typing)
-        if (document.activeElement !== titleInput) {
-          titleInput.value = formDataRef.current.title;
+      // Always preserve current input values from DOM when state changes
+      if (titleInput) {
+        // If user is currently typing, update the ref from DOM
+        if (document.activeElement === titleInput) {
+          formDataRef.current = { ...formDataRef.current, title: titleInput.value };
+        } else {
+          // If user is not typing, restore from ref
+          if (formDataRef.current.title !== titleInput.value) {
+            titleInput.value = formDataRef.current.title;
+          }
         }
       }
-      if (descriptionInput && formDataRef.current.description !== descriptionInput.value) {
-        // Only update if input is not currently focused (user not typing)
-        if (document.activeElement !== descriptionInput) {
-          descriptionInput.value = formDataRef.current.description;
+      
+      if (descriptionInput) {
+        // If user is currently typing, update the ref from DOM
+        if (document.activeElement === descriptionInput) {
+          formDataRef.current = { ...formDataRef.current, description: descriptionInput.value };
+        } else {
+          // If user is not typing, restore from ref
+          if (formDataRef.current.description !== descriptionInput.value) {
+            descriptionInput.value = formDataRef.current.description;
+          }
         }
       }
     };
