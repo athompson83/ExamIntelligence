@@ -457,8 +457,12 @@ export default function Assignments() {
   });
 
   const handleCreateAssignment = (formDataParam: FormData) => {
-    // Use the controlled form state instead of FormData
-    const assignmentData = formData;
+    // Collect current values from form inputs and state
+    const assignmentData = {
+      ...formData,
+      title: titleRef.current?.value || formData.title,
+      description: descriptionRef.current?.value || formData.description
+    };
     
     // Validate required fields
     if (!assignmentData.quizId || assignmentData.quizId === 'add-new' || assignmentData.quizId === 'no-quizzes') {
@@ -552,9 +556,41 @@ export default function Assignments() {
           title: "Success",
           description: `Created ${assignments.length} assignment(s) successfully`,
         });
+        
+        // Close modal and reset form
         setShowCreateModal(false);
         setSelectedStudents([]);
         setSelectedSections([]);
+        
+        // Reset form data
+        setFormData({
+          title: '',
+          description: '',
+          quizId: '',
+          dueDate: '',
+          availableFrom: '',
+          availableTo: '',
+          timeLimit: 60,
+          maxAttempts: 1,
+          allowLateSubmission: false,
+          percentLostPerDay: 10,
+          maxLateDays: 7,
+          showCorrectAnswers: false,
+          enableQuestionFeedback: false,
+          requireProctoring: false,
+          allowCalculator: false,
+          catEnabled: false,
+          catMinQuestions: 10,
+          catMaxQuestions: 50,
+          catDifficultyTarget: 0.5
+        });
+        
+        // Reset preserved values
+        setPreservedValues({ title: '', description: '' });
+        
+        // Clear input fields
+        if (titleRef.current) titleRef.current.value = '';
+        if (descriptionRef.current) descriptionRef.current.value = '';
       })
       .catch((error) => {
         console.error('Error creating assignments:', error);
