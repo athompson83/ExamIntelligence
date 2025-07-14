@@ -174,25 +174,57 @@ export default function Assignments() {
     }
   }, [editingAssignment]);
 
-  // Fetch data queries
-  const { data: assignments = [] } = useQuery({
+  // Fetch data queries with proper error handling
+  const { data: assignments = [], isLoading: assignmentsLoading, error: assignmentsError } = useQuery({
     queryKey: ['/api/quiz-assignments'],
-    queryFn: () => apiRequest('/api/quiz-assignments'),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('/api/quiz-assignments');
+        return Array.isArray(response) ? response : [];
+      } catch (error) {
+        console.error('Error fetching assignments:', error);
+        return [];
+      }
+    },
   });
 
-  const { data: quizzes = [] } = useQuery({
+  const { data: quizzes = [], isLoading: quizzesLoading } = useQuery({
     queryKey: ['/api/quizzes'],
-    queryFn: () => apiRequest('/api/quizzes'),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('/api/quizzes');
+        return Array.isArray(response) ? response : [];
+      } catch (error) {
+        console.error('Error fetching quizzes:', error);
+        return [];
+      }
+    },
   });
 
-  const { data: students = [] } = useQuery({
+  const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ['/api/users'],
-    queryFn: () => apiRequest('/api/users'),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('/api/users');
+        return Array.isArray(response) ? response : [];
+      } catch (error) {
+        console.error('Error fetching students:', error);
+        return [];
+      }
+    },
   });
 
-  const { data: sections = [] } = useQuery({
+  const { data: sections = [], isLoading: sectionsLoading } = useQuery({
     queryKey: ['/api/sections'],
-    queryFn: () => apiRequest('/api/sections'),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('/api/sections');
+        return Array.isArray(response) ? response : [];
+      } catch (error) {
+        console.error('Error fetching sections:', error);
+        return [];
+      }
+    },
   });
 
   // Create assignment mutation
@@ -313,13 +345,16 @@ export default function Assignments() {
       });
   }, [formData, selectedStudents, selectedSections, createAssignmentMutation]);
 
-  // Filter assignments
-  const filteredAssignments = assignments.filter((assignment: Assignment) => {
-    const matchesSearch = assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         assignment.description.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filter assignments with safety check
+  const filteredAssignments = Array.isArray(assignments) ? assignments.filter((assignment: Assignment) => {
+    const matchesSearch = assignment.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         assignment.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || assignment.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }) : [];
+
+  // Loading state
+  const isLoading = assignmentsLoading || quizzesLoading || studentsLoading || sectionsLoading;
 
   // Assignment Form Component
   const AssignmentForm = () => (
@@ -544,6 +579,21 @@ export default function Assignments() {
       </div>
     </div>
   );
+
+  // Show loading spinner while data is being fetched
+  if (isLoading) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6 max-w-7xl mx-auto">
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">
