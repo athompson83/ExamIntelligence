@@ -934,7 +934,9 @@ export default function Assignments() {
             type="datetime-local"
             value={formData.availableFrom}
             onChange={stableHandlers.availableFrom}
+            onFocus={(e) => e.target.showPicker?.()}
           />
+          <p className="text-xs text-gray-500 mt-1">When students can start</p>
         </div>
         <div>
           <Label htmlFor="availableTo">Available To</Label>
@@ -944,18 +946,22 @@ export default function Assignments() {
             type="datetime-local"
             value={formData.availableTo}
             onChange={stableHandlers.availableTo}
+            onFocus={(e) => e.target.showPicker?.()}
           />
+          <p className="text-xs text-gray-500 mt-1">When access expires</p>
         </div>
         <div>
-          <Label htmlFor="dueDate">Due Date</Label>
+          <Label htmlFor="dueDate">Due Date *</Label>
           <Input
             id="dueDate"
             name="dueDate"
             type="datetime-local"
             value={formData.dueDate}
             onChange={stableHandlers.dueDate}
+            onFocus={(e) => e.target.showPicker?.()}
             required
           />
+          <p className="text-xs text-gray-500 mt-1">Assignment deadline</p>
         </div>
       </div>
 

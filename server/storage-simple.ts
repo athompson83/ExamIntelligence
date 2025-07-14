@@ -1078,7 +1078,28 @@ export class DatabaseStorage implements IStorage {
   // Quiz Assignment Methods
   async getQuizAssignments(): Promise<any[]> {
     try {
-      const assignments = await db.select().from(quizAssignments);
+      const assignments = await db
+        .select({
+          id: quizAssignments.id,
+          title: quizAssignments.title,
+          description: quizAssignments.description,
+          quizId: quizAssignments.quizId,
+          assignedToUserId: quizAssignments.assignedToUserId,
+          assignedToSectionId: quizAssignments.assignedToSectionId,
+          assignedById: quizAssignments.assignedById,
+          dueDate: quizAssignments.dueDate,
+          availableFrom: quizAssignments.availableFrom,
+          availableUntil: quizAssignments.availableUntil,
+          maxAttempts: quizAssignments.maxAttempts,
+          timeLimit: quizAssignments.timeLimit,
+          allowLateSubmissions: quizAssignments.allowLateSubmissions,
+          lateGradingOptions: quizAssignments.lateGradingOptions,
+          isActive: quizAssignments.isActive,
+          createdAt: quizAssignments.createdAt,
+          updatedAt: quizAssignments.updatedAt,
+        })
+        .from(quizAssignments);
+      
       return assignments;
     } catch (error) {
       console.error('Error fetching quiz assignments:', error);
@@ -1136,48 +1157,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getQuizAssignments(): Promise<any[]> {
-    try {
-      const assignments = await db
-        .select({
-          id: quizAssignments.id,
-          title: sql<string>`COALESCE(${quizAssignments.title}, 'Untitled Assignment')`,
-          description: sql<string>`COALESCE(${quizAssignments.description}, '')`,
-          quizId: quizAssignments.quizId,
-          quizTitle: sql<string>`COALESCE(${quizzes.title}, 'Unknown Quiz')`,
-          assignedToUserId: quizAssignments.assignedToUserId,
-          assignedToSectionId: quizAssignments.assignedToSectionId,
-          assignedToSectionName: sql<string>`COALESCE(${sections.name}, 'Individual')`,
-          assignedToUserName: sql<string>`COALESCE(${users.firstName} || ' ' || ${users.lastName}, 'Unknown User')`,
-          assignedById: quizAssignments.assignedById,
-          dueDate: quizAssignments.dueDate,
-          availableFrom: quizAssignments.availableFrom,
-          availableUntil: quizAssignments.availableUntil,
-          maxAttempts: sql<number>`COALESCE(${quizAssignments.maxAttempts}, 1)`,
-          timeLimit: sql<number>`COALESCE(${quizAssignments.timeLimit}, 60)`,
-          allowLateSubmissions: sql<boolean>`COALESCE(${quizAssignments.allowLateSubmissions}, false)`,
-          lateGradingOptions: quizAssignments.lateGradingOptions,
-          isActive: sql<boolean>`COALESCE(${quizAssignments.isActive}, true)`,
-          status: sql<string>`CASE 
-            WHEN COALESCE(${quizAssignments.isActive}, true) = true THEN 'published'
-            ELSE 'draft'
-          END`,
-          createdAt: quizAssignments.createdAt,
-          updatedAt: quizAssignments.updatedAt,
-          submissions: sql<number>`0`, // TODO: Calculate actual submissions
-          averageScore: sql<number>`0`, // TODO: Calculate actual average score
-        })
-        .from(quizAssignments)
-        .leftJoin(quizzes, eq(quizAssignments.quizId, quizzes.id))
-        .leftJoin(sections, eq(quizAssignments.assignedToSectionId, sections.id))
-        .leftJoin(users, eq(quizAssignments.assignedToUserId, users.id));
-      
-      return assignments;
-    } catch (error) {
-      console.error('Error fetching quiz assignments:', error);
-      return [];
-    }
-  }
+
 
   // Additional mobile API methods
   async getActiveExamSessions(userId: string): Promise<any[]> {
