@@ -891,8 +891,9 @@ export default function Assignments() {
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    captureInputValues();
+                    const captured = captureInputValues();
                     setSelectedStudents([]);
+                    restoreValues(captured);
                   }}
                   disabled={selectedStudents.length === 0}
                 >
@@ -921,13 +922,16 @@ export default function Assignments() {
                         checked={selectedStudents.includes(student.id)}
                         onCheckedChange={(checked) => {
                           // Capture input values before state change
-                          captureInputValues();
+                          const captured = captureInputValues();
                           
                           if (checked) {
                             setSelectedStudents([...selectedStudents, student.id]);
                           } else {
                             setSelectedStudents(selectedStudents.filter(id => id !== student.id));
                           }
+                          
+                          // Restore values after state change
+                          restoreValues(captured);
                         }}
                       />
                       <div className="flex-1 min-w-0">
@@ -965,8 +969,9 @@ export default function Assignments() {
                     variant="outline" 
                     size="sm"
                     onClick={() => {
-                      captureInputValues();
+                      const captured = captureInputValues();
                       setSelectedSections([]);
+                      restoreValues(captured);
                     }}
                     disabled={selectedSections.length === 0}
                   >
@@ -993,13 +998,16 @@ export default function Assignments() {
                         checked={selectedSections.includes(section.id)}
                         onCheckedChange={(checked) => {
                           // Capture input values before state change
-                          captureInputValues();
+                          const captured = captureInputValues();
                           
                           if (checked) {
                             setSelectedSections([...selectedSections, section.id]);
                           } else {
                             setSelectedSections(selectedSections.filter(id => id !== section.id));
                           }
+                          
+                          // Restore values after state change
+                          restoreValues(captured);
                         }}
                       />
                       <div className="flex-1 min-w-0">
