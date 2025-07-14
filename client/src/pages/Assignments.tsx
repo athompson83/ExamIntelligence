@@ -217,6 +217,7 @@ export default function Assignments() {
     queryFn: async () => {
       try {
         const response = await apiRequest('/api/quizzes');
+        console.log('Quizzes response:', response);
         return Array.isArray(response) ? response : [];
       } catch (error) {
         console.error('Error fetching quizzes:', error);
@@ -384,10 +385,13 @@ export default function Assignments() {
   const isLoading = assignmentsLoading || quizzesLoading || studentsLoading || sectionsLoading;
 
   // Assignment Form Component
-  const AssignmentForm = () => (
-    <div className="space-y-6">
-      {/* Basic Information */}
-      <div className="space-y-4">
+  const AssignmentForm = () => {
+    console.log('AssignmentForm rendering with quizzes:', quizzes, 'loading:', quizzesLoading);
+    
+    return (
+      <div className="space-y-6">
+        {/* Basic Information */}
+        <div className="space-y-4">
         <div>
           <Label htmlFor="title">Assignment Title *</Label>
           <Input
@@ -417,14 +421,20 @@ export default function Assignments() {
             onValueChange={(value) => handleInputChange('quizId', value)}
           >
             <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Select a quiz" />
+              <SelectValue placeholder={quizzesLoading ? "Loading quizzes..." : "Select a quiz"} />
             </SelectTrigger>
             <SelectContent>
-              {quizzes.map((quiz: any) => (
-                <SelectItem key={quiz.id} value={quiz.id}>
-                  {quiz.title}
-                </SelectItem>
-              ))}
+              {quizzesLoading ? (
+                <SelectItem value="loading" disabled>Loading...</SelectItem>
+              ) : quizzes.length === 0 ? (
+                <SelectItem value="no-quizzes" disabled>No quizzes available</SelectItem>
+              ) : (
+                quizzes.map((quiz: any) => (
+                  <SelectItem key={quiz.id} value={quiz.id}>
+                    {quiz.title}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -606,6 +616,7 @@ export default function Assignments() {
       </div>
     </div>
   );
+};
 
   // Show loading spinner while data is being fetched
   if (isLoading) {
