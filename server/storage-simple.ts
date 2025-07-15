@@ -5,6 +5,7 @@ import {
   answerOptions,
   quizzes,
   quizQuestions,
+  questionGroups,
   quizAttempts,
   quizResponses,
   accounts,
@@ -444,6 +445,16 @@ export class DatabaseStorage implements IStorage {
 
       console.log('=== Quiz found:', foundQuiz.title);
       
+      // Fetch question groups for this quiz
+      console.log('=== Fetching question groups for quiz:', id);
+      const questionGroupRecords = await db
+        .select()
+        .from(questionGroups)
+        .where(eq(questionGroups.quizId, id))
+        .orderBy(questionGroups.displayOrder);
+      
+      console.log('=== Found question groups:', questionGroupRecords.length);
+      
       // Now fetch the questions associated with this quiz
       console.log('=== Fetching questions for quiz:', id);
       
@@ -456,13 +467,6 @@ export class DatabaseStorage implements IStorage {
           .orderBy(quizQuestions.displayOrder);
         
         console.log('=== Found quiz question records:', quizQuestionRecords.length);
-        
-        if (quizQuestionRecords.length === 0) {
-          return {
-            ...foundQuiz,
-            questions: []
-          };
-        }
         
         // Get the question details for each quiz question
         const questionsWithDetails = await Promise.all(
@@ -506,78 +510,23 @@ export class DatabaseStorage implements IStorage {
         const validQuestions = questionsWithDetails.filter(q => q !== null);
         
         console.log('=== Returning quiz with questions:', validQuestions.length);
+        console.log('=== Returning quiz with question groups:', questionGroupRecords.length);
         
         return {
           ...foundQuiz,
-          questions: validQuestions
+          questions: validQuestions,
+          questionGroups: questionGroupRecords
         };
         
       } catch (error) {
         console.log('=== Error fetching quiz questions:', error);
         return {
           ...foundQuiz,
-          questions: []
+          questions: [],
+          questionGroups: []
         };
       }
       
-      
-      // For each quiz question record, get the full question data and answer options
-      const questionsWithAnswers = await Promise.all(
-        quizQuestionRecords.map(async (qr) => {
-          console.log('=== Getting full question data for:', qr.questionId);
-          
-          // Get the full question data
-          const questionData = await db
-            .select()
-            .from(questions)
-            .where(eq(questions.id, qr.questionId))
-            .limit(1);
-          
-          if (questionData.length === 0) {
-            console.log('=== Question not found:', qr.questionId);
-            return null;
-          }
-          
-          const question = questionData[0];
-          
-          console.log('=== Getting answer options for question:', qr.questionId);
-          const answerOptions = await db
-            .select()
-            .from(answerOptions)
-            .where(eq(answerOptions.questionId, qr.questionId))
-            .orderBy(answerOptions.displayOrder);
-          
-          console.log('=== Found answer options:', answerOptions.length);
-          
-          return {
-            id: qr.id,
-            questionId: qr.questionId,
-            displayOrder: qr.displayOrder,
-            points: qr.points,
-            questionGroupId: qr.questionGroupId,
-            isRequired: qr.isRequired,
-            showFeedback: qr.showFeedback,
-            partialCredit: qr.partialCredit,
-            question: {
-              ...question,
-              answerOptions
-            }
-          };
-        })
-      );
-      
-      // Filter out any null entries
-      const validQuestions = questionsWithAnswers.filter(q => q !== null);
-      
-      console.log('=== Returning quiz with questions:', validQuestions.length);
-      
-      // For now, return just the first 2 questions to test the structure
-      const testQuestions = validQuestions.slice(0, 2);
-      
-      return {
-        ...foundQuiz,
-        questions: testQuestions
-      };
     } catch (error) {
       console.error('=== Error in getQuiz:', error);
       throw error;
