@@ -38,7 +38,7 @@ import {
   Minus,
   Divide,
   X as Multiply,
-  Equals,
+  Equal,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
