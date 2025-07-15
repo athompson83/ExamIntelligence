@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { ProctoringMonitor } from "@/components/proctoring/proctoring-monitor";
+import { LiveExamScheduler } from "@/components/LiveExamScheduler";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ export default function LiveExams() {
   const { isAuthenticated, isLoading } = useAuth();
   const [selectedExam, setSelectedExam] = useState<string | null>(null);
   const [showProctoring, setShowProctoring] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -73,7 +75,7 @@ export default function LiveExams() {
             <div className="flex gap-2">
               <Button 
                 variant="outline"
-                onClick={() => window.location.href = '/quiz-builder'}
+                onClick={() => setShowScheduler(true)}
               >
                 <Calendar className="mr-2 h-4 w-4" />
                 Schedule Exam
@@ -157,7 +159,7 @@ export default function LiveExams() {
                     <Play className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No active exams</h3>
                     <p className="text-gray-600 mb-4">Schedule an exam to start monitoring</p>
-                    <Button onClick={() => window.location.href = '/quiz-builder'}>
+                    <Button onClick={() => setShowScheduler(true)}>
                       <Calendar className="mr-2 h-4 w-4" />
                       Schedule Exam
                     </Button>
@@ -260,6 +262,12 @@ export default function LiveExams() {
           examId={selectedExam}
         />
       )}
+
+      {/* Live Exam Scheduler Modal */}
+      <LiveExamScheduler 
+        isOpen={showScheduler}
+        onClose={() => setShowScheduler(false)}
+      />
     </div>
   );
 }

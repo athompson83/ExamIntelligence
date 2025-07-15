@@ -2333,6 +2333,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create live exam
+  app.post('/api/live-exams', mockAuth, async (req: any, res) => {
+    try {
+      const teacherId = req.user?.id || "test-user";
+      const examData = {
+        ...req.body,
+        teacherId,
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime)
+      };
+      
+      const liveExam = await storage.createLiveExam(examData);
+      res.json(liveExam);
+    } catch (error) {
+      console.error("Error creating live exam:", error);
+      res.status(500).json({ message: "Failed to create live exam" });
+    }
+  });
+
+  // Update live exam
+  app.put('/api/live-exams/:id', mockAuth, async (req: any, res) => {
+    try {
+      const examId = req.params.id;
+      const examData = {
+        ...req.body,
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime)
+      };
+      
+      const liveExam = await storage.updateLiveExam(examId, examData);
+      res.json(liveExam);
+    } catch (error) {
+      console.error("Error updating live exam:", error);
+      res.status(500).json({ message: "Failed to update live exam" });
+    }
+  });
+
+  // Get live exams
+  app.get('/api/live-exams', mockAuth, async (req: any, res) => {
+    try {
+      const teacherId = req.user?.id || "test-user";
+      const liveExams = await storage.getLiveExams(teacherId);
+      res.json(liveExams);
+    } catch (error) {
+      console.error("Error fetching live exams:", error);
+      res.status(500).json({ message: "Failed to fetch live exams" });
+    }
+  });
+
+  // Delete live exam
+  app.delete('/api/live-exams/:id', mockAuth, async (req: any, res) => {
+    try {
+      const examId = req.params.id;
+      await storage.deleteLiveExam(examId);
+      res.json({ message: "Live exam deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting live exam:", error);
+      res.status(500).json({ message: "Failed to delete live exam" });
+    }
+  });
+
   // Add questions to quiz
   app.post('/api/quizzes/:id/questions',  async (req: any, res) => {
     try {

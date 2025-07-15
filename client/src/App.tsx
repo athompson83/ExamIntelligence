@@ -68,7 +68,7 @@ const EnhancedQuizPreview = lazy(() => import("@/pages/enhanced-quiz-preview"));
 const QuizManager = lazy(() => import("@/pages/quiz-manager"));
 const SectionManagement = lazy(() => import("@/pages/SectionManagementFixed"));
 const Assignments = lazy(() => import("@/pages/Assignments"));
-const MobileApp = lazy(() => import("@/pages/MobileAppFixed"));
+const MobileApp = lazy(() => import("@/pages/mobile-app"));
 const SystemTest = lazy(() => import("@/pages/SystemTest"));
 const ComprehensiveTest = lazy(() => import("@/pages/ComprehensiveTest"));
 const SectionManagementTest = lazy(() => import("@/pages/SectionManagementTest"));
