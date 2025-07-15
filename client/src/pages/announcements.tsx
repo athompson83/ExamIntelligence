@@ -541,7 +541,7 @@ export default function AnnouncementsPage() {
         <TabsContent value="drafts" className="space-y-6">
           {/* Draft Announcements */}
           <div className="grid gap-4">
-            {myAnnouncements?.filter((a: Announcement) => !a.isPublished).length === 0 ? (
+            {(Array.isArray(myAnnouncements) ? myAnnouncements : []).filter((a: Announcement) => !a.isPublished).length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-8">
                   <EyeOff className="h-12 w-12 text-muted-foreground mb-4" />
@@ -552,7 +552,7 @@ export default function AnnouncementsPage() {
                 </CardContent>
               </Card>
             ) : (
-              myAnnouncements?.filter((a: Announcement) => !a.isPublished).map((announcement: Announcement) => (
+              (Array.isArray(myAnnouncements) ? myAnnouncements : []).filter((a: Announcement) => !a.isPublished).map((announcement: Announcement) => (
                 <Card key={announcement.id}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">

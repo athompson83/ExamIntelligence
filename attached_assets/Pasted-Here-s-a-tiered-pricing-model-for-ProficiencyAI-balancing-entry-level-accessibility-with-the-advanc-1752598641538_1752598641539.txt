@@ -1,0 +1,73 @@
+Here’s a tiered pricing model for ProficiencyAI, balancing entry-level accessibility with the advanced capabilities institutions need. All prices are in USD and billed monthly, with a 15% discount on annual pre-payment.
+
+Tier	Price Per User / Month	Key Features	Limits & Add-Ons
+Starter	Free	• Manual quiz & testbank creation
+• Up to 5 quizzes
+• Basic reporting	• Testbank max 100 questions
+• AI-generate up to 10 questions/month
+• No CAT or proctoring
+Basic	$20 (or $204/yr)	• Unlimited manual quizzes & testbanks
+• AI-generate up to 200 questions/month
+• CSV export	• AI-validation up to 50 questions/month
+• No adaptive testing, no proctoring, no LTI
+Professional	$50 (or $510/yr)	All Basic, plus:
+• Computer-Adaptive Testing
+• LTI integration (Canvas, Blackboard, Moodle)
+• Unlimited AI validation
+• Advanced analytics dashboards	• Proctoring (up to 20 sessions/month)
+• Extra sessions $5/session
+Institutional	$1,200 flat / month	All Professional, plus:
+• Seat-based pricing for up to 100 users
+• Cohort & group management
+• Instructor & admin roles	• Additional seats: $10/user/month
+• Proctoring sessions: $4/session
+Enterprise	Custom	All Institutional, plus:
+• SSO & SCIM user-provisioning
+• Dedicated account manager & SLA
+• White-labeling
+• Custom integrations & on-prem options	• Volume discounts
+• Unlimited proctoring sessions
+• Premium support & training
+
+Feature Breakdown by Tier
+Manual Quiz & Testbank Management
+• Create, tag, and organize testbanks with Bloom’s taxonomy, learning objectives & custom categories.
+• Import/export CSV/Excel.
+
+AI-Powered Question Generation & Validation
+• Generate brand-new items from your references or open web.
+• Validation agent to flag ambiguous or poorly performing questions.
+
+Computer-Adaptive Testing (CAT)
+• Real-time item selection based on learner ability estimate (Professional+).
+• Customizable stopping rules and score reporting.
+
+Proctoring
+• Secure browser lockdown and identity verification.
+• Session recordings and audit logs.
+
+LTI Integration
+• Seamless embedding & grade passback with Canvas, Blackboard, Moodle, D2L, etc.
+
+Analytics & Reporting
+• Item-analysis (difficulty, discrimination), learner dashboards, cohort comparisons.
+
+Enterprise-Grade Services
+• SSO/SCIM, data-residency options, custom workflows, priority support.
+
+Optional Add-Ons (All Plans)
+Extra AI-Generation Credits: $10 per 100-question block
+
+Additional Proctoring Sessions: as noted per tier
+
+Custom API Access & Webhooks: $200/month
+
+Notes on Implementation:
+
+Annual Billing: 15% discount automatically applied.
+
+Seat Bundles: Institutional & Enterprise tiers support bulk seat purchases.
+
+Onboarding & Training: One-time setup fee available for Professional+ plans.
+
+This model lets solo educators and small teams start free, scales to power large programs, and provides a clear upgrade path as your needs (and user count) grow.
