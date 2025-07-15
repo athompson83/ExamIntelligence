@@ -430,7 +430,47 @@ export class DatabaseStorage implements IStorage {
 
   async getQuiz(id: string): Promise<Quiz | undefined> {
     const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
-    return quiz;
+    
+    if (!quiz) {
+      return undefined;
+    }
+
+    // Fetch quiz questions
+    const quizQuestionRecords = await db
+      .select()
+      .from(quizQuestions)
+      .where(eq(quizQuestions.quizId, id))
+      .orderBy(quizQuestions.order);
+
+    // Fetch the actual question data for each quiz question
+    const questions = [];
+    for (const qRecord of quizQuestionRecords) {
+      const [question] = await db
+        .select()
+        .from(questions)
+        .where(eq(questions.id, qRecord.questionId));
+      
+      if (question) {
+        // Fetch answer options for this question
+        const answerOptions = await db
+          .select()
+          .from(answerOptions)
+          .where(eq(answerOptions.questionId, question.id))
+          .orderBy(answerOptions.order);
+        
+        questions.push({
+          ...question,
+          answerOptions: answerOptions,
+          order: qRecord.order,
+          points: qRecord.points
+        });
+      }
+    }
+
+    return {
+      ...quiz,
+      questions: questions
+    };
   }
 
   async getQuizzesByAccount(accountId: string): Promise<Quiz[]> {

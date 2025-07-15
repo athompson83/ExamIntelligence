@@ -112,6 +112,17 @@ export default function EnhancedQuizBuilder() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTestbank, setSelectedTestbank] = useState('all');
 
+  // Parse URL parameters to get quiz ID for editing
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const quizId = urlParams.get('id');
+  const isEditing = Boolean(quizId);
+
+  // Load existing quiz data if editing
+  const { data: existingQuiz, isLoading: quizLoading } = useQuery({
+    queryKey: ['/api/quizzes', quizId],
+    enabled: isEditing,
+  });
+
   // Load testbanks and questions
   const { data: testbanks = [], isLoading: testbanksLoading } = useQuery({
     queryKey: ['/api/testbanks'],
@@ -122,6 +133,46 @@ export default function EnhancedQuizBuilder() {
     queryKey: ['/api/questions'],
     enabled: !viewingQuizQuestions,
   });
+
+  // Load existing quiz data when editing
+  useEffect(() => {
+    if (isEditing && existingQuiz) {
+      setQuiz({
+        title: existingQuiz.title || '',
+        description: existingQuiz.description || '',
+        instructions: existingQuiz.instructions || '',
+        timeLimit: existingQuiz.timeLimit || 60,
+        alwaysAvailable: existingQuiz.alwaysAvailable !== false,
+        shuffleQuestions: existingQuiz.shuffleQuestions || false,
+        shuffleAnswers: existingQuiz.shuffleAnswers || false,
+        allowMultipleAttempts: existingQuiz.allowMultipleAttempts || false,
+        maxAttempts: existingQuiz.maxAttempts || 1,
+        showCorrectAnswers: existingQuiz.showCorrectAnswers || false,
+        showCorrectAnswersAt: existingQuiz.showCorrectAnswersAt || 'after_submission',
+        passingGrade: existingQuiz.passingGrade || 70,
+        gradeToShow: existingQuiz.gradeToShow || 'percentage',
+        enableQuestionFeedback: existingQuiz.enableQuestionFeedback !== false,
+        enableLearningPrescription: existingQuiz.enableLearningPrescription !== false,
+        availabilityStart: existingQuiz.availabilityStart || null,
+        availabilityEnd: existingQuiz.availabilityEnd || null,
+        passwordProtected: existingQuiz.passwordProtected || false,
+        password: existingQuiz.password || '',
+        proctoring: existingQuiz.proctoring || false,
+        showQuestionsAfterAttempt: existingQuiz.showQuestionsAfterAttempt || false,
+        proctoringSettings: existingQuiz.proctoringSettings || {}
+      });
+      
+      // Load quiz questions if they exist
+      if (existingQuiz.questions && existingQuiz.questions.length > 0) {
+        setQuizQuestions(existingQuiz.questions);
+      }
+      
+      // Load question groups if they exist
+      if (existingQuiz.questionGroups && existingQuiz.questionGroups.length > 0) {
+        setQuestionGroups(existingQuiz.questionGroups);
+      }
+    }
+  }, [isEditing, existingQuiz]);
 
   // Filter available questions based on search and testbank
   const filteredQuestions = availableQuestions.filter(question => {
@@ -186,8 +237,11 @@ export default function EnhancedQuizBuilder() {
   // Save quiz functionality
   const handleSaveQuiz = async () => {
     try {
-      const response = await apiRequest('/api/quizzes', {
-        method: 'POST',
+      const url = isEditing ? `/api/quizzes/${quizId}` : '/api/quizzes';
+      const method = isEditing ? 'PUT' : 'POST';
+      
+      const response = await apiRequest(url, {
+        method: method,
         body: JSON.stringify({
           ...quiz,
           questions: quizQuestions,
@@ -197,7 +251,7 @@ export default function EnhancedQuizBuilder() {
       
       toast({
         title: "Quiz Saved",
-        description: "Your quiz has been saved successfully."
+        description: isEditing ? "Your quiz has been updated successfully." : "Your quiz has been created successfully."
       });
       
       navigate('/quiz-manager');
@@ -265,6 +319,22 @@ export default function EnhancedQuizBuilder() {
     );
   }
 
+  // Show loading state while fetching existing quiz data
+  if (isEditing && quizLoading) {
+    return (
+      <div className="container mx-auto p-6 max-w-6xl">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       {/* Breadcrumb Navigation */}
@@ -285,9 +355,11 @@ export default function EnhancedQuizBuilder() {
       </Breadcrumb>
 
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Enhanced Quiz Builder</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          {isEditing ? 'Edit Quiz' : 'Enhanced Quiz Builder'}
+        </h1>
         <p className="text-muted-foreground">
-          Create comprehensive quizzes with advanced features and settings
+          {isEditing ? 'Update your quiz with advanced features and settings' : 'Create comprehensive quizzes with advanced features and settings'}
         </p>
       </div>
 
