@@ -22,7 +22,8 @@ import {
   Home,
   ChevronRight,
   Crown,
-  Zap
+  Zap,
+  Clock
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 
@@ -246,11 +247,11 @@ export default function BillingPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Users</span>
                   <span className="text-sm font-medium">
-                    {billingInfo?.usage.users.current} / {billingInfo?.usage.users.limit === -1 ? '∞' : billingInfo?.usage.users.limit}
+                    {billingInfo?.usage?.users?.current || 0} / {billingInfo?.usage?.users?.limit === -1 ? '∞' : billingInfo?.usage?.users?.limit || 0}
                   </span>
                 </div>
                 <Progress 
-                  value={getUsagePercentage(billingInfo?.usage.users.current || 0, billingInfo?.usage.users.limit || 1)} 
+                  value={getUsagePercentage(billingInfo?.usage?.users?.current || 0, billingInfo?.usage?.users?.limit || 1)} 
                   className="h-2"
                 />
               </div>
@@ -259,11 +260,11 @@ export default function BillingPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Quizzes</span>
                   <span className="text-sm font-medium">
-                    {billingInfo?.usage.quizzes.current} / {billingInfo?.usage.quizzes.limit === -1 ? '∞' : billingInfo?.usage.quizzes.limit}
+                    {billingInfo?.usage?.quizzes?.current || 0} / {billingInfo?.usage?.quizzes?.limit === -1 ? '∞' : billingInfo?.usage?.quizzes?.limit || 0}
                   </span>
                 </div>
                 <Progress 
-                  value={getUsagePercentage(billingInfo?.usage.quizzes.current || 0, billingInfo?.usage.quizzes.limit || 1)} 
+                  value={getUsagePercentage(billingInfo?.usage?.quizzes?.current || 0, billingInfo?.usage?.quizzes?.limit || 1)} 
                   className="h-2"
                 />
               </div>
@@ -272,11 +273,11 @@ export default function BillingPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Questions</span>
                   <span className="text-sm font-medium">
-                    {billingInfo?.usage.questions.current} / {billingInfo?.usage.questions.limit === -1 ? '∞' : billingInfo?.usage.questions.limit}
+                    {billingInfo?.usage?.questions?.current || 0} / {billingInfo?.usage?.questions?.limit === -1 ? '∞' : billingInfo?.usage?.questions?.limit || 0}
                   </span>
                 </div>
                 <Progress 
-                  value={getUsagePercentage(billingInfo?.usage.questions.current || 0, billingInfo?.usage.questions.limit || 1)} 
+                  value={getUsagePercentage(billingInfo?.usage?.questions?.current || 0, billingInfo?.usage?.questions?.limit || 1)} 
                   className="h-2"
                 />
               </div>
@@ -285,11 +286,11 @@ export default function BillingPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Storage</span>
                   <span className="text-sm font-medium">
-                    {billingInfo?.usage.storage.current} MB / {billingInfo?.usage.storage.limit === -1 ? '∞' : `${billingInfo?.usage.storage.limit} MB`}
+                    {billingInfo?.usage?.storage?.current || 0} MB / {billingInfo?.usage?.storage?.limit === -1 ? '∞' : `${billingInfo?.usage?.storage?.limit || 0} MB`}
                   </span>
                 </div>
                 <Progress 
-                  value={getUsagePercentage(billingInfo?.usage.storage.current || 0, billingInfo?.usage.storage.limit || 1)} 
+                  value={getUsagePercentage(billingInfo?.usage?.storage?.current || 0, billingInfo?.usage?.storage?.limit || 1)} 
                   className="h-2"
                 />
               </div>
@@ -316,7 +317,7 @@ export default function BillingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {billingInfo?.billingHistory.map((invoice) => (
+                {(Array.isArray(billingInfo?.billingHistory) ? billingInfo.billingHistory : []).map((invoice) => (
                   <TableRow key={invoice.id}>
                     <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
                     <TableCell>{formatPrice(invoice.amount)}</TableCell>
