@@ -1379,8 +1379,9 @@ export default function EnhancedQuizBuilder() {
                             </div>
                           </motion.div>
                         )}
-                        </SortableContext>
-                      </DndContext>
+                            </div>
+                          </SortableContext>
+                        </DndContext>
                     )}
                   </div>
                 ) : (
