@@ -2207,11 +2207,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/quizzes/:id', mockAuth, async (req: any, res) => {
     try {
-      const quiz = await storage.getQuiz(req.params.id);
+      const quizId = req.params.id;
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      
+      // Workaround: Get all quizzes for the user and find the one with matching ID
+      const allQuizzes = await storage.getQuizzesByUser(userId);
+      const quiz = allQuizzes.find(q => q.id === quizId);
+      
       if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
       }
-      console.log(`Returning quiz ${req.params.id} with ${quiz.questions?.length || 0} questions`);
+      
+      console.log(`Returning quiz ${quizId} with ${quiz.questions?.length || 0} questions`);
       res.json(quiz);
     } catch (error) {
       console.error("Error fetching quiz:", error);

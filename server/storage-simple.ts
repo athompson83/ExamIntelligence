@@ -429,48 +429,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQuiz(id: string): Promise<Quiz | undefined> {
-    const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
+    console.log('Getting quiz with ID:', id);
     
-    if (!quiz) {
-      return undefined;
-    }
-
-    // Fetch quiz questions
-    const quizQuestionRecords = await db
-      .select()
-      .from(quizQuestions)
-      .where(eq(quizQuestions.quizId, id))
-      .orderBy(quizQuestions.order);
-
-    // Fetch the actual question data for each quiz question
-    const questions = [];
-    for (const qRecord of quizQuestionRecords) {
-      const [question] = await db
-        .select()
-        .from(questions)
-        .where(eq(questions.id, qRecord.questionId));
+    // First try to get all quizzes and find the one with matching ID
+    try {
+      const allQuizzes = await db.select().from(quizzes);
+      const foundQuiz = allQuizzes.find(quiz => quiz.id === id);
       
-      if (question) {
-        // Fetch answer options for this question
-        const answerOptions = await db
-          .select()
-          .from(answerOptions)
-          .where(eq(answerOptions.questionId, question.id))
-          .orderBy(answerOptions.order);
-        
-        questions.push({
-          ...question,
-          answerOptions: answerOptions,
-          order: qRecord.order,
-          points: qRecord.points
-        });
+      if (!foundQuiz) {
+        console.log('Quiz not found');
+        return undefined;
       }
-    }
 
-    return {
-      ...quiz,
-      questions: questions
-    };
+      console.log('Quiz found:', foundQuiz.title);
+      
+      // For now, let's just return the quiz without questions to isolate the issue
+      return {
+        ...foundQuiz,
+        questions: []
+      };
+    } catch (error) {
+      console.error('Error in getQuiz:', error);
+      throw error;
+    }
   }
 
   async getQuizzesByAccount(accountId: string): Promise<Quiz[]> {
