@@ -113,9 +113,17 @@ export default function EnhancedQuizBuilder() {
   const [selectedTestbank, setSelectedTestbank] = useState('all');
 
   // Parse URL parameters to get quiz ID for editing
-  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const urlParams = new URLSearchParams(window.location.search);
   const quizId = urlParams.get('id');
   const isEditing = Boolean(quizId);
+  
+  console.log('URL Parsing Debug:', {
+    location,
+    windowLocationSearch: window.location.search,
+    urlParams: urlParams.toString(),
+    quizId,
+    isEditing
+  });
 
   // Load existing quiz data if editing
   const { data: existingQuiz, isLoading: quizLoading, error: quizError } = useQuery({
