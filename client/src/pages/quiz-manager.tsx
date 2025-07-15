@@ -56,7 +56,7 @@ export default function QuizManager() {
 
   const deleteQuizMutation = useMutation({
     mutationFn: async (quizId: string) => {
-      await apiRequest("DELETE", `/api/quizzes/${quizId}`);
+      await apiRequest(`/api/quizzes/${quizId}`, { method: "DELETE" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
@@ -76,7 +76,10 @@ export default function QuizManager() {
 
   const copyQuizMutation = useMutation({
     mutationFn: async ({ quizId, newTitle }: { quizId: string; newTitle: string }) => {
-      return await apiRequest("POST", `/api/quizzes/${quizId}/copy`, { newTitle });
+      return await apiRequest(`/api/quizzes/${quizId}/copy`, { 
+        method: "POST", 
+        body: JSON.stringify({ newTitle }) 
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
@@ -96,7 +99,10 @@ export default function QuizManager() {
 
   const assignQuizMutation = useMutation({
     mutationFn: async ({ quizId, studentIds, dueDate }: { quizId: string; studentIds: string[]; dueDate?: string }) => {
-      return await apiRequest("POST", `/api/quizzes/${quizId}/assign`, { studentIds, dueDate });
+      return await apiRequest(`/api/quizzes/${quizId}/assign`, { 
+        method: "POST", 
+        body: JSON.stringify({ studentIds, dueDate }) 
+      });
     },
     onSuccess: () => {
       toast({
@@ -115,7 +121,7 @@ export default function QuizManager() {
 
   const startLiveExamMutation = useMutation({
     mutationFn: async (quizId: string) => {
-      return await apiRequest("POST", `/api/quizzes/${quizId}/start-live`);
+      return await apiRequest(`/api/quizzes/${quizId}/start-live`, { method: "POST" });
     },
     onSuccess: (data) => {
       toast({
