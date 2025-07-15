@@ -1337,53 +1337,48 @@ export default function EnhancedQuizBuilder() {
                         })}
                         
                         {/* Ungrouped Questions */}
-                        {(() => {
-                          const ungroupedQuestions = quizQuestions.filter(q => !q.groupId);
-                          if (ungroupedQuestions.length === 0) return null;
-                          
-                          return (
-                            <motion.div
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="border rounded-lg"
-                            >
-                              <div className="p-4 bg-muted/30">
-                                <div className="flex items-center gap-2">
-                                  <FileText className="h-4 w-4" />
-                                  <h4 className="font-medium">Individual Questions</h4>
-                                  <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.2, duration: 0.2 }}
-                                  >
-                                    <Badge variant="secondary">{ungroupedQuestions.length}</Badge>
-                                  </motion.div>
-                                </div>
+                        {quizQuestions.filter(q => !q.groupId).length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="border rounded-lg"
+                          >
+                            <div className="p-4 bg-muted/30">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                <h4 className="font-medium">Individual Questions</h4>
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ delay: 0.2, duration: 0.2 }}
+                                >
+                                  <Badge variant="secondary">{quizQuestions.filter(q => !q.groupId).length}</Badge>
+                                </motion.div>
                               </div>
-                              <div className="space-y-2 p-4">
-                                {ungroupedQuestions.map((question, index) => (
-                                  <motion.div
-                                    key={question.id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.1 + index * 0.05, duration: 0.2 }}
-                                  >
-                                    <DraggableQuestion
-                                      question={question}
-                                      onRemove={(questionId) => {
-                                        setQuizQuestions(prev => prev.filter(q => q.id !== questionId));
-                                      }}
-                                      showCheckbox={true}
-                                      isSelected={selectedQuestions.includes(question.id)}
-                                      onSelect={handleSelectQuestion}
-                                    />
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </motion.div>
-                          );
-                        })()}
+                            </div>
+                            <div className="space-y-2 p-4">
+                              {quizQuestions.filter(q => !q.groupId).map((question, index) => (
+                                <motion.div
+                                  key={question.id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.1 + index * 0.05, duration: 0.2 }}
+                                >
+                                  <DraggableQuestion
+                                    question={question}
+                                    onRemove={(questionId) => {
+                                      setQuizQuestions(prev => prev.filter(q => q.id !== questionId));
+                                    }}
+                                    showCheckbox={true}
+                                    isSelected={selectedQuestions.includes(question.id)}
+                                    onSelect={handleSelectQuestion}
+                                  />
+                                </motion.div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
                         </SortableContext>
                       </DndContext>
                     )}
