@@ -429,27 +429,157 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQuiz(id: string): Promise<Quiz | undefined> {
-    console.log('Getting quiz with ID:', id);
+    console.log('=== STORAGE getQuiz called with ID:', id);
     
-    // First try to get all quizzes and find the one with matching ID
     try {
+      // First get the quiz
       const allQuizzes = await db.select().from(quizzes);
+      console.log('=== Total quizzes in database:', allQuizzes.length);
       const foundQuiz = allQuizzes.find(quiz => quiz.id === id);
       
       if (!foundQuiz) {
-        console.log('Quiz not found');
+        console.log('=== Quiz not found');
         return undefined;
       }
 
-      console.log('Quiz found:', foundQuiz.title);
+      console.log('=== Quiz found:', foundQuiz.title);
       
-      // For now, let's just return the quiz without questions to isolate the issue
+      // Now fetch the questions associated with this quiz
+      console.log('=== Fetching questions for quiz:', id);
+      
+      // Get all quiz questions for this quiz
+      try {
+        const quizQuestionRecords = await db
+          .select()
+          .from(quizQuestions)
+          .where(eq(quizQuestions.quizId, id))
+          .orderBy(quizQuestions.displayOrder);
+        
+        console.log('=== Found quiz question records:', quizQuestionRecords.length);
+        
+        if (quizQuestionRecords.length === 0) {
+          return {
+            ...foundQuiz,
+            questions: []
+          };
+        }
+        
+        // Get the question details for each quiz question
+        const questionsWithDetails = await Promise.all(
+          quizQuestionRecords.map(async (qr) => {
+            const questionData = await db
+              .select()
+              .from(questions)
+              .where(eq(questions.id, qr.questionId))
+              .limit(1);
+            
+            if (questionData.length === 0) {
+              return null;
+            }
+            
+            const question = questionData[0];
+            
+            // Get answer options
+            const questionAnswerOptions = await db
+              .select()
+              .from(answerOptions)
+              .where(eq(answerOptions.questionId, qr.questionId))
+              .orderBy(answerOptions.displayOrder);
+            
+            return {
+              id: qr.id,
+              questionId: qr.questionId,
+              displayOrder: qr.displayOrder,
+              points: qr.points,
+              questionGroupId: qr.questionGroupId,
+              isRequired: qr.isRequired,
+              showFeedback: qr.showFeedback,
+              partialCredit: qr.partialCredit,
+              question: {
+                ...question,
+                answerOptions: questionAnswerOptions
+              }
+            };
+          })
+        );
+        
+        const validQuestions = questionsWithDetails.filter(q => q !== null);
+        
+        console.log('=== Returning quiz with questions:', validQuestions.length);
+        
+        return {
+          ...foundQuiz,
+          questions: validQuestions
+        };
+        
+      } catch (error) {
+        console.log('=== Error fetching quiz questions:', error);
+        return {
+          ...foundQuiz,
+          questions: []
+        };
+      }
+      
+      
+      // For each quiz question record, get the full question data and answer options
+      const questionsWithAnswers = await Promise.all(
+        quizQuestionRecords.map(async (qr) => {
+          console.log('=== Getting full question data for:', qr.questionId);
+          
+          // Get the full question data
+          const questionData = await db
+            .select()
+            .from(questions)
+            .where(eq(questions.id, qr.questionId))
+            .limit(1);
+          
+          if (questionData.length === 0) {
+            console.log('=== Question not found:', qr.questionId);
+            return null;
+          }
+          
+          const question = questionData[0];
+          
+          console.log('=== Getting answer options for question:', qr.questionId);
+          const answerOptions = await db
+            .select()
+            .from(answerOptions)
+            .where(eq(answerOptions.questionId, qr.questionId))
+            .orderBy(answerOptions.displayOrder);
+          
+          console.log('=== Found answer options:', answerOptions.length);
+          
+          return {
+            id: qr.id,
+            questionId: qr.questionId,
+            displayOrder: qr.displayOrder,
+            points: qr.points,
+            questionGroupId: qr.questionGroupId,
+            isRequired: qr.isRequired,
+            showFeedback: qr.showFeedback,
+            partialCredit: qr.partialCredit,
+            question: {
+              ...question,
+              answerOptions
+            }
+          };
+        })
+      );
+      
+      // Filter out any null entries
+      const validQuestions = questionsWithAnswers.filter(q => q !== null);
+      
+      console.log('=== Returning quiz with questions:', validQuestions.length);
+      
+      // For now, return just the first 2 questions to test the structure
+      const testQuestions = validQuestions.slice(0, 2);
+      
       return {
         ...foundQuiz,
-        questions: []
+        questions: testQuestions
       };
     } catch (error) {
-      console.error('Error in getQuiz:', error);
+      console.error('=== Error in getQuiz:', error);
       throw error;
     }
   }

@@ -2210,9 +2210,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const quizId = req.params.id;
       const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
       
-      // Workaround: Get all quizzes for the user and find the one with matching ID
-      const allQuizzes = await storage.getQuizzesByUser(userId);
-      const quiz = allQuizzes.find(q => q.id === quizId);
+      // Use the updated getQuiz method that properly loads questions
+      const quiz = await storage.getQuiz(quizId);
       
       if (!quiz) {
         return res.status(404).json({ message: "Quiz not found" });
