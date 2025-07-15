@@ -123,6 +123,42 @@ export default function EnhancedQuizBuilder() {
     enabled: isEditing,
   });
 
+  // Update quiz state when existing quiz data is loaded
+  useEffect(() => {
+    if (existingQuiz) {
+      console.log('Loading existing quiz data:', existingQuiz);
+      setQuiz({
+        title: existingQuiz.title || '',
+        description: existingQuiz.description || '',
+        instructions: existingQuiz.instructions || '',
+        timeLimit: existingQuiz.timeLimit || 60,
+        alwaysAvailable: existingQuiz.alwaysAvailable ?? true,
+        shuffleQuestions: existingQuiz.shuffleQuestions || false,
+        shuffleAnswers: existingQuiz.shuffleAnswers || false,
+        allowMultipleAttempts: existingQuiz.allowMultipleAttempts || false,
+        maxAttempts: existingQuiz.maxAttempts || 1,
+        showCorrectAnswers: existingQuiz.showCorrectAnswers || false,
+        showCorrectAnswersAt: existingQuiz.showCorrectAnswersAt || 'after_submission',
+        passingGrade: existingQuiz.passingGrade || 70,
+        gradeToShow: existingQuiz.gradeToShow || 'percentage',
+        enableQuestionFeedback: existingQuiz.enableQuestionFeedback ?? true,
+        enableLearningPrescription: existingQuiz.enableLearningPrescription ?? true,
+        availabilityStart: existingQuiz.availabilityStart,
+        availabilityEnd: existingQuiz.availabilityEnd,
+        passwordProtected: existingQuiz.passwordProtected || false,
+        password: existingQuiz.password || '',
+        proctoring: existingQuiz.proctoring || false,
+        showQuestionsAfterAttempt: existingQuiz.showQuestionsAfterAttempt || false,
+        proctoringSettings: existingQuiz.proctoringSettings || {}
+      });
+      
+      // Load questions if available
+      if (existingQuiz.questions && existingQuiz.questions.length > 0) {
+        setQuizQuestions(existingQuiz.questions);
+      }
+    }
+  }, [existingQuiz]);
+
   // Load testbanks and questions
   const { data: testbanks = [], isLoading: testbanksLoading } = useQuery({
     queryKey: ['/api/testbanks'],
@@ -349,7 +385,9 @@ export default function EnhancedQuizBuilder() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Enhanced Quiz Builder</BreadcrumbPage>
+            <BreadcrumbPage>
+              {isEditing ? `Edit Quiz: ${quiz.title || 'Loading...'}` : 'Enhanced Quiz Builder'}
+            </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
