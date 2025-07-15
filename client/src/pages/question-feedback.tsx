@@ -106,7 +106,7 @@ export default function QuestionFeedbackPage() {
   // Fetch question feedback
   const { data: questionFeedbacks, isLoading: loadingQuestionFeedbacks } = useQuery({
     queryKey: ["/api/question-feedback"],
-    queryFn: () => apiRequest("GET", "/api/question-feedback"),
+    queryFn: () => apiRequest("/api/question-feedback"),
   });
 
   // Fetch answer option feedback
@@ -227,12 +227,12 @@ export default function QuestionFeedbackPage() {
   };
 
   // Filter and search logic
-  const filteredQuestionFeedbacks = questionFeedbacks?.filter((feedback: QuestionFeedback) => {
+  const filteredQuestionFeedbacks = (Array.isArray(questionFeedbacks) ? questionFeedbacks : []).filter((feedback: QuestionFeedback) => {
     const matchesSearch = feedback.feedbackText.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          feedback.question?.questionText.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "all" || feedback.feedbackType === filterType;
     return matchesSearch && matchesType;
-  }) || [];
+  });
 
   const openEditDialog = (feedback: QuestionFeedback) => {
     setEditingQuestionFeedback(feedback);

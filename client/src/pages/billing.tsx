@@ -187,13 +187,13 @@ export default function BillingPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-2xl font-bold">{billingInfo?.currentPlan.name}</h3>
-                  {getStatusBadge(billingInfo?.currentPlan.status || 'active')}
+                  <h3 className="text-2xl font-bold">{billingInfo?.currentPlan?.name || 'Free'}</h3>
+                  {getStatusBadge(billingInfo?.currentPlan?.status || 'active')}
                 </div>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{formatPrice(billingInfo?.currentPlan.price || 0)} / {billingInfo?.currentPlan.billingCycle}</span>
+                  <span>{formatPrice(billingInfo?.currentPlan?.price || 0)} / {billingInfo?.currentPlan?.billingCycle || 'month'}</span>
                   <span>•</span>
-                  <span>Next billing: {new Date(billingInfo?.currentPlan.nextBillingDate || '').toLocaleDateString()}</span>
+                  <span>Next billing: {new Date(billingInfo?.currentPlan?.nextBillingDate || new Date()).toLocaleDateString()}</span>
                 </div>
               </div>
               <div className="flex gap-2">

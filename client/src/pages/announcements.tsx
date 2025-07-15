@@ -119,19 +119,19 @@ export default function AnnouncementsPage() {
   // Fetch announcements
   const { data: announcements, isLoading } = useQuery({
     queryKey: ["/api/announcements"],
-    queryFn: () => apiRequest("GET", "/api/announcements"),
+    queryFn: () => apiRequest("/api/announcements"),
   });
 
   // Fetch user's announcements
   const { data: myAnnouncements } = useQuery({
     queryKey: ["/api/announcements", "my"],
-    queryFn: () => apiRequest("GET", "/api/announcements/my"),
+    queryFn: () => apiRequest("/api/announcements/my"),
   });
 
   // Fetch current user
   const { data: user } = useQuery({
     queryKey: ["/api/auth/user"],
-    queryFn: () => apiRequest("GET", "/api/auth/user"),
+    queryFn: () => apiRequest("/api/auth/user"),
   });
 
   // Create announcement mutation
@@ -276,7 +276,7 @@ export default function AnnouncementsPage() {
   };
 
   const filteredAnnouncements = (announcementList: Announcement[] | undefined) => {
-    if (!announcementList) return [];
+    if (!announcementList || !Array.isArray(announcementList)) return [];
     
     return announcementList.filter(announcement => {
       const matchesType = filterType === "all" || announcement.announcementType === filterType;

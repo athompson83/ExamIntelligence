@@ -174,7 +174,7 @@ export default function PricingPage() {
 
       {/* Pricing Cards */}
       <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {plans?.map((plan) => (
+        {(Array.isArray(plans) ? plans : []).map((plan) => (
           <Card key={plan.id} className={`relative ${isPlanRecommended(plan) ? 'border-primary shadow-lg' : ''}`}>
             {isPlanRecommended(plan) && (
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
