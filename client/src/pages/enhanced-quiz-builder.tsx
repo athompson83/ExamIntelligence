@@ -118,15 +118,27 @@ export default function EnhancedQuizBuilder() {
   const isEditing = Boolean(quizId);
 
   // Load existing quiz data if editing
-  const { data: existingQuiz, isLoading: quizLoading } = useQuery({
-    queryKey: ['/api/quizzes', quizId],
-    enabled: isEditing,
+  const { data: existingQuiz, isLoading: quizLoading, error: quizError } = useQuery({
+    queryKey: [`/api/quizzes/${quizId}`],
+    enabled: isEditing && !!quizId,
+  });
+
+  // Debug logging
+  console.log('EnhancedQuizBuilder Debug:', {
+    quizId,
+    isEditing,
+    existingQuiz,
+    quizLoading,
+    quizError,
+    currentQuizState: quiz.title
   });
 
   // Update quiz state when existing quiz data is loaded
   useEffect(() => {
+    console.log('useEffect triggered with existingQuiz:', existingQuiz);
     if (existingQuiz) {
       console.log('Loading existing quiz data:', existingQuiz);
+      console.log('Setting quiz state...');
       setQuiz({
         title: existingQuiz.title || '',
         description: existingQuiz.description || '',
@@ -151,11 +163,14 @@ export default function EnhancedQuizBuilder() {
         showQuestionsAfterAttempt: existingQuiz.showQuestionsAfterAttempt || false,
         proctoringSettings: existingQuiz.proctoringSettings || {}
       });
+      console.log('Quiz state updated with:', existingQuiz.title);
       
       // Load questions if available
       if (existingQuiz.questions && existingQuiz.questions.length > 0) {
         setQuizQuestions(existingQuiz.questions);
       }
+    } else {
+      console.log('No existingQuiz data to load');
     }
   }, [existingQuiz]);
 
