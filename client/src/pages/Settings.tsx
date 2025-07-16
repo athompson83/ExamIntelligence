@@ -26,13 +26,30 @@ import {
   MessageCircle
 } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useTooltipMute } from "@/components/TooltipSystem";
-
 export default function Settings() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("profile");
-  const { isTooltipSystemMuted, toggleTooltipMute } = useTooltipMute();
+  
+  // Simple tooltip mute state without hook
+  const [isTooltipSystemMuted, setIsTooltipSystemMuted] = useState(() => {
+    return localStorage.getItem('tooltipSystemMuted') === 'true';
+  });
+  
+  const toggleTooltipMute = () => {
+    const newMutedState = !isTooltipSystemMuted;
+    setIsTooltipSystemMuted(newMutedState);
+    localStorage.setItem('tooltipSystemMuted', newMutedState.toString());
+    
+    // Show toast notification
+    toast({
+      title: newMutedState ? 'AI Tooltips Disabled' : 'AI Tooltips Enabled',
+      description: newMutedState 
+        ? 'You will no longer receive AI assistant tooltips. Use Alt+T to toggle them back on.' 
+        : 'AI assistant tooltips are now active. Press Alt+T to disable them anytime.',
+      duration: 3000,
+    });
+  };
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
