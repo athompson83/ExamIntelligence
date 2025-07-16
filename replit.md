@@ -520,8 +520,30 @@ To access super admin features for prompt management:
 - **User Experience**: Floating action button for easy access during exams, maintains exam flow without interruption
 - **Cross-Platform**: Calculator component designed for both iOS and Android with consistent behavior
 
+## Core Functionality Protection
+
+### Stable Core Systems (DO NOT MODIFY WITHOUT EXPLICIT REQUEST)
+- **Item Bank Management**: Complete CRUD operations with proper cache invalidation
+- **Question Creation**: Full question management with multiple question types
+- **Quiz Creation**: Enhanced quiz builder with comprehensive functionality
+- **Assignment Creation**: Assignment workflow with student management
+- **Exam Scheduling**: Live exam scheduling with proper session management
+
+### Recent Stability Fixes (January 16, 2025)
+- **API Request Signature Fix**: Corrected apiRequest calls to use proper (url, options) format
+- **Cache Invalidation Fix**: Fixed frontend cache not updating after item bank creation
+- **CAT Exam System**: Implemented comprehensive Computer Adaptive Testing functionality
+- **Database Schema**: Created stable CAT tables (cat_exams, cat_categories, cat_sessions)
+
+### Version Control Guidelines
+1. **Core Functionality**: Item banks, questions, quizzes, assignments, and exam scheduling are STABLE
+2. **Testing Protocol**: All changes to core systems must be tested thoroughly
+3. **Rollback Plan**: Keep working versions documented before any modifications
+4. **Change Documentation**: All architectural changes must be documented with rationale
+
 ## Changelog
 
+- January 16, 2025. **CORE FUNCTIONALITY STABILIZED**: Fixed critical cache invalidation bug preventing item bank creation from appearing in UI. Updated all API request calls to use correct signature format. Implemented comprehensive CAT exam system with database schema. **PROTECTION MEASURES**: Documented stable core systems and implemented change control guidelines to prevent disruption of working functionality.
 - July 15, 2025. **LIVE EXAM SCHEDULER SEPARATION COMPLETED**: Successfully separated live exam scheduling from quiz builder functionality. **DEDICATED LIVE EXAM SCHEDULER**: Created separate LiveExamScheduler component with its own modal interface accessed from live-exams page. **PRESERVED QUIZ BUILDER**: Quiz builder functionality remains fully intact and independent of live exam scheduling. **BACKEND API SUPPORT**: Added comprehensive API endpoints for live exam CRUD operations including create, update, get, and delete operations. **STORAGE LAYER INTEGRATION**: Extended storage interface with live exam management methods for full backend functionality. **FIXED COMPILATION ERRORS**: Resolved TypeScript compilation errors and JSX parsing issues that prevented application startup. **APPLICATION RUNNING**: Web application now runs successfully on port 5000 with all components functional.
 - July 14, 2025. **COMPREHENSIVE INPUT PRESERVATION SYSTEM COMPLETED**: Fixed all form input clearing issues by implementing complete uncontrolled input system with refs and preservation mechanisms. **ALL FORM INPUTS PROTECTED**: Converted all numeric inputs (maxAttempts, timeLimit, percentLostPerDay, maxLateDays, CAT settings) to uncontrolled approach with defaultValue + refs. **COMPLETE CAPTURE SYSTEM**: All form state changes (quiz selection, switches, checkboxes, student/section selection) now call captureInputValues() before state updates. **PRESERVATION ACROSS ALL ACTIONS**: Title, description, dates, and numeric values preserved during quiz selection, switch toggles, student selection, and section management. **MOBILE DATE PICKER ENHANCED**: Extended mobile date picker solution to all numeric inputs with comprehensive refs system and restoration effects.
 - July 13, 2025. **SECTION MANAGEMENT CRITICAL FIX**: Fixed critical "Method is not a valid HTTP token" error that prevented adding students to sections. Updated apiRequest function signature in queryClient.ts to match expected format (url, options) instead of (method, url, data). Added comprehensive error handling, database cleanup methods, and improved cache invalidation for section management. **SYSTEMATIC DEBUGGING APPROACH**: Implemented systematic debugging with proper null checks for undefined member properties, enhanced DELETE endpoint validation, and database cleanup for invalid section memberships. All section management operations now work correctly with proper error handling and real-time data updates.

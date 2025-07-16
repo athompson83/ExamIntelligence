@@ -59,6 +59,7 @@ export default function Sidebar() {
 
   const systemItems = [
     ...(['admin', 'teacher', 'super_admin'].includes(user?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
+    { href: "/core-functionality-test", label: "Core Tests", icon: Shield, tourId: "core-tests" },
     { href: "/pricing", label: "Pricing", icon: DollarSign, tourId: "pricing" },
     { href: "/billing", label: "Billing", icon: CreditCard, tourId: "billing" },
     { href: "/offline-sync", label: "Offline Sync", icon: Cloud, tourId: "offline-sync" },

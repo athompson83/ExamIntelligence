@@ -51,6 +51,7 @@ const StudentDashboard = lazy(() => import("@/pages/student-dashboard"));
 const StudentQuiz = lazy(() => import("@/pages/student-quiz"));
 const CATExamBuilder = lazy(() => import("@/pages/CATExamBuilder"));
 const CATExamTest = lazy(() => import("@/pages/CATExamTest"));
+const CoreFunctionalityTest = lazy(() => import("@/pages/CoreFunctionalityTest"));
 const ProctoringSecurity = lazy(() => import("@/pages/proctoring-security"));
 const QuestionFeedbackPage = lazy(() => import("@/pages/question-feedback"));
 const AnonymousQuizAccessPage = lazy(() => import("@/pages/anonymous-quiz-access"));
@@ -154,6 +155,9 @@ function Router() {
           </Route>
           <Route path="/cat-exam-test">
             {() => <Suspense fallback={<LoadingSpinner />}><CATExamTest /></Suspense>}
+          </Route>
+          <Route path="/core-functionality-test">
+            {() => <Suspense fallback={<LoadingSpinner />}><CoreFunctionalityTest /></Suspense>}
           </Route>
           <Route path="/live-exams">
             {() => <Suspense fallback={<LoadingSpinner />}><LiveExams /></Suspense>}
