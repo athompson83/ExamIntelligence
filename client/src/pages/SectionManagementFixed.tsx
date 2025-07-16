@@ -79,11 +79,24 @@ export default function SectionManagementFixed() {
   // Fetch section members
   const { data: sectionMembers = [], isLoading: membersLoading, error: membersError } = useQuery({
     queryKey: ['/api/sections', selectedSection?.id, 'members'],
-    queryFn: () => selectedSection ? apiRequest(`/api/sections/${selectedSection.id}/members`) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!selectedSection) return [];
+      const response = await apiRequest(`/api/sections/${selectedSection.id}/members`);
+      return await response.json();
+    },
     enabled: !!selectedSection,
     staleTime: 30000,
     select: (data) => {
       console.log('Section members data received:', data);
+      console.log('Data type:', typeof data);
+      console.log('Is array:', Array.isArray(data));
+      
+      // Ensure data is an array
+      if (!Array.isArray(data)) {
+        console.error('Expected array but got:', data);
+        return [];
+      }
+      
       // Filter out any invalid entries on the client side as well
       const validMembers = data.filter((member: any) => 
         member.id && 
