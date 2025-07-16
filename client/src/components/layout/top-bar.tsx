@@ -10,12 +10,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { Bell, LogOut, User, GraduationCap, BookOpen } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Bell, LogOut, User, GraduationCap, BookOpen, Shield } from "lucide-react";
 
 export function TopBar() {
   const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();
   const [location, navigate] = useLocation();
+  const { toast } = useToast();
 
   if (!isAuthenticated) {
     return null;
@@ -36,6 +38,30 @@ export function TopBar() {
     }
   };
 
+  const openProctoringDashboard = () => {
+    const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no';
+    const windowUrl = window.location.origin + '/proctoring-dashboard-window';
+    const windowName = 'ProctoringDashboard';
+    
+    // Check if window is already open
+    const existingWindow = window.open('', windowName);
+    if (existingWindow && !existingWindow.closed) {
+      existingWindow.focus();
+      return;
+    }
+    
+    const newWindow = window.open(windowUrl, windowName, windowFeatures);
+    if (newWindow) {
+      newWindow.focus();
+    } else {
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups to open the proctoring dashboard window",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <header className="h-16 border-b bg-white flex items-center justify-between px-6">
       <div className="flex items-center space-x-4">
@@ -47,6 +73,13 @@ export function TopBar() {
         
         {/* Language Switcher */}
         <LanguageSwitcher variant="compact" />
+        
+        {/* Proctoring Dashboard */}
+        {['admin', 'teacher', 'super_admin'].includes(user?.role || '') && (
+          <Button variant="ghost" size="sm" onClick={openProctoringDashboard} title="Open Proctoring Dashboard">
+            <Shield className="h-4 w-4" />
+          </Button>
+        )}
         
         {/* Notifications */}
         <Button variant="ghost" size="sm">

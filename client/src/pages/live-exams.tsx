@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Play, Users, Clock, AlertTriangle, Eye, Calendar } from "lucide-react";
+import { Play, Users, Clock, AlertTriangle, Eye, Calendar, ExternalLink } from "lucide-react";
 import { useEffect } from "react";
 
 export default function LiveExams() {
@@ -20,6 +20,30 @@ export default function LiveExams() {
   const [selectedExam, setSelectedExam] = useState<string | null>(null);
   const [showProctoring, setShowProctoring] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
+
+  const openProctoringDashboard = () => {
+    const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no';
+    const windowUrl = window.location.origin + '/proctoring-dashboard-window';
+    const windowName = 'ProctoringDashboard';
+    
+    // Check if window is already open
+    const existingWindow = window.open('', windowName);
+    if (existingWindow && !existingWindow.closed) {
+      existingWindow.focus();
+      return;
+    }
+    
+    const newWindow = window.open(windowUrl, windowName, windowFeatures);
+    if (newWindow) {
+      newWindow.focus();
+    } else {
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups to open the proctoring dashboard window",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -82,10 +106,10 @@ export default function LiveExams() {
               </Button>
               <Button 
                 className="bg-primary hover:bg-primary/90"
-                onClick={() => setShowProctoring(true)}
+                onClick={openProctoringDashboard}
               >
-                <Eye className="mr-2 h-4 w-4" />
-                Proctoring Dashboard
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open Proctoring Dashboard
               </Button>
             </div>
           </div>

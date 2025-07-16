@@ -53,6 +53,7 @@ const CATExamBuilder = lazy(() => import("@/pages/CATExamBuilder"));
 const CATExamTest = lazy(() => import("@/pages/CATExamTest"));
 const CoreFunctionalityTest = lazy(() => import("@/pages/CoreFunctionalityTest"));
 const ProctoringSecurity = lazy(() => import("@/pages/proctoring-security"));
+const ProctoringDashboardWindow = lazy(() => import("@/pages/proctoring-dashboard-window"));
 const QuestionFeedbackPage = lazy(() => import("@/pages/question-feedback"));
 const AnonymousQuizAccessPage = lazy(() => import("@/pages/anonymous-quiz-access"));
 const NotificationSettings = lazy(() => import("@/pages/notification-settings"));
@@ -227,6 +228,9 @@ function Router() {
           </Route>
           <Route path="/proctoring-security">
             {() => <Suspense fallback={<LoadingSpinner />}><ProctoringSecurity /></Suspense>}
+          </Route>
+          <Route path="/proctoring-dashboard-window">
+            {() => <Suspense fallback={<LoadingSpinner />}><ProctoringDashboardWindow /></Suspense>}
           </Route>
           <Route path="/project-status">
             {() => <Suspense fallback={<LoadingSpinner />}><ProjectStatus /></Suspense>}
