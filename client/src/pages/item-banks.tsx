@@ -51,14 +51,25 @@ export default function ItemBanks() {
 
   const createTestbankMutation = useMutation({
     mutationFn: async (data: { title: string; description: string; tags: string[]; learningObjectives: string[] }) => {
-      await apiRequest("POST", "/api/testbanks", data);
+      console.log('Creating testbank with data:', data);
+      const response = await apiRequest("POST", "/api/testbanks", data);
+      console.log('Testbank creation response:', response);
+      return response;
     },
-    onSuccess: () => {
-      // Force refresh the testbanks list
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
-      queryClient.refetchQueries({ queryKey: ['/api/testbanks'] });
+    onSuccess: async (response) => {
+      console.log('Testbank creation successful, refreshing cache...');
+      
+      // Force refresh the testbanks list with multiple approaches
+      await queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/testbanks'] });
+      
       // Also clear the cache to ensure fresh data
       queryClient.removeQueries({ queryKey: ['/api/testbanks'] });
+      
+      // Force a complete cache refresh
+      await queryClient.resetQueries({ queryKey: ['/api/testbanks'] });
+      
+      console.log('Cache refresh completed');
       
       setIsDialogOpen(false);
       setEditingTestbank(null);
