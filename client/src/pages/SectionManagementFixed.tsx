@@ -79,6 +79,7 @@ export default function SectionManagementFixed() {
   // Fetch section members
   const { data: sectionMembers = [], isLoading: membersLoading, error: membersError } = useQuery({
     queryKey: ['/api/sections', selectedSection?.id, 'members'],
+    queryFn: () => selectedSection ? apiRequest(`/api/sections/${selectedSection.id}/members`) : Promise.resolve([]),
     enabled: !!selectedSection,
     staleTime: 30000,
     select: (data) => {

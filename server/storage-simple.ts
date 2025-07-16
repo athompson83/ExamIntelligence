@@ -1129,6 +1129,7 @@ export class DatabaseStorage implements IStorage {
   // Section Membership Methods
   async getSectionMembers(sectionId: string): Promise<any[]> {
     try {
+      console.log(`Fetching members for section: ${sectionId}`);
       const result = await db
         .select({
           id: users.id,
@@ -1143,6 +1144,8 @@ export class DatabaseStorage implements IStorage {
         .innerJoin(users, eq(sectionMemberships.studentId, users.id))
         .where(eq(sectionMemberships.sectionId, sectionId));
       
+      console.log(`Raw query result:`, result);
+      
       // Filter out any entries with null/empty names or emails
       const validMembers = result.filter(member => 
         member.id && 
@@ -1155,6 +1158,7 @@ export class DatabaseStorage implements IStorage {
       return validMembers;
     } catch (error) {
       console.error('Error fetching section members:', error);
+      console.error('Error details:', error.message);
       return [];
     }
   }
