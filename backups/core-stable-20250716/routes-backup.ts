@@ -1453,9 +1453,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create answer options if provided
       if (req.body.answerOptions && Array.isArray(req.body.answerOptions)) {
         for (const option of req.body.answerOptions) {
-          const answerText = option.answerText || option.text;
           // Ensure answerText is present and valid
-          if (!answerText || typeof answerText !== 'string' || answerText.trim() === '') {
+          if (!option.answerText || typeof option.answerText !== 'string' || option.answerText.trim() === '') {
             console.warn(`Skipping invalid answer option for question ${question.id}:`, option);
             continue;
           }
@@ -1464,7 +1463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const optionData = insertAnswerOptionSchema.parse({
               ...option,
               questionId: question.id,
-              answerText: answerText.trim(),
+              answerText: option.answerText.trim(),
               isCorrect: Boolean(option.isCorrect),
               displayOrder: option.displayOrder || 0,
             });
@@ -1669,8 +1668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (generatedQuestion.answerOptions && Array.isArray(generatedQuestion.answerOptions)) {
           for (const option of generatedQuestion.answerOptions) {
             // Ensure answerText is present and valid
-            const answerText = option.answerText || option.text;
-            if (!answerText || typeof answerText !== 'string' || answerText.trim() === '') {
+            if (!option.answerText || typeof option.answerText !== 'string' || option.answerText.trim() === '') {
               console.warn(`Skipping invalid answer option for question ${question.id}:`, option);
               continue;
             }
@@ -1679,7 +1677,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const optionData = insertAnswerOptionSchema.parse({
                 ...option,
                 questionId: question.id,
-                answerText: answerText.trim(),
+                answerText: option.answerText.trim(),
                 isCorrect: Boolean(option.isCorrect),
                 displayOrder: option.displayOrder || 0,
               });
@@ -1763,9 +1761,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create answer options if provided
         if (generatedQuestion.answerOptions && Array.isArray(generatedQuestion.answerOptions)) {
           for (const option of generatedQuestion.answerOptions) {
-            const answerText = option.answerText || option.text;
             // Ensure answerText is present and valid
-            if (!answerText || typeof answerText !== 'string' || answerText.trim() === '') {
+            if (!option.answerText || typeof option.answerText !== 'string' || option.answerText.trim() === '') {
               console.warn(`Skipping invalid answer option for question ${question.id}:`, option);
               continue;
             }
@@ -1774,7 +1771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const optionData = insertAnswerOptionSchema.parse({
                 ...option,
                 questionId: question.id,
-                answerText: answerText.trim(),
+                answerText: option.answerText.trim(),
                 isCorrect: Boolean(option.isCorrect),
                 displayOrder: option.displayOrder || 0,
               });
@@ -1817,8 +1814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.answerOptions && Array.isArray(req.body.answerOptions)) {
         for (const option of req.body.answerOptions) {
           // Ensure answerText is present and valid
-          const answerText = option.answerText || option.text;
-          if (!answerText || typeof answerText !== 'string' || answerText.trim() === '') {
+          if (!option.answerText || typeof option.answerText !== 'string' || option.answerText.trim() === '') {
             console.warn(`Skipping invalid answer option for question ${question.id}:`, option);
             continue;
           }
@@ -1827,7 +1823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const optionData = insertAnswerOptionSchema.parse({
               ...option,
               questionId: question.id,
-              answerText: answerText.trim(),
+              answerText: option.answerText.trim(),
               isCorrect: Boolean(option.isCorrect),
               displayOrder: option.displayOrder || 0,
             });
