@@ -52,22 +52,19 @@ export default function ItemBanks() {
   const createTestbankMutation = useMutation({
     mutationFn: async (data: { title: string; description: string; tags: string[]; learningObjectives: string[] }) => {
       console.log('Creating testbank with data:', data);
-      const response = await apiRequest("POST", "/api/testbanks", data);
+      const response = await apiRequest("/api/testbanks", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
       console.log('Testbank creation response:', response);
-      return response;
+      return response.json();
     },
     onSuccess: async (response) => {
       console.log('Testbank creation successful, refreshing cache...');
       
-      // Force refresh the testbanks list with multiple approaches
-      await queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
-      await queryClient.refetchQueries({ queryKey: ['/api/testbanks'] });
-      
-      // Also clear the cache to ensure fresh data
+      // Force complete cache refresh
       queryClient.removeQueries({ queryKey: ['/api/testbanks'] });
-      
-      // Force a complete cache refresh
-      await queryClient.resetQueries({ queryKey: ['/api/testbanks'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
       
       console.log('Cache refresh completed');
       
@@ -103,7 +100,11 @@ export default function ItemBanks() {
 
   const updateTestbankMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Testbank> }) => {
-      await apiRequest("PUT", `/api/testbanks/${id}`, data);
+      const response = await apiRequest(`/api/testbanks/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data)
+      });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
@@ -136,7 +137,10 @@ export default function ItemBanks() {
 
   const deleteTestbankMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/testbanks/${id}`);
+      const response = await apiRequest(`/api/testbanks/${id}`, {
+        method: "DELETE"
+      });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
