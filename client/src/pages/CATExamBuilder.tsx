@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,7 +92,6 @@ interface CATExamConfig {
 
 export default function CATExamBuilder() {
   const { user } = useAuth();
-  const { toast } = useToast();
   
   const [examConfig, setExamConfig] = useState<CATExamConfig>({
     title: '',
@@ -140,11 +139,21 @@ export default function CATExamBuilder() {
   const [bankMinQuestions, setBankMinQuestions] = useState(5);
   const [bankMaxQuestions, setBankMaxQuestions] = useState(15);
 
-  // Fetch available item banks
-  const { data: itemBanks, isLoading: banksLoading } = useQuery<ItemBank[]>({
+  // Fetch available item banks (testbanks)
+  const { data: testbanks, isLoading: banksLoading } = useQuery({
     queryKey: ['/api/testbanks'],
     enabled: !!user
   });
+
+  // Transform testbanks into ItemBank format
+  const itemBanks: ItemBank[] = testbanks?.map((testbank: any) => ({
+    id: testbank.id,
+    name: testbank.title,
+    description: testbank.description,
+    questionCount: testbank.questionCount || 0,
+    subject: testbank.tags?.[0] || 'General',
+    difficulty: { min: 1, max: 10 } // Default difficulty range
+  })) || [];
 
   // Fetch students for assignment
   const { data: students } = useQuery({

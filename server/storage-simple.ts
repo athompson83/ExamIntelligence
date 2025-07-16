@@ -14,6 +14,10 @@ import {
   quizAssignments,
   promptTemplates,
   archiveHistory,
+  catExams,
+  catExamCategories,
+  catExamAssignments,
+  catExamSessions,
   type User,
   type UpsertUser,
   type Testbank,
@@ -30,6 +34,14 @@ import {
   type InsertQuizResponse,
   type PromptTemplate,
   type InsertPromptTemplate,
+  type CatExam,
+  type InsertCatExam,
+  type CatExamCategory,
+  type InsertCatExamCategory,
+  type CatExamAssignment,
+  type InsertCatExamAssignment,
+  type CatExamSession,
+  type InsertCatExamSession,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
@@ -164,6 +176,17 @@ export interface IStorage {
   permanentlyDeleteQuestion(questionId: string, userId: string): Promise<boolean>;
   permanentlyDeleteQuiz(quizId: string, userId: string): Promise<boolean>;
   permanentlyDeleteTestbank(testbankId: string, userId: string): Promise<boolean>;
+  
+  // CAT (Computer Adaptive Testing) Methods
+  createCATExam(catExamData: any): Promise<any>;
+  getCATExam(id: string): Promise<any | undefined>;
+  getCATExamsByAccount(accountId: string): Promise<any[]>;
+  updateCATExam(id: string, catExamData: any): Promise<any>;
+  deleteCATExam(id: string): Promise<boolean>;
+  startCATExamSession(catExamId: string, studentId: string): Promise<any>;
+  getNextCATQuestion(sessionId: string): Promise<any>;
+  submitCATAnswer(sessionId: string, questionId: string, selectedAnswers: string[], timeSpent: number): Promise<any>;
+  completeCATExamSession(sessionId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3094,6 +3117,172 @@ Return JSON with the new question data:
       return true;
     } catch (error) {
       console.error('Error deleting live exam:', error);
+      throw error;
+    }
+  }
+
+  // CAT (Computer Adaptive Testing) Methods
+  async createCATExam(catExamData: any): Promise<any> {
+    try {
+      // Mock implementation for now - would create in catExams table
+      const catExam = {
+        id: 'cat_' + Date.now(),
+        ...catExamData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      return catExam;
+    } catch (error) {
+      console.error('Error creating CAT exam:', error);
+      throw error;
+    }
+  }
+
+  async getCATExam(id: string): Promise<any | undefined> {
+    try {
+      // Mock implementation - would query catExams table
+      return {
+        id,
+        title: 'Sample CAT Exam',
+        description: 'Computer Adaptive Test',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    } catch (error) {
+      console.error('Error getting CAT exam:', error);
+      throw error;
+    }
+  }
+
+  async getCATExamsByAccount(accountId: string): Promise<any[]> {
+    try {
+      // Mock implementation - would query catExams table
+      return [
+        {
+          id: 'cat_1',
+          title: 'Mathematics CAT',
+          description: 'Adaptive math assessment',
+          accountId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 'cat_2',
+          title: 'Science CAT',
+          description: 'Adaptive science assessment',
+          accountId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+    } catch (error) {
+      console.error('Error getting CAT exams by account:', error);
+      throw error;
+    }
+  }
+
+  async updateCATExam(id: string, catExamData: any): Promise<any> {
+    try {
+      // Mock implementation - would update in catExams table
+      return {
+        id,
+        ...catExamData,
+        updatedAt: new Date()
+      };
+    } catch (error) {
+      console.error('Error updating CAT exam:', error);
+      throw error;
+    }
+  }
+
+  async deleteCATExam(id: string): Promise<boolean> {
+    try {
+      // Mock implementation - would delete from catExams table
+      return true;
+    } catch (error) {
+      console.error('Error deleting CAT exam:', error);
+      throw error;
+    }
+  }
+
+  async startCATExamSession(catExamId: string, studentId: string): Promise<any> {
+    try {
+      // Mock implementation - would create in catExamSessions table
+      return {
+        id: 'session_' + Date.now(),
+        catExamId,
+        studentId,
+        startedAt: new Date(),
+        status: 'active',
+        currentAbilityEstimate: 0.0,
+        currentStandardError: 1.0,
+        questionsAsked: 0,
+        questionResponses: [],
+        categoryProgress: {}
+      };
+    } catch (error) {
+      console.error('Error starting CAT exam session:', error);
+      throw error;
+    }
+  }
+
+  async getNextCATQuestion(sessionId: string): Promise<any> {
+    try {
+      // Mock implementation - would select next question using CAT algorithm
+      return {
+        id: 'question_' + Date.now(),
+        questionText: 'What is the capital of France?',
+        questionType: 'multiple_choice',
+        answerOptions: [
+          { id: 'a', answerText: 'Paris', isCorrect: true },
+          { id: 'b', answerText: 'London', isCorrect: false },
+          { id: 'c', answerText: 'Berlin', isCorrect: false },
+          { id: 'd', answerText: 'Madrid', isCorrect: false }
+        ],
+        difficultyScore: 5,
+        category: 'Geography'
+      };
+    } catch (error) {
+      console.error('Error getting next CAT question:', error);
+      throw error;
+    }
+  }
+
+  async submitCATAnswer(sessionId: string, questionId: string, selectedAnswers: string[], timeSpent: number): Promise<any> {
+    try {
+      // Mock implementation - would update session state and calculate next question
+      return {
+        isCorrect: selectedAnswers.includes('a'), // Mock correct answer
+        feedback: 'Good job!',
+        shouldContinue: true,
+        abilityEstimate: 0.2,
+        standardError: 0.8,
+        questionsAsked: 1
+      };
+    } catch (error) {
+      console.error('Error submitting CAT answer:', error);
+      throw error;
+    }
+  }
+
+  async completeCATExamSession(sessionId: string): Promise<any> {
+    try {
+      // Mock implementation - would finalize session and calculate final score
+      return {
+        sessionId,
+        finalScore: 75,
+        scaledScore: 650,
+        percentileRank: 72,
+        questionsAsked: 25,
+        timeSpent: 1800,
+        categoryResults: {
+          'Mathematics': { score: 80, questionsAsked: 10 },
+          'Science': { score: 70, questionsAsked: 15 }
+        },
+        completedAt: new Date()
+      };
+    } catch (error) {
+      console.error('Error completing CAT exam session:', error);
       throw error;
     }
   }

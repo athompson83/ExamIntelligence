@@ -16,6 +16,17 @@ export interface CATSettings {
   };
   itemSelectionMethod: string;
   scoringMethod: string;
+  categories: CATCategory[];
+}
+
+export interface CATCategory {
+  categoryId: string;
+  categoryName: string;
+  testbankId: string;
+  percentage: number;
+  minQuestions: number;
+  maxQuestions: number;
+  targetProficiency: number;
 }
 
 export interface IRTParameters {

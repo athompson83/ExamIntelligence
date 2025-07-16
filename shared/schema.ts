@@ -399,6 +399,124 @@ export const quizProgress = pgTable("quiz_progress", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// CAT Exam Configurations - Computer Adaptive Testing
+export const catExams = pgTable("cat_exams", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  instructions: text("instructions"),
+  creatorId: varchar("creator_id").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  
+  // CAT-specific settings
+  startingDifficulty: numeric("starting_difficulty", { precision: 3, scale: 1 }).default("5.0"),
+  difficultyAdjustment: numeric("difficulty_adjustment", { precision: 3, scale: 2 }).default("0.5"),
+  minQuestions: integer("min_questions").default(10),
+  maxQuestions: integer("max_questions").default(50),
+  
+  // Termination criteria
+  confidenceLevel: numeric("confidence_level", { precision: 3, scale: 2 }).default("0.95"),
+  standardError: numeric("standard_error", { precision: 3, scale: 2 }).default("0.3"),
+  timeLimit: integer("time_limit").default(120), // minutes
+  
+  // Scoring settings
+  passingScore: numeric("passing_score", { precision: 5, scale: 2 }).default("70.0"),
+  scalingMethod: varchar("scaling_method", { enum: ["irt", "percent", "scaled"] }).default("irt"),
+  reportingScaleMin: integer("reporting_scale_min").default(200),
+  reportingScaleMax: integer("reporting_scale_max").default(800),
+  
+  // Security settings
+  allowCalculator: boolean("allow_calculator").default(false),
+  calculatorType: varchar("calculator_type", { enum: ["basic", "scientific", "graphing"] }).default("basic"),
+  enableProctoring: boolean("enable_proctoring").default(false),
+  preventCopyPaste: boolean("prevent_copy_paste").default(true),
+  preventTabSwitching: boolean("prevent_tab_switching").default(true),
+  requireWebcam: boolean("require_webcam").default(false),
+  
+  // Access settings
+  availableFrom: timestamp("available_from"),
+  availableTo: timestamp("available_to"),
+  allowedAttempts: integer("allowed_attempts").default(1),
+  isActive: boolean("is_active").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CAT Exam Categories - Links testbanks to CAT exams with percentage distribution
+export const catExamCategories = pgTable("cat_exam_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  catExamId: uuid("cat_exam_id").references(() => catExams.id).notNull(),
+  testbankId: uuid("testbank_id").references(() => testbanks.id).notNull(),
+  percentage: numeric("percentage", { precision: 5, scale: 2 }).notNull(), // 0-100%
+  minQuestions: integer("min_questions").default(1),
+  maxQuestions: integer("max_questions").default(20),
+  difficultyRange: jsonb("difficulty_range").$type<{min: number; max: number}>().default({min: 1, max: 10}),
+  
+  // CAT-specific category settings
+  proficiencyThreshold: numeric("proficiency_threshold", { precision: 5, scale: 2 }).default("80.0"),
+  terminateOnProficiency: boolean("terminate_on_proficiency").default(false),
+  adaptiveWeight: numeric("adaptive_weight", { precision: 3, scale: 2 }).default("1.0"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CAT Exam Assignments - Links students to CAT exams
+export const catExamAssignments = pgTable("cat_exam_assignments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  catExamId: uuid("cat_exam_id").references(() => catExams.id).notNull(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  assignedBy: varchar("assigned_by").references(() => users.id).notNull(),
+  dueDate: timestamp("due_date"),
+  status: varchar("status", { enum: ["assigned", "in_progress", "completed", "overdue"] }).default("assigned"),
+  
+  // Attempt tracking
+  attemptsUsed: integer("attempts_used").default(0),
+  lastAttemptAt: timestamp("last_attempt_at"),
+  completedAt: timestamp("completed_at"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CAT Exam Sessions - Individual student sessions
+export const catExamSessions = pgTable("cat_exam_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  catExamId: uuid("cat_exam_id").references(() => catExams.id).notNull(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  assignmentId: uuid("assignment_id").references(() => catExamAssignments.id),
+  
+  // Session tracking
+  startedAt: timestamp("started_at").defaultNow(),
+  endedAt: timestamp("ended_at"),
+  status: varchar("status", { enum: ["active", "completed", "terminated", "expired"] }).default("active"),
+  
+  // CAT state tracking
+  currentAbilityEstimate: numeric("current_ability_estimate", { precision: 5, scale: 2 }).default("0.0"),
+  currentStandardError: numeric("current_standard_error", { precision: 5, scale: 2 }).default("1.0"),
+  questionsAsked: integer("questions_asked").default(0),
+  questionResponses: jsonb("question_responses").$type<Array<{questionId: string; response: any; isCorrect: boolean; difficulty: number; timestamp: string}>>().default([]),
+  
+  // Category-specific tracking
+  categoryProgress: jsonb("category_progress").$type<Record<string, {questionsAsked: number; correctAnswers: number; currentDifficulty: number; proficiencyReached: boolean}>>().default({}),
+  
+  // Final results
+  finalScore: numeric("final_score", { precision: 5, scale: 2 }),
+  scaledScore: numeric("scaled_score", { precision: 5, scale: 2 }),
+  percentileRank: numeric("percentile_rank", { precision: 5, scale: 2 }),
+  proficiencyLevel: varchar("proficiency_level", { enum: ["below_basic", "basic", "proficient", "advanced"] }),
+  
+  // Metadata
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  proctoringData: jsonb("proctoring_data"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Proctoring logs
 export const proctoringLogs = pgTable("proctoring_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -910,6 +1028,7 @@ export const testbanksRelations = relations(testbanks, ({ one, many }) => ({
   creator: one(users, { fields: [testbanks.creatorId], references: [users.id] }),
   account: one(accounts, { fields: [testbanks.accountId], references: [accounts.id] }),
   questions: many(questions),
+  catExamCategories: many(catExamCategories),
 }));
 
 export const questionsRelations = relations(questions, ({ one, many }) => ({
@@ -1003,6 +1122,33 @@ export const assignmentSubmissionsRelations = relations(assignmentSubmissions, (
 export const studyAidsRelations = relations(studyAids, ({ one }) => ({
   student: one(users, { fields: [studyAids.studentId], references: [users.id] }),
   quiz: one(quizzes, { fields: [studyAids.quizId], references: [quizzes.id] }),
+}));
+
+// CAT Exam Relations
+export const catExamsRelations = relations(catExams, ({ one, many }) => ({
+  creator: one(users, { fields: [catExams.creatorId], references: [users.id] }),
+  account: one(accounts, { fields: [catExams.accountId], references: [accounts.id] }),
+  categories: many(catExamCategories),
+  assignments: many(catExamAssignments),
+  sessions: many(catExamSessions),
+}));
+
+export const catExamCategoriesRelations = relations(catExamCategories, ({ one }) => ({
+  catExam: one(catExams, { fields: [catExamCategories.catExamId], references: [catExams.id] }),
+  testbank: one(testbanks, { fields: [catExamCategories.testbankId], references: [testbanks.id] }),
+}));
+
+export const catExamAssignmentsRelations = relations(catExamAssignments, ({ one, many }) => ({
+  catExam: one(catExams, { fields: [catExamAssignments.catExamId], references: [catExams.id] }),
+  student: one(users, { fields: [catExamAssignments.studentId], references: [users.id] }),
+  assignedBy: one(users, { fields: [catExamAssignments.assignedBy], references: [users.id] }),
+  sessions: many(catExamSessions),
+}));
+
+export const catExamSessionsRelations = relations(catExamSessions, ({ one }) => ({
+  catExam: one(catExams, { fields: [catExamSessions.catExamId], references: [catExams.id] }),
+  student: one(users, { fields: [catExamSessions.studentId], references: [users.id] }),
+  assignment: one(catExamAssignments, { fields: [catExamSessions.assignmentId], references: [catExamAssignments.id] }),
 }));
 
 export const mobileDevicesRelations = relations(mobileDevices, ({ one }) => ({
@@ -1298,6 +1444,12 @@ export const insertMobileDeviceSchema = createInsertSchema(mobileDevices).omit({
 export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertLlmProviderSchema = createInsertSchema(llmProviders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCustomInstructionSchema = createInsertSchema(customInstructions).omit({ id: true, createdAt: true, updatedAt: true });
+
+// CAT Exam Insert Schemas
+export const insertCatExamSchema = createInsertSchema(catExams).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCatExamCategorySchema = createInsertSchema(catExamCategories).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCatExamAssignmentSchema = createInsertSchema(catExamAssignments).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCatExamSessionSchema = createInsertSchema(catExamSessions).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMoodEntrySchema = createInsertSchema(moodEntries).omit({ id: true, createdAt: true });
 export const insertDifficultyEntrySchema = createInsertSchema(difficultyEntries).omit({ id: true, createdAt: true });
 export const insertBadgeSchema = createInsertSchema(badges).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1363,6 +1515,16 @@ export type InsertLlmProvider = z.infer<typeof insertLlmProviderSchema>;
 export type LlmProvider = typeof llmProviders.$inferSelect;
 export type InsertCustomInstruction = z.infer<typeof insertCustomInstructionSchema>;
 export type CustomInstruction = typeof customInstructions.$inferSelect;
+
+// CAT Exam Types
+export type InsertCatExam = z.infer<typeof insertCatExamSchema>;
+export type CatExam = typeof catExams.$inferSelect;
+export type InsertCatExamCategory = z.infer<typeof insertCatExamCategorySchema>;
+export type CatExamCategory = typeof catExamCategories.$inferSelect;
+export type InsertCatExamAssignment = z.infer<typeof insertCatExamAssignmentSchema>;
+export type CatExamAssignment = typeof catExamAssignments.$inferSelect;
+export type InsertCatExamSession = z.infer<typeof insertCatExamSessionSchema>;
+export type CatExamSession = typeof catExamSessions.$inferSelect;
 export type InsertMoodEntry = z.infer<typeof insertMoodEntrySchema>;
 export type MoodEntry = typeof moodEntries.$inferSelect;
 export type InsertDifficultyEntry = z.infer<typeof insertDifficultyEntrySchema>;
