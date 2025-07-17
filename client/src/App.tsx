@@ -14,6 +14,7 @@ import { lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import SmoothLoadingFallback from "@/components/SmoothLoadingFallback";
 import { useEffect } from "react";
 
 // Core pages that are always needed
@@ -105,8 +106,11 @@ function Router() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background transition-all duration-300">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground animate-pulse">Loading ProficiencyAI...</p>
+        </div>
       </div>
     );
   }
@@ -117,10 +121,10 @@ function Router() {
         <>
           <Route path="/" component={Landing} />
           <Route path="/language-test">
-            {() => <Suspense fallback={<LoadingSpinner />}><LanguageTest /></Suspense>}
+            {() => <Suspense fallback={<SmoothLoadingFallback type="content" />}><LanguageTest /></Suspense>}
           </Route>
           <Route path="/student-login">
-            {() => <Suspense fallback={<LoadingSpinner />}><StudentLogin /></Suspense>}
+            {() => <Suspense fallback={<SmoothLoadingFallback type="content" />}><StudentLogin /></Suspense>}
           </Route>
         </>
       ) : (
@@ -128,10 +132,10 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/item-banks">
-            {() => <Suspense fallback={<LoadingSpinner />}><ItemBanks /></Suspense>}
+            {() => <Suspense fallback={<SmoothLoadingFallback />}><ItemBanks /></Suspense>}
           </Route>
           <Route path="/question-manager">
-            {() => <Suspense fallback={<LoadingSpinner />}><QuestionManager /></Suspense>}
+            {() => <Suspense fallback={<SmoothLoadingFallback />}><QuestionManager /></Suspense>}
           </Route>
           <Route path="/testbanks/:id/questions">
             {(params) => <Suspense fallback={<LoadingSpinner />}><QuestionManager testbankId={params.id} /></Suspense>}
@@ -161,7 +165,7 @@ function Router() {
             {() => <Suspense fallback={<LoadingSpinner />}><CoreFunctionalityTest /></Suspense>}
           </Route>
           <Route path="/live-exams">
-            {() => <Suspense fallback={<LoadingSpinner />}><LiveExams /></Suspense>}
+            {() => <Suspense fallback={<SmoothLoadingFallback />}><LiveExams /></Suspense>}
           </Route>
           <Route path="/analytics">
             {() => <Suspense fallback={<LoadingSpinner />}><Analytics /></Suspense>}
@@ -182,13 +186,13 @@ function Router() {
             {(params) => <Suspense fallback={<LoadingSpinner />}><SpeedGrader quizId={params.quizId} /></Suspense>}
           </Route>
           <Route path="/user-management">
-            {() => <Suspense fallback={<LoadingSpinner />}><UserManagement /></Suspense>}
+            {() => <Suspense fallback={<SmoothLoadingFallback />}><UserManagement /></Suspense>}
           </Route>
           <Route path="/admin-settings">
             {() => <Suspense fallback={<LoadingSpinner />}><AdminSettings /></Suspense>}
           </Route>
           <Route path="/settings">
-            {() => <Suspense fallback={<LoadingSpinner />}><Settings /></Suspense>}
+            {() => <Suspense fallback={<SmoothLoadingFallback />}><Settings /></Suspense>}
           </Route>
           <Route path="/super-admin-settings">
             {() => <Suspense fallback={<LoadingSpinner />}><SuperAdminSettings /></Suspense>}

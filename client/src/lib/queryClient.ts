@@ -54,6 +54,7 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 2 * 60 * 1000, // 2 minutes - faster updates
+      gcTime: 5 * 60 * 1000, // 5 minutes cache time
       retry: (failureCount, error) => {
         // Don't retry on 401, 403, or 404 errors
         if (error.message.includes('401') || error.message.includes('403') || error.message.includes('404')) {
