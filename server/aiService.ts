@@ -823,6 +823,17 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         * Use when multiple correct answers enhance learning
         * Clearly indicate how many options to select
         * Include 4-7 answer options with multiple correct answers
+        * Question text must specify "Select all that apply" or similar instruction
+      - Ordering: Test understanding of sequences, processes, or procedures
+        * Present items that need to be arranged in correct order
+        * Use questionConfig to store correct sequence as array
+        * Answer options should be the items to be ordered
+        * All answer options marked as correct (order determined by questionConfig)
+      - Categorization: Test ability to classify items into categories
+        * Present items that need to be sorted into categories
+        * Use questionConfig to store category mappings
+        * Answer options represent the items to be categorized
+        * All answer options marked as correct (categories determined by questionConfig)
       - Hotspot: Test spatial understanding and visual comprehension
         * Use diagrams, maps, or images for location-based knowledge
         * Provide clear instructions for selection
@@ -934,6 +945,58 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       - Include diverse question formats as specified
       
       **VALIDATION CHECKPOINT**: Before including any question, verify it meets ALL criteria above.
+      
+      **SPECIFIC EXAMPLES FOR COMPLEX QUESTION TYPES**:
+      
+      **MULTIPLE RESPONSE EXAMPLE**:
+      {
+        "questionText": "Which of the following are characteristics of renewable energy sources? (Select all that apply)",
+        "questionType": "multiple_response",
+        "answerOptions": [
+          {"answerText": "They are naturally replenished", "isCorrect": true, "displayOrder": 0},
+          {"answerText": "They produce no carbon emissions", "isCorrect": false, "displayOrder": 1},
+          {"answerText": "They are unlimited in supply", "isCorrect": true, "displayOrder": 2},
+          {"answerText": "They are always cheaper than fossil fuels", "isCorrect": false, "displayOrder": 3},
+          {"answerText": "They can be used indefinitely", "isCorrect": true, "displayOrder": 4}
+        ]
+      }
+      
+      **ORDERING EXAMPLE**:
+      {
+        "questionText": "Arrange the following steps of photosynthesis in the correct order from first to last:",
+        "questionType": "ordering",
+        "answerOptions": [
+          {"answerText": "Light absorption by chlorophyll", "isCorrect": true, "displayOrder": 0},
+          {"answerText": "Carbon dioxide enters through stomata", "isCorrect": true, "displayOrder": 1},
+          {"answerText": "Water is split into hydrogen and oxygen", "isCorrect": true, "displayOrder": 2},
+          {"answerText": "Glucose is produced in the Calvin cycle", "isCorrect": true, "displayOrder": 3}
+        ],
+        "questionConfig": {
+          "correctSequence": [0, 1, 2, 3],
+          "orderingItems": ["Light absorption by chlorophyll", "Carbon dioxide enters through stomata", "Water is split into hydrogen and oxygen", "Glucose is produced in the Calvin cycle"]
+        }
+      }
+      
+      **CATEGORIZATION EXAMPLE**:
+      {
+        "questionText": "Categorize the following animals into their correct groups:",
+        "questionType": "categorization",
+        "answerOptions": [
+          {"answerText": "Eagle", "isCorrect": true, "displayOrder": 0},
+          {"answerText": "Salmon", "isCorrect": true, "displayOrder": 1},
+          {"answerText": "Elephant", "isCorrect": true, "displayOrder": 2},
+          {"answerText": "Shark", "isCorrect": true, "displayOrder": 3}
+        ],
+        "questionConfig": {
+          "categories": ["Birds", "Fish", "Mammals"],
+          "categoryMappings": {
+            "Eagle": "Birds",
+            "Salmon": "Fish",
+            "Elephant": "Mammals",
+            "Shark": "Fish"
+          }
+        }
+      }
     `;
 
     // Send progress update before AI call
