@@ -117,6 +117,11 @@ function Router() {
 
   return (
     <Switch>
+      {/* Mobile app route - accessible without authentication */}
+      <Route path="/mobile">
+        {() => <Suspense fallback={<LoadingSpinner />}><MobileApp /></Suspense>}
+      </Route>
+      
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
@@ -145,9 +150,6 @@ function Router() {
           </Route>
           <Route path="/assignments">
             {() => <Suspense fallback={<LoadingSpinner />}><Assignments /></Suspense>}
-          </Route>
-          <Route path="/mobile">
-            {() => <Suspense fallback={<LoadingSpinner />}><MobileApp /></Suspense>}
           </Route>
           <Route path="/quiz-builder">
             {() => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizBuilder /></Suspense>}

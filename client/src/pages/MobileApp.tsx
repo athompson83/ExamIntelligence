@@ -1,6 +1,31 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+
+// Device detection functions
+const detectDevice = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isAndroid = /android/.test(userAgent);
+  const isIOS = /iphone|ipad|ipod/.test(userAgent);
+  const isMobile = isAndroid || isIOS;
+  const isSmartphone = isMobile && !/ipad/.test(userAgent);
+  
+  return {
+    isMobile,
+    isSmartphone,
+    isAndroid,
+    isIOS,
+    isDesktop: !isMobile,
+    userAgent
+  };
+};
+
+// App store detection
+const getAppStoreUrls = () => ({
+  ios: 'https://apps.apple.com/app/proficiencyai/id123456789', // Replace with actual App Store URL
+  android: 'https://play.google.com/store/apps/details?id=com.proficiencyai.app', // Replace with actual Play Store URL
+  nativeAppScheme: 'proficiencyai://', // Deep link to open native app
+});
 import { 
   ArrowLeft, 
   Settings, 
@@ -37,9 +62,10 @@ import {
   Minus,
   Divide,
   X as Multiply,
-  Equals,
+  Equal,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Smartphone
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -158,8 +184,13 @@ interface CalculatorState {
 }
 
 export default function MobileApp() {
+  // Device detection
+  const device = detectDevice();
+  const appStoreUrls = getAppStoreUrls();
+  
   // State management
   const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'catExams' | 'exam' | 'results' | 'profile' | 'settings'>('dashboard');
+  const [showAppDownload, setShowAppDownload] = useState(device.isSmartphone);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [examSession, setExamSession] = useState<ExamSession | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -212,6 +243,30 @@ export default function MobileApp() {
     queryKey: ['/api/mobile/student/profile'],
     retry: false,
   });
+
+  // App store functions
+  const tryNativeAppOpen = useCallback(() => {
+    if (!device.isSmartphone) return false;
+    
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = appStoreUrls.nativeAppScheme;
+    document.body.appendChild(iframe);
+    
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
+    
+    return true;
+  }, [device.isSmartphone, appStoreUrls.nativeAppScheme]);
+
+  const openAppStore = useCallback(() => {
+    if (device.isIOS) {
+      window.open(appStoreUrls.ios, '_blank');
+    } else if (device.isAndroid) {
+      window.open(appStoreUrls.android, '_blank');
+    }
+  }, [device.isIOS, device.isAndroid, appStoreUrls]);
 
   // Mutations
   const startAssignmentMutation = useMutation({
@@ -1520,17 +1575,79 @@ export default function MobileApp() {
     </div>
   );
 
+  // Render app download banner for smartphones
+  const renderAppDownloadBanner = () => {
+    if (!showAppDownload || !device.isSmartphone) return null;
+
+    return (
+      <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-3 z-50 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <Smartphone className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Get the Native App</p>
+              <p className="text-xs opacity-90">Better performance & offline support</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-blue-600 border-white bg-white hover:bg-gray-100"
+              onClick={() => {
+                const opened = tryNativeAppOpen();
+                if (!opened) {
+                  openAppStore();
+                }
+              }}
+            >
+              {device.isIOS ? 'App Store' : 'Play Store'}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-white hover:bg-blue-700"
+              onClick={() => setShowAppDownload(false)}
+            >
+              ✕
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Main render
   return (
-    <div className="mobile-app">
-      {currentView === 'dashboard' && renderDashboard()}
-      {currentView === 'assignments' && renderAssignments()}
-      {currentView === 'catExams' && renderCATExams()}
-      {currentView === 'exam' && renderExam()}
-      {currentView === 'results' && renderResults()}
-      {currentView === 'profile' && renderProfile()}
-      {currentView === 'settings' && renderSettings()}
-      {renderCalculator()}
+    <div className="mobile-app h-screen bg-gray-50 overflow-hidden">
+      {/* App Download Banner */}
+      {renderAppDownloadBanner()}
+      
+      {/* Main Content with offset if banner is showing */}
+      <div className={`h-full ${showAppDownload && device.isSmartphone ? 'pt-16' : ''}`}>
+        {currentView === 'dashboard' && renderDashboard()}
+        {currentView === 'assignments' && renderAssignments()}
+        {currentView === 'catExams' && renderCATExams()}
+        {currentView === 'exam' && renderExam()}
+        {currentView === 'results' && renderResults()}
+        {currentView === 'profile' && renderProfile()}
+        {currentView === 'settings' && renderSettings()}
+      </div>
+      
+      {/* Floating Calculator */}
+      {showCalculator && renderCalculator()}
+      
+      {/* Connection Status Toast */}
+      {!isOnline && (
+        <div className="fixed top-4 left-4 right-4 bg-red-500 text-white p-3 rounded-lg shadow-lg z-50">
+          <div className="flex items-center space-x-2">
+            <WifiOff className="h-5 w-5" />
+            <span className="text-sm font-medium">You are offline</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
