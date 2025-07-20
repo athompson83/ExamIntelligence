@@ -275,11 +275,23 @@ export default function MobileApp() {
         method: 'POST',
       });
     },
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
       setExamSession(data);
-      setCurrentView('exam');
       setExamStartTime(new Date());
-      setTimeRemaining(data.timeLimit * 60);
+      setTimeRemaining(data.timeRemaining || selectedQuiz?.timeLimit * 60 || 3600);
+      
+      // Load exam questions using the assignment ID
+      try {
+        const questionsResponse = await apiRequest(`/api/mobile/assignment/${selectedQuiz?.id}/questions`);
+        setExamQuestions(questionsResponse || []);
+        setCurrentQuestionIndex(0);
+        setResponses({});
+      } catch (error) {
+        console.error('Error loading exam questions:', error);
+        setExamQuestions([]);
+      }
+      
+      setCurrentView('exam');
       initializeProctoring();
     },
   });
@@ -343,6 +355,7 @@ export default function MobileApp() {
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(console.error);
       }
       
       mediaStreamRef.current = stream;
