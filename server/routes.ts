@@ -7724,6 +7724,196 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
+  // ===== PROCTORING LOBBY ROUTES =====
+
+  // Create a new proctoring lobby
+  app.post("/api/proctoring-lobbies", mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const lobbyData = {
+        ...req.body,
+        proctorId: userId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const lobby = await storage.createProctoringLobby(lobbyData);
+      res.json(lobby);
+    } catch (error) {
+      console.error("Error creating proctoring lobby:", error);
+      res.status(500).json({ message: "Failed to create proctoring lobby" });
+    }
+  });
+
+  // Get all proctoring lobbies for current user (proctor)
+  app.get("/api/proctoring-lobbies", mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const lobbies = await storage.getProctoringLobbiesByProctor(userId);
+      res.json(lobbies);
+    } catch (error) {
+      console.error("Error fetching proctoring lobbies:", error);
+      res.status(500).json({ message: "Failed to fetch proctoring lobbies" });
+    }
+  });
+
+  // Get specific proctoring lobby
+  app.get("/api/proctoring-lobbies/:id", mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const lobby = await storage.getProctoringLobby(id);
+      
+      if (!lobby) {
+        return res.status(404).json({ message: "Proctoring lobby not found" });
+      }
+      
+      res.json(lobby);
+    } catch (error) {
+      console.error("Error fetching proctoring lobby:", error);
+      res.status(500).json({ message: "Failed to fetch proctoring lobby" });
+    }
+  });
+
+  // Update proctoring lobby
+  app.put("/api/proctoring-lobbies/:id", mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      const updatedLobby = await storage.updateProctoringLobby(id, updateData);
+      res.json(updatedLobby);
+    } catch (error) {
+      console.error("Error updating proctoring lobby:", error);
+      res.status(500).json({ message: "Failed to update proctoring lobby" });
+    }
+  });
+
+  // Delete proctoring lobby
+  app.delete("/api/proctoring-lobbies/:id", mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteProctoringLobby(id);
+      
+      if (success) {
+        res.json({ message: "Proctoring lobby deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Proctoring lobby not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting proctoring lobby:", error);
+      res.status(500).json({ message: "Failed to delete proctoring lobby" });
+    }
+  });
+
+  // Start proctoring session
+  app.post("/api/proctoring-lobbies/:id/start", mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updatedLobby = await storage.startProctoringSession(id);
+      res.json(updatedLobby);
+    } catch (error) {
+      console.error("Error starting proctoring session:", error);
+      res.status(500).json({ message: "Failed to start proctoring session" });
+    }
+  });
+
+  // End proctoring session
+  app.post("/api/proctoring-lobbies/:id/end", mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updatedLobby = await storage.endProctoringSession(id);
+      res.json(updatedLobby);
+    } catch (error) {
+      console.error("Error ending proctoring session:", error);
+      res.status(500).json({ message: "Failed to end proctoring session" });
+    }
+  });
+
+  // Add student to lobby
+  app.post("/api/proctoring-lobbies/:id/students", mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { studentId } = req.body;
+      
+      const participant = await storage.addStudentToLobby(id, studentId);
+      res.json(participant);
+    } catch (error) {
+      console.error("Error adding student to lobby:", error);
+      res.status(500).json({ message: "Failed to add student to lobby" });
+    }
+  });
+
+  // Remove student from lobby
+  app.delete("/api/proctoring-lobbies/:id/students/:studentId", mockAuth, async (req: any, res) => {
+    try {
+      const { id, studentId } = req.params;
+      const success = await storage.removeStudentFromLobby(id, studentId);
+      
+      if (success) {
+        res.json({ message: "Student removed from lobby successfully" });
+      } else {
+        res.status(404).json({ message: "Student not found in lobby" });
+      }
+    } catch (error) {
+      console.error("Error removing student from lobby:", error);
+      res.status(500).json({ message: "Failed to remove student from lobby" });
+    }
+  });
+
+  // Verify student in lobby
+  app.post("/api/proctoring-lobbies/:id/verify/:studentId", mockAuth, async (req: any, res) => {
+    try {
+      const { id, studentId } = req.params;
+      const proctorId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      
+      const participant = await storage.verifyStudentInLobby(id, studentId, proctorId);
+      res.json(participant);
+    } catch (error) {
+      console.error("Error verifying student:", error);
+      res.status(500).json({ message: "Failed to verify student" });
+    }
+  });
+
+  // Get students in lobby
+  app.get("/api/proctoring-lobbies/:id/students", mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const students = await storage.getStudentsInLobby(id);
+      res.json(students);
+    } catch (error) {
+      console.error("Error fetching students in lobby:", error);
+      res.status(500).json({ message: "Failed to fetch students in lobby" });
+    }
+  });
+
+  // Update student status
+  app.put("/api/proctoring-lobbies/students/:participantId", mockAuth, async (req: any, res) => {
+    try {
+      const { participantId } = req.params;
+      const { status, notes } = req.body;
+      
+      const participant = await storage.updateStudentStatus(participantId, status, notes);
+      res.json(participant);
+    } catch (error) {
+      console.error("Error updating student status:", error);
+      res.status(500).json({ message: "Failed to update student status" });
+    }
+  });
+
+  // Start exam for specific student
+  app.post("/api/proctoring-lobbies/:id/start-exam/:studentId", mockAuth, async (req: any, res) => {
+    try {
+      const { id, studentId } = req.params;
+      const { catExamId } = req.body;
+      
+      const catSession = await storage.startExamForStudent(id, studentId, catExamId);
+      res.json(catSession);
+    } catch (error) {
+      console.error("Error starting exam for student:", error);
+      res.status(500).json({ message: "Failed to start exam for student" });
+    }
+  });
+
   // Security Event endpoints
   app.post('/api/security-events', mockAuth, async (req: any, res) => {
     try {

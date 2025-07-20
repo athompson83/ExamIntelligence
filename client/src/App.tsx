@@ -73,6 +73,7 @@ const QuizManager = lazy(() => import("@/pages/quiz-manager"));
 const SectionManagement = lazy(() => import("@/pages/SectionManagementFixed"));
 const Assignments = lazy(() => import("@/pages/Assignments"));
 const MobileApp = lazy(() => import("@/pages/MobileApp"));
+const ProctoringLobby = lazy(() => import("@/pages/ProctoringLobby"));
 const SystemTest = lazy(() => import("@/pages/SystemTest"));
 const ComprehensiveTest = lazy(() => import("@/pages/ComprehensiveTest"));
 const SectionManagementTest = lazy(() => import("@/pages/SectionManagementTest"));
@@ -237,6 +238,9 @@ function Router() {
           </Route>
           <Route path="/proctoring-dashboard-window">
             {() => <Suspense fallback={<LoadingSpinner />}><ProctoringDashboardWindow /></Suspense>}
+          </Route>
+          <Route path="/proctoring-lobby">
+            {() => <Suspense fallback={<LoadingSpinner />}><ProctoringLobby /></Suspense>}
           </Route>
           <Route path="/project-status">
             {() => <Suspense fallback={<LoadingSpinner />}><ProjectStatus /></Suspense>}

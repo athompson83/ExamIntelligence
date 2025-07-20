@@ -491,7 +491,11 @@ export const catExamSessions = pgTable("cat_exam_sessions", {
   // Session tracking
   startedAt: timestamp("started_at").defaultNow(),
   endedAt: timestamp("ended_at"),
-  status: varchar("status", { enum: ["active", "completed", "terminated", "expired"] }).default("active"),
+  status: varchar("status", { enum: ["waiting_for_proctor", "active", "completed", "terminated", "expired"] }).default("active"),
+  
+  // Proctoring session tracking
+  proctoringSessionId: uuid("proctoring_session_id").references(() => proctoringLobbies.id),
+  proctorApprovedAt: timestamp("proctor_approved_at"),
   
   // CAT state tracking
   currentAbilityEstimate: numeric("current_ability_estimate", { precision: 5, scale: 2 }).default("0.0"),
@@ -512,6 +516,99 @@ export const catExamSessions = pgTable("cat_exam_sessions", {
   ipAddress: varchar("ip_address"),
   userAgent: text("user_agent"),
   proctoringData: jsonb("proctoring_data"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Proctoring Lobbies - Where proctors host live exam sessions
+export const proctoringLobbies = pgTable("proctoring_lobbies", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  catExamId: uuid("cat_exam_id").references(() => catExams.id).notNull(),
+  proctorId: varchar("proctor_id").references(() => users.id).notNull(),
+  
+  // Lobby details
+  lobbyName: varchar("lobby_name").notNull(),
+  description: text("description"),
+  instructions: text("instructions"),
+  
+  // Scheduling
+  scheduledStartTime: timestamp("scheduled_start_time"),
+  scheduledEndTime: timestamp("scheduled_end_time"),
+  actualStartTime: timestamp("actual_start_time"),
+  actualEndTime: timestamp("actual_end_time"),
+  
+  // Status and capacity
+  status: varchar("status", { enum: ["scheduled", "waiting_for_students", "active", "completed", "cancelled"] }).default("scheduled"),
+  maxStudents: integer("max_students").default(50),
+  currentStudentCount: integer("current_student_count").default(0),
+  
+  // Settings
+  allowLateJoin: boolean("allow_late_join").default(false),
+  lateJoinCutoffMinutes: integer("late_join_cutoff_minutes").default(10),
+  requireStudentVerification: boolean("require_student_verification").default(true),
+  
+  // Proctoring configuration
+  proctoringSettings: jsonb("proctoring_settings").$type<{
+    requireWebcam: boolean;
+    requireMicrophone: boolean;
+    enableScreenSharing: boolean;
+    allowCalculator: boolean;
+    calculatorType: string;
+    preventTabSwitching: boolean;
+    preventCopyPaste: boolean;
+    autoFlagViolations: boolean;
+    violationThreshold: number;
+  }>().default({
+    requireWebcam: true,
+    requireMicrophone: false,
+    enableScreenSharing: true,
+    allowCalculator: false,
+    calculatorType: "basic",
+    preventTabSwitching: true,
+    preventCopyPaste: true,
+    autoFlagViolations: true,
+    violationThreshold: 3
+  }),
+  
+  // Access control
+  accessCode: varchar("access_code"), // Optional access code for students
+  isPublic: boolean("is_public").default(false),
+  
+  // Results and reporting
+  autoGradeOnCompletion: boolean("auto_grade_on_completion").default(true),
+  generateReport: boolean("generate_report").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Proctoring Session Participants - Students in a proctoring lobby
+export const proctoringParticipants = pgTable("proctoring_participants", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  proctoringSessionId: uuid("proctoring_session_id").references(() => proctoringLobbies.id).notNull(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  catSessionId: uuid("cat_session_id").references(() => catExamSessions.id),
+  
+  // Participation tracking
+  joinedAt: timestamp("joined_at").defaultNow(),
+  leftAt: timestamp("left_at"),
+  status: varchar("status", { enum: ["waiting", "verified", "exam_started", "exam_completed", "disconnected", "removed"] }).default("waiting"),
+  
+  // Verification details
+  verifiedAt: timestamp("verified_at"),
+  verifiedBy: varchar("verified_by").references(() => users.id),
+  identityConfirmed: boolean("identity_confirmed").default(false),
+  
+  // Technical status
+  webcamStatus: varchar("webcam_status", { enum: ["not_required", "pending", "active", "disabled", "failed"] }).default("pending"),
+  microphoneStatus: varchar("microphone_status", { enum: ["not_required", "pending", "active", "disabled", "failed"] }).default("not_required"),
+  screenShareStatus: varchar("screen_share_status", { enum: ["not_required", "pending", "active", "disabled", "failed"] }).default("not_required"),
+  
+  // Violation tracking
+  totalViolations: integer("total_violations").default(0),
+  flaggedForReview: boolean("flagged_for_review").default(false),
+  proctorNotes: text("proctor_notes"),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -1131,6 +1228,7 @@ export const catExamsRelations = relations(catExams, ({ one, many }) => ({
   categories: many(catExamCategories),
   assignments: many(catExamAssignments),
   sessions: many(catExamSessions),
+  proctoringLobbies: many(proctoringLobbies),
 }));
 
 export const catExamCategoriesRelations = relations(catExamCategories, ({ one }) => ({
@@ -1149,6 +1247,21 @@ export const catExamSessionsRelations = relations(catExamSessions, ({ one }) => 
   catExam: one(catExams, { fields: [catExamSessions.catExamId], references: [catExams.id] }),
   student: one(users, { fields: [catExamSessions.studentId], references: [users.id] }),
   assignment: one(catExamAssignments, { fields: [catExamSessions.assignmentId], references: [catExamAssignments.id] }),
+  proctoringSession: one(proctoringLobbies, { fields: [catExamSessions.proctoringSessionId], references: [proctoringLobbies.id] }),
+}));
+
+export const proctoringLobbiesRelations = relations(proctoringLobbies, ({ one, many }) => ({
+  catExam: one(catExams, { fields: [proctoringLobbies.catExamId], references: [catExams.id] }),
+  proctor: one(users, { fields: [proctoringLobbies.proctorId], references: [users.id] }),
+  participants: many(proctoringParticipants),
+  sessions: many(catExamSessions),
+}));
+
+export const proctoringParticipantsRelations = relations(proctoringParticipants, ({ one }) => ({
+  proctoringSession: one(proctoringLobbies, { fields: [proctoringParticipants.proctoringSessionId], references: [proctoringLobbies.id] }),
+  student: one(users, { fields: [proctoringParticipants.studentId], references: [users.id] }),
+  catSession: one(catExamSessions, { fields: [proctoringParticipants.catSessionId], references: [catExamSessions.id] }),
+  verifiedBy: one(users, { fields: [proctoringParticipants.verifiedBy], references: [users.id] }),
 }));
 
 export const mobileDevicesRelations = relations(mobileDevices, ({ one }) => ({

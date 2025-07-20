@@ -18,6 +18,8 @@ import {
   catExamCategories,
   catExamAssignments,
   catExamSessions,
+  proctoringLobbies,
+  proctoringParticipants,
   type User,
   type UpsertUser,
   type Testbank,
@@ -187,6 +189,21 @@ export interface IStorage {
   getNextCATQuestion(sessionId: string): Promise<any>;
   submitCATAnswer(sessionId: string, questionId: string, selectedAnswers: string[], timeSpent: number): Promise<any>;
   completeCATExamSession(sessionId: string): Promise<any>;
+  
+  // Proctoring Lobby Methods
+  createProctoringLobby(lobbyData: any): Promise<any>;
+  getProctoringLobby(id: string): Promise<any | undefined>;
+  getProctoringLobbiesByProctor(proctorId: string): Promise<any[]>;
+  updateProctoringLobby(id: string, lobbyData: any): Promise<any>;
+  deleteProctoringLobby(id: string): Promise<boolean>;
+  startProctoringSession(lobbyId: string): Promise<any>;
+  endProctoringSession(lobbyId: string): Promise<any>;
+  addStudentToLobby(lobbyId: string, studentId: string): Promise<any>;
+  removeStudentFromLobby(lobbyId: string, studentId: string): Promise<boolean>;
+  verifyStudentInLobby(lobbyId: string, studentId: string, proctorId: string): Promise<any>;
+  getStudentsInLobby(lobbyId: string): Promise<any[]>;
+  updateStudentStatus(participantId: string, status: string, notes?: string): Promise<any>;
+  startExamForStudent(lobbyId: string, studentId: string, catExamId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3287,6 +3304,266 @@ Return JSON with the new question data:
       };
     } catch (error) {
       console.error('Error completing CAT exam session:', error);
+      throw error;
+    }
+  }
+
+  // Proctoring Lobby Methods
+  async createProctoringLobby(lobbyData: any): Promise<any> {
+    try {
+      const [lobby] = await db.insert(proctoringLobbies).values({
+        catExamId: lobbyData.catExamId,
+        proctorId: lobbyData.proctorId,
+        lobbyName: lobbyData.lobbyName,
+        description: lobbyData.description,
+        instructions: lobbyData.instructions,
+        scheduledStartTime: lobbyData.scheduledStartTime ? new Date(lobbyData.scheduledStartTime) : undefined,
+        scheduledEndTime: lobbyData.scheduledEndTime ? new Date(lobbyData.scheduledEndTime) : undefined,
+        maxStudents: lobbyData.maxStudents || 50,
+        allowLateJoin: lobbyData.allowLateJoin || false,
+        lateJoinCutoffMinutes: lobbyData.lateJoinCutoffMinutes || 10,
+        requireStudentVerification: lobbyData.requireStudentVerification !== false,
+        proctoringSettings: lobbyData.proctoringSettings || {},
+        accessCode: lobbyData.accessCode,
+        isPublic: lobbyData.isPublic || false,
+        autoGradeOnCompletion: lobbyData.autoGradeOnCompletion !== false,
+        generateReport: lobbyData.generateReport !== false,
+      }).returning();
+      return lobby;
+    } catch (error) {
+      console.error('Error creating proctoring lobby:', error);
+      throw error;
+    }
+  }
+
+  async getProctoringLobby(id: string): Promise<any | undefined> {
+    try {
+      const [lobby] = await db.select().from(proctoringLobbies).where(eq(proctoringLobbies.id, id));
+      return lobby;
+    } catch (error) {
+      console.error('Error getting proctoring lobby:', error);
+      return undefined;
+    }
+  }
+
+  async getProctoringLobbiesByProctor(proctorId: string): Promise<any[]> {
+    try {
+      const lobbies = await db.select().from(proctoringLobbies)
+        .where(eq(proctoringLobbies.proctorId, proctorId))
+        .orderBy(desc(proctoringLobbies.createdAt));
+      return lobbies;
+    } catch (error) {
+      console.error('Error getting proctoring lobbies by proctor:', error);
+      return [];
+    }
+  }
+
+  async updateProctoringLobby(id: string, lobbyData: any): Promise<any> {
+    try {
+      const [updatedLobby] = await db.update(proctoringLobbies)
+        .set({
+          ...lobbyData,
+          updatedAt: new Date(),
+        })
+        .where(eq(proctoringLobbies.id, id))
+        .returning();
+      return updatedLobby;
+    } catch (error) {
+      console.error('Error updating proctoring lobby:', error);
+      throw error;
+    }
+  }
+
+  async deleteProctoringLobby(id: string): Promise<boolean> {
+    try {
+      await db.delete(proctoringLobbies).where(eq(proctoringLobbies.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting proctoring lobby:', error);
+      return false;
+    }
+  }
+
+  async startProctoringSession(lobbyId: string): Promise<any> {
+    try {
+      const [updatedLobby] = await db.update(proctoringLobbies)
+        .set({
+          status: 'waiting_for_students',
+          actualStartTime: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(proctoringLobbies.id, lobbyId))
+        .returning();
+      return updatedLobby;
+    } catch (error) {
+      console.error('Error starting proctoring session:', error);
+      throw error;
+    }
+  }
+
+  async endProctoringSession(lobbyId: string): Promise<any> {
+    try {
+      const [updatedLobby] = await db.update(proctoringLobbies)
+        .set({
+          status: 'completed',
+          actualEndTime: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(proctoringLobbies.id, lobbyId))
+        .returning();
+      return updatedLobby;
+    } catch (error) {
+      console.error('Error ending proctoring session:', error);
+      throw error;
+    }
+  }
+
+  async addStudentToLobby(lobbyId: string, studentId: string): Promise<any> {
+    try {
+      const [participant] = await db.insert(proctoringParticipants).values({
+        proctoringSessionId: lobbyId,
+        studentId: studentId,
+        status: 'waiting',
+      }).returning();
+
+      // Update student count
+      await db.update(proctoringLobbies)
+        .set({
+          currentStudentCount: sql`${proctoringLobbies.currentStudentCount} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(proctoringLobbies.id, lobbyId));
+
+      return participant;
+    } catch (error) {
+      console.error('Error adding student to lobby:', error);
+      throw error;
+    }
+  }
+
+  async removeStudentFromLobby(lobbyId: string, studentId: string): Promise<boolean> {
+    try {
+      await db.delete(proctoringParticipants)
+        .where(and(
+          eq(proctoringParticipants.proctoringSessionId, lobbyId),
+          eq(proctoringParticipants.studentId, studentId)
+        ));
+
+      // Update student count
+      await db.update(proctoringLobbies)
+        .set({
+          currentStudentCount: sql`${proctoringLobbies.currentStudentCount} - 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(proctoringLobbies.id, lobbyId));
+
+      return true;
+    } catch (error) {
+      console.error('Error removing student from lobby:', error);
+      return false;
+    }
+  }
+
+  async verifyStudentInLobby(lobbyId: string, studentId: string, proctorId: string): Promise<any> {
+    try {
+      const [updatedParticipant] = await db.update(proctoringParticipants)
+        .set({
+          status: 'verified',
+          verifiedAt: new Date(),
+          verifiedBy: proctorId,
+          identityConfirmed: true,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(proctoringParticipants.proctoringSessionId, lobbyId),
+          eq(proctoringParticipants.studentId, studentId)
+        ))
+        .returning();
+      return updatedParticipant;
+    } catch (error) {
+      console.error('Error verifying student in lobby:', error);
+      throw error;
+    }
+  }
+
+  async getStudentsInLobby(lobbyId: string): Promise<any[]> {
+    try {
+      const participants = await db.select({
+        id: proctoringParticipants.id,
+        studentId: proctoringParticipants.studentId,
+        status: proctoringParticipants.status,
+        joinedAt: proctoringParticipants.joinedAt,
+        verifiedAt: proctoringParticipants.verifiedAt,
+        webcamStatus: proctoringParticipants.webcamStatus,
+        microphoneStatus: proctoringParticipants.microphoneStatus,
+        screenShareStatus: proctoringParticipants.screenShareStatus,
+        totalViolations: proctoringParticipants.totalViolations,
+        flaggedForReview: proctoringParticipants.flaggedForReview,
+        proctorNotes: proctoringParticipants.proctorNotes,
+        studentName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        studentEmail: users.email,
+      })
+      .from(proctoringParticipants)
+      .leftJoin(users, eq(proctoringParticipants.studentId, users.id))
+      .where(eq(proctoringParticipants.proctoringSessionId, lobbyId))
+      .orderBy(proctoringParticipants.joinedAt);
+      
+      return participants;
+    } catch (error) {
+      console.error('Error getting students in lobby:', error);
+      return [];
+    }
+  }
+
+  async updateStudentStatus(participantId: string, status: string, notes?: string): Promise<any> {
+    try {
+      const updateData: any = {
+        status,
+        updatedAt: new Date(),
+      };
+      
+      if (notes) {
+        updateData.proctorNotes = notes;
+      }
+
+      const [updatedParticipant] = await db.update(proctoringParticipants)
+        .set(updateData)
+        .where(eq(proctoringParticipants.id, participantId))
+        .returning();
+      
+      return updatedParticipant;
+    } catch (error) {
+      console.error('Error updating student status:', error);
+      throw error;
+    }
+  }
+
+  async startExamForStudent(lobbyId: string, studentId: string, catExamId: string): Promise<any> {
+    try {
+      // Create CAT exam session
+      const [catSession] = await db.insert(catExamSessions).values({
+        catExamId: catExamId,
+        studentId: studentId,
+        proctoringSessionId: lobbyId,
+        status: 'active',
+        proctorApprovedAt: new Date(),
+      }).returning();
+
+      // Update participant status
+      await db.update(proctoringParticipants)
+        .set({
+          status: 'exam_started',
+          catSessionId: catSession.id,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(proctoringParticipants.proctoringSessionId, lobbyId),
+          eq(proctoringParticipants.studentId, studentId)
+        ));
+
+      return catSession;
+    } catch (error) {
+      console.error('Error starting exam for student:', error);
       throw error;
     }
   }
