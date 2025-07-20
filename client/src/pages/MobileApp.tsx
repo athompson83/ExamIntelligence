@@ -239,7 +239,7 @@ export default function MobileApp() {
     retry: false,
   });
 
-  const { data: profile, isLoading: profileLoading } = useQuery({
+  const { data: profile = {}, isLoading: profileLoading } = useQuery({
     queryKey: ['/api/mobile/student/profile'],
     retry: false,
   });
@@ -275,7 +275,7 @@ export default function MobileApp() {
         method: 'POST',
       });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setExamSession(data);
       setCurrentView('exam');
       setExamStartTime(new Date());
@@ -288,7 +288,7 @@ export default function MobileApp() {
     mutationFn: async ({ sessionId, responses, timeSpent }: { sessionId: string; responses: Record<string, string>; timeSpent: number }) => {
       return await apiRequest(`/api/mobile/session/${sessionId}/submit`, {
         method: 'POST',
-        body: { responses, timeSpent },
+        body: JSON.stringify({ responses, timeSpent }),
       });
     },
     onSuccess: (data) => {
@@ -1489,7 +1489,7 @@ export default function MobileApp() {
             onClick={() => setCurrentView('assignments')}
             className={`flex-1 py-3 px-2 text-center ${currentView === 'assignments' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
           >
-            <Book className="h-5 w-5 mx-auto mb-1" />
+            <BookOpen className="h-5 w-5 mx-auto mb-1" />
             <span className="text-xs">Assignments</span>
           </button>
           <button
