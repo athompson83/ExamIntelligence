@@ -34,8 +34,7 @@ import {
   type InsertQuizAttempt,
   type QuizResponse,
   type InsertQuizResponse,
-  type PromptTemplate,
-  type InsertPromptTemplate,
+
   type CatExam,
   type InsertCatExam,
   type CatExamCategory,
@@ -266,10 +265,7 @@ export class DatabaseStorage implements IStorage {
       .values(userData)
       .onConflictDoUpdate({
         target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
+        set: userData,
       })
       .returning();
     return user;
@@ -411,7 +407,7 @@ export class DatabaseStorage implements IStorage {
   async updateTestbank(id: string, testbankData: Partial<InsertTestbank>): Promise<Testbank | undefined> {
     const [testbank] = await db
       .update(testbanks)
-      .set({ ...testbankData, updatedAt: new Date() })
+      .set(testbankData)
       .where(eq(testbanks.id, id))
       .returning();
     return testbank;
@@ -465,7 +461,7 @@ export class DatabaseStorage implements IStorage {
   async updateQuestion(id: string, questionData: Partial<InsertQuestion>): Promise<Question | undefined> {
     const [question] = await db
       .update(questions)
-      .set({ ...questionData, updatedAt: new Date() })
+      .set(questionData)
       .where(eq(questions.id, id))
       .returning();
     return question;

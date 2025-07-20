@@ -1543,39 +1543,13 @@ export const insertQuizQuestionSchema = createInsertSchema(quizQuestions).omit({
 export const insertQuizAttemptSchema = createInsertSchema(quizAttempts).omit({ id: true });
 export const insertQuizResponseSchema = createInsertSchema(quizResponses).omit({ id: true, createdAt: true });
 export const insertQuizProgressSchema = createInsertSchema(quizProgress).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertProctoringLogSchema = createInsertSchema(proctoringLogs).omit({ id: true, resolvedAt: true });
-export const insertValidationLogSchema = createInsertSchema(validationLogs).omit({ id: true, validatedAt: true });
-export const insertAiResourceSchema = createInsertSchema(aiResources).omit({ id: true, createdAt: true });
-export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
-export const insertReferenceBankSchema = createInsertSchema(referenceBanks).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertReferenceSchema = createInsertSchema(references).omit({ id: true, createdAt: true });
 export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertScheduledAssignmentSchema = createInsertSchema(scheduledAssignments).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertAssignmentSubmissionSchema = createInsertSchema(assignmentSubmissions).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertStudyAidSchema = createInsertSchema(studyAids).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertMobileDeviceSchema = createInsertSchema(mobileDevices).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertLlmProviderSchema = createInsertSchema(llmProviders).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertCustomInstructionSchema = createInsertSchema(customInstructions).omit({ id: true, createdAt: true, updatedAt: true });
 
 // CAT Exam Insert Schemas
 export const insertCatExamSchema = createInsertSchema(catExams).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCatExamCategorySchema = createInsertSchema(catExamCategories).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCatExamAssignmentSchema = createInsertSchema(catExamAssignments).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCatExamSessionSchema = createInsertSchema(catExamSessions).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertMoodEntrySchema = createInsertSchema(moodEntries).omit({ id: true, createdAt: true });
-export const insertDifficultyEntrySchema = createInsertSchema(difficultyEntries).omit({ id: true, createdAt: true });
-export const insertBadgeSchema = createInsertSchema(badges).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({ id: true, awardedAt: true });
-export const insertLearningMilestoneSchema = createInsertSchema(learningMilestones).omit({ id: true, createdAt: true });
-export const insertSocialShareSchema = createInsertSchema(socialShares).omit({ id: true, sharedAt: true });
-export const insertBadgeTemplateSchema = createInsertSchema(badgeTemplates).omit({ id: true, createdAt: true });
-export const insertSectionSchema = createInsertSchema(sections).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertSectionMembershipSchema = createInsertSchema(sectionMemberships).omit({ id: true, joinedAt: true });
-export const insertQuizAssignmentSchema = createInsertSchema(quizAssignments).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertBillingHistorySchema = createInsertSchema(billingHistory).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertUsageTrackingSchema = createInsertSchema(usageTracking).omit({ id: true, createdAt: true, updatedAt: true });
 
 
 
@@ -1600,34 +1574,8 @@ export type InsertQuizResponse = z.infer<typeof insertQuizResponseSchema>;
 export type QuizResponse = typeof quizResponses.$inferSelect;
 export type InsertQuizProgress = z.infer<typeof insertQuizProgressSchema>;
 export type QuizProgress = typeof quizProgress.$inferSelect;
-export type InsertProctoringLog = z.infer<typeof insertProctoringLogSchema>;
-export type ProctoringLog = typeof proctoringLogs.$inferSelect;
-export type InsertValidationLog = z.infer<typeof insertValidationLogSchema>;
-export type ValidationLog = typeof validationLogs.$inferSelect;
-export type InsertAiResource = z.infer<typeof insertAiResourceSchema>;
-export type AiResource = typeof aiResources.$inferSelect;
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-export type Notification = typeof notifications.$inferSelect;
-export type InsertReferenceBank = z.infer<typeof insertReferenceBankSchema>;
-export type ReferenceBank = typeof referenceBanks.$inferSelect;
-export type InsertReference = z.infer<typeof insertReferenceSchema>;
-export type Reference = typeof references.$inferSelect;
 export type InsertAccount = z.infer<typeof insertAccountSchema>;
 export type Account = typeof accounts.$inferSelect;
-export type InsertScheduledAssignment = z.infer<typeof insertScheduledAssignmentSchema>;
-export type ScheduledAssignment = typeof scheduledAssignments.$inferSelect;
-export type InsertAssignmentSubmission = z.infer<typeof insertAssignmentSubmissionSchema>;
-export type AssignmentSubmission = typeof assignmentSubmissions.$inferSelect;
-export type InsertStudyAid = z.infer<typeof insertStudyAidSchema>;
-export type StudyAid = typeof studyAids.$inferSelect;
-export type InsertMobileDevice = z.infer<typeof insertMobileDeviceSchema>;
-export type MobileDevice = typeof mobileDevices.$inferSelect;
-export type InsertPromptTemplate = z.infer<typeof insertPromptTemplateSchema>;
-export type PromptTemplate = typeof promptTemplates.$inferSelect;
-export type InsertLlmProvider = z.infer<typeof insertLlmProviderSchema>;
-export type LlmProvider = typeof llmProviders.$inferSelect;
-export type InsertCustomInstruction = z.infer<typeof insertCustomInstructionSchema>;
-export type CustomInstruction = typeof customInstructions.$inferSelect;
 
 // CAT Exam Types
 export type InsertCatExam = z.infer<typeof insertCatExamSchema>;
@@ -1638,42 +1586,7 @@ export type InsertCatExamAssignment = z.infer<typeof insertCatExamAssignmentSche
 export type CatExamAssignment = typeof catExamAssignments.$inferSelect;
 export type InsertCatExamSession = z.infer<typeof insertCatExamSessionSchema>;
 export type CatExamSession = typeof catExamSessions.$inferSelect;
-export type InsertMoodEntry = z.infer<typeof insertMoodEntrySchema>;
-export type MoodEntry = typeof moodEntries.$inferSelect;
-export type InsertDifficultyEntry = z.infer<typeof insertDifficultyEntrySchema>;
-export type DifficultyEntry = typeof difficultyEntries.$inferSelect;
-export type InsertBadge = z.infer<typeof insertBadgeSchema>;
-export type Badge = typeof badges.$inferSelect;
-export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
-export type UserBadge = typeof userBadges.$inferSelect;
-export type InsertLearningMilestone = z.infer<typeof insertLearningMilestoneSchema>;
-export type LearningMilestone = typeof learningMilestones.$inferSelect;
-export type InsertSocialShare = z.infer<typeof insertSocialShareSchema>;
-export type SocialShare = typeof socialShares.$inferSelect;
-export type InsertBadgeTemplate = z.infer<typeof insertBadgeTemplateSchema>;
-export type BadgeTemplate = typeof badgeTemplates.$inferSelect;
-export type InsertSection = z.infer<typeof insertSectionSchema>;
-export type Section = typeof sections.$inferSelect;
-export type InsertSectionMembership = z.infer<typeof insertSectionMembershipSchema>;
-export type SectionMembership = typeof sectionMemberships.$inferSelect;
-export type InsertQuizAssignment = z.infer<typeof insertQuizAssignmentSchema>;
-export type QuizAssignment = typeof quizAssignments.$inferSelect;
-export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
-export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
-export type InsertBillingHistory = z.infer<typeof insertBillingHistorySchema>;
-export type BillingHistory = typeof billingHistory.$inferSelect;
-export type InsertUsageTracking = z.infer<typeof insertUsageTrackingSchema>;
-export type UsageTracking = typeof usageTracking.$inferSelect;
-
-// Offline sync types
-export type InsertOfflineSyncQueue = z.infer<typeof insertOfflineSyncQueueSchema>;
-export type OfflineSyncQueue = typeof offlineSyncQueue.$inferSelect;
-export type InsertConnectionLog = z.infer<typeof insertConnectionLogSchema>;
-export type ConnectionLog = typeof connectionLogs.$inferSelect;
-export type InsertTeacherNotification = z.infer<typeof insertTeacherNotificationSchema>;
-export type TeacherNotification = typeof teacherNotifications.$inferSelect;
-export type InsertDeviceSyncStatus = z.infer<typeof insertDeviceSyncStatusSchema>;
-export type DeviceSyncStatus = typeof deviceSyncStatus.$inferSelect;
+// Additional types can be added here as needed
 
 // Additional tables for badge and certificate system
 export const awardedBadges = pgTable("awarded_badges", {
