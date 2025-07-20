@@ -159,7 +159,7 @@ interface CalculatorState {
 
 export default function MobileApp() {
   // State management
-  const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'exam' | 'results' | 'profile' | 'settings'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'catExams' | 'exam' | 'results' | 'profile' | 'settings'>('dashboard');
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [examSession, setExamSession] = useState<ExamSession | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -200,6 +200,11 @@ export default function MobileApp() {
 
   const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
     queryKey: ['/api/mobile/assignments'],
+    retry: false,
+  });
+
+  const { data: catExams = [], isLoading: catExamsLoading } = useQuery({
+    queryKey: ['/api/cat-exams'],
     retry: false,
   });
 
@@ -653,7 +658,7 @@ export default function MobileApp() {
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-5 gap-1">
           <Button
             variant={currentView === 'dashboard' ? 'default' : 'ghost'}
             className="h-16 flex-col rounded-none"
@@ -669,6 +674,14 @@ export default function MobileApp() {
           >
             <FileText className="h-5 w-5 mb-1" />
             <span className="text-xs">Assignments</span>
+          </Button>
+          <Button
+            variant={currentView === 'catExams' ? 'default' : 'ghost'}
+            className="h-16 flex-col rounded-none"
+            onClick={() => setCurrentView('catExams')}
+          >
+            <Target className="h-5 w-5 mb-1" />
+            <span className="text-xs">CAT Exams</span>
           </Button>
           <Button
             variant={currentView === 'profile' ? 'default' : 'ghost'}
@@ -1392,11 +1405,127 @@ export default function MobileApp() {
     </Dialog>
   );
 
+  // CAT Exams render function
+  const renderCATExams = () => (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">CAT Exams</h1>
+            <p className="text-sm text-gray-600">Computer Adaptive Tests</p>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <span className="text-xs text-gray-500">{isOnline ? 'Online' : 'Offline'}</span>
+          </div>
+        </div>
+        
+        {/* Navigation */}
+        <nav className="flex mt-4 border-t pt-4">
+          <button
+            onClick={() => setCurrentView('dashboard')}
+            className={`flex-1 py-3 px-2 text-center ${currentView === 'dashboard' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+          >
+            <Home className="h-5 w-5 mx-auto mb-1" />
+            <span className="text-xs">Dashboard</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('assignments')}
+            className={`flex-1 py-3 px-2 text-center ${currentView === 'assignments' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+          >
+            <Book className="h-5 w-5 mx-auto mb-1" />
+            <span className="text-xs">Assignments</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('catExams')}
+            className={`flex-1 py-3 px-2 text-center ${currentView === 'catExams' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+          >
+            <Target className="h-5 w-5 mx-auto mb-1" />
+            <span className="text-xs">CAT Exams</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('profile')}
+            className={`flex-1 py-3 px-2 text-center ${currentView === 'profile' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+          >
+            <User className="h-5 w-5 mx-auto mb-1" />
+            <span className="text-xs">Profile</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('settings')}
+            className={`flex-1 py-3 px-2 text-center ${currentView === 'settings' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+          >
+            <Settings className="h-5 w-5 mx-auto mb-1" />
+            <span className="text-xs">Settings</span>
+          </button>
+        </nav>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 space-y-4">
+        {catExamsLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600">Loading CAT exams...</p>
+          </div>
+        ) : catExams.length === 0 ? (
+          <div className="text-center py-12">
+            <Target className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No CAT Exams Available</h3>
+            <p className="text-gray-500">Check back later for adaptive assessments</p>
+          </div>
+        ) : (
+          catExams.map((catExam: any) => (
+            <Card key={catExam.id} className="bg-white">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Target className="h-5 w-5 text-blue-600" />
+                      <h3 className="font-semibold text-lg text-gray-900">{catExam.title}</h3>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-3">{catExam.description}</p>
+                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                      <span className="flex items-center">
+                        <Target className="h-3 w-3 mr-1" />
+                        Adaptive
+                      </span>
+                      <span className="flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Self-paced
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                  <p className="text-sm text-blue-800">
+                    <Target className="h-4 w-4 inline mr-1" />
+                    Adaptive assessment that adjusts to your skill level
+                  </p>
+                </div>
+                
+                <Button
+                  onClick={() => startExam(catExam)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Target className="h-4 w-4 mr-2" />
+                  Start CAT Exam
+                </Button>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   // Main render
   return (
     <div className="mobile-app">
       {currentView === 'dashboard' && renderDashboard()}
       {currentView === 'assignments' && renderAssignments()}
+      {currentView === 'catExams' && renderCATExams()}
       {currentView === 'exam' && renderExam()}
       {currentView === 'results' && renderResults()}
       {currentView === 'profile' && renderProfile()}

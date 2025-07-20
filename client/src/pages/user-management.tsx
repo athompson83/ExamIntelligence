@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Mail, Users, Settings, UserCheck } from 'lucide-react';
+import { Eye, Mail, Users, Settings, UserCheck, Smartphone, QrCode } from 'lucide-react';
 import Layout from '@/components/Layout';
 
 interface User {
@@ -198,10 +198,19 @@ export default function UserManagement() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">User Management</h1>
-          <Button onClick={() => setShowNotificationDialog(true)}>
-            <Mail className="w-4 h-4 mr-2" />
-            Send Notification
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => window.open('/mobile', '_blank')}
+            >
+              <Smartphone className="w-4 h-4 mr-2" />
+              Mobile Web App
+            </Button>
+            <Button onClick={() => setShowNotificationDialog(true)}>
+              <Mail className="w-4 h-4 mr-2" />
+              Send Notification
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="users" className="w-full">
@@ -256,6 +265,14 @@ export default function UserManagement() {
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           View As
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open('/mobile', '_blank')}
+                        >
+                          <Smartphone className="w-4 h-4 mr-2" />
+                          Mobile App
                         </Button>
                         <Button
                           variant="outline"

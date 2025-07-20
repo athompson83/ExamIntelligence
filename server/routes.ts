@@ -514,6 +514,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CAT Exams API endpoints  
+  app.get('/api/cat-exams', async (req, res) => {
+    try {
+      const catExams = [
+        {
+          id: 'cat-1',
+          title: 'Adaptive Biology Assessment',
+          description: 'Computer adaptive test that adjusts difficulty based on your responses',
+          subject: 'Biology',
+          categories: [
+            { name: 'Cell Biology', percentage: 40 },
+            { name: 'Genetics', percentage: 30 },
+            { name: 'Evolution', percentage: 30 }
+          ],
+          estimatedDuration: '20-45 minutes',
+          proctoringEnabled: true,
+          status: 'available'
+        },
+        {
+          id: 'cat-2', 
+          title: 'Physics Proficiency Test',
+          description: 'Adaptive assessment covering mechanics, thermodynamics, and electricity',
+          subject: 'Physics',
+          categories: [
+            { name: 'Mechanics', percentage: 50 },
+            { name: 'Thermodynamics', percentage: 25 },
+            { name: 'Electricity', percentage: 25 }
+          ],
+          estimatedDuration: '30-60 minutes',
+          proctoringEnabled: true,
+          status: 'available'
+        }
+      ];
+      res.json(catExams);
+    } catch (error) {
+      console.error('CAT exams error:', error);
+      res.status(500).json({ error: 'Failed to fetch CAT exams' });
+    }
+  });
+
+  app.post('/api/mobile/cat-exam/:id/start', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const sessionId = `cat-session-${Date.now()}`;
+      
+      const session = {
+        id: sessionId,
+        catExamId: id,
+        startTime: new Date(),
+        currentProficiency: 0.5,
+        questionsAnswered: 0,
+        adaptiveQuestions: [
+          {
+            id: 'cat-q1',
+            questionText: 'Which organelle is responsible for cellular respiration?',
+            type: 'multiple_choice',
+            options: ['Nucleus', 'Mitochondria', 'Chloroplast', 'Ribosome'],
+            correctAnswer: 'Mitochondria',
+            difficulty: 0.5,
+            category: 'Cell Biology'
+          }
+        ]
+      };
+      
+      res.json(session);
+    } catch (error) {
+      console.error('Start CAT exam error:', error);
+      res.status(500).json({ error: 'Failed to start CAT exam' });
+    }
+  });
+
   // Mobile API endpoints
   app.get('/api/mobile/dashboard/stats', mockAuth, async (req: any, res) => {
     try {
