@@ -2,21 +2,42 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
-// Device detection functions
+// Enhanced device detection functions
 const detectDevice = () => {
   const userAgent = navigator.userAgent.toLowerCase();
   const isAndroid = /android/.test(userAgent);
   const isIOS = /iphone|ipad|ipod/.test(userAgent);
   const isMobile = isAndroid || isIOS;
   const isSmartphone = isMobile && !/ipad/.test(userAgent);
+  const isTablet = (isMobile && /ipad/.test(userAgent)) || 
+                   (isAndroid && !/mobile/.test(userAgent)) ||
+                   (window.innerWidth >= 768 && window.innerWidth <= 1024);
+  const isDesktop = !isMobile || window.innerWidth > 1024;
+  
+  // Screen size detection
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  const isLandscape = screenWidth > screenHeight;
+  const isPortrait = screenHeight >= screenWidth;
   
   return {
     isMobile,
     isSmartphone,
+    isTablet,
     isAndroid,
     isIOS,
-    isDesktop: !isMobile,
-    userAgent
+    isDesktop,
+    isLandscape,
+    isPortrait,
+    screenWidth,
+    screenHeight,
+    userAgent,
+    // Breakpoint helpers
+    isSm: screenWidth >= 640,
+    isMd: screenWidth >= 768,
+    isLg: screenWidth >= 1024,
+    isXl: screenWidth >= 1280,
+    is2Xl: screenWidth >= 1536
   };
 };
 
@@ -184,9 +205,33 @@ interface CalculatorState {
 }
 
 export default function MobileApp() {
-  // Device detection
-  const device = detectDevice();
+  const queryClient = useQueryClient();
+  
+  // Device detection with responsive updates
+  const [device, setDevice] = useState(detectDevice());
   const appStoreUrls = getAppStoreUrls();
+  
+  // Update device info on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setDevice(detectDevice());
+    };
+    
+    const handleOrientationChange = () => {
+      // Small delay to allow for orientation change to complete
+      setTimeout(() => {
+        setDevice(detectDevice());
+      }, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
   
   // State management
   const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'catExams' | 'exam' | 'results' | 'profile' | 'settings'>('dashboard');
@@ -928,91 +973,104 @@ export default function MobileApp() {
 
     return (
       <div className="min-h-screen bg-white">
-        {/* Header */}
-        <div className="bg-gray-900 text-white p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold">{selectedQuiz.title}</h1>
-              <p className="text-sm text-gray-300">
-                Question {currentQuestionIndex + 1} of {examQuestions.length}
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-mono">
-                {formatTime(timeRemaining)}
+        {/* Responsive Header */}
+        <div className="bg-gray-900 text-white p-3 sm:p-4 lg:p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-base sm:text-lg lg:text-xl font-semibold truncate">{selectedQuiz.title}</h1>
+                <p className="text-xs sm:text-sm text-gray-300 mt-1">
+                  Question {currentQuestionIndex + 1} of {examQuestions.length}
+                </p>
               </div>
-              <div className="text-xs text-gray-300">Time remaining</div>
-            </div>
-          </div>
-          
-          <div className="mt-3">
-            <Progress value={progress} className="h-2" />
-          </div>
-        </div>
-
-        {/* Proctoring Status */}
-        {selectedQuiz.proctoringEnabled && (
-          <div className="bg-yellow-50 border-b border-yellow-200 p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Shield className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm font-medium text-yellow-800">
-                  Proctoring Active
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-1">
-                  <Camera className={`h-4 w-4 ${cameraEnabled ? 'text-green-600' : 'text-red-600'}`} />
-                  <span className="text-xs text-gray-600">Camera</span>
+              <div className="text-right flex-shrink-0">
+                <div className="text-lg sm:text-xl lg:text-2xl font-mono">
+                  {formatTime(timeRemaining)}
                 </div>
-                <div className="flex items-center space-x-1">
-                  {micEnabled ? (
-                    <Mic className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <MicOff className="h-4 w-4 text-red-600" />
-                  )}
-                  <span className="text-xs text-gray-600">Mic</span>
-                </div>
+                <div className="text-xs text-gray-300">Time remaining</div>
               </div>
             </div>
             
-            {violations.length > 0 && (
-              <div className="mt-2">
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    {violations.length} violation(s) detected. Please follow exam protocols.
-                  </AlertDescription>
-                </Alert>
+            <div className="mt-3 sm:mt-4">
+              <Progress value={progress} className="h-2 sm:h-3" />
+            </div>
+          </div>
+        </div>
+
+        {/* Responsive Proctoring Status */}
+        {selectedQuiz.proctoringEnabled && (
+          <div className="bg-yellow-50 border-b border-yellow-200 p-3 sm:p-4 lg:p-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                <div className="flex items-center space-x-2">
+                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
+                  <span className="text-sm sm:text-base font-medium text-yellow-800">
+                    Proctoring Active
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="flex items-center space-x-1 sm:space-x-2">
+                    <Camera className={`h-4 w-4 sm:h-5 sm:w-5 ${cameraEnabled ? 'text-green-600' : 'text-red-600'}`} />
+                    <span className="text-xs sm:text-sm text-gray-600 hidden sm:inline">Camera</span>
+                  </div>
+                  <div className="flex items-center space-x-1 sm:space-x-2">
+                    {micEnabled ? (
+                      <Mic className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                    ) : (
+                      <MicOff className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                    )}
+                    <span className="text-xs sm:text-sm text-gray-600 hidden sm:inline">Mic</span>
+                  </div>
+                </div>
               </div>
-            )}
+              
+              {violations.length > 0 && (
+                <div className="mt-3 sm:mt-4">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-sm sm:text-base">
+                      {violations.length} violation(s) detected. Please follow exam protocols.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Question Content */}
-        <div className="p-4 flex-1">
-          {currentQuestion ? (
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h2 className="text-lg font-medium mb-4">{currentQuestion.questionText}</h2>
-                
-                {currentQuestion.type === 'multiple_choice' && (
-                  <div className="space-y-3">
-                    {currentQuestion.options?.map((option, index) => (
-                      <label key={index} className="flex items-center space-x-3 p-3 bg-white rounded-lg border hover:bg-gray-50 cursor-pointer">
-                        <input
-                          type="radio"
-                          name={`question-${currentQuestion.id}`}
-                          value={option}
-                          checked={responses[currentQuestion.id] === option}
-                          onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                          className="h-4 w-4 text-blue-600"
-                        />
-                        <span className="text-sm">{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
+        {/* Responsive Question Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto">
+            <div className="lg:flex lg:gap-8 lg:p-6">
+              {/* Main Question Area */}
+              <div className="lg:flex-1 p-4 sm:p-6 lg:p-0">
+                {currentQuestion ? (
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="bg-gray-50 p-4 sm:p-6 lg:p-8 rounded-lg sm:rounded-xl">
+                      <h2 className="text-base sm:text-lg lg:text-xl font-medium mb-4 sm:mb-6 leading-relaxed">
+                        {currentQuestion.questionText}
+                      </h2>
+                      
+                      {currentQuestion.type === 'multiple_choice' && (
+                        <div className="space-y-3 sm:space-y-4">
+                          {currentQuestion.options?.map((option, index) => (
+                            <label 
+                              key={index} 
+                              className="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 lg:p-5 bg-white rounded-lg sm:rounded-xl border-2 hover:bg-gray-50 hover:border-blue-200 cursor-pointer transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500"
+                            >
+                              <input
+                                type="radio"
+                                name={`question-${currentQuestion.id}`}
+                                value={option}
+                                checked={responses[currentQuestion.id] === option}
+                                onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                                className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 flex-shrink-0"
+                              />
+                              <span className="text-sm sm:text-base lg:text-lg leading-relaxed flex-1">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                 
                 {currentQuestion.type === 'true_false' && (
                   <div className="space-y-3">
@@ -1056,62 +1114,122 @@ export default function MobileApp() {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  </div>
 
-        {/* Navigation */}
-        <div className="border-t bg-white p-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={previousQuestion}
-              disabled={currentQuestionIndex === 0}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
-            </Button>
-            
-            <div className="flex items-center space-x-2">
-              {selectedQuiz.allowCalculator && (
+        {/* Responsive Navigation */}
+        <div className="border-t bg-white p-3 sm:p-4 lg:p-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Mobile Navigation - Stacked Layout */}
+            <div className="lg:hidden space-y-3">
+              <div className="flex items-center justify-between">
                 <Button
                   variant="outline"
-                  onClick={() => setShowCalculator(true)}
+                  onClick={previousQuestion}
+                  disabled={currentQuestionIndex === 0}
+                  className="flex-1 mr-2"
                 >
-                  <Calculator className="h-4 w-4 mr-1" />
-                  Calculator
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
                 </Button>
-              )}
+                
+                {currentQuestionIndex < examQuestions.length - 1 ? (
+                  <Button onClick={nextQuestion} className="flex-1 ml-2">
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                ) : (
+                  <Button onClick={handleExamSubmit} className="bg-green-600 hover:bg-green-700 flex-1 ml-2">
+                    Finish Exam
+                  </Button>
+                )}
+              </div>
               
+              <div className="flex items-center justify-center space-x-2">
+                {selectedQuiz.allowCalculator && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCalculator(true)}
+                    size="sm"
+                  >
+                    <Calculator className="h-4 w-4 mr-1" />
+                    Calculator
+                  </Button>
+                )}
+                
+                <Button
+                  variant="outline"
+                  onClick={handleExamSubmit}
+                  className="bg-red-50 text-red-600 hover:bg-red-100"
+                  size="sm"
+                >
+                  Submit Exam
+                </Button>
+              </div>
+            </div>
+
+            {/* Desktop Navigation - Single Row Layout */}
+            <div className="hidden lg:flex items-center justify-between">
               <Button
                 variant="outline"
-                onClick={handleExamSubmit}
-                className="bg-red-50 text-red-600 hover:bg-red-100"
+                onClick={previousQuestion}
+                disabled={currentQuestionIndex === 0}
+                size="lg"
               >
-                Submit Exam
+                <ChevronLeft className="h-5 w-5 mr-2" />
+                Previous
               </Button>
+              
+              <div className="flex items-center space-x-4">
+                {selectedQuiz.allowCalculator && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCalculator(true)}
+                    size="lg"
+                  >
+                    <Calculator className="h-5 w-5 mr-2" />
+                    Calculator
+                  </Button>
+                )}
+                
+                <Button
+                  variant="outline"
+                  onClick={handleExamSubmit}
+                  className="bg-red-50 text-red-600 hover:bg-red-100"
+                  size="lg"
+                >
+                  Submit Exam
+                </Button>
+              </div>
+              
+              {currentQuestionIndex < examQuestions.length - 1 ? (
+                <Button onClick={nextQuestion} size="lg">
+                  Next
+                  <ChevronRight className="h-5 w-5 ml-2" />
+                </Button>
+              ) : (
+                <Button onClick={handleExamSubmit} className="bg-green-600 hover:bg-green-700" size="lg">
+                  Finish Exam
+                </Button>
+              )}
             </div>
-            
-            {currentQuestionIndex < examQuestions.length - 1 ? (
-              <Button onClick={nextQuestion}>
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            ) : (
-              <Button onClick={handleExamSubmit} className="bg-green-600 hover:bg-green-700">
-                Finish Exam
-              </Button>
-            )}
           </div>
         </div>
 
-        {/* Proctoring Video */}
+        {/* Responsive Proctoring Video */}
         {selectedQuiz.proctoringEnabled && cameraEnabled && (
-          <div className="fixed bottom-4 right-4 w-32 h-24 bg-black rounded-lg overflow-hidden shadow-lg">
+          <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-lg border-2 border-white">
             <video
               ref={videoRef}
               autoPlay
               muted
               className="w-full h-full object-cover"
             />
-            <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <div className="absolute top-1 right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <div className="absolute bottom-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded hidden sm:block">
+              Live
+            </div>
           </div>
         )}
       </div>
