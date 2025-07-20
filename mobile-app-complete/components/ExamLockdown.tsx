@@ -4,6 +4,7 @@ import { Button, Card, Badge, ProgressBar } from 'react-native-paper';
 import { Camera, CameraType } from 'expo-camera';
 import { Audio } from 'expo-av';
 import * as ScreenCapture from 'expo-screen-capture';
+import * as MediaLibrary from 'expo-media-library';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface ExamLockdownProps {

@@ -28,6 +28,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ProgressBar } from 'react-native-progress';
 import axios from 'axios';
 import ExamLockdown from './components/ExamLockdown';
+import CATExamInterface from './components/CATExamInterface';
+import ScreenShareProctoring from './components/ScreenShareProctoring';
 
 // Create navigation instances
 const Tab = createBottomTabNavigator();
@@ -894,6 +896,92 @@ const ExamScreen = ({ route, navigation }: any) => {
   );
 };
 
+// CAT Exams Screen
+const CATExamsScreen = ({ navigation }: any) => {
+  const { data: catExams = [], isLoading } = useApiRequest('/api/cat-exams');
+  const [showCATExam, setShowCATExam] = useState(false);
+  const [selectedCATExam, setSelectedCATExam] = useState<string | null>(null);
+
+  const startCATExam = (catExamId: string) => {
+    setSelectedCATExam(catExamId);
+    setShowCATExam(true);
+  };
+
+  const handleCATComplete = (results: any) => {
+    setShowCATExam(false);
+    setSelectedCATExam(null);
+    navigation.navigate('ResultsScreen', { examResult: results });
+  };
+
+  const handleCATError = (error: string) => {
+    setShowCATExam(false);
+    setSelectedCATExam(null);
+    Alert.alert('CAT Exam Error', error);
+  };
+
+  if (showCATExam && selectedCATExam) {
+    return (
+      <CATExamInterface
+        catExamId={selectedCATExam}
+        onComplete={handleCATComplete}
+        onError={handleCATError}
+      />
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>CAT Exams</Text>
+          <Text style={styles.headerSubtitle}>Computer Adaptive Tests</Text>
+        </View>
+      </View>
+
+      <ScrollView style={styles.scrollView}>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <Text>Loading CAT exams...</Text>
+          </View>
+        ) : catExams.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Icon name="psychology" size={64} color="#9ca3af" />
+            <Text style={styles.emptyTitle}>No CAT Exams Available</Text>
+            <Text style={styles.emptySubtitle}>Check back later for adaptive assessments</Text>
+          </View>
+        ) : (
+          <View style={styles.catExamList}>
+            {catExams.map((catExam: any) => (
+              <View key={catExam.id} style={styles.catExamCard}>
+                <View style={styles.catExamHeader}>
+                  <Icon name="psychology" size={24} color="#3b82f6" />
+                  <Text style={styles.catExamTitle}>{catExam.title}</Text>
+                </View>
+                
+                <Text style={styles.catExamDescription}>{catExam.description}</Text>
+                
+                <View style={styles.catExamDetails}>
+                  <Text style={styles.catExamDetailText}>
+                    Adaptive assessment that adjusts to your skill level
+                  </Text>
+                </View>
+                
+                <TouchableOpacity
+                  style={styles.startCATButton}
+                  onPress={() => startCATExam(catExam.id)}
+                >
+                  <Icon name="play-arrow" size={20} color="#ffffff" />
+                  <Text style={styles.startCATButtonText}>Start CAT Exam</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
 // Results Screen
 const ResultsScreen = ({ route, navigation }: any) => {
   const { examResult } = route.params;
@@ -1191,6 +1279,7 @@ const MainTabNavigator = () => {
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Assignments" component={AssignmentsScreen} />
+      <Tab.Screen name="CAT Exams" component={CATExamsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
@@ -1405,6 +1494,83 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9ca3af',
     marginTop: 4,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 8,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  catExamList: {
+    padding: 16,
+    gap: 16,
+  },
+  catExamCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  catExamHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  catExamTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginLeft: 12,
+    flex: 1,
+  },
+  catExamDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  catExamDetails: {
+    marginBottom: 16,
+  },
+  catExamDetailText: {
+    fontSize: 13,
+    color: '#9ca3af',
+    fontStyle: 'italic',
+  },
+  startCATButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3b82f6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  startCATButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   searchContainer: {
     marginTop: 12,

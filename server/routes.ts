@@ -7582,6 +7582,130 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
+  // ===== MOBILE API ROUTES =====
+  
+  // Mobile CAT exam start
+  app.post("/api/mobile/cat-exam/:id/start", mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const user = await storage.getUser(userId);
+      
+      if (!user?.accountId) {
+        return res.status(400).json({ message: "User account not found" });
+      }
+
+      // Start CAT exam session
+      const session = await storage.startCATExamSession(id, user.id);
+      res.json(session);
+    } catch (error) {
+      console.error("Error starting mobile CAT exam:", error);
+      res.status(500).json({ message: "Failed to start CAT exam" });
+    }
+  });
+
+  // Mobile assignment start
+  app.post("/api/mobile/assignment/:id/start", mockAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const user = await storage.getUser(userId);
+      
+      if (!user?.accountId) {
+        return res.status(400).json({ message: "User account not found" });
+      }
+
+      // Start assignment session (mock implementation)
+      const session = {
+        id: 'session_' + Date.now(),
+        assignmentId: id,
+        studentId: user.id,
+        startedAt: new Date().toISOString(),
+        timeLimit: 60, // minutes
+        proctoringEnabled: true,
+        title: 'Sample Assignment'
+      };
+      res.json(session);
+    } catch (error) {
+      console.error("Error starting mobile assignment:", error);
+      res.status(500).json({ message: "Failed to start assignment" });
+    }
+  });
+
+  // Mobile exam submit
+  app.post("/api/mobile/session/:sessionId/submit", mockAuth, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { responses, timeSpent } = req.body;
+      
+      // Mock exam submission
+      const result = {
+        sessionId,
+        submittedAt: new Date().toISOString(),
+        timeSpent,
+        score: Math.round(Math.random() * 100),
+        passed: Math.random() > 0.3,
+        totalQuestions: Object.keys(responses || {}).length,
+        correctAnswers: Math.floor(Object.keys(responses || {}).length * 0.7)
+      };
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error submitting mobile exam:", error);
+      res.status(500).json({ message: "Failed to submit exam" });
+    }
+  });
+
+  // Mobile dashboard stats
+  app.get("/api/mobile/dashboard/stats", mockAuth, async (req: any, res) => {
+    try {
+      const stats = {
+        assignedQuizzes: 5,
+        completedQuizzes: 3,
+        averageScore: 85,
+        upcomingDeadlines: 2,
+        recentActivity: [
+          {
+            title: "Mathematics Quiz",
+            questionCount: 20,
+            status: "completed",
+            score: 92
+          },
+          {
+            title: "Science Assessment",
+            questionCount: 15,
+            status: "in_progress",
+            score: null
+          }
+        ]
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting mobile dashboard stats:", error);
+      res.status(500).json({ message: "Failed to get stats" });
+    }
+  });
+
+  // Mobile student profile
+  app.get("/api/mobile/student/profile", mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const user = await storage.getUser(userId);
+      
+      const profile = {
+        firstName: user?.firstName || 'Student',
+        lastName: user?.lastName || 'User',
+        studentId: user?.id || 'STU123',
+        email: user?.email || 'student@example.com'
+      };
+      
+      res.json(profile);
+    } catch (error) {
+      console.error("Error getting mobile profile:", error);
+      res.status(500).json({ message: "Failed to get profile" });
+    }
+  });
+
   // ===== CAT EXAM ROUTES =====
 
   // Create a new CAT exam
