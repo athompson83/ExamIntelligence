@@ -2127,6 +2127,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Publish quiz endpoint
+  app.post('/api/quizzes/:id/publish', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id || 'test-user';
+      const quizId = req.params.id;
+      
+      // Get the quiz to verify ownership
+      const quiz = await storage.getQuiz(quizId);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      
+      // Verify ownership
+      if (quiz.creatorId !== userId) {
+        return res.status(403).json({ message: "Not authorized to publish this quiz" });
+      }
+      
+      // Validation before publishing
+      if (!quiz.title?.trim()) {
+        return res.status(400).json({ message: "Quiz title is required before publishing" });
+      }
+      
+      // Check if quiz has questions (the quiz object already includes questions)
+      if (!quiz.questions || quiz.questions.length === 0) {
+        return res.status(400).json({ message: "At least one question is required before publishing" });
+      }
+      
+      // Update quiz status to published
+      const updatedQuiz = await storage.updateQuiz(quizId, {
+        status: 'published',
+        publishedAt: new Date().toISOString()
+      });
+      
+      res.json({ 
+        message: "Quiz published successfully",
+        quiz: updatedQuiz
+      });
+    } catch (error) {
+      console.error("Error publishing quiz:", error);
+      res.status(500).json({ message: "Failed to publish quiz" });
+    }
+  });
+
   // Seed quiz data endpoint
   app.post('/api/seed-quiz-data', mockAuth, async (req, res) => {
     try {

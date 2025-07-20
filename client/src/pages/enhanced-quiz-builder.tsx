@@ -53,6 +53,7 @@ import {
   Calendar,
   Timer,
   ShuffleIcon,
+  Upload,
   Target,
   FolderPlus,
   GripVertical,
@@ -318,6 +319,81 @@ export default function EnhancedQuizBuilder() {
       toast({
         title: "Error",
         description: "Failed to save quiz. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Publish quiz functionality
+  const handlePublishQuiz = async () => {
+    try {
+      // Validation before publishing
+      if (!quiz.title?.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Quiz title is required before publishing.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (quizQuestions.length === 0) {
+        toast({
+          title: "Validation Error",
+          description: "At least one question is required before publishing.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Save first if there are unsaved changes, then publish
+      let currentQuizId = quizId;
+      
+      if (!isEditing) {
+        // Create quiz first if it's new
+        const createUrl = '/api/quizzes';
+        const createResponse = await apiRequest(createUrl, {
+          method: 'POST',
+          body: JSON.stringify({
+            ...quiz,
+            status: 'draft',
+            questions: quizQuestions,
+            questionGroups: questionGroups
+          })
+        });
+        
+        const createdQuiz = await createResponse.json();
+        currentQuizId = createdQuiz.id;
+      } else {
+        // Update existing quiz first
+        const updateUrl = `/api/quizzes/${quizId}`;
+        await apiRequest(updateUrl, {
+          method: 'PUT',
+          body: JSON.stringify({
+            ...quiz,
+            questions: quizQuestions,
+            questionGroups: questionGroups
+          })
+        });
+      }
+
+      // Now publish the quiz
+      const publishUrl = `/api/quizzes/${currentQuizId}/publish`;
+      await apiRequest(publishUrl, {
+        method: 'POST'
+      });
+      
+      toast({
+        title: "Quiz Published",
+        description: "Your quiz has been published and is now available to students."
+      });
+      
+      navigate('/quiz-manager');
+    } catch (error) {
+      console.error('Publish error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to publish quiz. Please try again.",
         variant: "destructive"
       });
     }
@@ -1007,9 +1083,13 @@ export default function EnhancedQuizBuilder() {
           <Eye className="h-4 w-4 mr-2" />
           Preview
         </Button>
-        <Button onClick={handleSaveQuiz}>
+        <Button variant="outline" onClick={handleSaveQuiz}>
           <Save className="h-4 w-4 mr-2" />
-          Save Quiz
+          Save as Draft
+        </Button>
+        <Button onClick={handlePublishQuiz} className="bg-green-600 hover:bg-green-700">
+          <Upload className="h-4 w-4 mr-2" />
+          Publish Quiz
         </Button>
       </div>
     </div>
