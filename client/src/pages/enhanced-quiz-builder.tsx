@@ -383,6 +383,9 @@ export default function EnhancedQuizBuilder() {
         method: 'POST'
       });
       
+      // Invalidate quiz cache to update the quiz manager list
+      queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
+      
       toast({
         title: "Quiz Published",
         description: "Your quiz has been published and is now available to students."
