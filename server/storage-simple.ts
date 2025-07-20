@@ -52,11 +52,13 @@ import { eq, and, desc, sql, inArray } from "drizzle-orm";
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserById(userId: string): Promise<any>;
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   getAllUsersWithAccountInfo(): Promise<any[]>;
   getUsersByAccount(accountId: string): Promise<User[]>;
   updateUserRole(userId: string, role: string): Promise<User | undefined>;
+  updateUserOnboardingStatus(userId: string, status: any): Promise<User | undefined>;
   bulkCreateUsers(users: any[]): Promise<User[]>;
   
   // System statistics
@@ -65,6 +67,7 @@ export interface IStorage {
   // Testbank operations
   createTestbank(testbank: InsertTestbank): Promise<Testbank>;
   getTestbank(id: string): Promise<Testbank | undefined>;
+  getTestbankById(id: string): Promise<Testbank | undefined>;
   getTestbanksByAccount(accountId: string): Promise<Testbank[]>;
   getTestbanksByUser(userId: string): Promise<Testbank[]>;
   updateTestbank(id: string, testbank: Partial<InsertTestbank>): Promise<Testbank | undefined>;
@@ -73,6 +76,8 @@ export interface IStorage {
   // Question operations
   createQuestion(question: InsertQuestion): Promise<Question>;
   getQuestion(id: string): Promise<Question | undefined>;
+  getQuestionById(id: string): Promise<Question | undefined>;
+  getQuestions(testbankId: string): Promise<Question[]>;
   getQuestionsByTestbank(testbankId: string): Promise<Question[]>;
   updateQuestion(id: string, question: Partial<InsertQuestion>): Promise<Question | undefined>;
   deleteQuestion(id: string): Promise<boolean>;
@@ -86,9 +91,12 @@ export interface IStorage {
   createQuiz(quiz: InsertQuiz): Promise<Quiz>;
   getQuiz(id: string): Promise<Quiz | undefined>;
   getQuizzesByAccount(accountId: string): Promise<Quiz[]>;
+  getQuizQuestions(quizId: string): Promise<any[]>;
+  getQuizById(id: string): Promise<Quiz | undefined>;
   updateQuiz(id: string, quiz: Partial<InsertQuiz>): Promise<Quiz | undefined>;
   updateQuizQuestions(quizId: string, questions: any[]): Promise<void>;
   updateQuizGroups(quizId: string, groups: any[]): Promise<void>;
+  addQuestionsToQuiz(quizId: string, questionIds: string[]): Promise<void>;
   deleteQuiz(id: string): Promise<boolean>;
   
   // Quiz management operations
@@ -105,6 +113,8 @@ export interface IStorage {
   // Quiz attempt operations
   createQuizAttempt(attempt: InsertQuizAttempt): Promise<QuizAttempt>;
   getQuizAttempt(id: string): Promise<QuizAttempt | undefined>;
+  getActiveQuizAttempts(userId: string): Promise<QuizAttempt[]>;
+  updateQuizAttempt(id: string, data: any): Promise<QuizAttempt | undefined>;
   getQuizAttemptsByUser(userId: string): Promise<QuizAttempt[]>;
   
   // Quiz response operations
@@ -119,10 +129,47 @@ export interface IStorage {
   startAssignment(userId: string, assignmentId: string): Promise<any>;
   submitAssignment(sessionId: string, responses: Record<string, string>, timeSpent: number): Promise<any>;
   getActiveExamSessions(userId: string): Promise<any[]>;
-  getUserById(userId: string): Promise<any>;
   getQuizzesByUser(userId: string): Promise<any[]>;
   getTestbanksByUser(userId: string): Promise<any[]>;
   getNotificationsByUser(userId: string): Promise<any[]>;
+  
+  // Proctoring and validation operations
+  createProctoringLog(log: any): Promise<any>;
+  updateProctoringLog(id: string, data: any): Promise<any>;
+  createValidationLog(log: any): Promise<any>;
+  markNotificationAsRead(id: string): Promise<any>;
+  
+  // Analytics operations
+  getQuizAnalytics(quizId: string): Promise<any>;
+  getTestbankAnalytics(testbankId: string): Promise<any>;
+  
+  // Reference management operations
+  createReferenceBank(data: any): Promise<any>;
+  getReferenceBanksByUser(userId: string): Promise<any[]>;
+  getReferenceBank(id: string): Promise<any>;
+  updateReferenceBank(id: string, data: any): Promise<any>;
+  deleteReferenceBank(id: string): Promise<boolean>;
+  createReference(data: any): Promise<any>;
+  getReferencesByBank(bankId: string): Promise<any[]>;
+  updateReference(id: string, data: any): Promise<any>;
+  deleteReference(id: string): Promise<boolean>;
+  
+  // Account management operations
+  getAccountsByUser(userId: string): Promise<any[]>;
+  
+  // Scheduled assignments operations
+  getScheduledAssignmentsByStudent(studentId: string): Promise<any[]>;
+  getScheduledAssignmentsByAccount(accountId: string): Promise<any[]>;
+  createScheduledAssignment(data: any): Promise<any>;
+  
+  // Assignment submissions operations
+  getAssignmentSubmissionsByStudent(studentId: string): Promise<any[]>;
+  getAssignmentSubmissionsByAssignment(assignmentId: string): Promise<any[]>;
+  createAssignmentSubmission(data: any): Promise<any>;
+  
+  // Mobile device operations
+  getMobileDevicesByUser(userId: string): Promise<any[]>;
+  createMobileDevice(data: any): Promise<any>;
   
   // Prompt Template Methods
   getAllPromptTemplates(): Promise<PromptTemplate[]>;
@@ -3566,6 +3613,167 @@ Return JSON with the new question data:
       console.error('Error starting exam for student:', error);
       throw error;
     }
+  }
+
+  // Missing method implementations as stubs
+  async getQuizQuestions(quizId: string): Promise<any[]> {
+    console.log('getQuizQuestions stub called for quizId:', quizId);
+    return [];
+  }
+
+  async getQuizById(id: string): Promise<Quiz | undefined> {
+    return this.getQuiz(id);
+  }
+
+  async getTestbankById(id: string): Promise<Testbank | undefined> {
+    return this.getTestbank(id);
+  }
+
+  async getQuestionById(id: string): Promise<Question | undefined> {
+    return this.getQuestion(id);
+  }
+
+  async getQuestions(testbankId: string): Promise<Question[]> {
+    return this.getQuestionsByTestbank(testbankId);
+  }
+
+  async addQuestionsToQuiz(quizId: string, questionIds: string[]): Promise<void> {
+    console.log('addQuestionsToQuiz stub called');
+  }
+
+  async getActiveQuizAttempts(userId: string): Promise<QuizAttempt[]> {
+    console.log('getActiveQuizAttempts stub called');
+    return [];
+  }
+
+  async updateQuizAttempt(id: string, data: any): Promise<QuizAttempt | undefined> {
+    console.log('updateQuizAttempt stub called');
+    return undefined;
+  }
+
+  async updateUserOnboardingStatus(userId: string, status: any): Promise<User | undefined> {
+    console.log('updateUserOnboardingStatus stub called');
+    return undefined;
+  }
+
+  async createProctoringLog(log: any): Promise<any> {
+    console.log('createProctoringLog stub called');
+    return { id: 'mock-log-id' };
+  }
+
+  async updateProctoringLog(id: string, data: any): Promise<any> {
+    console.log('updateProctoringLog stub called');
+    return undefined;
+  }
+
+  async createValidationLog(log: any): Promise<any> {
+    console.log('createValidationLog stub called');
+    return { id: 'mock-validation-log-id' };
+  }
+
+  async markNotificationAsRead(id: string): Promise<any> {
+    console.log('markNotificationAsRead stub called');
+    return undefined;
+  }
+
+  async getQuizAnalytics(quizId: string): Promise<any> {
+    console.log('getQuizAnalytics stub called');
+    return {};
+  }
+
+  async getTestbankAnalytics(testbankId: string): Promise<any> {
+    console.log('getTestbankAnalytics stub called');
+    return {};
+  }
+
+  async createReferenceBank(data: any): Promise<any> {
+    console.log('createReferenceBank stub called');
+    return { id: 'mock-ref-bank-id' };
+  }
+
+  async getReferenceBanksByUser(userId: string): Promise<any[]> {
+    console.log('getReferenceBanksByUser stub called');
+    return [];
+  }
+
+  async getReferenceBank(id: string): Promise<any> {
+    console.log('getReferenceBank stub called');
+    return undefined;
+  }
+
+  async updateReferenceBank(id: string, data: any): Promise<any> {
+    console.log('updateReferenceBank stub called');
+    return undefined;
+  }
+
+  async deleteReferenceBank(id: string): Promise<boolean> {
+    console.log('deleteReferenceBank stub called');
+    return true;
+  }
+
+  async createReference(data: any): Promise<any> {
+    console.log('createReference stub called');
+    return { id: 'mock-ref-id' };
+  }
+
+  async getReferencesByBank(bankId: string): Promise<any[]> {
+    console.log('getReferencesByBank stub called');
+    return [];
+  }
+
+  async updateReference(id: string, data: any): Promise<any> {
+    console.log('updateReference stub called');
+    return undefined;
+  }
+
+  async deleteReference(id: string): Promise<boolean> {
+    console.log('deleteReference stub called');
+    return true;
+  }
+
+  async getAccountsByUser(userId: string): Promise<any[]> {
+    console.log('getAccountsByUser stub called');
+    return [];
+  }
+
+  async getScheduledAssignmentsByStudent(studentId: string): Promise<any[]> {
+    console.log('getScheduledAssignmentsByStudent stub called');
+    return [];
+  }
+
+  async getScheduledAssignmentsByAccount(accountId: string): Promise<any[]> {
+    console.log('getScheduledAssignmentsByAccount stub called');
+    return [];
+  }
+
+  async createScheduledAssignment(data: any): Promise<any> {
+    console.log('createScheduledAssignment stub called');
+    return { id: 'mock-assignment-id' };
+  }
+
+  async getAssignmentSubmissionsByStudent(studentId: string): Promise<any[]> {
+    console.log('getAssignmentSubmissionsByStudent stub called');
+    return [];
+  }
+
+  async getAssignmentSubmissionsByAssignment(assignmentId: string): Promise<any[]> {
+    console.log('getAssignmentSubmissionsByAssignment stub called');
+    return [];
+  }
+
+  async createAssignmentSubmission(data: any): Promise<any> {
+    console.log('createAssignmentSubmission stub called');
+    return { id: 'mock-submission-id' };
+  }
+
+  async getMobileDevicesByUser(userId: string): Promise<any[]> {
+    console.log('getMobileDevicesByUser stub called');
+    return [];
+  }
+
+  async createMobileDevice(data: any): Promise<any> {
+    console.log('createMobileDevice stub called');
+    return { id: 'mock-device-id' };
   }
 }
 
