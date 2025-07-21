@@ -116,7 +116,7 @@ export default function LiveExams() {
 
             <TabsContent value="active" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {activeExams?.map((exam: any) => (
+                {Array.isArray(activeExams) && activeExams.map((exam: any) => (
                   <Card key={exam.id} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <div className="flex items-center justify-between">
@@ -171,7 +171,7 @@ export default function LiveExams() {
                   </Card>
                 ))}
 
-                {(!activeExams || activeExams.length === 0) && (
+                {(!Array.isArray(activeExams) || activeExams.length === 0) && (
                   <div className="col-span-full text-center py-12">
                     <Play className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No active exams</h3>
@@ -187,7 +187,7 @@ export default function LiveExams() {
 
             <TabsContent value="scheduled" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {scheduledExams?.map((exam: any) => (
+                {Array.isArray(scheduledExams) && scheduledExams.map((exam: any) => (
                   <Card key={exam.id}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
@@ -219,7 +219,7 @@ export default function LiveExams() {
                   </Card>
                 ))}
 
-                {(!scheduledExams || scheduledExams.length === 0) && (
+                {(!Array.isArray(scheduledExams) || scheduledExams.length === 0) && (
                   <div className="col-span-full text-center py-12">
                     <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No scheduled exams</h3>
@@ -231,7 +231,7 @@ export default function LiveExams() {
 
             <TabsContent value="alerts" className="space-y-4">
               <div className="space-y-4">
-                {proctoringAlerts?.map((alert: any) => (
+                {Array.isArray(proctoringAlerts) && proctoringAlerts.map((alert: any) => (
                   <Card key={alert.id} className="border-l-4 border-l-destructive">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
@@ -258,7 +258,7 @@ export default function LiveExams() {
                   </Card>
                 ))}
 
-                {(!proctoringAlerts || proctoringAlerts.length === 0) && (
+                {(!Array.isArray(proctoringAlerts) || proctoringAlerts.length === 0) && (
                   <div className="text-center py-12">
                     <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No active alerts</h3>

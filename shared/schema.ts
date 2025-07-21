@@ -2139,3 +2139,198 @@ export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
 export type ErrorLog = typeof errorLogs.$inferSelect;
 export type InsertClickLog = z.infer<typeof insertClickLogSchema>;
 export type ClickLog = typeof clickLogs.$inferSelect;
+
+// ============= COMPREHENSIVE LOGGING & SECURITY SYSTEM =============
+
+// Comprehensive Activity Logging System
+export const activityLogs = pgTable("activity_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  
+  // Activity tracking
+  action: varchar("action").notNull(), // create, update, delete, view, login, logout, click
+  resource: varchar("resource").notNull(), // quiz, question, testbank, user, assignment
+  resourceId: uuid("resource_id"),
+  
+  // Page and interaction tracking
+  pageUrl: varchar("page_url"),
+  pageTitle: varchar("page_title"),
+  clickTarget: varchar("click_target"), // button ID, link text, etc.
+  elementType: varchar("element_type"), // button, link, input, etc.
+  
+  // Request details
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  sessionId: varchar("session_id"),
+  
+  // Data changes
+  beforeData: jsonb("before_data"), // State before change
+  afterData: jsonb("after_data"), // State after change
+  changesSummary: text("changes_summary"), // Human-readable change description
+  
+  // Security and performance
+  responseTime: integer("response_time"), // API response time in ms
+  statusCode: integer("status_code"), // HTTP status code
+  errorMessage: text("error_message"),
+  securityLevel: varchar("security_level", { enum: ["low", "medium", "high", "critical"] }).default("low"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Rollback System for Critical Operations
+export const rollbackHistory = pgTable("rollback_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  
+  // Rollback metadata
+  operationType: varchar("operation_type", { 
+    enum: ["quiz_edit", "question_edit", "testbank_edit", "user_edit", "assignment_edit", "delete", "bulk_update"] 
+  }).notNull(),
+  resourceType: varchar("resource_type", { enum: ["quiz", "question", "testbank", "user", "assignment"] }).notNull(),
+  resourceId: uuid("resource_id").notNull(),
+  
+  // Rollback data
+  previousState: jsonb("previous_state").notNull(), // Complete previous state
+  currentState: jsonb("current_state").notNull(), // Current state
+  rollbackDescription: text("rollback_description").notNull(),
+  
+  // Rollback status
+  isRolledBack: boolean("is_rolled_back").default(false),
+  rolledBackAt: timestamp("rolled_back_at"),
+  rolledBackBy: varchar("rolled_back_by").references(() => users.id),
+  
+  // Auto-expire rollbacks after 30 days
+  expiresAt: timestamp("expires_at").notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Enhanced Security Events and Access Control Violations
+export const enhancedSecurityEvents = pgTable("enhanced_security_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id),
+  accountId: uuid("account_id").references(() => accounts.id),
+  
+  // Security event details
+  eventType: varchar("event_type", { 
+    enum: ["unauthorized_access", "privilege_escalation", "data_breach_attempt", "suspicious_activity", "brute_force", "session_hijack"] 
+  }).notNull(),
+  severity: varchar("severity", { enum: ["low", "medium", "high", "critical"] }).notNull(),
+  description: text("description").notNull(),
+  
+  // Request context
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  requestUrl: varchar("request_url"),
+  requestMethod: varchar("request_method"),
+  
+  // Response and mitigation
+  blocked: boolean("blocked").default(false),
+  mitigationAction: varchar("mitigation_action"), // account_locked, ip_banned, session_terminated
+  
+  // Investigation
+  investigated: boolean("investigated").default(false),
+  investigatedBy: varchar("investigated_by").references(() => users.id),
+  investigationNotes: text("investigation_notes"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Role-Based Permission Tracking
+export const permissionAudits = pgTable("permission_audits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  
+  // Permission details
+  requestedPermission: varchar("requested_permission").notNull(), // view_item_banks, edit_quiz, etc.
+  resource: varchar("resource").notNull(),
+  resourceId: uuid("resource_id"),
+  
+  // Access result
+  granted: boolean("granted").notNull(),
+  denialReason: varchar("denial_reason"), // insufficient_role, account_mismatch, etc.
+  userRole: varchar("user_role").notNull(),
+  requiredRole: varchar("required_role"),
+  
+  // Context
+  requestContext: jsonb("request_context"), // Additional request details
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Comprehensive User Action Tracking
+export const userActionTracker = pgTable("user_action_tracker", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  sessionId: varchar("session_id").notNull(),
+  
+  // Action details
+  actionType: varchar("action_type", { 
+    enum: ["page_view", "button_click", "form_submit", "download", "upload", "search", "filter", "sort"] 
+  }).notNull(),
+  targetElement: varchar("target_element"), // button id, form name, etc.
+  
+  // Page context
+  currentPage: varchar("current_page").notNull(),
+  referrerPage: varchar("referrer_page"),
+  
+  // Interaction details
+  coordinates: jsonb("coordinates"), // { x: number, y: number }
+  deviceType: varchar("device_type", { enum: ["desktop", "tablet", "mobile"] }),
+  browserInfo: jsonb("browser_info"),
+  
+  // Performance metrics
+  loadTime: integer("load_time"), // milliseconds
+  interactionTime: integer("interaction_time"), // time since page load
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Schema relations for new tables
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+  user: one(users, { fields: [activityLogs.userId], references: [users.id] }),
+  account: one(accounts, { fields: [activityLogs.accountId], references: [accounts.id] }),
+}));
+
+export const rollbackHistoryRelations = relations(rollbackHistory, ({ one }) => ({
+  user: one(users, { fields: [rollbackHistory.userId], references: [users.id] }),
+  rolledBackBy: one(users, { fields: [rollbackHistory.rolledBackBy], references: [users.id] }),
+  account: one(accounts, { fields: [rollbackHistory.accountId], references: [accounts.id] }),
+}));
+
+export const enhancedSecurityEventsRelations = relations(enhancedSecurityEvents, ({ one }) => ({
+  user: one(users, { fields: [enhancedSecurityEvents.userId], references: [users.id] }),
+  investigatedBy: one(users, { fields: [enhancedSecurityEvents.investigatedBy], references: [users.id] }),
+  account: one(accounts, { fields: [enhancedSecurityEvents.accountId], references: [accounts.id] }),
+}));
+
+export const permissionAuditsRelations = relations(permissionAudits, ({ one }) => ({
+  user: one(users, { fields: [permissionAudits.userId], references: [users.id] }),
+  account: one(accounts, { fields: [permissionAudits.accountId], references: [accounts.id] }),
+}));
+
+export const userActionTrackerRelations = relations(userActionTracker, ({ one }) => ({
+  user: one(users, { fields: [userActionTracker.userId], references: [users.id] }),
+}));
+
+// Insert schemas for new tables
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true, createdAt: true });
+export const insertRollbackHistorySchema = createInsertSchema(rollbackHistory).omit({ id: true, createdAt: true });
+export const insertEnhancedSecurityEventSchema = createInsertSchema(enhancedSecurityEvents).omit({ id: true, createdAt: true });
+export const insertPermissionAuditSchema = createInsertSchema(permissionAudits).omit({ id: true, createdAt: true });
+export const insertUserActionTrackerSchema = createInsertSchema(userActionTracker).omit({ id: true, createdAt: true });
+
+// Types for new tables
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertRollbackHistory = z.infer<typeof insertRollbackHistorySchema>;
+export type RollbackHistory = typeof rollbackHistory.$inferSelect;
+export type InsertEnhancedSecurityEvent = z.infer<typeof insertEnhancedSecurityEventSchema>;
+export type EnhancedSecurityEvent = typeof enhancedSecurityEvents.$inferSelect;
+export type InsertPermissionAudit = z.infer<typeof insertPermissionAuditSchema>;
+export type PermissionAudit = typeof permissionAudits.$inferSelect;
+export type InsertUserActionTracker = z.infer<typeof insertUserActionTrackerSchema>;
+export type UserActionTracker = typeof userActionTracker.$inferSelect;

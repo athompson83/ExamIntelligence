@@ -18,7 +18,9 @@ import {
   Calendar,
   Link2,
   TrendingUp,
-  Headphones
+  Headphones,
+  Activity,
+  Shield
 } from "lucide-react";
 
 interface SidebarProps {
@@ -42,6 +44,24 @@ const getTeacherNavigation = (t: any) => [
   { name: t('navigation.settings'), href: "/settings", icon: Settings },
 ];
 
+const getAdminNavigation = (t: any) => [
+  { name: t('navigation.dashboard'), href: "/", icon: LayoutDashboard },
+  { name: t('navigation.itemBanks'), href: "/item-banks", icon: FolderOpen },
+  { name: t('navigation.quizBuilder'), href: "/quiz-manager", icon: Puzzle },
+  { name: "Assignments", href: "/assignments", icon: Calendar },
+  { name: "Study Aids", href: "/study-aids", icon: BookOpen },
+  { name: "Prerequisites", href: "/prerequisites", icon: Link2 },
+  { name: "Gradebook", href: "/gradebook", icon: BarChart3 },
+  { name: "Progress Tracking", href: "/progress-tracking", icon: TrendingUp },
+  { name: t('navigation.liveExams'), href: "/live-exams", icon: Play },
+  { name: t('navigation.analytics'), href: "/analytics", icon: BarChart3 },
+  { name: "AI Resources", href: "/ai-resources", icon: Brain },
+  { name: t('navigation.userManagement'), href: "/user-management", icon: Users },
+  { name: "User Activity", href: "/admin/user-activity", icon: Activity },
+  { name: "Customer Support", href: "/customer-support", icon: Headphones },
+  { name: t('navigation.settings'), href: "/settings", icon: Settings },
+];
+
 const getStudentNavigation = (t: any) => [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "My Assignments", href: "/assignments", icon: Calendar },
@@ -56,9 +76,21 @@ export function Sidebar({ className }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { t } = useTranslation();
   
-  // Determine if user is in student view
-  const isStudentView = location.startsWith('/student');
-  const navigation = isStudentView ? getStudentNavigation(t) : getTeacherNavigation(t);
+  // Get user role from local storage or context
+  const userRole = localStorage.getItem('userRole') || 'teacher';
+  
+  // Determine navigation based on user role
+  const isStudentView = location.startsWith('/student') || userRole === 'student';
+  const isAdminView = userRole === 'admin' || userRole === 'super_admin';
+  
+  let navigation;
+  if (isStudentView) {
+    navigation = getStudentNavigation(t);
+  } else if (isAdminView) {
+    navigation = getAdminNavigation(t);
+  } else {
+    navigation = getTeacherNavigation(t);
+  }
 
   const toggleSidebar = () => {
     const newState = !isCollapsed;

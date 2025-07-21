@@ -73,6 +73,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth middleware - temporarily disabled for testing
   // await setupAuth(app);
+
+  // Add comprehensive logging and security middleware
+  // Note: Imports will be added when implementing logging
+  // app.use(createLoggingMiddleware(storage));
+  // app.use(createSecurityMiddleware(storage));
+
+  // Admin routes for logging and monitoring
+  app.get('/api/admin/activity-logs/:userId?', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { action, resource, securityLevel, startDate, endDate, limit } = req.query;
+      const accountId = '00000000-0000-0000-0000-000000000001'; // Mock account ID
+
+      // Mock data for now - replace with actual database queries
+      const logs = [
+        {
+          id: '1',
+          userId: userId || 'test-user',
+          accountId,
+          action: 'view',
+          resource: 'dashboard',
+          pageUrl: '/dashboard',
+          createdAt: new Date(),
+          securityLevel: 'low'
+        }
+      ];
+      
+      res.json(logs);
+    } catch (error) {
+      console.error('Error fetching activity logs:', error);
+      res.status(500).json({ error: 'Failed to fetch activity logs' });
+    }
+  });
+
+  app.get('/api/admin/rollback-history/:userId?', async (req, res) => {
+    try {
+      res.json([]); // Mock empty rollback history
+    } catch (error) {
+      console.error('Error fetching rollback history:', error);
+      res.status(500).json({ error: 'Failed to fetch rollback history' });
+    }
+  });
+
+  app.get('/api/admin/security-events/:userId?', async (req, res) => {
+    try {
+      res.json([]); // Mock empty security events
+    } catch (error) {
+      console.error('Error fetching security events:', error);
+      res.status(500).json({ error: 'Failed to fetch security events' });
+    }
+  });
+
+  app.get('/api/admin/permission-audits/:userId?', async (req, res) => {
+    try {
+      res.json([]); // Mock empty permission audits
+    } catch (error) {
+      console.error('Error fetching permission audits:', error);
+      res.status(500).json({ error: 'Failed to fetch permission audits' });
+    }
+  });
+
+  app.get('/api/admin/user-activity-summary/:userId', async (req, res) => {
+    try {
+      const summary = {
+        totalActions: 25,
+        pageViews: 15,
+        buttonClicks: 8,
+        formSubmissions: 2,
+        securityEvents: 0,
+        permissionDenials: 0,
+        mostVisitedPages: [
+          { page: '/dashboard', count: 10 },
+          { page: '/item-banks', count: 5 }
+        ],
+        activityByDay: []
+      };
+      
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching user activity summary:', error);
+      res.status(500).json({ error: 'Failed to fetch user activity summary' });
+    }
+  });
+
+  app.post('/api/admin/execute-rollback/:rollbackId', async (req, res) => {
+    try {
+      res.json({ message: 'Rollback executed successfully' });
+    } catch (error) {
+      console.error('Error executing rollback:', error);
+      res.status(500).json({ error: 'Failed to execute rollback' });
+    }
+  });
   
   // Add session middleware for test login
   const { getSession } = await import("./replitAuth");

@@ -90,6 +90,7 @@ const ArchiveManagement = lazy(() => import("@/pages/archive-management"));
 const Pricing = lazy(() => import("@/pages/pricing"));
 const Subscribe = lazy(() => import("@/pages/subscribe"));
 const Billing = lazy(() => import("@/pages/billing"));
+const UserActivityDashboard = lazy(() => import("@/pages/admin/UserActivityDashboard"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -349,6 +350,9 @@ function Router() {
           </Route>
           <Route path="/billing">
             {() => <Suspense fallback={<LoadingSpinner />}><Billing /></Suspense>}
+          </Route>
+          <Route path="/admin/user-activity">
+            {() => <Suspense fallback={<LoadingSpinner />}><UserActivityDashboard /></Suspense>}
           </Route>
         </>
       )}

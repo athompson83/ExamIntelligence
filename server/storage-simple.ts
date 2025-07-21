@@ -3771,6 +3771,368 @@ Return JSON with the new question data:
     console.log('createMobileDevice stub called');
     return { id: 'mock-device-id' };
   }
+
+  // ========== COMPREHENSIVE LOGGING SYSTEM ==========
+  
+  // Activity Logs
+  async getActivityLogs(accountId: string, filters?: {
+    userId?: string;
+    action?: string;
+    resource?: string;
+    securityLevel?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<any[]> {
+    try {
+      let query = db
+        .select()
+        .from(activityLogs)
+        .where(eq(activityLogs.accountId, accountId));
+
+      if (filters?.userId) {
+        query = query.where(eq(activityLogs.userId, filters.userId));
+      }
+      if (filters?.action) {
+        query = query.where(eq(activityLogs.action, filters.action));
+      }
+      if (filters?.resource) {
+        query = query.where(eq(activityLogs.resource, filters.resource));
+      }
+      if (filters?.securityLevel) {
+        query = query.where(eq(activityLogs.securityLevel, filters.securityLevel));
+      }
+      if (filters?.startDate) {
+        query = query.where(gte(activityLogs.createdAt, filters.startDate));
+      }
+      if (filters?.endDate) {
+        query = query.where(lte(activityLogs.createdAt, filters.endDate));
+      }
+
+      return await query
+        .orderBy(desc(activityLogs.createdAt))
+        .limit(filters?.limit || 100);
+    } catch (error) {
+      console.error('Error getting activity logs:', error);
+      return [];
+    }
+  }
+
+  // Rollback System
+  async getRollbackHistory(accountId: string, resourceType?: string, resourceId?: string): Promise<any[]> {
+    try {
+      let query = db
+        .select()
+        .from(rollbackHistory)
+        .where(and(
+          eq(rollbackHistory.accountId, accountId),
+          eq(rollbackHistory.isRolledBack, false),
+          gt(rollbackHistory.expiresAt, new Date())
+        ));
+
+      if (resourceType) {
+        query = query.where(eq(rollbackHistory.resourceType, resourceType));
+      }
+      if (resourceId) {
+        query = query.where(eq(rollbackHistory.resourceId, resourceId));
+      }
+
+      return await query.orderBy(desc(rollbackHistory.createdAt));
+    } catch (error) {
+      console.error('Error getting rollback history:', error);
+      return [];
+    }
+  }
+
+  async executeRollback(rollbackId: string, performedBy: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const rollback = await db
+        .select()
+        .from(rollbackHistory)
+        .where(eq(rollbackHistory.id, rollbackId))
+        .limit(1);
+
+      if (!rollback.length) {
+        return { success: false, message: 'Rollback record not found' };
+      }
+
+      const record = rollback[0];
+      
+      if (record.isRolledBack) {
+        return { success: false, message: 'Rollback already executed' };
+      }
+
+      if (record.expiresAt < new Date()) {
+        return { success: false, message: 'Rollback has expired' };
+      }
+
+      // Execute the rollback based on resource type
+      switch (record.resourceType) {
+        case 'quiz':
+          await db
+            .update(quizzes)
+            .set(record.previousState)
+            .where(eq(quizzes.id, record.resourceId));
+          break;
+        case 'question':
+          await db
+            .update(questions)
+            .set(record.previousState)
+            .where(eq(questions.id, record.resourceId));
+          break;
+        case 'testbank':
+          await db
+            .update(testbanks)
+            .set(record.previousState)
+            .where(eq(testbanks.id, record.resourceId));
+          break;
+        case 'user':
+          await db
+            .update(users)
+            .set(record.previousState)
+            .where(eq(users.id, record.resourceId));
+          break;
+        case 'assignment':
+          await db
+            .update(quizAssignments)
+            .set(record.previousState)
+            .where(eq(quizAssignments.id, record.resourceId));
+          break;
+        default:
+          return { success: false, message: 'Unsupported resource type for rollback' };
+      }
+
+      // Mark rollback as executed
+      await db
+        .update(rollbackHistory)
+        .set({
+          isRolledBack: true,
+          rolledBackAt: new Date(),
+          rolledBackBy: performedBy,
+        })
+        .where(eq(rollbackHistory.id, rollbackId));
+
+      return { success: true, message: 'Rollback executed successfully' };
+    } catch (error) {
+      console.error('Rollback execution failed:', error);
+      return { success: false, message: 'Rollback execution failed' };
+    }
+  }
+
+  // Security Events
+  async getSecurityEvents(accountId?: string, filters?: {
+    severity?: string;
+    eventType?: string;
+    userId?: string;
+    investigated?: boolean;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<any[]> {
+    try {
+      let query = db.select().from(enhancedSecurityEvents);
+
+      if (accountId) {
+        query = query.where(eq(enhancedSecurityEvents.accountId, accountId));
+      }
+
+      if (filters?.severity) {
+        query = query.where(eq(enhancedSecurityEvents.severity, filters.severity));
+      }
+      if (filters?.eventType) {
+        query = query.where(eq(enhancedSecurityEvents.eventType, filters.eventType));
+      }
+      if (filters?.userId) {
+        query = query.where(eq(enhancedSecurityEvents.userId, filters.userId));
+      }
+      if (filters?.investigated !== undefined) {
+        query = query.where(eq(enhancedSecurityEvents.investigated, filters.investigated));
+      }
+      if (filters?.startDate) {
+        query = query.where(gte(enhancedSecurityEvents.createdAt, filters.startDate));
+      }
+      if (filters?.endDate) {
+        query = query.where(lte(enhancedSecurityEvents.createdAt, filters.endDate));
+      }
+
+      return await query
+        .orderBy(desc(enhancedSecurityEvents.createdAt))
+        .limit(filters?.limit || 50);
+    } catch (error) {
+      console.error('Error getting security events:', error);
+      return [];
+    }
+  }
+
+  async markSecurityEventInvestigated(eventId: string, investigatedBy: string, notes?: string): Promise<void> {
+    try {
+      await db
+        .update(enhancedSecurityEvents)
+        .set({
+          investigated: true,
+          investigatedBy,
+          investigationNotes: notes,
+        })
+        .where(eq(enhancedSecurityEvents.id, eventId));
+    } catch (error) {
+      console.error('Error marking security event investigated:', error);
+    }
+  }
+
+  // Permission Audits
+  async getPermissionAudits(accountId: string, filters?: {
+    userId?: string;
+    resource?: string;
+    granted?: boolean;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<any[]> {
+    try {
+      let query = db
+        .select()
+        .from(permissionAudits)
+        .where(eq(permissionAudits.accountId, accountId));
+
+      if (filters?.userId) {
+        query = query.where(eq(permissionAudits.userId, filters.userId));
+      }
+      if (filters?.resource) {
+        query = query.where(eq(permissionAudits.resource, filters.resource));
+      }
+      if (filters?.granted !== undefined) {
+        query = query.where(eq(permissionAudits.granted, filters.granted));
+      }
+      if (filters?.startDate) {
+        query = query.where(gte(permissionAudits.createdAt, filters.startDate));
+      }
+      if (filters?.endDate) {
+        query = query.where(lte(permissionAudits.createdAt, filters.endDate));
+      }
+
+      return await query
+        .orderBy(desc(permissionAudits.createdAt))
+        .limit(filters?.limit || 100);
+    } catch (error) {
+      console.error('Error getting permission audits:', error);
+      return [];
+    }
+  }
+
+  // User Action Tracking
+  async getUserActions(userId: string, filters?: {
+    actionType?: string;
+    currentPage?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<any[]> {
+    try {
+      let query = db
+        .select()
+        .from(userActionTracker)
+        .where(eq(userActionTracker.userId, userId));
+
+      if (filters?.actionType) {
+        query = query.where(eq(userActionTracker.actionType, filters.actionType));
+      }
+      if (filters?.currentPage) {
+        query = query.where(eq(userActionTracker.currentPage, filters.currentPage));
+      }
+      if (filters?.startDate) {
+        query = query.where(gte(userActionTracker.createdAt, filters.startDate));
+      }
+      if (filters?.endDate) {
+        query = query.where(lte(userActionTracker.createdAt, filters.endDate));
+      }
+
+      return await query
+        .orderBy(desc(userActionTracker.createdAt))
+        .limit(filters?.limit || 100);
+    } catch (error) {
+      console.error('Error getting user actions:', error);
+      return [];
+    }
+  }
+
+  // Get comprehensive user activity summary
+  async getUserActivitySummary(userId: string, accountId: string, days: number = 30): Promise<{
+    totalActions: number;
+    pageViews: number;
+    buttonClicks: number;
+    formSubmissions: number;
+    securityEvents: number;
+    permissionDenials: number;
+    mostVisitedPages: Array<{ page: string; count: number }>;
+    activityByDay: Array<{ date: string; count: number }>;
+  }> {
+    try {
+      const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      // Get user actions
+      const actions = await this.getUserActions(userId, { startDate });
+      
+      // Get activity logs
+      const activities = await this.getActivityLogs(accountId, { userId, startDate });
+      
+      // Get permission audits
+      const permissions = await this.getPermissionAudits(accountId, { userId, startDate });
+      
+      // Get security events
+      const security = await this.getSecurityEvents(accountId, { userId, startDate });
+
+      const summary = {
+        totalActions: actions.length,
+        pageViews: actions.filter(a => a.actionType === 'page_view').length,
+        buttonClicks: actions.filter(a => a.actionType === 'button_click').length,
+        formSubmissions: actions.filter(a => a.actionType === 'form_submit').length,
+        securityEvents: security.length,
+        permissionDenials: permissions.filter(p => !p.granted).length,
+        mostVisitedPages: this.getMostVisitedPages(actions),
+        activityByDay: this.getActivityByDay(actions, days),
+      };
+
+      return summary;
+    } catch (error) {
+      console.error('Error getting user activity summary:', error);
+      return {
+        totalActions: 0,
+        pageViews: 0,
+        buttonClicks: 0,
+        formSubmissions: 0,
+        securityEvents: 0,
+        permissionDenials: 0,
+        mostVisitedPages: [],
+        activityByDay: [],
+      };
+    }
+  }
+
+  private getMostVisitedPages(actions: any[]): Array<{ page: string; count: number }> {
+    const pageViews = actions.filter(a => a.actionType === 'page_view');
+    const pageCounts = pageViews.reduce((acc, action) => {
+      acc[action.currentPage] = (acc[action.currentPage] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(pageCounts)
+      .map(([page, count]) => ({ page, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }
+
+  private getActivityByDay(actions: any[], days: number): Array<{ date: string; count: number }> {
+    const result = [];
+    for (let i = 0; i < days; i++) {
+      const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const dateStr = date.toISOString().split('T')[0];
+      const count = actions.filter(a => 
+        a.createdAt && a.createdAt.toISOString().split('T')[0] === dateStr
+      ).length;
+      result.push({ date: dateStr, count });
+    }
+    return result.reverse();
+  }
 }
 
 export const storage = new DatabaseStorage();
