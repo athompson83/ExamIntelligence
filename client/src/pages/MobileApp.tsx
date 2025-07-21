@@ -40,7 +40,8 @@ import {
   Equal,
   ChevronLeft,
   ChevronRight,
-  Smartphone
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -246,6 +247,7 @@ export default function MobileApp() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
+  const [screenShareEnabled, setScreenShareEnabled] = useState(false);
   const [violations, setViolations] = useState<any[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
   const [calculatorState, setCalculatorState] = useState<CalculatorState>({
@@ -265,7 +267,9 @@ export default function MobileApp() {
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
+  const screenVideoRef = useRef<HTMLVideoElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
 
   // API queries
   const { data: dashboardStats, isLoading: statsLoading } = useQuery<DashboardStats>({
@@ -392,19 +396,29 @@ export default function MobileApp() {
     if (!selectedQuiz?.proctoringEnabled) return;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+      // Initialize camera and microphone
+      const cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: 'user'
+        },
         audio: true
       });
       
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+        videoRef.current.srcObject = cameraStream;
+        // Remove muted attribute to show video properly
+        videoRef.current.muted = false;
         videoRef.current.play().catch(console.error);
       }
       
-      mediaStreamRef.current = stream;
+      mediaStreamRef.current = cameraStream;
       setCameraEnabled(true);
       setMicEnabled(true);
+      
+      // Initialize screen sharing
+      await initializeScreenShare();
       
       // Start monitoring
       document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -412,10 +426,48 @@ export default function MobileApp() {
       window.addEventListener('focus', handleWindowFocus);
       
     } catch (error) {
-      console.error('Error accessing media devices:', error);
+      console.error('Error accessing camera/microphone:', error);
       addViolation('media_access_denied', 'Failed to access camera/microphone');
+      
+      // Try to initialize screen sharing even if camera fails
+      try {
+        await initializeScreenShare();
+      } catch (screenError) {
+        console.error('Screen sharing also failed:', screenError);
+      }
     }
   }, [selectedQuiz]);
+
+  const initializeScreenShare = useCallback(async () => {
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+      
+      if (screenVideoRef.current) {
+        screenVideoRef.current.srcObject = screenStream;
+        screenVideoRef.current.muted = true; // Screen share should be muted
+        screenVideoRef.current.play().catch(console.error);
+      }
+      
+      screenStreamRef.current = screenStream;
+      setScreenShareEnabled(true);
+      
+      // Handle screen share ending
+      screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+        setScreenShareEnabled(false);
+        addViolation('screen_share_ended', 'Screen sharing was stopped by user');
+      });
+      
+    } catch (error) {
+      console.error('Error accessing screen share:', error);
+      addViolation('screen_share_denied', 'Failed to access screen sharing');
+    }
+  }, []);
 
   const handleVisibilityChange = useCallback(() => {
     if (document.hidden) {
@@ -448,12 +500,18 @@ export default function MobileApp() {
       mediaStreamRef.current = null;
     }
     
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach(track => track.stop());
+      screenStreamRef.current = null;
+    }
+    
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     window.removeEventListener('blur', handleWindowBlur);
     window.removeEventListener('focus', handleWindowFocus);
     
     setCameraEnabled(false);
     setMicEnabled(false);
+    setScreenShareEnabled(false);
   }, []);
 
   // Calculator functions
@@ -1157,6 +1215,18 @@ export default function MobileApp() {
                   </Button>
                 )}
                 
+                {selectedQuiz.proctoringEnabled && !screenShareEnabled && (
+                  <Button
+                    variant="outline"
+                    onClick={initializeScreenShare}
+                    size="sm"
+                    className="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  >
+                    <Monitor className="h-4 w-4 mr-1" />
+                    Share Screen
+                  </Button>
+                )}
+                
                 <Button
                   variant="outline"
                   onClick={handleExamSubmit}
@@ -1192,6 +1262,18 @@ export default function MobileApp() {
                   </Button>
                 )}
                 
+                {selectedQuiz.proctoringEnabled && !screenShareEnabled && (
+                  <Button
+                    variant="outline"
+                    onClick={initializeScreenShare}
+                    size="lg"
+                    className="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  >
+                    <Monitor className="h-5 w-5 mr-2" />
+                    Share Screen
+                  </Button>
+                )}
+                
                 <Button
                   variant="outline"
                   onClick={handleExamSubmit}
@@ -1216,19 +1298,51 @@ export default function MobileApp() {
           </div>
         </div>
 
-        {/* Responsive Proctoring Video */}
-        {selectedQuiz.proctoringEnabled && cameraEnabled && (
-          <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-lg border-2 border-white">
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute top-1 right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
-            <div className="absolute bottom-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded hidden sm:block">
-              Live
-            </div>
+        {/* Proctoring Video Feeds */}
+        {selectedQuiz.proctoringEnabled && (
+          <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 space-y-2">
+            {/* Camera Feed */}
+            {cameraEnabled && (
+              <div className="w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-lg border-2 border-white">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-1 right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded hidden sm:block">
+                  Camera
+                </div>
+              </div>
+            )}
+            
+            {/* Screen Share Feed */}
+            {screenShareEnabled && (
+              <div className="w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-lg border-2 border-green-400">
+                <video
+                  ref={screenVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-1 right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded hidden sm:block">
+                  Screen
+                </div>
+              </div>
+            )}
+            
+            {/* Proctoring Status */}
+            {!cameraEnabled && !screenShareEnabled && (
+              <div className="w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-red-100 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg border-2 border-red-300">
+                <div className="text-center">
+                  <div className="w-3 h-3 bg-red-500 rounded-full mx-auto mb-1"></div>
+                  <div className="text-xs text-red-600 font-medium">No Feed</div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
