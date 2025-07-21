@@ -602,25 +602,54 @@ export default function MobileApp() {
           videoRef.current.srcObject = cameraStream;
           videoRef.current.muted = true; // Mute to prevent audio feedback
           videoRef.current.playsInline = true; // Important for mobile
+          
+          // Ensure video plays when metadata loads
+          videoRef.current.onloadedmetadata = () => {
+            if (videoRef.current) {
+              videoRef.current.play().catch((playError) => {
+                console.warn('Video play failed:', playError);
+                // Try again with a delay
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.play().catch(console.warn);
+                  }
+                }, 1000);
+              });
+            }
+          };
+          
+          // Also try to play immediately
           try {
             await videoRef.current.play();
+            console.log('Video playing successfully');
           } catch (playError) {
-            console.warn('Video play failed:', playError);
-            // Try again with user interaction
-            setTimeout(() => {
-              if (videoRef.current) {
-                videoRef.current.play().catch(console.warn);
-              }
-            }, 1000);
+            console.warn('Initial video play failed:', playError);
           }
+          
+          // Debug: Check video state
+          console.log('Video element state:', {
+            srcObject: !!videoRef.current.srcObject,
+            readyState: videoRef.current.readyState,
+            networkState: videoRef.current.networkState,
+            paused: videoRef.current.paused,
+            muted: videoRef.current.muted,
+            playsInline: videoRef.current.playsInline
+          });
         }
         
         mediaStreamRef.current = cameraStream;
         setCameraEnabled(true);
         setMicEnabled(true);
         
-        // Log successful constraint
+        // Log successful constraint and stream info
         console.log('Camera initialized with constraints:', constraint);
+        console.log('Camera stream info:', {
+          id: cameraStream.id,
+          active: cameraStream.active,
+          videoTracks: cameraStream.getVideoTracks().length,
+          audioTracks: cameraStream.getAudioTracks().length,
+          videoTrackSettings: cameraStream.getVideoTracks()[0]?.getSettings(),
+        });
         return;
         
       } catch (error) {
@@ -755,6 +784,19 @@ export default function MobileApp() {
   }, [mediaQuality, restartMediaStreams]);
 
   const initializeScreenShare = useCallback(async (quality?: 'low' | 'medium' | 'high') => {
+    // Check if screen sharing is supported (not available on mobile)
+    if (device.isMobile) {
+      addViolation('screen_share_not_supported', 'Screen sharing is not available on mobile devices');
+      alert('Screen sharing is not supported on mobile devices. Camera monitoring is active instead.');
+      return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      addViolation('screen_share_not_supported', 'Screen sharing is not supported in this browser');
+      alert('Screen sharing is not supported in this browser.');
+      return;
+    }
+
     try {
       const currentQuality = quality || mediaQuality;
       const constraints = getOptimalScreenShareConstraints(device, currentQuality);
@@ -765,17 +807,13 @@ export default function MobileApp() {
         screenVideoRef.current.srcObject = screenStream;
         screenVideoRef.current.muted = true; // Screen share should be muted
         screenVideoRef.current.playsInline = true; // Important for mobile
-        try {
-          await screenVideoRef.current.play();
-        } catch (playError) {
-          console.warn('Screen video play failed:', playError);
-          // Try again with user interaction
-          setTimeout(() => {
-            if (screenVideoRef.current) {
-              screenVideoRef.current.play().catch(console.warn);
-            }
-          }, 1000);
-        }
+        
+        // Wait for metadata to load before playing
+        screenVideoRef.current.onloadedmetadata = () => {
+          if (screenVideoRef.current) {
+            screenVideoRef.current.play().catch(console.warn);
+          }
+        };
       }
       
       screenStreamRef.current = screenStream;
@@ -784,6 +822,9 @@ export default function MobileApp() {
       // Handle screen share ending
       screenStream.getVideoTracks()[0].addEventListener('ended', () => {
         setScreenShareEnabled(false);
+        if (screenVideoRef.current) {
+          screenVideoRef.current.srcObject = null;
+        }
         addViolation('screen_share_ended', 'Screen sharing was stopped by user');
       });
       
@@ -796,7 +837,13 @@ export default function MobileApp() {
       
     } catch (error) {
       console.error('Error accessing screen share:', error);
-      addViolation('screen_share_denied', 'Failed to access screen sharing');
+      if (error.name === 'NotAllowedError') {
+        addViolation('screen_share_denied', 'User denied screen sharing permission');
+      } else if (error.name === 'NotSupportedError') {
+        addViolation('screen_share_not_supported', 'Screen sharing is not supported');
+      } else {
+        addViolation('screen_share_error', 'Screen sharing failed: ' + error.message);
+      }
     }
   }, [device, mediaQuality]);
 
@@ -1546,7 +1593,7 @@ export default function MobileApp() {
                   </Button>
                 )}
                 
-                {selectedQuiz.proctoringEnabled && !screenShareEnabled && (
+                {selectedQuiz.proctoringEnabled && !screenShareEnabled && !device.isMobile && (
                   <Button
                     variant="outline"
                     onClick={() => initializeScreenShare()}
@@ -1556,6 +1603,31 @@ export default function MobileApp() {
                     <Monitor className="h-4 w-4 mr-1" />
                     Share Screen
                   </Button>
+                )}
+                
+                {selectedQuiz.proctoringEnabled && device.isMobile && (
+                  <div className="flex items-center space-x-2">
+                    <div className="text-xs text-gray-500 flex items-center">
+                      <Smartphone className="h-3 w-3 mr-1" />
+                      Camera Only
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        console.log('Test video initialization triggered');
+                        try {
+                          await initializeCameraWithFallback();
+                          console.log('Camera test successful');
+                        } catch (error) {
+                          console.error('Camera test failed:', error);
+                        }
+                      }}
+                      className="text-xs"
+                    >
+                      Test Cam
+                    </Button>
+                  </div>
                 )}
                 
                 {selectedQuiz.proctoringEnabled && (
@@ -1606,7 +1678,7 @@ export default function MobileApp() {
                   </Button>
                 )}
                 
-                {selectedQuiz.proctoringEnabled && !screenShareEnabled && (
+                {selectedQuiz.proctoringEnabled && !screenShareEnabled && !device.isMobile && (
                   <Button
                     variant="outline"
                     onClick={() => initializeScreenShare()}
@@ -1616,6 +1688,30 @@ export default function MobileApp() {
                     <Monitor className="h-5 w-5 mr-2" />
                     Share Screen
                   </Button>
+                )}
+                
+                {selectedQuiz.proctoringEnabled && device.isMobile && (
+                  <div className="flex items-center space-x-2">
+                    <div className="text-sm text-gray-600 flex items-center bg-gray-50 px-3 py-2 rounded-lg">
+                      <Smartphone className="h-4 w-4 mr-2" />
+                      Camera monitoring active
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        console.log('Test video initialization triggered');
+                        try {
+                          await initializeCameraWithFallback();
+                          console.log('Camera test successful');
+                        } catch (error) {
+                          console.error('Camera test failed:', error);
+                        }
+                      }}
+                    >
+                      Test Camera
+                    </Button>
+                  </div>
                 )}
                 
                 {selectedQuiz.proctoringEnabled && (
@@ -1668,10 +1764,24 @@ export default function MobileApp() {
                   playsInline
                   className="w-full h-full object-cover"
                   onLoadedMetadata={() => {
+                    console.log('Camera video metadata loaded');
                     if (videoRef.current) {
                       videoRef.current.play().catch(console.warn);
                     }
                   }}
+                  onCanPlay={() => {
+                    console.log('Camera video can play');
+                    if (videoRef.current) {
+                      videoRef.current.play().catch(console.warn);
+                    }
+                  }}
+                  onError={(e) => {
+                    console.error('Camera video error:', e);
+                  }}
+                  style={{ backgroundColor: 'black' }}
+                  onPlay={() => console.log('Camera video started playing')}
+                  onPause={() => console.log('Camera video paused')}
+                  onWaiting={() => console.log('Camera video waiting for data')}
                 />
                 <div className="absolute top-1 right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
                 <div className="absolute bottom-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded hidden sm:block">
@@ -1690,10 +1800,24 @@ export default function MobileApp() {
                   playsInline
                   className="w-full h-full object-cover"
                   onLoadedMetadata={() => {
+                    console.log('Screen share video metadata loaded');
                     if (screenVideoRef.current) {
                       screenVideoRef.current.play().catch(console.warn);
                     }
                   }}
+                  onCanPlay={() => {
+                    console.log('Screen share video can play');
+                    if (screenVideoRef.current) {
+                      screenVideoRef.current.play().catch(console.warn);
+                    }
+                  }}
+                  onError={(e) => {
+                    console.error('Screen share video error:', e);
+                  }}
+                  style={{ backgroundColor: 'black' }}
+                  onPlay={() => console.log('Screen share video started playing')}
+                  onPause={() => console.log('Screen share video paused')}
+                  onWaiting={() => console.log('Screen share video waiting for data')}
                 />
                 <div className="absolute top-1 right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <div className="absolute bottom-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded hidden sm:block">
