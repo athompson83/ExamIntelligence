@@ -670,38 +670,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CAT Exams API endpoints  
-  app.get('/api/cat-exams', async (req, res) => {
+  app.get('/api/cat-exams', mockAuth, async (req: any, res) => {
     try {
-      const catExams = [
-        {
-          id: 'cat-1',
-          title: 'Adaptive Biology Assessment',
-          description: 'Computer adaptive test that adjusts difficulty based on your responses',
-          subject: 'Biology',
-          categories: [
-            { name: 'Cell Biology', percentage: 40 },
-            { name: 'Genetics', percentage: 30 },
-            { name: 'Evolution', percentage: 30 }
-          ],
-          estimatedDuration: '20-45 minutes',
-          proctoringEnabled: true,
-          status: 'available'
-        },
-        {
-          id: 'cat-2', 
-          title: 'Physics Proficiency Test',
-          description: 'Adaptive assessment covering mechanics, thermodynamics, and electricity',
-          subject: 'Physics',
-          categories: [
-            { name: 'Mechanics', percentage: 50 },
-            { name: 'Thermodynamics', percentage: 25 },
-            { name: 'Electricity', percentage: 25 }
-          ],
-          estimatedDuration: '30-60 minutes',
-          proctoringEnabled: true,
-          status: 'available'
-        }
-      ];
+      const user = req.user;
+      const catExams = await storage.getCATExams();
       res.json(catExams);
     } catch (error) {
       console.error('CAT exams error:', error);

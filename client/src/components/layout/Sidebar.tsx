@@ -21,7 +21,8 @@ import {
   TrendingUp,
   Headphones,
   Activity,
-  Shield
+  Shield,
+  Target
 } from "lucide-react";
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ const getTeacherNavigation = (t: any) => [
   { name: t('navigation.dashboard'), href: "/", icon: LayoutDashboard },
   { name: t('navigation.itemBanks'), href: "/item-banks", icon: FolderOpen },
   { name: t('navigation.quizBuilder'), href: "/quiz-manager", icon: Puzzle },
+  { name: "CAT Exams", href: "/cat-exams", icon: Target },
   { name: "Assignments", href: "/assignments", icon: Calendar },
   { name: "Study Aids", href: "/study-aids", icon: BookOpen },
   { name: "Prerequisites", href: "/prerequisites", icon: Link2 },
@@ -49,6 +51,7 @@ const getAdminNavigation = (t: any) => [
   { name: t('navigation.dashboard'), href: "/", icon: LayoutDashboard },
   { name: t('navigation.itemBanks'), href: "/item-banks", icon: FolderOpen },
   { name: t('navigation.quizBuilder'), href: "/quiz-manager", icon: Puzzle },
+  { name: "CAT Exams", href: "/cat-exams", icon: Target },
   { name: "Assignments", href: "/assignments", icon: Calendar },
   { name: "Study Aids", href: "/study-aids", icon: BookOpen },
   { name: "Prerequisites", href: "/prerequisites", icon: Link2 },
