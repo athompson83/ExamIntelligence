@@ -600,8 +600,19 @@ export default function MobileApp() {
         
         if (videoRef.current) {
           videoRef.current.srcObject = cameraStream;
-          videoRef.current.muted = false;
-          await videoRef.current.play();
+          videoRef.current.muted = true; // Mute to prevent audio feedback
+          videoRef.current.playsInline = true; // Important for mobile
+          try {
+            await videoRef.current.play();
+          } catch (playError) {
+            console.warn('Video play failed:', playError);
+            // Try again with user interaction
+            setTimeout(() => {
+              if (videoRef.current) {
+                videoRef.current.play().catch(console.warn);
+              }
+            }, 1000);
+          }
         }
         
         mediaStreamRef.current = cameraStream;
@@ -678,28 +689,20 @@ export default function MobileApp() {
       // Monitor camera stream performance
       if (mediaStreamRef.current) {
         const videoTrack = mediaStreamRef.current.getVideoTracks()[0];
-        if (videoTrack && videoTrack.getStats) {
-          const stats = await videoTrack.getStats();
-          stats.forEach((report: any) => {
-            if (report.type === 'outbound-rtp' && report.mediaType === 'video') {
-              performance.fps = report.framesPerSecond || 0;
-              performance.bandwidth = report.bytesSent || 0;
-            }
-          });
+        if (videoTrack && videoTrack.getSettings) {
+          const settings = videoTrack.getSettings();
+          performance.fps = settings.frameRate || 24;
+          performance.bandwidth = settings.width * settings.height * performance.fps * 0.1; // Estimate
         }
       }
 
       // Monitor screen share performance
       if (screenStreamRef.current) {
         const screenTrack = screenStreamRef.current.getVideoTracks()[0];
-        if (screenTrack && screenTrack.getStats) {
-          const stats = await screenTrack.getStats();
-          stats.forEach((report: any) => {
-            if (report.type === 'outbound-rtp' && report.mediaType === 'video') {
-              performance.screenFps = report.framesPerSecond || 0;
-              performance.screenBandwidth = report.bytesSent || 0;
-            }
-          });
+        if (screenTrack && screenTrack.getSettings) {
+          const settings = screenTrack.getSettings();
+          performance.screenFps = settings.frameRate || 15;
+          performance.screenBandwidth = settings.width * settings.height * performance.screenFps * 0.1; // Estimate
         }
       }
 
@@ -761,7 +764,18 @@ export default function MobileApp() {
       if (screenVideoRef.current) {
         screenVideoRef.current.srcObject = screenStream;
         screenVideoRef.current.muted = true; // Screen share should be muted
-        await screenVideoRef.current.play();
+        screenVideoRef.current.playsInline = true; // Important for mobile
+        try {
+          await screenVideoRef.current.play();
+        } catch (playError) {
+          console.warn('Screen video play failed:', playError);
+          // Try again with user interaction
+          setTimeout(() => {
+            if (screenVideoRef.current) {
+              screenVideoRef.current.play().catch(console.warn);
+            }
+          }, 1000);
+        }
       }
       
       screenStreamRef.current = screenStream;
@@ -1535,7 +1549,7 @@ export default function MobileApp() {
                 {selectedQuiz.proctoringEnabled && !screenShareEnabled && (
                   <Button
                     variant="outline"
-                    onClick={initializeScreenShare}
+                    onClick={() => initializeScreenShare()}
                     size="sm"
                     className="bg-blue-50 text-blue-600 hover:bg-blue-100"
                   >
@@ -1595,7 +1609,7 @@ export default function MobileApp() {
                 {selectedQuiz.proctoringEnabled && !screenShareEnabled && (
                   <Button
                     variant="outline"
-                    onClick={initializeScreenShare}
+                    onClick={() => initializeScreenShare()}
                     size="lg"
                     className="bg-blue-50 text-blue-600 hover:bg-blue-100"
                   >
@@ -1646,12 +1660,18 @@ export default function MobileApp() {
           <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 space-y-2">
             {/* Camera Feed */}
             {cameraEnabled && (
-              <div className="w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-lg border-2 border-white">
+              <div className="relative w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-lg border-2 border-white">
                 <video
                   ref={videoRef}
                   autoPlay
+                  muted
                   playsInline
                   className="w-full h-full object-cover"
+                  onLoadedMetadata={() => {
+                    if (videoRef.current) {
+                      videoRef.current.play().catch(console.warn);
+                    }
+                  }}
                 />
                 <div className="absolute top-1 right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
                 <div className="absolute bottom-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded hidden sm:block">
@@ -1662,13 +1682,18 @@ export default function MobileApp() {
             
             {/* Screen Share Feed */}
             {screenShareEnabled && (
-              <div className="w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-lg border-2 border-green-400">
+              <div className="relative w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-lg border-2 border-green-400">
                 <video
                   ref={screenVideoRef}
                   autoPlay
                   muted
                   playsInline
                   className="w-full h-full object-cover"
+                  onLoadedMetadata={() => {
+                    if (screenVideoRef.current) {
+                      screenVideoRef.current.play().catch(console.warn);
+                    }
+                  }}
                 />
                 <div className="absolute top-1 right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <div className="absolute bottom-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded hidden sm:block">
