@@ -364,6 +364,44 @@ export default function MobileApp() {
       window.removeEventListener('orientationchange', handleOrientationChange);
     };
   }, []);
+
+  // Check camera video status after exam starts
+  useEffect(() => {
+    if (currentView === 'exam' && selectedQuiz?.proctoringEnabled && cameraEnabled) {
+      const checkVideoStatus = () => {
+        if (videoRef.current && mediaStreamRef.current) {
+          const videoTracks = mediaStreamRef.current.getVideoTracks();
+          console.log('Video check - tracks:', videoTracks.length);
+          console.log('Video check - element:', {
+            srcObject: !!videoRef.current.srcObject,
+            paused: videoRef.current.paused,
+            readyState: videoRef.current.readyState
+          });
+          
+          // Force video to play if paused
+          if (videoRef.current.paused && videoRef.current.srcObject) {
+            videoRef.current.play().catch(console.warn);
+          }
+          
+          // Check track status
+          videoTracks.forEach(track => {
+            if (!track.enabled) {
+              track.enabled = true;
+              console.log('Enabled video track');
+            }
+          });
+        }
+      };
+      
+      // Check multiple times
+      checkVideoStatus();
+      const intervals = [500, 1500, 3000, 5000].map(delay => 
+        setTimeout(checkVideoStatus, delay)
+      );
+      
+      return () => intervals.forEach(clearTimeout);
+    }
+  }, [currentView, selectedQuiz, cameraEnabled]);
   
   // State management
   const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'catExams' | 'exam' | 'results' | 'profile' | 'settings'>('dashboard');
@@ -598,23 +636,38 @@ export default function MobileApp() {
       try {
         const cameraStream = await navigator.mediaDevices.getUserMedia(constraint);
         
-        if (videoRef.current) {
+        if (videoRef.current && cameraStream) {
+          // Clear any existing source first
+          videoRef.current.srcObject = null;
+          
+          // Set new stream
           videoRef.current.srcObject = cameraStream;
           videoRef.current.muted = true; // Mute to prevent audio feedback
           videoRef.current.playsInline = true; // Important for mobile
+          videoRef.current.autoplay = true; // Ensure autoplay is set
+          
+          // Force a layout refresh on mobile
+          videoRef.current.style.display = 'none';
+          videoRef.current.offsetHeight; // Trigger reflow
+          videoRef.current.style.display = 'block';
           
           // Ensure video plays when metadata loads
-          videoRef.current.onloadedmetadata = () => {
-            if (videoRef.current) {
-              videoRef.current.play().catch((playError) => {
-                console.warn('Video play failed:', playError);
-                // Try again with a delay
+          videoRef.current.onloadedmetadata = async () => {
+            if (videoRef.current && videoRef.current.paused) {
+              try {
+                await videoRef.current.play();
+                console.log('Video started playing after metadata loaded');
+              } catch (playError) {
+                console.warn('Video play failed after metadata:', playError);
+                // Try again with user gesture simulation
+                const clickEvent = new Event('click');
+                document.dispatchEvent(clickEvent);
                 setTimeout(() => {
                   if (videoRef.current) {
                     videoRef.current.play().catch(console.warn);
                   }
-                }, 1000);
-              });
+                }, 500);
+              }
             }
           };
           
@@ -624,6 +677,17 @@ export default function MobileApp() {
             console.log('Video playing successfully');
           } catch (playError) {
             console.warn('Initial video play failed:', playError);
+            // Try with a small delay
+            setTimeout(async () => {
+              if (videoRef.current && videoRef.current.paused) {
+                try {
+                  await videoRef.current.play();
+                  console.log('Video playing after delay');
+                } catch (err) {
+                  console.warn('Delayed play also failed:', err);
+                }
+              }
+            }, 100);
           }
           
           // Debug: Check video state
@@ -633,7 +697,19 @@ export default function MobileApp() {
             networkState: videoRef.current.networkState,
             paused: videoRef.current.paused,
             muted: videoRef.current.muted,
-            playsInline: videoRef.current.playsInline
+            playsInline: videoRef.current.playsInline,
+            autoplay: videoRef.current.autoplay
+          });
+          
+          // Additional debugging for mobile
+          console.log('Stream tracks:', {
+            videoTracks: cameraStream.getVideoTracks().map(t => ({
+              label: t.label,
+              enabled: t.enabled,
+              muted: t.muted,
+              readyState: t.readyState,
+              settings: t.getSettings()
+            }))
           });
         }
         
@@ -670,14 +746,16 @@ export default function MobileApp() {
       // Initialize camera with adaptive quality
       await initializeCameraWithFallback();
       
-      // Initialize screen sharing with delay to avoid overwhelming the system
-      setTimeout(async () => {
-        try {
-          await initializeScreenShare();
-        } catch (screenError) {
-          console.warn('Screen sharing initialization failed:', screenError);
-        }
-      }, 1000);
+      // Initialize screen sharing with delay to avoid overwhelming the system (only on desktop)
+      if (!device.isMobile) {
+        setTimeout(async () => {
+          try {
+            await initializeScreenShare();
+          } catch (screenError) {
+            console.warn('Screen sharing initialization failed:', screenError);
+          }
+        }, 1000);
+      }
       
       // Start monitoring
       document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -700,7 +778,7 @@ export default function MobileApp() {
       console.error('Error accessing camera/microphone:', error);
       addViolation('media_access_denied', 'Failed to access camera/microphone');
     }
-  }, [selectedQuiz, initializeCameraWithFallback, adaptMediaQuality]);
+  }, [selectedQuiz, initializeCameraWithFallback, adaptMediaQuality, device.isMobile]);
 
   // Performance monitoring
   const monitorMediaPerformance = useCallback(async () => {
@@ -1759,29 +1837,46 @@ export default function MobileApp() {
               <div className="relative w-24 h-18 sm:w-32 sm:h-24 lg:w-40 lg:h-30 bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-lg border-2 border-white">
                 <video
                   ref={videoRef}
-                  autoPlay
-                  muted
-                  playsInline
+                  autoPlay={true}
+                  muted={true}
+                  playsInline={true}
+                  controls={false}
                   className="w-full h-full object-cover"
+                  webkit-playsinline="true"
+                  x-webkit-airplay="allow"
                   onLoadedMetadata={() => {
                     console.log('Camera video metadata loaded');
-                    if (videoRef.current) {
-                      videoRef.current.play().catch(console.warn);
+                    if (videoRef.current && videoRef.current.paused) {
+                      videoRef.current.play().then(() => {
+                        console.log('Camera video playing after metadata');
+                      }).catch((err) => {
+                        console.warn('Camera play failed:', err);
+                      });
                     }
                   }}
                   onCanPlay={() => {
                     console.log('Camera video can play');
-                    if (videoRef.current) {
+                    if (videoRef.current && videoRef.current.paused) {
+                      videoRef.current.play().catch(console.warn);
+                    }
+                  }}
+                  onLoadedData={() => {
+                    console.log('Camera video data loaded');
+                    if (videoRef.current && videoRef.current.paused) {
                       videoRef.current.play().catch(console.warn);
                     }
                   }}
                   onError={(e) => {
                     console.error('Camera video error:', e);
+                    const video = e.target as HTMLVideoElement;
+                    console.error('Video error code:', video.error?.code);
+                    console.error('Video error message:', video.error?.message);
                   }}
-                  style={{ backgroundColor: 'black' }}
+                  style={{ backgroundColor: 'black', WebkitTransform: 'translateZ(0)' }}
                   onPlay={() => console.log('Camera video started playing')}
                   onPause={() => console.log('Camera video paused')}
                   onWaiting={() => console.log('Camera video waiting for data')}
+                  onStalled={() => console.log('Camera video stalled')}
                 />
                 <div className="absolute top-1 right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
                 <div className="absolute bottom-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded hidden sm:block">
@@ -1862,6 +1957,41 @@ export default function MobileApp() {
                     </div>
                   )}
                 </div>
+                
+                {/* Debug button for video issues */}
+                <Button
+                  onClick={async () => {
+                    console.log('Manual video debug check...');
+                    if (videoRef.current) {
+                      console.log('Video element:', videoRef.current);
+                      console.log('Video state:', {
+                        srcObject: videoRef.current.srcObject,
+                        paused: videoRef.current.paused,
+                        readyState: videoRef.current.readyState,
+                        width: videoRef.current.videoWidth,
+                        height: videoRef.current.videoHeight
+                      });
+                      
+                      if (mediaStreamRef.current) {
+                        const tracks = mediaStreamRef.current.getVideoTracks();
+                        console.log('Stream tracks:', tracks.map(t => ({
+                          label: t.label,
+                          enabled: t.enabled,
+                          readyState: t.readyState,
+                          settings: t.getSettings()
+                        })));
+                      }
+                      
+                      // Try to reinitialize camera
+                      await initializeCameraWithFallback();
+                    }
+                  }}
+                  size="sm"
+                  variant="ghost"
+                  className="w-full mt-2 text-xs"
+                >
+                  Debug Video
+                </Button>
               </div>
             )}
           </div>
