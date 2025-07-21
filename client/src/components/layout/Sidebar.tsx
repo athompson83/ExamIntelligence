@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   BarChart3, 
   BookOpen, 
@@ -75,9 +76,10 @@ export function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { t } = useTranslation();
+  const { user } = useAuth();
   
-  // Get user role from local storage or context
-  const userRole = localStorage.getItem('userRole') || 'teacher';
+  // Get user role from auth context
+  const userRole = (user as any)?.role || 'teacher';
   
   // Determine navigation based on user role
   const isStudentView = location.startsWith('/student') || userRole === 'student';

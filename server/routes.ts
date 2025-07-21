@@ -86,16 +86,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { action, resource, securityLevel, startDate, endDate, limit } = req.query;
       const accountId = '00000000-0000-0000-0000-000000000001'; // Mock account ID
 
-      // Mock data for now - replace with actual database queries
+      // Enhanced mock data for comprehensive demonstration
       const logs = [
         {
           id: '1',
           userId: userId || 'test-user',
           accountId,
           action: 'view',
-          resource: 'dashboard',
+          resource: 'User Activity Dashboard',
+          pageUrl: '/admin/user-activity',
+          createdAt: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
+          securityLevel: 'medium'
+        },
+        {
+          id: '2',
+          userId: userId || 'test-user',
+          accountId,
+          action: 'create',
+          resource: 'Item Bank',
+          pageUrl: '/item-banks',
+          createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+          securityLevel: 'high'
+        },
+        {
+          id: '3',
+          userId: userId || 'test-user',
+          accountId,
+          action: 'update',
+          resource: 'Quiz Configuration',
+          pageUrl: '/quiz-manager',
+          createdAt: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
+          securityLevel: 'medium'
+        },
+        {
+          id: '4',
+          userId: userId || 'test-user',
+          accountId,
+          action: 'view',
+          resource: 'Dashboard',
           pageUrl: '/dashboard',
-          createdAt: new Date(),
+          createdAt: new Date(Date.now() - 1000 * 60 * 90), // 1.5 hours ago
           securityLevel: 'low'
         }
       ];
@@ -137,17 +167,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/user-activity-summary/:userId', async (req, res) => {
     try {
       const summary = {
-        totalActions: 25,
-        pageViews: 15,
-        buttonClicks: 8,
-        formSubmissions: 2,
+        totalActions: 127,
+        pageViews: 85,
+        buttonClicks: 32,
+        formSubmissions: 10,
         securityEvents: 0,
         permissionDenials: 0,
         mostVisitedPages: [
-          { page: '/dashboard', count: 10 },
-          { page: '/item-banks', count: 5 }
+          { page: '/dashboard', count: 25 },
+          { page: '/item-banks', count: 18 },
+          { page: '/quiz-manager', count: 15 },
+          { page: '/admin/user-activity', count: 8 },
+          { page: '/analytics', count: 6 }
         ],
-        activityByDay: []
+        activityByDay: [
+          { date: '2025-01-21', actions: 45 },
+          { date: '2025-01-20', actions: 38 },
+          { date: '2025-01-19', actions: 44 }
+        ]
       };
       
       res.json(summary);
@@ -165,6 +202,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to execute rollback' });
     }
   });
+
+  // Users endpoint for admin dashboard
+  app.get('/api/users', async (req, res) => {
+    try {
+      res.json(mockUsers);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
   
   // Add session middleware for test login
   const { getSession } = await import("./replitAuth");
@@ -179,6 +226,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     accountId: "00000000-0000-0000-0000-000000000001",
     role: "super_admin"
   };
+
+  // Mock users for user activity dashboard
+  const mockUsers = [
+    {
+      id: "test-user",
+      email: "test@example.com",
+      firstName: "Test",
+      lastName: "User",
+      role: "super_admin",
+      accountId: "00000000-0000-0000-0000-000000000001"
+    },
+    {
+      id: "student-1",
+      email: "student1@example.com",
+      firstName: "Student",
+      lastName: "One",
+      role: "student",
+      accountId: "00000000-0000-0000-0000-000000000001"
+    },
+    {
+      id: "teacher-1",
+      email: "teacher1@example.com",
+      firstName: "Teacher",
+      lastName: "One",
+      role: "teacher",
+      accountId: "00000000-0000-0000-0000-000000000001"
+    }
+  ];
 
   // Function to get current user (supporting user switching)
   const getCurrentUser = async (req: any) => {

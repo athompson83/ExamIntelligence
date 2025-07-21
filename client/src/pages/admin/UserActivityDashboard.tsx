@@ -132,6 +132,7 @@ export default function UserActivityDashboard() {
     }
   };
 
+  // Check admin access
   if (!['admin', 'super_admin'].includes((user as any)?.role || '')) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -139,6 +140,7 @@ export default function UserActivityDashboard() {
           <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Access Denied</h3>
           <p className="text-gray-600">You need admin privileges to access user activity logs.</p>
+          <p className="text-sm text-gray-500 mt-2">Current role: {(user as any)?.role || 'unknown'}</p>
         </div>
       </div>
     );
