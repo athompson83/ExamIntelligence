@@ -59,6 +59,121 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 
+// Cross-platform media capture optimization
+const getOptimalMediaConstraints = (device: any, quality: 'low' | 'medium' | 'high') => {
+  const constraints: any = {
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      sampleRate: quality === 'high' ? 48000 : quality === 'medium' ? 44100 : 22050
+    },
+    video: {
+      facingMode: 'user',
+      width: { ideal: quality === 'high' ? 1280 : quality === 'medium' ? 640 : 320 },
+      height: { ideal: quality === 'high' ? 720 : quality === 'medium' ? 480 : 240 },
+      frameRate: { ideal: quality === 'high' ? 30 : quality === 'medium' ? 24 : 15 }
+    }
+  };
+
+  // Device-specific optimizations
+  if (device.isIOS) {
+    // iOS Safari optimizations
+    constraints.video.width = { max: quality === 'high' ? 1280 : quality === 'medium' ? 640 : 320 };
+    constraints.video.height = { max: quality === 'high' ? 720 : quality === 'medium' ? 480 : 240 };
+    constraints.video.frameRate = { max: 30 };
+  } else if (device.isAndroid) {
+    // Android Chrome optimizations
+    constraints.video.aspectRatio = 16/9;
+  } else if (device.isDesktop) {
+    // Desktop optimizations - higher quality possible
+    if (quality === 'high') {
+      constraints.video.width = { ideal: 1920 };
+      constraints.video.height = { ideal: 1080 };
+    }
+  }
+
+  // Low-end device detection and adjustments
+  if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) {
+    constraints.video.frameRate = { max: 15 };
+    constraints.video.width = { max: 480 };
+    constraints.video.height = { max: 360 };
+  }
+
+  return constraints;
+};
+
+const getOptimalScreenShareConstraints = (device: any, quality: 'low' | 'medium' | 'high') => {
+  const constraints: any = {
+    video: {
+      width: { ideal: quality === 'high' ? 1920 : quality === 'medium' ? 1280 : 640 },
+      height: { ideal: quality === 'high' ? 1080 : quality === 'medium' ? 720 : 480 },
+      frameRate: { ideal: quality === 'high' ? 15 : quality === 'medium' ? 10 : 5 }
+    },
+    audio: false // Usually no audio for screen share
+  };
+
+  // Mobile devices - reduce quality for performance
+  if (device.isMobile) {
+    constraints.video.width = { max: 720 };
+    constraints.video.height = { max: 480 };
+    constraints.video.frameRate = { max: 5 };
+  }
+
+  return constraints;
+};
+
+const detectMediaCapabilities = async () => {
+  const capabilities: any = {
+    camera: false,
+    microphone: false,
+    screenShare: false,
+    supportedResolutions: [],
+    supportedFrameRates: [],
+    audioContextSupported: false
+  };
+
+  try {
+    // Check basic media device availability
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    capabilities.camera = devices.some(device => device.kind === 'videoinput');
+    capabilities.microphone = devices.some(device => device.kind === 'audioinput');
+    
+    // Check screen share support
+    capabilities.screenShare = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+    
+    // Check audio context support
+    capabilities.audioContextSupported = !!(window.AudioContext || (window as any).webkitAudioContext);
+    
+    // Test resolution capabilities
+    if (capabilities.camera) {
+      const resolutions = [
+        { width: 320, height: 240 },
+        { width: 640, height: 480 },
+        { width: 1280, height: 720 },
+        { width: 1920, height: 1080 }
+      ];
+      
+      for (const res of resolutions) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { exact: res.width }, height: { exact: res.height } }
+          });
+          capabilities.supportedResolutions.push(res);
+          stream.getTracks().forEach(track => track.stop());
+        } catch (e) {
+          // Resolution not supported
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error detecting media capabilities:', error);
+  }
+
+  return capabilities;
+};
+
 // Enhanced device detection functions
 const detectDevice = () => {
   const userAgent = navigator.userAgent.toLowerCase();
@@ -212,6 +327,22 @@ export default function MobileApp() {
   const [device, setDevice] = useState(detectDevice());
   const appStoreUrls = getAppStoreUrls();
   
+  // Initialize media capabilities detection
+  useEffect(() => {
+    const initCapabilities = async () => {
+      const capabilities = await detectMediaCapabilities();
+      setCaptureCapabilities(capabilities);
+      
+      // Auto-adjust quality based on device capabilities
+      if (device.isMobile || capabilities.supportedResolutions.length <= 2) {
+        setMediaQuality('low');
+      } else if (device.isDesktop && capabilities.supportedResolutions.length >= 3) {
+        setMediaQuality('high');
+      }
+    };
+    initCapabilities();
+  }, [device]);
+  
   // Update device info on window resize
   useEffect(() => {
     const handleResize = () => {
@@ -248,6 +379,14 @@ export default function MobileApp() {
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
   const [screenShareEnabled, setScreenShareEnabled] = useState(false);
+  const [mediaQuality, setMediaQuality] = useState<'low' | 'medium' | 'high'>('medium');
+  const [captureCapabilities, setCaptureCapabilities] = useState<any>(null);
+  const [mediaPerformance, setMediaPerformance] = useState<any>({
+    fps: 0,
+    bandwidth: 0,
+    latency: 0,
+    droppedFrames: 0
+  });
   const [violations, setViolations] = useState<any[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
   const [calculatorState, setCalculatorState] = useState<CalculatorState>({
@@ -391,67 +530,238 @@ export default function MobileApp() {
     return () => clearInterval(interval);
   }, [examSession, timeRemaining]);
 
+  // Adaptive quality management
+  const adaptMediaQuality = useCallback(async () => {
+    if (!captureCapabilities) return;
+    
+    // Monitor performance and adapt quality
+    const connectionType = (navigator as any).connection?.effectiveType;
+    const batteryLevel = (navigator as any).getBattery ? await (navigator as any).getBattery() : null;
+    
+    let newQuality = mediaQuality;
+    
+    // Adapt based on connection speed with bandwidth optimization
+    const bandwidthOptimization = optimizeBandwidth(connectionType || '3g');
+    newQuality = bandwidthOptimization.quality;
+    
+    // Adapt based on battery level (mobile only)
+    if (batteryLevel && batteryLevel.level < 0.2 && device.isMobile) {
+      newQuality = 'low';
+    }
+    
+    // Adapt based on device performance
+    if (navigator.hardwareConcurrency <= 2) {
+      newQuality = 'low';
+    }
+    
+    if (newQuality !== mediaQuality) {
+      setMediaQuality(newQuality);
+      // Restart media streams with new quality if active
+      if (cameraEnabled || screenShareEnabled) {
+        await restartMediaStreams(newQuality);
+      }
+    }
+  }, [captureCapabilities, mediaQuality, device, cameraEnabled, screenShareEnabled]);
+
+  const restartMediaStreams = useCallback(async (quality: 'low' | 'medium' | 'high') => {
+    // Stop current streams
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+    }
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach(track => track.stop());
+    }
+    
+    // Restart with new quality
+    if (cameraEnabled) {
+      await initializeCameraWithFallback(quality);
+    }
+    if (screenShareEnabled) {
+      await initializeScreenShare(quality);
+    }
+  }, [cameraEnabled, screenShareEnabled]);
+
+  const initializeCameraWithFallback = useCallback(async (quality?: 'low' | 'medium' | 'high') => {
+    const currentQuality = quality || mediaQuality;
+    const constraints = getOptimalMediaConstraints(device, currentQuality);
+    
+    // Progressive fallback strategy
+    const fallbackConstraints = [
+      constraints, // Original optimal constraints
+      getOptimalMediaConstraints(device, 'medium'), // Medium quality fallback
+      getOptimalMediaConstraints(device, 'low'), // Low quality fallback
+      { video: true, audio: true }, // Basic constraints
+      { video: { width: 320, height: 240 }, audio: true }, // Minimal constraints
+    ];
+    
+    for (const constraint of fallbackConstraints) {
+      try {
+        const cameraStream = await navigator.mediaDevices.getUserMedia(constraint);
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = cameraStream;
+          videoRef.current.muted = false;
+          await videoRef.current.play();
+        }
+        
+        mediaStreamRef.current = cameraStream;
+        setCameraEnabled(true);
+        setMicEnabled(true);
+        
+        // Log successful constraint
+        console.log('Camera initialized with constraints:', constraint);
+        return;
+        
+      } catch (error) {
+        console.warn('Failed with constraint:', constraint, error);
+        continue;
+      }
+    }
+    
+    // All fallbacks failed
+    throw new Error('Unable to initialize camera with any constraints');
+  }, [device, mediaQuality]);
+
   // Proctoring functions
   const initializeProctoring = useCallback(async () => {
     if (!selectedQuiz?.proctoringEnabled) return;
 
     try {
-      // Initialize camera and microphone
-      const cameraStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user'
-        },
-        audio: true
-      });
+      // Initialize camera with adaptive quality
+      await initializeCameraWithFallback();
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = cameraStream;
-        // Remove muted attribute to show video properly
-        videoRef.current.muted = false;
-        videoRef.current.play().catch(console.error);
-      }
-      
-      mediaStreamRef.current = cameraStream;
-      setCameraEnabled(true);
-      setMicEnabled(true);
-      
-      // Initialize screen sharing
-      await initializeScreenShare();
+      // Initialize screen sharing with delay to avoid overwhelming the system
+      setTimeout(async () => {
+        try {
+          await initializeScreenShare();
+        } catch (screenError) {
+          console.warn('Screen sharing initialization failed:', screenError);
+        }
+      }, 1000);
       
       // Start monitoring
       document.addEventListener('visibilitychange', handleVisibilityChange);
       window.addEventListener('blur', handleWindowBlur);
       window.addEventListener('focus', handleWindowFocus);
       
+      // Start adaptive quality monitoring
+      const qualityInterval = setInterval(adaptMediaQuality, 30000); // Check every 30 seconds
+      
+      // Start performance monitoring
+      const performanceInterval = setInterval(monitorMediaPerformance, 5000); // Check every 5 seconds
+      
+      // Cleanup intervals on unmount
+      return () => {
+        clearInterval(qualityInterval);
+        clearInterval(performanceInterval);
+      };
+      
     } catch (error) {
       console.error('Error accessing camera/microphone:', error);
       addViolation('media_access_denied', 'Failed to access camera/microphone');
-      
-      // Try to initialize screen sharing even if camera fails
-      try {
-        await initializeScreenShare();
-      } catch (screenError) {
-        console.error('Screen sharing also failed:', screenError);
-      }
     }
-  }, [selectedQuiz]);
+  }, [selectedQuiz, initializeCameraWithFallback, adaptMediaQuality]);
 
-  const initializeScreenShare = useCallback(async () => {
+  // Performance monitoring
+  const monitorMediaPerformance = useCallback(async () => {
+    if (!mediaStreamRef.current && !screenStreamRef.current) return;
+
     try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      });
+      const performance: any = {
+        fps: 0,
+        bandwidth: 0,
+        latency: 0,
+        droppedFrames: 0,
+        timestamp: Date.now()
+      };
+
+      // Monitor camera stream performance
+      if (mediaStreamRef.current) {
+        const videoTrack = mediaStreamRef.current.getVideoTracks()[0];
+        if (videoTrack && videoTrack.getStats) {
+          const stats = await videoTrack.getStats();
+          stats.forEach((report: any) => {
+            if (report.type === 'outbound-rtp' && report.mediaType === 'video') {
+              performance.fps = report.framesPerSecond || 0;
+              performance.bandwidth = report.bytesSent || 0;
+            }
+          });
+        }
+      }
+
+      // Monitor screen share performance
+      if (screenStreamRef.current) {
+        const screenTrack = screenStreamRef.current.getVideoTracks()[0];
+        if (screenTrack && screenTrack.getStats) {
+          const stats = await screenTrack.getStats();
+          stats.forEach((report: any) => {
+            if (report.type === 'outbound-rtp' && report.mediaType === 'video') {
+              performance.screenFps = report.framesPerSecond || 0;
+              performance.screenBandwidth = report.bytesSent || 0;
+            }
+          });
+        }
+      }
+
+      // Network latency estimation
+      const startTime = performance.now ? performance.now() : Date.now();
+      try {
+        await fetch('/api/ping', { method: 'HEAD' });
+        const endTime = performance.now ? performance.now() : Date.now();
+        performance.latency = endTime - startTime;
+      } catch (e) {
+        performance.latency = 999; // High latency indicator
+      }
+
+      setMediaPerformance(performance);
+
+      // Auto-adapt quality based on performance
+      if (performance.fps < 10 && mediaQuality !== 'low') {
+        console.log('Low FPS detected, reducing quality');
+        setMediaQuality('low');
+        await restartMediaStreams('low');
+      } else if (performance.latency > 500 && mediaQuality === 'high') {
+        console.log('High latency detected, reducing quality');
+        setMediaQuality('medium');
+        await restartMediaStreams('medium');
+      }
+
+    } catch (error) {
+      console.warn('Performance monitoring error:', error);
+    }
+  }, [mediaQuality, restartMediaStreams]);
+
+  // Bandwidth optimization
+  const optimizeBandwidth = useCallback((connectionType: string) => {
+    const optimizations: any = {
+      'slow-2g': { quality: 'low', maxBitrate: 50000 },
+      '2g': { quality: 'low', maxBitrate: 100000 },
+      '3g': { quality: 'medium', maxBitrate: 300000 },
+      '4g': { quality: 'high', maxBitrate: 1000000 },
+      '5g': { quality: 'high', maxBitrate: 2000000 },
+    };
+
+    const optimization = optimizations[connectionType] || optimizations['3g'];
+    
+    if (optimization.quality !== mediaQuality) {
+      setMediaQuality(optimization.quality);
+      restartMediaStreams(optimization.quality);
+    }
+
+    return optimization;
+  }, [mediaQuality, restartMediaStreams]);
+
+  const initializeScreenShare = useCallback(async (quality?: 'low' | 'medium' | 'high') => {
+    try {
+      const currentQuality = quality || mediaQuality;
+      const constraints = getOptimalScreenShareConstraints(device, currentQuality);
+      
+      const screenStream = await navigator.mediaDevices.getDisplayMedia(constraints);
       
       if (screenVideoRef.current) {
         screenVideoRef.current.srcObject = screenStream;
         screenVideoRef.current.muted = true; // Screen share should be muted
-        screenVideoRef.current.play().catch(console.error);
+        await screenVideoRef.current.play();
       }
       
       screenStreamRef.current = screenStream;
@@ -463,11 +773,18 @@ export default function MobileApp() {
         addViolation('screen_share_ended', 'Screen sharing was stopped by user');
       });
       
+      // Monitor screen share performance
+      const track = screenStream.getVideoTracks()[0];
+      if (track.getSettings) {
+        const settings = track.getSettings();
+        console.log('Screen share initialized with settings:', settings);
+      }
+      
     } catch (error) {
       console.error('Error accessing screen share:', error);
       addViolation('screen_share_denied', 'Failed to access screen sharing');
     }
-  }, []);
+  }, [device, mediaQuality]);
 
   const handleVisibilityChange = useCallback(() => {
     if (document.hidden) {
@@ -1227,6 +1544,19 @@ export default function MobileApp() {
                   </Button>
                 )}
                 
+                {selectedQuiz.proctoringEnabled && (
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMediaQuality(mediaQuality === 'high' ? 'medium' : mediaQuality === 'medium' ? 'low' : 'high')}
+                      className="text-xs"
+                    >
+                      Quality: {mediaQuality.toUpperCase()}
+                    </Button>
+                  </div>
+                )}
+                
                 <Button
                   variant="outline"
                   onClick={handleExamSubmit}
@@ -1272,6 +1602,19 @@ export default function MobileApp() {
                     <Monitor className="h-5 w-5 mr-2" />
                     Share Screen
                   </Button>
+                )}
+                
+                {selectedQuiz.proctoringEnabled && (
+                  <Select value={mediaQuality} onValueChange={(value: any) => setMediaQuality(value)}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Quality" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low Quality</SelectItem>
+                      <SelectItem value="medium">Medium Quality</SelectItem>
+                      <SelectItem value="high">High Quality</SelectItem>
+                    </SelectContent>
+                  </Select>
                 )}
                 
                 <Button
@@ -1340,6 +1683,35 @@ export default function MobileApp() {
                 <div className="text-center">
                   <div className="w-3 h-3 bg-red-500 rounded-full mx-auto mb-1"></div>
                   <div className="text-xs text-red-600 font-medium">No Feed</div>
+                </div>
+              </div>
+            )}
+            
+            {/* Enhanced Performance Dashboard */}
+            {(cameraEnabled || screenShareEnabled) && (
+              <div className="w-32 sm:w-40 bg-white rounded-lg shadow-lg border border-gray-200 p-2">
+                <div className="text-xs font-medium text-gray-600 text-center mb-1">
+                  {mediaQuality.toUpperCase()}
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>FPS:</span>
+                    <span className={mediaPerformance.fps < 15 ? 'text-red-500' : 'text-green-500'}>
+                      {Math.round(mediaPerformance.fps)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Ping:</span>
+                    <span className={mediaPerformance.latency > 200 ? 'text-red-500' : 'text-green-500'}>
+                      {Math.round(mediaPerformance.latency)}ms
+                    </span>
+                  </div>
+                  {captureCapabilities && (
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>Res:</span>
+                      <span>{captureCapabilities.supportedResolutions?.length || 0}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
