@@ -267,8 +267,8 @@ export default function ItemBanks() {
                   className="bg-primary hover:bg-primary/90"
                   onClick={() => setEditingTestbank(null)}
                 >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Item Bank
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Create Item Bank</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
@@ -434,16 +434,16 @@ export default function ItemBanks() {
                             onClick={() => window.location.href = `/testbanks/${testbank.id}/questions`}
                             className="text-xs"
                           >
-                            <BookOpen className="h-3 w-3 mr-1" />
-                            View Questions
+                            <BookOpen className="h-3 w-3 sm:mr-1" />
+                            <span className="hidden sm:inline">View Questions</span>
                           </Button>
                           
                           {/* Export Dropdown */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="outline" size="sm" className="text-xs">
-                                <Download className="h-3 w-3 mr-1" />
-                                Export
+                                <Download className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Export</span>
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -511,8 +511,8 @@ export default function ItemBanks() {
                             }}
                             className="text-xs"
                           >
-                            <Zap className="h-3 w-3 mr-1" />
-                            Revalidate
+                            <Zap className="h-3 w-3 sm:mr-1" />
+                            <span className="hidden sm:inline">Revalidate</span>
                           </Button>
                           <div className="flex">
                             <Button

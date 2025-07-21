@@ -257,8 +257,8 @@ export default function UserManagement() {
             <Dialog open={isCreateUserDialogOpen} onOpenChange={setIsCreateUserDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-primary hover:bg-primary/90 text-white">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Add User
+                  <UserPlus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Add User</span>
                 </Button>
               </DialogTrigger>
             <DialogContent>

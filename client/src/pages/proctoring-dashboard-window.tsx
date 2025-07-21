@@ -107,8 +107,8 @@ function ProctorAlertResolver({ alert, onResolve }: { alert: ProctorAlert, onRes
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <CheckCircle className="h-4 w-4 mr-1" />
-          Resolve
+          <CheckCircle className="h-4 w-4 sm:mr-1" />
+          <span className="hidden sm:inline">Resolve</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
