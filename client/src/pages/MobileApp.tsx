@@ -343,6 +343,45 @@ export default function MobileApp() {
     initCapabilities();
   }, [device]);
   
+  // State management - declare states before using them
+  const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'catExams' | 'exam' | 'results' | 'profile' | 'settings'>('dashboard');
+  const [showAppDownload, setShowAppDownload] = useState(device.isSmartphone);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [examSession, setExamSession] = useState<ExamSession | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [examQuestions, setExamQuestions] = useState<Question[]>([]);
+  const [responses, setResponses] = useState<Record<string, string>>({});
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [examResult, setExamResult] = useState<any>(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(false);
+  const [screenShareEnabled, setScreenShareEnabled] = useState(false);
+  const [mediaQuality, setMediaQuality] = useState<'low' | 'medium' | 'high'>('medium');
+  const [captureCapabilities, setCaptureCapabilities] = useState<any>(null);
+  const [mediaPerformance, setMediaPerformance] = useState<any>({
+    fps: 0,
+    bandwidth: 0,
+    latency: 0,
+    droppedFrames: 0
+  });
+  const [violations, setViolations] = useState<any[]>([]);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calculatorState, setCalculatorState] = useState<CalculatorState>({
+    display: '0',
+    previousValue: 0,
+    operator: '',
+    waitingForNewValue: false,
+    memory: 0,
+    history: []
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [examStartTime, setExamStartTime] = useState<Date | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  
   // Update device info on window resize
   useEffect(() => {
     const handleResize = () => {
@@ -402,45 +441,6 @@ export default function MobileApp() {
       return () => intervals.forEach(clearTimeout);
     }
   }, [currentView, selectedQuiz, cameraEnabled]);
-  
-  // State management
-  const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'catExams' | 'exam' | 'results' | 'profile' | 'settings'>('dashboard');
-  const [showAppDownload, setShowAppDownload] = useState(device.isSmartphone);
-  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
-  const [examSession, setExamSession] = useState<ExamSession | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [examQuestions, setExamQuestions] = useState<Question[]>([]);
-  const [responses, setResponses] = useState<Record<string, string>>({});
-  const [timeRemaining, setTimeRemaining] = useState(0);
-  const [examResult, setExamResult] = useState<any>(null);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [cameraEnabled, setCameraEnabled] = useState(false);
-  const [micEnabled, setMicEnabled] = useState(false);
-  const [screenShareEnabled, setScreenShareEnabled] = useState(false);
-  const [mediaQuality, setMediaQuality] = useState<'low' | 'medium' | 'high'>('medium');
-  const [captureCapabilities, setCaptureCapabilities] = useState<any>(null);
-  const [mediaPerformance, setMediaPerformance] = useState<any>({
-    fps: 0,
-    bandwidth: 0,
-    latency: 0,
-    droppedFrames: 0
-  });
-  const [violations, setViolations] = useState<any[]>([]);
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [calculatorState, setCalculatorState] = useState<CalculatorState>({
-    display: '0',
-    previousValue: 0,
-    operator: '',
-    waitingForNewValue: false,
-    memory: 0,
-    history: []
-  });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [showFilters, setShowFilters] = useState(false);
-  const [examStartTime, setExamStartTime] = useState<Date | null>(null);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
