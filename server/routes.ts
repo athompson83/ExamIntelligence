@@ -669,7 +669,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CAT Exams API endpoints  
+  // CAT Exams API endpoints
+  app.post('/api/cat-exams', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      const catExamData = {
+        ...req.body,
+        createdBy: user.id,
+        accountId: user.accountId || "00000000-0000-0000-0000-000000000001"
+      };
+      
+      const catExam = await storage.createCATExam(catExamData);
+      res.json(catExam);
+    } catch (error) {
+      console.error('Error creating CAT exam:', error);
+      res.status(500).json({ message: 'Failed to create CAT exam' });
+    }
+  });
+
   app.get('/api/cat-exams', mockAuth, async (req: any, res) => {
     try {
       const user = req.user;

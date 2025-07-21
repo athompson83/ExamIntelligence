@@ -3197,62 +3197,64 @@ Return JSON with the new question data:
   }
 
   // CAT (Computer Adaptive Testing) Methods
+  private catExamsStorage: any[] = [
+    {
+      id: 'cat_1734567890',
+      title: 'Adaptive Biology Assessment',
+      description: 'Computer adaptive test that adjusts difficulty based on your responses',
+      subject: 'Biology',
+      categories: [
+        { name: 'Cell Biology', percentage: 40 },
+        { name: 'Genetics', percentage: 30 },
+        { name: 'Evolution', percentage: 30 }
+      ],
+      estimatedDuration: '20-45 minutes',
+      proctoringEnabled: true,
+      status: 'published',
+      createdAt: '2025-01-19T10:00:00Z',
+      sessions: 15,
+      avgScore: 78
+    },
+    {
+      id: 'cat_1734567891', 
+      title: 'Physics Proficiency Test',
+      description: 'Adaptive assessment covering mechanics, thermodynamics, and electricity',
+      subject: 'Physics',
+      categories: [
+        { name: 'Mechanics', percentage: 50 },
+        { name: 'Thermodynamics', percentage: 25 },
+        { name: 'Electricity', percentage: 25 }
+      ],
+      estimatedDuration: '30-60 minutes',
+      proctoringEnabled: true,
+      status: 'published',
+      createdAt: '2025-01-18T14:30:00Z',
+      sessions: 8,
+      avgScore: 72
+    },
+    {
+      id: 'cat_1734567892',
+      title: 'Mathematics Adaptive Exam',
+      description: 'Comprehensive adaptive math assessment for advanced learners',
+      subject: 'Mathematics',
+      categories: [
+        { name: 'Algebra', percentage: 35 },
+        { name: 'Geometry', percentage: 25 },
+        { name: 'Calculus', percentage: 40 }
+      ],
+      estimatedDuration: '25-50 minutes',
+      proctoringEnabled: false,
+      status: 'draft',
+      createdAt: '2025-01-21T09:15:00Z',
+      sessions: 0,
+      avgScore: 0
+    }
+  ];
+
   async getCATExams(): Promise<any[]> {
     try {
-      // Return mock CAT exams including any created ones
-      return [
-        {
-          id: 'cat_1734567890',
-          title: 'Adaptive Biology Assessment',
-          description: 'Computer adaptive test that adjusts difficulty based on your responses',
-          subject: 'Biology',
-          categories: [
-            { name: 'Cell Biology', percentage: 40 },
-            { name: 'Genetics', percentage: 30 },
-            { name: 'Evolution', percentage: 30 }
-          ],
-          estimatedDuration: '20-45 minutes',
-          proctoringEnabled: true,
-          status: 'published',
-          createdAt: '2025-01-19T10:00:00Z',
-          sessions: 15,
-          avgScore: 78
-        },
-        {
-          id: 'cat_1734567891', 
-          title: 'Physics Proficiency Test',
-          description: 'Adaptive assessment covering mechanics, thermodynamics, and electricity',
-          subject: 'Physics',
-          categories: [
-            { name: 'Mechanics', percentage: 50 },
-            { name: 'Thermodynamics', percentage: 25 },
-            { name: 'Electricity', percentage: 25 }
-          ],
-          estimatedDuration: '30-60 minutes',
-          proctoringEnabled: true,
-          status: 'published',
-          createdAt: '2025-01-18T14:30:00Z',
-          sessions: 8,
-          avgScore: 72
-        },
-        {
-          id: 'cat_1734567892',
-          title: 'Mathematics Adaptive Exam',
-          description: 'Comprehensive adaptive math assessment for advanced learners',
-          subject: 'Mathematics',
-          categories: [
-            { name: 'Algebra', percentage: 35 },
-            { name: 'Geometry', percentage: 25 },
-            { name: 'Calculus', percentage: 40 }
-          ],
-          estimatedDuration: '25-50 minutes',
-          proctoringEnabled: false,
-          status: 'draft',
-          createdAt: '2025-01-21T09:15:00Z',
-          sessions: 0,
-          avgScore: 0
-        }
-      ];
+      // Return all CAT exams including created ones
+      return [...this.catExamsStorage];
     } catch (error) {
       console.error('Error fetching CAT exams:', error);
       throw error;
@@ -3261,8 +3263,7 @@ Return JSON with the new question data:
 
   async getCATExam(id: string): Promise<any> {
     try {
-      const catExams = await this.getCATExams();
-      return catExams.find(exam => exam.id === id);
+      return this.catExamsStorage.find(exam => exam.id === id);
     } catch (error) {
       console.error('Error fetching CAT exam:', error);
       throw error;
@@ -3271,12 +3272,16 @@ Return JSON with the new question data:
 
   async updateCATExam(id: string, updateData: any): Promise<any> {
     try {
-      // Mock implementation - would update in catExams table
-      return {
-        id,
-        ...updateData,
-        updatedAt: new Date()
-      };
+      const index = this.catExamsStorage.findIndex(exam => exam.id === id);
+      if (index !== -1) {
+        this.catExamsStorage[index] = {
+          ...this.catExamsStorage[index],
+          ...updateData,
+          updatedAt: new Date()
+        };
+        return this.catExamsStorage[index];
+      }
+      throw new Error('CAT exam not found');
     } catch (error) {
       console.error('Error updating CAT exam:', error);
       throw error;
@@ -3285,8 +3290,10 @@ Return JSON with the new question data:
 
   async deleteCATExam(id: string): Promise<void> {
     try {
-      // Mock implementation - would delete from catExams table
-      console.log('Deleting CAT exam:', id);
+      const index = this.catExamsStorage.findIndex(exam => exam.id === id);
+      if (index !== -1) {
+        this.catExamsStorage.splice(index, 1);
+      }
     } catch (error) {
       console.error('Error deleting CAT exam:', error);
       throw error;
@@ -3295,7 +3302,6 @@ Return JSON with the new question data:
 
   async createCATExam(catExamData: any): Promise<any> {
     try {
-      // Mock implementation for now - would create in catExams table
       const catExam = {
         id: 'cat_' + Date.now(),
         ...catExamData,
@@ -3303,8 +3309,15 @@ Return JSON with the new question data:
         updatedAt: new Date(),
         status: 'draft',
         sessions: 0,
-        avgScore: 0
+        avgScore: 0,
+        estimatedDuration: catExamData.estimatedDuration || '20-45 minutes',
+        proctoringEnabled: catExamData.proctoringEnabled || false,
+        subject: catExamData.subject || 'General',
+        categories: catExamData.categories || []
       };
+      
+      // Add to storage
+      this.catExamsStorage.push(catExam);
       return catExam;
     } catch (error) {
       console.error('Error creating CAT exam:', error);
