@@ -244,7 +244,7 @@ export default function UserManagement() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 overflow-x-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -433,7 +433,7 @@ export default function UserManagement() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
@@ -447,7 +447,8 @@ export default function UserManagement() {
                 ))}
               </div>
             ) : filteredUsers && filteredUsers.length > 0 ? (
-              <Table>
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
@@ -519,6 +520,7 @@ export default function UserManagement() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             ) : (
               <div className="text-center py-12">
                 <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />

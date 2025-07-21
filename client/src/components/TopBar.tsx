@@ -57,9 +57,7 @@ export default function TopBar() {
   return (
     <header className="bg-surface border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
       <div className="flex items-center flex-1">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-          Dashboard
-        </h2>
+        {/* Section titles are in a different area */}
       </div>
       
       <div className="flex items-center space-x-4">
