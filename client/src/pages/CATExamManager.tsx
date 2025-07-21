@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import Layout from "@/components/layout/Layout";
+import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +46,7 @@ import {
   Eye
 } from "lucide-react";
 import { format } from "date-fns";
+import CATExamPreview from "@/components/CATExamPreview";
 
 interface CATExam {
   id: string;
@@ -68,6 +69,8 @@ export default function CATExamManager() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedExam, setSelectedExam] = useState<CATExam | null>(null);
+  const [previewExam, setPreviewExam] = useState<CATExam | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Fetch CAT exams
   const { data: catExams, isLoading } = useQuery<CATExam[]>({
@@ -294,7 +297,11 @@ export default function CATExamManager() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleViewDetails(exam)}
+                              onClick={() => {
+                                setPreviewExam(exam);
+                                setShowPreview(true);
+                              }}
+                              title="Preview Exam"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -405,6 +412,32 @@ export default function CATExamManager() {
           </Dialog>
         )}
       </div>
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-7xl h-[90vh] overflow-hidden">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl font-semibold">
+              Interactive Exam Preview
+            </DialogTitle>
+          </DialogHeader>
+          <div className="h-full overflow-y-auto">
+            {previewExam && (
+              <CATExamPreview
+                examId={previewExam.id}
+                onStartExam={() => {
+                  setShowPreview(false);
+                  handleStartSession(previewExam);
+                }}
+                onEditExam={() => {
+                  setShowPreview(false);
+                  window.location.href = `/cat-exam-builder?id=${previewExam.id}`;
+                }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
