@@ -310,6 +310,58 @@ export const TooltipSystem: React.FC = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [toggleTooltipMute]);
 
+  // Listen for route changes to update tooltip queue
+  useEffect(() => {
+    const handleRouteChange = () => {
+      // Trigger tooltip queue update when route changes
+      if (!isTooltipSystemMuted) {
+        const currentPath = window.location.pathname;
+        const availableTooltips = tooltipData.filter(tooltip => {
+          // Check if permanently dismissed
+          if (dismissedTooltips.has(tooltip.id)) {
+            return false;
+          }
+          
+          // Show mobile tooltip only on mobile route
+          if (tooltip.id === 'mobile-welcome') {
+            return currentPath === '/mobile';
+          }
+          
+          // Don't show mobile tooltip on other routes
+          if (currentPath === '/mobile' && tooltip.id !== 'mobile-welcome') {
+            return false;
+          }
+          
+          return true;
+        });
+        setTooltipQueue(availableTooltips);
+      }
+    };
+    
+    // Listen for navigation events
+    window.addEventListener('popstate', handleRouteChange);
+    
+    // Also listen for programmatic navigation (pushState/replaceState)
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function(...args) {
+      originalPushState.apply(history, args);
+      setTimeout(handleRouteChange, 0);
+    };
+    
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(history, args);
+      setTimeout(handleRouteChange, 0);
+    };
+    
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+    };
+  }, [dismissedTooltips, isTooltipSystemMuted]);
+
   // Sample tooltip data
   const tooltipData: TooltipData[] = [
     {
@@ -345,15 +397,39 @@ export const TooltipSystem: React.FC = () => {
       category: 'tutorial',
       priority: 'low',
       delay: 10000
+    },
+    {
+      id: 'mobile-welcome',
+      title: 'Mobile Web Interface 📱',
+      content: 'Welcome to the mobile-optimized version of ProficiencyAI! This interface is designed for touch navigation and mobile workflows. Tap "Got it!" to dismiss this message permanently.',
+      category: 'info',
+      priority: 'high',
+      showOnce: true,
+      delay: 1000
     }
   ];
 
   useEffect(() => {
     // Initialize tooltip queue with non-dismissed tooltips only if not muted
     if (!isTooltipSystemMuted) {
+      const currentPath = window.location.pathname;
       const availableTooltips = tooltipData.filter(tooltip => {
         // Check if permanently dismissed
-        return !dismissedTooltips.has(tooltip.id);
+        if (dismissedTooltips.has(tooltip.id)) {
+          return false;
+        }
+        
+        // Show mobile tooltip only on mobile route
+        if (tooltip.id === 'mobile-welcome') {
+          return currentPath === '/mobile';
+        }
+        
+        // Don't show mobile tooltip on other routes
+        if (currentPath === '/mobile' && tooltip.id !== 'mobile-welcome') {
+          return false;
+        }
+        
+        return true;
       });
       setTooltipQueue(availableTooltips);
     } else {
