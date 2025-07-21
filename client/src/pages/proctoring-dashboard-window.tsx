@@ -247,9 +247,9 @@ export default function ProctoringDashboardWindow() {
       </div>
 
       {/* Dashboard Content */}
-      <div className={`p-6 ${isMinimized ? 'hidden' : ''}`}>
+      <div className={`w-full p-4 lg:p-6 ${isMinimized ? 'hidden' : ''}`}>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -342,17 +342,17 @@ export default function ProctoringDashboardWindow() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
+                  <div className="w-full overflow-x-auto">
+                    <Table className="min-w-full">
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Alert Type</TableHead>
-                          <TableHead>Student</TableHead>
-                          <TableHead>Severity</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Time</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
+                          <TableHead className="min-w-[120px]">Alert Type</TableHead>
+                          <TableHead className="min-w-[100px]">Student</TableHead>
+                          <TableHead className="min-w-[80px]">Severity</TableHead>
+                          <TableHead className="min-w-[200px]">Description</TableHead>
+                          <TableHead className="min-w-[80px]">Time</TableHead>
+                          <TableHead className="min-w-[80px]">Status</TableHead>
+                          <TableHead className="min-w-[120px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>

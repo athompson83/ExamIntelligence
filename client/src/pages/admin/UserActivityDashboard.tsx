@@ -148,13 +148,13 @@ export default function UserActivityDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">User Activity Dashboard</h1>
           <p className="text-gray-600">Monitor user activities, security events, and manage rollbacks</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={exportLogs} disabled={!selectedUser}>
+        <div className="flex gap-2 flex-shrink-0">
+          <Button onClick={exportLogs} disabled={!selectedUser} size="sm">
             <Download className="mr-2 h-4 w-4" />
             Export Logs
           </Button>
@@ -170,11 +170,11 @@ export default function UserActivityDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="min-w-0">
               <label className="text-sm font-medium mb-2 block">User</label>
               <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select user" />
                 </SelectTrigger>
                 <SelectContent>
@@ -187,13 +187,15 @@ export default function UserActivityDashboard() {
               </Select>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="text-sm font-medium mb-2 block">Date Range</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange.from ? format(dateRange.from, "MMM dd") : "Start date"} - {dateRange.to ? format(dateRange.to, "MMM dd") : "End date"}
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">
+                      {dateRange.from ? format(dateRange.from, "MMM dd") : "Start"} - {dateRange.to ? format(dateRange.to, "MMM dd") : "End"}
+                    </span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -207,10 +209,10 @@ export default function UserActivityDashboard() {
               </Popover>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="text-sm font-medium mb-2 block">Action</label>
               <Select value={filters.action} onValueChange={(value) => setFilters({ ...filters, action: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -223,10 +225,10 @@ export default function UserActivityDashboard() {
               </Select>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="text-sm font-medium mb-2 block">Security Level</label>
               <Select value={filters.securityLevel} onValueChange={(value) => setFilters({ ...filters, securityLevel: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -244,7 +246,7 @@ export default function UserActivityDashboard() {
 
       {/* Activity Summary */}
       {selectedUser && activitySummary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center">
@@ -335,30 +337,32 @@ export default function UserActivityDashboard() {
                 <CardTitle>Activity Logs</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {activityLogs.map((log: any) => (
-                    <div key={log.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <Badge className={getActionColor(log.action)}>
-                          {log.action}
-                        </Badge>
-                        <div>
-                          <p className="font-medium">{log.resource}</p>
-                          <p className="text-sm text-gray-600">{log.pageUrl}</p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(log.createdAt).toLocaleString()}
-                          </p>
+                <div className="w-full overflow-x-auto">
+                  <div className="space-y-4 min-w-[500px]">
+                    {activityLogs.map((log: any) => (
+                      <div key={log.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 min-w-0 flex-1">
+                          <Badge className={getActionColor(log.action)}>
+                            {log.action}
+                          </Badge>
+                          <div className="min-w-0">
+                            <p className="font-medium">{log.resource}</p>
+                            <p className="text-sm text-gray-600 truncate">{log.pageUrl}</p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(log.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 flex-shrink-0">
+                          <div className={`w-2 h-2 rounded-full ${getSeverityColor(log.securityLevel)}`}></div>
+                          <span className="text-sm text-gray-600">{log.securityLevel}</span>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-2 h-2 rounded-full ${getSeverityColor(log.securityLevel)}`}></div>
-                        <span className="text-sm text-gray-600">{log.securityLevel}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {activityLogs.length === 0 && (
-                    <p className="text-center text-gray-500 py-8">No activity logs found for the selected criteria.</p>
-                  )}
+                    ))}
+                    {activityLogs.length === 0 && (
+                      <p className="text-center text-gray-500 py-8">No activity logs found for the selected criteria.</p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -370,36 +374,38 @@ export default function UserActivityDashboard() {
                 <CardTitle>Security Events</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {securityEvents.map((event: any) => (
-                    <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg border-l-4 border-l-red-500">
-                      <div className="flex items-center space-x-4">
-                        <AlertTriangle className="h-5 w-5 text-red-500" />
-                        <div>
-                          <p className="font-medium">{event.eventType}</p>
-                          <p className="text-sm text-gray-600">{event.description}</p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(event.createdAt).toLocaleString()}
-                          </p>
+                <div className="w-full overflow-x-auto">
+                  <div className="space-y-4 min-w-[600px]">
+                    {securityEvents.map((event: any) => (
+                      <div key={event.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg border-l-4 border-l-red-500">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 min-w-0 flex-1">
+                          <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="font-medium">{event.eventType}</p>
+                            <p className="text-sm text-gray-600">{event.description}</p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(event.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-shrink-0">
+                          <Badge className={getSeverityColor(event.severity)}>
+                            {event.severity}
+                          </Badge>
+                          {event.investigated ? (
+                            <Badge variant="outline">Investigated</Badge>
+                          ) : (
+                            <Button variant="outline" size="sm">
+                              Investigate
+                            </Button>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getSeverityColor(event.severity)}>
-                          {event.severity}
-                        </Badge>
-                        {event.investigated ? (
-                          <Badge variant="outline">Investigated</Badge>
-                        ) : (
-                          <Button variant="outline" size="sm">
-                            Investigate
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {securityEvents.length === 0 && (
-                    <p className="text-center text-gray-500 py-8">No security events found for the selected criteria.</p>
-                  )}
+                    ))}
+                    {securityEvents.length === 0 && (
+                      <p className="text-center text-gray-500 py-8">No security events found for the selected criteria.</p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

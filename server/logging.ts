@@ -90,7 +90,7 @@ export class ComprehensiveLogger {
     }
   }
 
-  // Create rollback point for critical operations
+  // Enhanced rollback point creation with comprehensive state management
   async createRollbackPoint({
     userId,
     accountId,
@@ -100,7 +100,9 @@ export class ComprehensiveLogger {
     previousState,
     currentState,
     rollbackDescription,
-    expiresAt
+    expiresAt,
+    dependencies = [],
+    priority = 'medium'
   }: {
     userId: string;
     accountId: string;
@@ -111,27 +113,211 @@ export class ComprehensiveLogger {
     currentState: any;
     rollbackDescription: string;
     expiresAt?: Date;
+    dependencies?: string[];
+    priority?: 'low' | 'medium' | 'high' | 'critical';
   }) {
     try {
       const expiry = expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days default
+      const crypto = require('crypto');
       
-      await this.db.insert(rollbackHistory).values({
+      // Generate security hash for data integrity
+      const dataHash = crypto.createHash('sha256')
+        .update(JSON.stringify({ previousState, currentState }))
+        .digest('hex');
+      
+      const rollbackPoint = await this.db.insert(rollbackHistory).values({
         userId,
         accountId,
         operationType,
         resourceType,
         resourceId,
-        previousState,
-        currentState,
+        previousState: {
+          ...previousState,
+          _metadata: {
+            timestamp: new Date().toISOString(),
+            dependencies,
+            dataHash,
+            schemaVersion: '2.0'
+          }
+        },
+        currentState: {
+          ...currentState,
+          _metadata: {
+            timestamp: new Date().toISOString(),
+            dataHash,
+            schemaVersion: '2.0'
+          }
+        },
         rollbackDescription,
         expiresAt: expiry,
+      }).returning();
+
+      // Log rollback point creation for audit trail
+      await this.logActivity({
+        userId,
+        accountId,
+        action: 'rollback_point_created',
+        resource: 'system',
+        resourceId: rollbackPoint[0].id,
+        securityLevel: priority as any,
+        changesSummary: `Rollback point created for ${resourceType}:${resourceId}`,
+        metadata: { dependencies, priority, dataHash }
       });
+
+      return rollbackPoint[0];
     } catch (error) {
       console.error('Failed to create rollback point:', error);
+      throw error;
     }
   }
 
-  // Log security events
+  // Execute rollback operation
+  async executeRollback(rollbackId: string, executedByUserId: string): Promise<boolean> {
+    try {
+      const rollback = await this.db.query.rollbackHistory.findFirst({
+        where: eq(rollbackHistory.id, rollbackId)
+      });
+
+      if (!rollback || rollback.executedAt) {
+        throw new Error('Rollback point not found or already executed');
+      }
+
+      const { resourceType, resourceId, previousState } = rollback;
+      const crypto = require('crypto');
+
+      // Verify data integrity
+      const expectedHash = previousState._metadata?.dataHash;
+      const currentHash = crypto.createHash('sha256')
+        .update(JSON.stringify(previousState))
+        .digest('hex');
+
+      if (expectedHash && expectedHash !== currentHash) {
+        throw new Error('Data integrity check failed - rollback aborted');
+      }
+
+      // Execute rollback based on resource type
+      let success = false;
+      switch (resourceType) {
+        case 'quiz':
+          success = await this.rollbackQuiz(resourceId, previousState);
+          break;
+        case 'question':
+          success = await this.rollbackQuestion(resourceId, previousState);
+          break;
+        case 'testbank':
+          success = await this.rollbackTestbank(resourceId, previousState);
+          break;
+        case 'user':
+          success = await this.rollbackUser(resourceId, previousState);
+          break;
+        case 'assignment':
+          success = await this.rollbackAssignment(resourceId, previousState);
+          break;
+        default:
+          throw new Error(`Unsupported resource type: ${resourceType}`);
+      }
+
+      if (success) {
+        // Mark rollback as executed
+        await this.db.update(rollbackHistory)
+          .set({ 
+            executedAt: new Date(),
+            executedByUserId,
+            status: 'completed'
+          })
+          .where(eq(rollbackHistory.id, rollbackId));
+
+        // Log successful rollback
+        await this.logActivity({
+          userId: executedByUserId,
+          accountId: rollback.accountId,
+          action: 'rollback_executed',
+          resource: resourceType,
+          resourceId,
+          securityLevel: 'high',
+          changesSummary: `Successfully rolled back ${resourceType}:${resourceId}`
+        });
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Rollback execution failed:', error);
+      
+      // Log failed rollback attempt
+      await this.logSecurityEvent({
+        userId: executedByUserId,
+        eventType: 'suspicious_activity',
+        severity: 'high',
+        description: `Failed rollback attempt: ${error.message}`,
+        blocked: true
+      });
+      
+      throw error;
+    }
+  }
+
+  // Rollback implementations for different resource types
+  private async rollbackQuiz(quizId: string, previousState: any): Promise<boolean> {
+    try {
+      await this.db.update(quizzes)
+        .set(previousState)
+        .where(eq(quizzes.id, quizId));
+      return true;
+    } catch (error) {
+      console.error('Quiz rollback failed:', error);
+      return false;
+    }
+  }
+
+  private async rollbackQuestion(questionId: string, previousState: any): Promise<boolean> {
+    try {
+      await this.db.update(questions)
+        .set(previousState)
+        .where(eq(questions.id, questionId));
+      return true;
+    } catch (error) {
+      console.error('Question rollback failed:', error);
+      return false;
+    }
+  }
+
+  private async rollbackTestbank(testbankId: string, previousState: any): Promise<boolean> {
+    try {
+      await this.db.update(testbanks)
+        .set(previousState)
+        .where(eq(testbanks.id, testbankId));
+      return true;
+    } catch (error) {
+      console.error('Testbank rollback failed:', error);
+      return false;
+    }
+  }
+
+  private async rollbackUser(userId: string, previousState: any): Promise<boolean> {
+    try {
+      await this.db.update(users)
+        .set(previousState)
+        .where(eq(users.id, userId));
+      return true;
+    } catch (error) {
+      console.error('User rollback failed:', error);
+      return false;
+    }
+  }
+
+  private async rollbackAssignment(assignmentId: string, previousState: any): Promise<boolean> {
+    try {
+      await this.db.update(quizAssignments)
+        .set(previousState)
+        .where(eq(quizAssignments.id, assignmentId));
+      return true;
+    } catch (error) {
+      console.error('Assignment rollback failed:', error);
+      return false;
+    }
+  }
+
+  // Enhanced security event logging with threat intelligence
   async logSecurityEvent({
     userId,
     accountId,
@@ -143,11 +329,13 @@ export class ComprehensiveLogger {
     requestUrl,
     requestMethod,
     blocked = false,
-    mitigationAction
+    mitigationAction,
+    threatIndicators = {},
+    geoLocation
   }: {
     userId?: string;
     accountId?: string;
-    eventType: 'unauthorized_access' | 'privilege_escalation' | 'data_breach_attempt' | 'suspicious_activity' | 'brute_force' | 'session_hijack';
+    eventType: 'unauthorized_access' | 'privilege_escalation' | 'data_breach_attempt' | 'suspicious_activity' | 'brute_force' | 'session_hijack' | 'malware_detected' | 'ddos_attempt';
     severity: 'low' | 'medium' | 'high' | 'critical';
     description: string;
     ipAddress?: string;
@@ -156,23 +344,132 @@ export class ComprehensiveLogger {
     requestMethod?: string;
     blocked?: boolean;
     mitigationAction?: string;
+    threatIndicators?: any;
+    geoLocation?: string;
   }) {
     try {
-      await this.db.insert(enhancedSecurityEvents).values({
+      // Enhanced threat analysis
+      const riskScore = this.calculateRiskScore({
+        eventType,
+        severity,
+        threatIndicators,
+        ipAddress,
+        userAgent
+      });
+
+      // Check for patterns indicating coordinated attacks
+      const isCoordinatedAttack = await this.detectCoordinatedAttack(ipAddress, eventType);
+
+      const securityEvent = await this.db.insert(enhancedSecurityEvents).values({
         userId,
         accountId,
         eventType,
         severity,
-        description,
+        description: `${description} | Risk Score: ${riskScore}${isCoordinatedAttack ? ' | COORDINATED ATTACK DETECTED' : ''}`,
         ipAddress,
         userAgent,
         requestUrl,
         requestMethod,
-        blocked,
-        mitigationAction,
-      });
+        blocked: blocked || (riskScore > 80), // Auto-block high-risk events
+        mitigationAction: mitigationAction || (riskScore > 80 ? 'AUTOMATIC_BLOCK' : 'MONITOR'),
+        metadata: {
+          riskScore,
+          threatIndicators,
+          geoLocation,
+          isCoordinatedAttack,
+          analysisTimestamp: new Date().toISOString()
+        }
+      }).returning();
+
+      // Trigger automatic incident response for critical events
+      if (severity === 'critical' || riskScore > 90) {
+        await this.triggerIncidentResponse(securityEvent[0]);
+      }
+
+      return securityEvent[0];
     } catch (error) {
       console.error('Failed to log security event:', error);
+      throw error;
+    }
+  }
+
+  // Calculate threat risk score
+  private calculateRiskScore({
+    eventType,
+    severity,
+    threatIndicators,
+    ipAddress,
+    userAgent
+  }: any): number {
+    let score = 0;
+
+    // Base score from event type
+    const eventScores = {
+      'unauthorized_access': 30,
+      'privilege_escalation': 50,
+      'data_breach_attempt': 70,
+      'suspicious_activity': 20,
+      'brute_force': 40,
+      'session_hijack': 60,
+      'malware_detected': 80,
+      'ddos_attempt': 90
+    };
+    score += eventScores[eventType] || 10;
+
+    // Severity multiplier
+    const severityMultipliers = { low: 1, medium: 1.5, high: 2, critical: 3 };
+    score *= severityMultipliers[severity] || 1;
+
+    // Threat indicators
+    if (threatIndicators.knownMaliciousIP) score += 30;
+    if (threatIndicators.suspiciousUserAgent) score += 20;
+    if (threatIndicators.rapidRequests) score += 25;
+    if (threatIndicators.anomalousLocation) score += 15;
+
+    return Math.min(100, Math.round(score));
+  }
+
+  // Detect coordinated attacks
+  private async detectCoordinatedAttack(ipAddress: string, eventType: string): Promise<boolean> {
+    if (!ipAddress) return false;
+
+    try {
+      const recentEvents = await this.db.query.enhancedSecurityEvents.findMany({
+        where: and(
+          eq(enhancedSecurityEvents.ipAddress, ipAddress),
+          gte(enhancedSecurityEvents.createdAt, new Date(Date.now() - 60 * 60 * 1000)) // Last hour
+        )
+      });
+
+      // Consider it coordinated if >5 security events from same IP in the last hour
+      return recentEvents.length > 5;
+    } catch (error) {
+      console.error('Error detecting coordinated attack:', error);
+      return false;
+    }
+  }
+
+  // Trigger incident response
+  private async triggerIncidentResponse(securityEvent: any): Promise<void> {
+    try {
+      // Log incident response activation
+      await this.logActivity({
+        userId: 'system',
+        accountId: securityEvent.accountId || 'system',
+        action: 'incident_response_triggered',
+        resource: 'security',
+        resourceId: securityEvent.id,
+        securityLevel: 'critical',
+        changesSummary: `Automatic incident response triggered for ${securityEvent.eventType}`
+      });
+
+      // Here you could integrate with external security tools:
+      // - Send alerts to security team
+      // - Update firewall rules
+      // - Trigger automated response scripts
+      console.log(`🚨 INCIDENT RESPONSE TRIGGERED: ${securityEvent.eventType} - Event ID: ${securityEvent.id}`);
+    } catch (error) {
+      console.error('Failed to trigger incident response:', error);
     }
   }
 
