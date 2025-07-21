@@ -1,52 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-
-// Enhanced device detection functions
-const detectDevice = () => {
-  const userAgent = navigator.userAgent.toLowerCase();
-  const isAndroid = /android/.test(userAgent);
-  const isIOS = /iphone|ipad|ipod/.test(userAgent);
-  const isMobile = isAndroid || isIOS;
-  const isSmartphone = isMobile && !/ipad/.test(userAgent);
-  const isTablet = (isMobile && /ipad/.test(userAgent)) || 
-                   (isAndroid && !/mobile/.test(userAgent)) ||
-                   (window.innerWidth >= 768 && window.innerWidth <= 1024);
-  const isDesktop = !isMobile || window.innerWidth > 1024;
-  
-  // Screen size detection
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
-  const isLandscape = screenWidth > screenHeight;
-  const isPortrait = screenHeight >= screenWidth;
-  
-  return {
-    isMobile,
-    isSmartphone,
-    isTablet,
-    isAndroid,
-    isIOS,
-    isDesktop,
-    isLandscape,
-    isPortrait,
-    screenWidth,
-    screenHeight,
-    userAgent,
-    // Breakpoint helpers
-    isSm: screenWidth >= 640,
-    isMd: screenWidth >= 768,
-    isLg: screenWidth >= 1024,
-    isXl: screenWidth >= 1280,
-    is2Xl: screenWidth >= 1536
-  };
-};
-
-// App store detection
-const getAppStoreUrls = () => ({
-  ios: 'https://apps.apple.com/app/proficiencyai/id123456789', // Replace with actual App Store URL
-  android: 'https://play.google.com/store/apps/details?id=com.proficiencyai.app', // Replace with actual Play Store URL
-  nativeAppScheme: 'proficiencyai://', // Deep link to open native app
-});
 import { 
   ArrowLeft, 
   Settings, 
@@ -103,6 +57,52 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
+
+// Enhanced device detection functions
+const detectDevice = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isAndroid = /android/.test(userAgent);
+  const isIOS = /iphone|ipad|ipod/.test(userAgent);
+  const isMobile = isAndroid || isIOS;
+  const isSmartphone = isMobile && !/ipad/.test(userAgent);
+  const isTablet = (isMobile && /ipad/.test(userAgent)) || 
+                   (isAndroid && !/mobile/.test(userAgent)) ||
+                   (window.innerWidth >= 768 && window.innerWidth <= 1024);
+  const isDesktop = !isMobile || window.innerWidth > 1024;
+  
+  // Screen size detection
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  const isLandscape = screenWidth > screenHeight;
+  const isPortrait = screenHeight >= screenWidth;
+  
+  return {
+    isMobile,
+    isSmartphone,
+    isTablet,
+    isAndroid,
+    isIOS,
+    isDesktop,
+    isLandscape,
+    isPortrait,
+    screenWidth,
+    screenHeight,
+    userAgent,
+    // Breakpoint helpers
+    isSm: screenWidth >= 640,
+    isMd: screenWidth >= 768,
+    isLg: screenWidth >= 1024,
+    isXl: screenWidth >= 1280,
+    is2Xl: screenWidth >= 1536
+  };
+};
+
+// App store detection
+const getAppStoreUrls = () => ({
+  ios: 'https://apps.apple.com/app/proficiencyai/id123456789', // Replace with actual App Store URL
+  android: 'https://play.google.com/store/apps/details?id=com.proficiencyai.app', // Replace with actual Play Store URL
+  nativeAppScheme: 'proficiencyai://', // Deep link to open native app
+});
 
 // Type definitions
 interface Quiz {
@@ -266,25 +266,24 @@ export default function MobileApp() {
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-  const queryClient = useQueryClient();
 
   // API queries
-  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
+  const { data: dashboardStats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/mobile/dashboard/stats'],
     retry: false,
   });
 
-  const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
+  const { data: assignments = [], isLoading: assignmentsLoading } = useQuery<Quiz[]>({
     queryKey: ['/api/mobile/assignments'],
     retry: false,
   });
 
-  const { data: catExams = [], isLoading: catExamsLoading } = useQuery({
+  const { data: catExams = [], isLoading: catExamsLoading } = useQuery<Quiz[]>({
     queryKey: ['/api/cat-exams'],
     retry: false,
   });
 
-  const { data: profile = {}, isLoading: profileLoading } = useQuery({
+  const { data: profile, isLoading: profileLoading } = useQuery<StudentProfile>({
     queryKey: ['/api/mobile/student/profile'],
     retry: false,
   });
@@ -328,7 +327,7 @@ export default function MobileApp() {
       // Load exam questions using the assignment ID
       try {
         const questionsResponse = await apiRequest(`/api/mobile/assignment/${selectedQuiz?.id}/questions`);
-        setExamQuestions(questionsResponse || []);
+        setExamQuestions(Array.isArray(questionsResponse) ? questionsResponse : []);
         setCurrentQuestionIndex(0);
         setResponses({});
       } catch (error) {
