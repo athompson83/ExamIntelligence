@@ -26,13 +26,6 @@ export default function LiveExams() {
     const windowUrl = window.location.origin + '/proctoring-dashboard-window';
     const windowName = 'ProctoringDashboard';
     
-    // Check if window is already open
-    const existingWindow = window.open('', windowName);
-    if (existingWindow && !existingWindow.closed) {
-      existingWindow.focus();
-      return;
-    }
-    
     const newWindow = window.open(windowUrl, windowName, windowFeatures);
     if (newWindow) {
       newWindow.focus();

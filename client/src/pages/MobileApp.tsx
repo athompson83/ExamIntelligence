@@ -651,6 +651,15 @@ export default function MobileApp() {
           videoRef.current.offsetHeight; // Trigger reflow
           videoRef.current.style.display = 'block';
           
+          // Additional mobile fixes for video preview
+          if (device.isMobile) {
+            videoRef.current.setAttribute('webkit-playsinline', 'true');
+            videoRef.current.setAttribute('x-webkit-airplay', 'allow');
+            videoRef.current.setAttribute('preload', 'metadata');
+            videoRef.current.style.webkitTransform = 'translateZ(0)';
+            videoRef.current.style.transform = 'translateZ(0)';
+          }
+          
           // Ensure video plays when metadata loads
           videoRef.current.onloadedmetadata = async () => {
             if (videoRef.current && videoRef.current.paused) {
@@ -1847,10 +1856,16 @@ export default function MobileApp() {
                   onLoadedMetadata={() => {
                     console.log('Camera video metadata loaded');
                     if (videoRef.current && videoRef.current.paused) {
-                      videoRef.current.play().then(() => {
-                        console.log('Camera video playing after metadata');
-                      }).catch((err) => {
-                        console.warn('Camera play failed:', err);
+                      // Force layout reflow before playing
+                      videoRef.current.style.height = videoRef.current.style.height;
+                      requestAnimationFrame(() => {
+                        if (videoRef.current) {
+                          videoRef.current.play().then(() => {
+                            console.log('Camera video playing after metadata');
+                          }).catch((err) => {
+                            console.warn('Camera play failed:', err);
+                          });
+                        }
                       });
                     }
                   }}
