@@ -252,9 +252,18 @@ export default function CATExamBuilder() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">CAT Exam Builder</h1>
-          <p className="text-gray-600">Create Computer Adaptive Tests using item banks</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">CAT Exam Builder</h1>
+            <p className="text-gray-600">Create Computer Adaptive Tests using item banks</p>
+          </div>
+          <Button
+            onClick={() => setLocation('/ai-cat-generator')}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+          >
+            <Brain className="h-4 w-4" />
+            AI Generator
+          </Button>
         </div>
 
         <Tabs defaultValue="basic" className="space-y-6">
