@@ -9294,15 +9294,36 @@ For new item banks, include 3-5 sample questions with this structure:
 
 Return the response as valid JSON with all the above sections.`;
 
-      const result = await generateQuestionsWithAI(aiPrompt, 'Generate CAT Exam Configuration');
+      // Direct OpenAI API call for CAT exam configuration
+      const OpenAI = require('openai');
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
       
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(400).json({ 
+          message: 'OpenAI API key not configured. Please contact your administrator to set up AI functionality.' 
+        });
+      }
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { 
+            role: "system", 
+            content: "You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). You generate comprehensive CAT exam configurations in valid JSON format." 
+          },
+          { role: "user", content: aiPrompt }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+      });
+
       // Parse the AI response
       let examConfig;
       try {
-        examConfig = JSON.parse(result.content);
+        examConfig = JSON.parse(response.choices[0].message.content || '{}');
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
-        return res.status(500).json({ message: 'Failed to parse AI response' });
+        return res.status(500).json({ message: 'Failed to parse AI response from OpenAI' });
       }
 
       // Validate and structure the response
