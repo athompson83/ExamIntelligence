@@ -85,7 +85,7 @@ export default function Sidebar() {
       </div>
       
       {/* Navigation - Scrollable */}
-      <div className="flex flex-col mt-6 overflow-y-auto flex-1 pb-4 px-2">
+      <div className="flex flex-col mt-6 flex-1 pb-4 px-2 sidebar-scroll">
         <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
           Main Menu
         </div>

@@ -50,8 +50,10 @@ export default function QuizManager() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: quizzes, isLoading } = useQuery({
+  const { data: quizzes, isLoading, isError } = useQuery({
     queryKey: ['/api/quizzes'],
+    staleTime: 30000, // 30 seconds
+    cacheTime: 300000, // 5 minutes
   });
 
   const deleteQuizMutation = useMutation({
@@ -123,10 +125,10 @@ export default function QuizManager() {
     mutationFn: async (quizId: string) => {
       return await apiRequest(`/api/quizzes/${quizId}/start-live`, { method: "POST" });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast({
         title: "Success",
-        description: `Live exam started! Access code: ${data.accessCode}`,
+        description: `Live exam started! Access code: ${data?.accessCode || 'N/A'}`,
       });
     },
     onError: (error) => {
@@ -177,16 +179,55 @@ export default function QuizManager() {
     setLocation(`/live-exams?quizId=${quiz.id}&quizTitle=${encodeURIComponent(quiz.title)}`);
   };
 
-  if (isLoading) {
+  // Show skeleton loading only on initial load
+  if (isLoading && !quizzes) {
     return (
-      <div className="p-6">
+      <div className="p-6 space-y-6">
+        {/* Breadcrumb skeleton */}
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-48"></div>
+        </div>
+        
+        {/* Header skeleton */}
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-48 bg-gray-200 rounded"></div>
-            ))}
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+        </div>
+        
+        {/* Search and button skeleton */}
+        <div className="animate-pulse flex justify-between items-center">
+          <div className="h-10 bg-gray-200 rounded w-64"></div>
+          <div className="h-10 bg-gray-200 rounded w-32"></div>
+        </div>
+        
+        {/* Tabs skeleton */}
+        <div className="animate-pulse">
+          <div className="flex space-x-4">
+            <div className="h-10 bg-gray-200 rounded w-20"></div>
+            <div className="h-10 bg-gray-200 rounded w-24"></div>
           </div>
+        </div>
+        
+        {/* Cards skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-white rounded-lg shadow-sm border h-64 p-4 space-y-3">
+                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                <div className="flex space-x-2 mt-4">
+                  <div className="h-6 bg-gray-200 rounded w-16"></div>
+                  <div className="h-6 bg-gray-200 rounded w-20"></div>
+                </div>
+                <div className="flex space-x-2 mt-4">
+                  <div className="h-8 bg-gray-200 rounded w-16"></div>
+                  <div className="h-8 bg-gray-200 rounded w-16"></div>
+                  <div className="h-8 bg-gray-200 rounded w-16"></div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

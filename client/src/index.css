@@ -8,53 +8,55 @@
     scroll-behavior: smooth;
   }
   
-  /* Hide scrollbars but maintain scroll functionality (except for sidebar) */
-  *:not(.sidebar *) {
+  /* Hide scrollbars but maintain scroll functionality */
+  * {
     /* Firefox */
     scrollbar-width: none;
     /* IE and Edge */
     -ms-overflow-style: none;
   }
   
-  /* Webkit browsers (Chrome, Safari, Edge) - hide scrollbars except for sidebar */
-  *:not(.sidebar *)::-webkit-scrollbar {
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  *::-webkit-scrollbar {
     width: 0px;
     height: 0px;
     background: transparent;
   }
   
-  *:not(.sidebar *)::-webkit-scrollbar-track {
+  *::-webkit-scrollbar-track {
     background: transparent;
   }
   
-  *:not(.sidebar *)::-webkit-scrollbar-thumb {
+  *::-webkit-scrollbar-thumb {
     background: transparent;
   }
   
-  /* Enable visible scrollbar for sidebar navigation */
-  .sidebar .overflow-y-auto {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e0 #f7fafc;
-    -ms-overflow-style: auto;
+  /* Force scrolling for sidebar navigation */
+  .sidebar-scroll {
+    overflow-y: scroll !important;
+    max-height: calc(100vh - 120px) !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #cbd5e0 #f7fafc !important;
+    -ms-overflow-style: auto !important;
   }
   
-  .sidebar .overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-    background: #f7fafc;
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 8px !important;
+    background: #f7fafc !important;
   }
   
-  .sidebar .overflow-y-auto::-webkit-scrollbar-track {
-    background: #f7fafc;
-    border-radius: 3px;
+  .sidebar-scroll::-webkit-scrollbar-track {
+    background: #f7fafc !important;
+    border-radius: 4px !important;
   }
   
-  .sidebar .overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 3px;
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e0 !important;
+    border-radius: 4px !important;
   }
   
-  .sidebar .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0 !important;
   }
   
   /* Focus styles for better accessibility */
