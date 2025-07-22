@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ interface CATExamConfig {
 export default function CATExamBuilder() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   
   const [examConfig, setExamConfig] = useState<CATExamConfig>({
     title: '',
@@ -147,7 +149,7 @@ export default function CATExamBuilder() {
   });
 
   // Transform testbanks into ItemBank format
-  const itemBanks: ItemBank[] = testbanks?.map((testbank: any) => ({
+  const itemBanks: ItemBank[] = (testbanks as any[])?.map((testbank: any) => ({
     id: testbank.id,
     name: testbank.title,
     description: testbank.description,
@@ -178,12 +180,17 @@ export default function CATExamBuilder() {
       
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "CAT Exam Created",
-        description: "Your Computer Adaptive Test has been created successfully"
+        description: "Your Computer Adaptive Test has been created successfully. Redirecting to exam list..."
       });
       queryClient.invalidateQueries({ queryKey: ['/api/cat-exams'] });
+      
+      // Redirect to CAT Exam list after a brief delay
+      setTimeout(() => {
+        setLocation('/cat-exam-test');
+      }, 1500);
     },
     onError: (error) => {
       toast({
