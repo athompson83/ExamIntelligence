@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import CameraSourceSelector from '@/components/CameraSourceSelector';
 import { 
   Camera, 
   Mic, 
@@ -83,6 +84,9 @@ export const CrossPlatformProctoring: React.FC<CrossPlatformProctoringProps> = (
   
   const [isInitialized, setIsInitialized] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [showCameraSelector, setShowCameraSelector] = useState(false);
+  const [selectedCameraId, setSelectedCameraId] = useState<string>('');
+  const [selectedMicrophoneId, setSelectedMicrophoneId] = useState<string>('');
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -522,6 +526,52 @@ export const CrossPlatformProctoring: React.FC<CrossPlatformProctoringProps> = (
               ))}
             </div>
           </div>
+        )}
+
+        {/* Camera Source Selector */}
+        {(settings.requireCamera || settings.requireMicrophone) && (
+          <>
+            <Separator />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Camera & Microphone Setup</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCameraSelector(!showCameraSelector)}
+                >
+                  {showCameraSelector ? 'Hide' : 'Configure'} Sources
+                </Button>
+              </div>
+              
+              {showCameraSelector && (
+                <CameraSourceSelector
+                  onCameraChange={(deviceId, stream) => {
+                    setSelectedCameraId(deviceId);
+                    if (stream && videoRef.current) {
+                      videoRef.current.srcObject = stream;
+                      setState(prev => ({ ...prev, cameraEnabled: true }));
+                    }
+                  }}
+                  onMicrophoneChange={(deviceId, stream) => {
+                    setSelectedMicrophoneId(deviceId);
+                    setState(prev => ({ ...prev, microphoneEnabled: !!stream }));
+                  }}
+                  onPermissionChange={(hasCamera, hasMicrophone) => {
+                    setDeviceCapabilities(prev => ({
+                      ...prev,
+                      hasCamera,
+                      hasMicrophone
+                    }));
+                  }}
+                  defaultCameraId={selectedCameraId}
+                  defaultMicrophoneId={selectedMicrophoneId}
+                  showPreview={true}
+                  autoStart={false}
+                />
+              )}
+            </div>
+          </>
         )}
 
         {/* Action Button */}
