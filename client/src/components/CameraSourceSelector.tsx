@@ -230,9 +230,15 @@ export default function CameraSourceSelector({
         }
       }
 
-      // Set video preview
+      // Set video preview with forced reflow
       if (videoRef.current && isPreviewEnabled) {
         videoRef.current.srcObject = stream;
+        // Force video to start playing
+        try {
+          await videoRef.current.play();
+        } catch (playError) {
+          console.warn('Video autoplay failed:', playError);
+        }
       }
 
       // Notify parent component
