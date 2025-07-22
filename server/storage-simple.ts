@@ -3327,14 +3327,9 @@ Return JSON with the new question data:
 
   async getCATExam(id: string): Promise<any | undefined> {
     try {
-      // Mock implementation - would query catExams table
-      return {
-        id,
-        title: 'Sample CAT Exam',
-        description: 'Computer Adaptive Test',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      // Find exam in storage
+      const exam = this.catExamsStorage.find(exam => exam.id === id);
+      return exam || undefined;
     } catch (error) {
       console.error('Error getting CAT exam:', error);
       throw error;

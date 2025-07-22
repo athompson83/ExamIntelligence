@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -96,6 +96,11 @@ export default function CATExamBuilder() {
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   
+  // Parse URL parameters for edit mode
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const editExamId = urlParams.get('examId');
+  const isEditMode = !!editExamId;
+  
   const [examConfig, setExamConfig] = useState<CATExamConfig>({
     title: '',
     description: '',
@@ -163,6 +168,32 @@ export default function CATExamBuilder() {
     queryKey: ['/api/students'],
     enabled: !!user
   });
+  
+  // Load existing exam data when in edit mode
+  const { data: existingExam } = useQuery({
+    queryKey: ['/api/cat-exams', editExamId],
+    queryFn: () => editExamId ? apiRequest(`/api/cat-exams/${editExamId}`) : null,
+    enabled: !!editExamId,
+    staleTime: 2 * 60 * 1000,
+  });
+  
+  // Initialize form with existing exam data in edit mode
+  React.useEffect(() => {
+    if (existingExam && isEditMode) {
+      setExamConfig(prevConfig => ({
+        ...prevConfig,
+        title: existingExam.title || '',
+        description: existingExam.description || '',
+        instructions: existingExam.instructions || '',
+        itemBanks: existingExam.itemBanks || [],
+        // Preserve other settings from existing exam if available
+        ...(existingExam.adaptiveSettings && { adaptiveSettings: existingExam.adaptiveSettings }),
+        ...(existingExam.scoringSettings && { scoringSettings: existingExam.scoringSettings }),
+        ...(existingExam.securitySettings && { securitySettings: existingExam.securitySettings }),
+        ...(existingExam.accessSettings && { accessSettings: existingExam.accessSettings })
+      }));
+    }
+  }, [existingExam, isEditMode]);
 
   const createCATExamMutation = useMutation({
     mutationFn: async (config: CATExamConfig) => {
@@ -254,8 +285,12 @@ export default function CATExamBuilder() {
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">CAT Exam Builder</h1>
-            <p className="text-gray-600">Create Computer Adaptive Tests using item banks</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {isEditMode ? 'Edit CAT Exam' : 'CAT Exam Builder'}
+            </h1>
+            <p className="text-gray-600">
+              {isEditMode ? 'Modify your existing Computer Adaptive Test configuration' : 'Create Computer Adaptive Tests using item banks'}
+            </p>
           </div>
           <Button
             onClick={() => setLocation('/ai-cat-generator')}
@@ -724,10 +759,10 @@ export default function CATExamBuilder() {
               onClick={() => createCATExamMutation.mutate(examConfig)}
               disabled={!canSave() || createCATExamMutation.isPending}
             >
-              {createCATExamMutation.isPending ? "Creating..." : (
+              {createCATExamMutation.isPending ? (isEditMode ? "Updating..." : "Creating...") : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Create CAT Exam
+                  {isEditMode ? "Update CAT Exam" : "Create CAT Exam"}
                 </>
               )}
             </Button>

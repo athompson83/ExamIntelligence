@@ -21,24 +21,20 @@ import {
   Users,
   Plus,
   Edit,
-  Trash2
+  Trash2,
+  Eye,
+  Calendar
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useLocation } from 'wouter';
 
 export default function CATExamTest() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [activeSession, setActiveSession] = useState<any>(null);
   const [currentQuestion, setCurrentQuestion] = useState<any>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [catState, setCatState] = useState<any>(null);
   const [sessionResults, setSessionResults] = useState<any>(null);
-  
-  // Edit exam state
-  const [editingExam, setEditingExam] = useState<any>(null);
-  const [editFormData, setEditFormData] = useState({ title: '', description: '', subject: '' });
 
   // Fetch available CAT exams
   const { data: catExams, isLoading: examsLoading } = useQuery({
@@ -164,38 +160,6 @@ export default function CATExamTest() {
     });
   };
 
-  // Edit CAT exam mutation
-  const editExamMutation = useMutation({
-    mutationFn: async (examData: { id: string; title: string; description: string; subject: string }) => {
-      const response = await apiRequest(`/api/cat-exams/${examData.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: examData.title,
-          description: examData.description,
-          subject: examData.subject
-        })
-      });
-      return response;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cat-exams'] });
-      setEditingExam(null);
-      setEditFormData({ title: '', description: '', subject: '' });
-      toast({
-        title: "Exam Updated",
-        description: "CAT exam has been updated successfully"
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update CAT exam",
-        variant: "destructive"
-      });
-    }
-  });
-
   // Delete CAT exam mutation  
   const deleteExamMutation = useMutation({
     mutationFn: async (examId: string) => {
@@ -219,26 +183,6 @@ export default function CATExamTest() {
       });
     }
   });
-
-  const handleEditExam = (exam: any) => {
-    setEditingExam(exam);
-    setEditFormData({
-      title: exam.title || '',
-      description: exam.description || '',
-      subject: exam.subject || ''
-    });
-  };
-
-  const handleSaveEdit = () => {
-    if (editingExam && editFormData.title.trim()) {
-      editExamMutation.mutate({
-        id: editingExam.id,
-        title: editFormData.title.trim(),
-        description: editFormData.description.trim(),
-        subject: editFormData.subject.trim()
-      });
-    }
-  };
 
   const createSampleExam = async () => {
     try {
@@ -335,63 +279,14 @@ export default function CATExamTest() {
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditExam(exam)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Edit CAT Exam</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label htmlFor="title">Title</Label>
-                                    <Input
-                                      id="title"
-                                      value={editFormData.title}
-                                      onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
-                                      placeholder="Enter exam title"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="description">Description</Label>
-                                    <Textarea
-                                      id="description"
-                                      value={editFormData.description}
-                                      onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
-                                      placeholder="Enter exam description"
-                                      rows={3}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="subject">Subject</Label>
-                                    <Input
-                                      id="subject"
-                                      value={editFormData.subject}
-                                      onChange={(e) => setEditFormData(prev => ({ ...prev, subject: e.target.value }))}
-                                      placeholder="Enter subject area"
-                                    />
-                                  </div>
-                                  <div className="flex justify-end gap-2">
-                                    <Button variant="outline" onClick={() => setEditingExam(null)}>
-                                      Cancel
-                                    </Button>
-                                    <Button 
-                                      onClick={handleSaveEdit}
-                                      disabled={!editFormData.title.trim() || editExamMutation.isPending}
-                                    >
-                                      {editExamMutation.isPending ? 'Saving...' : 'Save Changes'}
-                                    </Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setLocation(`/cat-exam-builder?examId=${exam.id}`)}
+                              title="Edit Exam"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                             
                             <Button
                               variant="outline"
@@ -402,8 +297,28 @@ export default function CATExamTest() {
                                 }
                               }}
                               disabled={deleteExamMutation.isPending}
+                              title="Delete Exam"
                             >
                               <Trash2 className="h-4 w-4" />
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => startSessionMutation.mutate(exam.id)}
+                              disabled={startSessionMutation.isPending || !!activeSession}
+                              title="Preview/Test Exam"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setLocation(`/live-exams?examId=${exam.id}&type=cat`)}
+                              title="Schedule Exam"
+                            >
+                              <Calendar className="h-4 w-4" />
                             </Button>
                             
                             <Button
