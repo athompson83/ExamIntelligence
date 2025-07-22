@@ -53,7 +53,7 @@ export default function QuizManager() {
   const { data: quizzes, isLoading, isError } = useQuery({
     queryKey: ['/api/quizzes'],
     staleTime: 30000, // 30 seconds
-    cacheTime: 300000, // 5 minutes
+    gcTime: 300000, // 5 minutes (renamed from cacheTime in v5)
   });
 
   const deleteQuizMutation = useMutation({

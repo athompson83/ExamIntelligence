@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useRef, useState } from "react";
 import { 
   ClipboardCheck, 
   BookOpen, 
@@ -27,15 +28,23 @@ import {
   Cloud,
   Archive,
   CreditCard,
-  DollarSign
+  DollarSign,
+  ChevronUp,
+  ChevronDown,
+  Home
 } from "lucide-react";
 
 export default function Sidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const activeItemRef = useRef<HTMLAnchorElement>(null);
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   const navigationItems = [
-    { href: "/", label: "Dashboard", icon: BarChart3, tourId: "dashboard" },
+    { href: "/", label: "Dashboard", icon: Home, tourId: "dashboard" },
     { href: "/item-banks", label: "Item Banks", icon: BookOpen, tourId: "item-banks" },
     { href: "/quiz-manager", label: "Quiz Manager", icon: Puzzle, tourId: "quiz-manager" },
     { href: "/assignments", label: "Assignments", icon: ClipboardCheck, tourId: "assignments" },
@@ -72,6 +81,82 @@ export default function Sidebar() {
     return location.startsWith(href);
   };
 
+  // Check if container can scroll
+  const checkScrollable = () => {
+    if (!scrollContainerRef.current) return;
+    
+    const container = scrollContainerRef.current;
+    const canScrollUpward = container.scrollTop > 0;
+    const canScrollDownward = container.scrollTop < container.scrollHeight - container.clientHeight;
+    
+    setCanScrollUp(canScrollUpward);
+    setCanScrollDown(canScrollDownward);
+  };
+
+  // Smooth scroll to active item
+  const scrollToActiveItem = () => {
+    if (!activeItemRef.current || !scrollContainerRef.current) return;
+    
+    const container = scrollContainerRef.current;
+    const activeItem = activeItemRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const itemRect = activeItem.getBoundingClientRect();
+    
+    // Check if item is not fully visible
+    const itemTop = itemRect.top - containerRect.top;
+    const itemBottom = itemRect.bottom - containerRect.top;
+    
+    if (itemTop < 0 || itemBottom > containerRect.height) {
+      activeItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  };
+
+  // Manual scroll functions
+  const scrollUp = () => {
+    if (!scrollContainerRef.current) return;
+    setIsScrolling(true);
+    scrollContainerRef.current.scrollBy({
+      top: -200,
+      behavior: 'smooth'
+    });
+    setTimeout(() => setIsScrolling(false), 500);
+  };
+
+  const scrollDown = () => {
+    if (!scrollContainerRef.current) return;
+    setIsScrolling(true);
+    scrollContainerRef.current.scrollBy({
+      top: 200,
+      behavior: 'smooth'
+    });
+    setTimeout(() => setIsScrolling(false), 500);
+  };
+
+  // Effect to handle scroll events and auto-scroll to active item
+  useEffect(() => {
+    checkScrollable();
+    scrollToActiveItem();
+    
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      checkScrollable();
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    const resizeObserver = new ResizeObserver(checkScrollable);
+    resizeObserver.observe(container);
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      resizeObserver.disconnect();
+    };
+  }, [location]);
+
   return (
     <nav className="sidebar w-64 fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-900 shadow-sm border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
@@ -84,8 +169,27 @@ export default function Sidebar() {
         </div>
       </div>
       
+      {/* Scroll up indicator */}
+      {canScrollUp && (
+        <div className="flex-shrink-0 px-4 py-1">
+          <button
+            onClick={scrollUp}
+            className={`w-full flex items-center justify-center py-2 rounded-lg text-gray-500 hover:text-primary hover:bg-primary/10 dark:text-gray-400 dark:hover:text-primary transition-all duration-200 ${
+              isScrolling ? 'animate-pulse' : 'scroll-indicator'
+            }`}
+            title="Scroll up to see more items"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      
       {/* Navigation - Scrollable */}
-      <div className="flex flex-col mt-6 flex-1 pb-4 px-2 sidebar-scroll">
+      <div 
+        ref={scrollContainerRef}
+        className="flex flex-col mt-2 flex-1 pb-4 px-2 sidebar-scroll"
+        onScroll={checkScrollable}
+      >
         <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
           Main Menu
         </div>
@@ -93,11 +197,13 @@ export default function Sidebar() {
         <div className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
+                ref={active ? activeItemRef : undefined}
+                className={`nav-item ${active ? 'active' : ''}`}
                 data-tour={item.tourId}
               >
                 <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
@@ -115,11 +221,13 @@ export default function Sidebar() {
         <div className="space-y-1">
           {supportItems.map((item) => {
             const Icon = item.icon;
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
+                ref={active ? activeItemRef : undefined}
+                className={`nav-item ${active ? 'active' : ''}`}
                 data-tour={item.tourId}
               >
                 <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
@@ -138,11 +246,13 @@ export default function Sidebar() {
             <div className="space-y-1">
               {systemItems.map((item) => {
                 const Icon = item.icon;
+                const active = isActive(item.href);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
+                    ref={active ? activeItemRef : undefined}
+                    className={`nav-item ${active ? 'active' : ''}`}
                     data-tour={item.tourId}
                   >
                     <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
@@ -154,6 +264,21 @@ export default function Sidebar() {
           </>
         )}
       </div>
+      
+      {/* Scroll down indicator */}
+      {canScrollDown && (
+        <div className="flex-shrink-0 px-4 py-1">
+          <button
+            onClick={scrollDown}
+            className={`w-full flex items-center justify-center py-2 rounded-lg text-gray-500 hover:text-primary hover:bg-primary/10 dark:text-gray-400 dark:hover:text-primary transition-all duration-200 ${
+              isScrolling ? 'animate-pulse' : 'scroll-indicator'
+            }`}
+            title="Scroll down to see more items"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </nav>
   );
 }
