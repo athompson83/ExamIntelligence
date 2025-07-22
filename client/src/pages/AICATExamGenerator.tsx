@@ -89,15 +89,61 @@ export default function AICATExamGenerator() {
         })
       });
 
-      return response;
+      return response as GeneratedExamConfig;
     },
     onSuccess: (data) => {
-      setGeneratedConfig(data);
+      // Add safety checks for the generated data
+      if (!data || typeof data !== 'object') {
+        console.error('Invalid data received:', data);
+        toast({
+          title: "Generation Error",
+          description: "Received invalid data from AI service",
+          variant: "destructive"
+        });
+        setIsGenerating(false);
+        setGenerationProgress(0);
+        setCurrentStep('');
+        return;
+      }
+
+      // Ensure required properties exist with defaults
+      const safeConfig: GeneratedExamConfig = {
+        title: data.title || 'Generated CAT Exam',
+        description: data.description || 'AI generated CAT exam configuration',
+        subject: data.subject || 'General',
+        difficulty: data.difficulty || { min: 3, max: 7 },
+        estimatedDuration: data.estimatedDuration || 90,
+        targetAudience: data.targetAudience || 'Students',
+        learningObjectives: data.learningObjectives || [],
+        itemBanks: data.itemBanks || [],
+        catSettings: data.catSettings || {
+          model: 'irt_2pl',
+          theta_start: 0,
+          theta_min: -4,
+          theta_max: 4,
+          se_target: 0.3,
+          min_items: 10,
+          max_items: 50,
+          exposure_control: true,
+          content_balancing: true
+        },
+        additionalSettings: data.additionalSettings || {
+          passingGrade: 70,
+          timeLimit: 90,
+          allowCalculator: false,
+          calculatorType: 'basic',
+          proctoring: true,
+          shuffleQuestions: true,
+          showCorrectAnswers: false
+        }
+      };
+
+      setGeneratedConfig(safeConfig);
       setGenerationProgress(100);
       setCurrentStep('Generation complete!');
       toast({
         title: "CAT Exam Generated Successfully",
-        description: `Generated exam configuration with ${data.itemBanks.length} item banks`
+        description: `Generated exam configuration with ${safeConfig.itemBanks.length} item banks`
       });
     },
     onError: (error: any) => {
@@ -197,9 +243,11 @@ export default function AICATExamGenerator() {
       return catExam;
     },
     onSuccess: (exam) => {
+      const examTitle = (exam && typeof exam === 'object' && 'title' in exam) ? exam.title : 'CAT Exam';
+      
       toast({
         title: "CAT Exam Created",
-        description: `Successfully created "${exam.title}" with all item banks and questions`,
+        description: `Successfully created "${examTitle}" with all item banks and questions`,
         duration: 5000
       });
       
