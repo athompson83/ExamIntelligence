@@ -18,15 +18,15 @@ import SmoothLoadingFallback from "@/components/SmoothLoadingFallback";
 import { useEffect } from "react";
 
 // Core pages that are always needed
-import Landing from "@/pages/Landing";
-import Dashboard from "@/pages/Dashboard";
+import Landing from "@/pages/landing";
+import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 
 // Lazy load pages to reduce initial bundle size
 const ItemBanks = lazy(() => import("@/pages/item-banks"));
 const QuestionManager = lazy(() => import("@/pages/question-manager"));
 const LiveExams = lazy(() => import("@/pages/live-exams"));
-const Analytics = lazy(() => import("@/pages/Analytics"));
+const Analytics = lazy(() => import("@/pages/analytics"));
 const AnalyticsDashboard = lazy(() => import("@/pages/analytics-dashboard"));
 const SpeedGrader = lazy(() => import("@/pages/speed-grader"));
 const UserManagement = lazy(() => import("@/pages/user-management"));
@@ -192,7 +192,7 @@ function Router() {
             {() => <Suspense fallback={<LoadingSpinner />}><SpeedGrader /></Suspense>}
           </Route>
           <Route path="/speed-grader/:quizId">
-            {(params) => <Suspense fallback={<LoadingSpinner />}><SpeedGrader quizId={params.quizId} /></Suspense>}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><SpeedGrader /></Suspense>}
           </Route>
           <Route path="/user-management">
             {() => <Suspense fallback={<SmoothLoadingFallback />}><UserManagement /></Suspense>}
@@ -279,7 +279,7 @@ function Router() {
             {() => <Suspense fallback={<LoadingSpinner />}><BackendPromptTestPage /></Suspense>}
           </Route>
           <Route path="/exam/:id">
-            {(params) => <Suspense fallback={<LoadingSpinner />}><ExamInterface examId={params.id} /></Suspense>}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><ExamInterface examId={params?.id || ''} /></Suspense>}
           </Route>
           <Route path="/student">
             {() => <Suspense fallback={<LoadingSpinner />}><StudentDashboard /></Suspense>}
@@ -291,16 +291,16 @@ function Router() {
             {() => <Suspense fallback={<LoadingSpinner />}><StudentQuiz /></Suspense>}
           </Route>
           <Route path="/student/quiz/:quizId">
-            {(params) => <Suspense fallback={<LoadingSpinner />}><StudentQuiz quizId={params.quizId} /></Suspense>}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><StudentQuiz /></Suspense>}
           </Route>
           <Route path="/quiz/:id">
-            {(params) => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizPreview id={params.id} /></Suspense>}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizPreview /></Suspense>}
           </Route>
           <Route path="/quiz-preview/:id">
-            {(params) => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizPreview id={params.id} /></Suspense>}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizPreview /></Suspense>}
           </Route>
           <Route path="/enhanced-quiz-preview/:id">
-            {(params) => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizPreview id={params.id} /></Suspense>}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><EnhancedQuizPreview /></Suspense>}
           </Route>
           <Route path="/published-quizzes">
             {() => <Suspense fallback={<LoadingSpinner />}><PublishedQuizzes /></Suspense>}
@@ -365,7 +365,7 @@ function Router() {
         </>
       )}
       <Route path="/join/:token">
-        {(params) => <Suspense fallback={<LoadingSpinner />}><AccountRegistration token={params.token} /></Suspense>}
+        {(params) => <Suspense fallback={<LoadingSpinner />}><AccountRegistration /></Suspense>}
       </Route>
       <Route component={NotFound} />
       
