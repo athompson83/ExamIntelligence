@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Brain, Zap, BookOpen, Settings, Clock, Users, Target, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'wouter';
 import Layout from '@/components/Layout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +60,7 @@ export default function AICATExamGenerator() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
   const [prompt, setPrompt] = useState('');
   const [examTitle, setExamTitle] = useState('');
@@ -140,10 +142,16 @@ export default function AICATExamGenerator() {
 
       setGeneratedConfig(safeConfig);
       setGenerationProgress(100);
-      setCurrentStep('Generation complete!');
+      setCurrentStep('Generation complete! Creating exam...');
+      
+      // Automatically create the exam after successful generation
+      setTimeout(() => {
+        createExamMutation.mutate(safeConfig);
+      }, 1000);
+      
       toast({
         title: "CAT Exam Generated Successfully",
-        description: `Generated exam configuration with ${safeConfig.itemBanks.length} item banks`
+        description: `Generated exam configuration with ${safeConfig.itemBanks.length} item banks. Creating exam...`
       });
     },
     onError: (error: any) => {
@@ -254,6 +262,11 @@ export default function AICATExamGenerator() {
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/cat-exams'] });
       queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
+      
+      // Navigate to CAT exams list
+      setTimeout(() => {
+        setLocation('/cat-exam-test');
+      }, 2000);
       
       // Reset form
       setPrompt('');
