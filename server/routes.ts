@@ -9204,6 +9204,146 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
+  // AI CAT Exam Generation endpoint
+  app.post('/api/ai/generate-cat-exam', mockAuth, async (req, res) => {
+    try {
+      const { prompt, title, existingTestbanks } = req.body;
+      
+      if (!prompt || !title) {
+        return res.status(400).json({ message: 'Prompt and title are required' });
+      }
+
+      // Create enhanced AI prompt for CAT exam generation
+      const aiPrompt = `
+You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). 
+Generate a comprehensive CAT exam configuration based on the following requirements:
+
+USER REQUIREMENTS:
+${prompt}
+
+EXAM TITLE: ${title}
+
+EXISTING TESTBANKS:
+${JSON.stringify(existingTestbanks?.map((tb: any) => ({
+  id: tb.id,
+  title: tb.title,
+  description: tb.description,
+  subject: tb.subject || tb.tags?.[0],
+  questionCount: tb.questionCount || 0
+})), null, 2)}
+
+Please generate a detailed CAT exam configuration that includes:
+
+1. EXAM METADATA:
+   - title: "${title}"
+   - description: Comprehensive description based on requirements
+   - subject: Main subject area
+   - difficulty: {min: X, max: Y} (1-10 scale)
+   - estimatedDuration: Duration in minutes
+   - targetAudience: Description of intended audience
+   - learningObjectives: Array of 3-5 specific learning objectives
+
+2. ITEM BANKS ANALYSIS:
+   For each needed content area, determine if existing testbanks can be used or if new ones need to be created.
+   - Analyze existing testbanks for relevance
+   - Create new item banks for missing content areas
+   - For each item bank (new or existing):
+     * id: (null for new, existing id for reused)
+     * name: Descriptive name
+     * description: Detailed description
+     * subject: Subject area
+     * questionCount: Number of questions needed
+     * isNew: true/false
+     * questions: Array of sample questions for new item banks (include full question structure with answerOptions)
+
+3. CAT SETTINGS:
+   - model: "2pl" or "3pl" (Item Response Theory model)
+   - theta_start: Starting ability estimate (typically 0)
+   - theta_min: Minimum ability estimate (typically -4)
+   - theta_max: Maximum ability estimate (typically 4)
+   - se_target: Target standard error (0.3-0.5)
+   - min_items: Minimum questions (based on requirements)
+   - max_items: Maximum questions (based on requirements)
+   - exposure_control: true/false
+   - content_balancing: true/false
+
+4. ADDITIONAL SETTINGS:
+   - passingGrade: Passing score (60-80)
+   - timeLimit: Total time limit in minutes
+   - allowCalculator: true/false based on subject
+   - calculatorType: "basic", "scientific", or "graphing"
+   - proctoring: true/false based on security needs
+   - shuffleQuestions: Recommended true for CAT
+   - showCorrectAnswers: false (recommended for adaptive testing)
+
+For new item banks, include 3-5 sample questions with this structure:
+{
+  "questionText": "Question content",
+  "type": "multiple_choice",
+  "difficulty": 1-10,
+  "bloomsLevel": "remember|understand|apply|analyze|evaluate|create",
+  "answerOptions": [
+    {"answerText": "Option A", "isCorrect": false, "displayOrder": 0},
+    {"answerText": "Option B", "isCorrect": true, "displayOrder": 1},
+    {"answerText": "Option C", "isCorrect": false, "displayOrder": 2},
+    {"answerText": "Option D", "isCorrect": false, "displayOrder": 3}
+  ],
+  "explanation": "Why this answer is correct",
+  "tags": ["relevant", "keywords"]
+}
+
+Return the response as valid JSON with all the above sections.`;
+
+      const result = await generateQuestionsWithAI(aiPrompt, 'Generate CAT Exam Configuration');
+      
+      // Parse the AI response
+      let examConfig;
+      try {
+        examConfig = JSON.parse(result.content);
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', parseError);
+        return res.status(500).json({ message: 'Failed to parse AI response' });
+      }
+
+      // Validate and structure the response
+      const structuredConfig = {
+        title: examConfig.title || title,
+        description: examConfig.description || 'AI-generated CAT exam',
+        subject: examConfig.subject || 'General',
+        difficulty: examConfig.difficulty || { min: 3, max: 8 },
+        estimatedDuration: examConfig.estimatedDuration || 60,
+        targetAudience: examConfig.targetAudience || 'Students',
+        learningObjectives: examConfig.learningObjectives || ['Assess understanding of core concepts'],
+        itemBanks: examConfig.itemBanks || [],
+        catSettings: {
+          model: examConfig.catSettings?.model || '2pl',
+          theta_start: examConfig.catSettings?.theta_start || 0,
+          theta_min: examConfig.catSettings?.theta_min || -4,
+          theta_max: examConfig.catSettings?.theta_max || 4,
+          se_target: examConfig.catSettings?.se_target || 0.4,
+          min_items: examConfig.catSettings?.min_items || 10,
+          max_items: examConfig.catSettings?.max_items || 50,
+          exposure_control: examConfig.catSettings?.exposure_control ?? true,
+          content_balancing: examConfig.catSettings?.content_balancing ?? true
+        },
+        additionalSettings: {
+          passingGrade: examConfig.additionalSettings?.passingGrade || 70,
+          timeLimit: examConfig.additionalSettings?.timeLimit || 60,
+          allowCalculator: examConfig.additionalSettings?.allowCalculator ?? false,
+          calculatorType: examConfig.additionalSettings?.calculatorType || 'basic',
+          proctoring: examConfig.additionalSettings?.proctoring ?? false,
+          shuffleQuestions: examConfig.additionalSettings?.shuffleQuestions ?? true,
+          showCorrectAnswers: examConfig.additionalSettings?.showCorrectAnswers ?? false
+        }
+      };
+
+      res.json(structuredConfig);
+    } catch (error) {
+      console.error('Error generating CAT exam:', error);
+      res.status(500).json({ message: 'Failed to generate CAT exam configuration' });
+    }
+  });
+
   // Stripe webhook
   app.post('/api/webhooks/stripe', async (req, res) => {
     const sig = req.headers['stripe-signature'];
