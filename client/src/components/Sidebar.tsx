@@ -58,7 +58,7 @@ export default function Sidebar() {
   ];
 
   const systemItems = [
-    ...(['admin', 'teacher', 'super_admin'].includes(user?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
+    ...(['admin', 'teacher', 'super_admin'].includes((user as any)?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
     { href: "/core-functionality-test", label: "Core Tests", icon: Shield, tourId: "core-tests" },
     { href: "/pricing", label: "Pricing", icon: DollarSign, tourId: "pricing" },
     { href: "/billing", label: "Billing", icon: CreditCard, tourId: "billing" },
@@ -85,7 +85,7 @@ export default function Sidebar() {
       </div>
       
       {/* Navigation - Scrollable */}
-      <div className="flex flex-col mt-6 overflow-y-auto flex-1 pb-4">
+      <div className="flex flex-col mt-6 overflow-y-auto flex-1 pb-4 px-2">
         <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
           Main Menu
         </div>
