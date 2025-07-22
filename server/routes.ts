@@ -9358,7 +9358,7 @@ Return the response as valid JSON with all the above sections.`;
 
       // Validate and structure the response
       const structuredConfig = {
-        title: examConfig.title || title,
+        title: title, // Always use the user's provided title
         description: examConfig.description || 'AI-generated CAT exam',
         subject: examConfig.subject || 'General',
         difficulty: examConfig.difficulty || { min: 3, max: 8 },

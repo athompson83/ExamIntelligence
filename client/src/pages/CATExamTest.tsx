@@ -19,8 +19,14 @@ import {
   Clock,
   BarChart3,
   Users,
-  Plus
+  Plus,
+  Edit,
+  Trash2
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function CATExamTest() {
   const { user } = useAuth();
@@ -29,6 +35,10 @@ export default function CATExamTest() {
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [catState, setCatState] = useState<any>(null);
   const [sessionResults, setSessionResults] = useState<any>(null);
+  
+  // Edit exam state
+  const [editingExam, setEditingExam] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState({ title: '', description: '', subject: '' });
 
   // Fetch available CAT exams
   const { data: catExams, isLoading: examsLoading } = useQuery({
@@ -154,6 +164,82 @@ export default function CATExamTest() {
     });
   };
 
+  // Edit CAT exam mutation
+  const editExamMutation = useMutation({
+    mutationFn: async (examData: { id: string; title: string; description: string; subject: string }) => {
+      const response = await apiRequest(`/api/cat-exams/${examData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: examData.title,
+          description: examData.description,
+          subject: examData.subject
+        })
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cat-exams'] });
+      setEditingExam(null);
+      setEditFormData({ title: '', description: '', subject: '' });
+      toast({
+        title: "Exam Updated",
+        description: "CAT exam has been updated successfully"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update CAT exam",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete CAT exam mutation  
+  const deleteExamMutation = useMutation({
+    mutationFn: async (examId: string) => {
+      const response = await apiRequest(`/api/cat-exams/${examId}`, {
+        method: 'DELETE'
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cat-exams'] });
+      toast({
+        title: "Exam Deleted",
+        description: "CAT exam has been deleted successfully"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error", 
+        description: "Failed to delete CAT exam",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleEditExam = (exam: any) => {
+    setEditingExam(exam);
+    setEditFormData({
+      title: exam.title || '',
+      description: exam.description || '',
+      subject: exam.subject || ''
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (editingExam && editFormData.title.trim()) {
+      editExamMutation.mutate({
+        id: editingExam.id,
+        title: editFormData.title.trim(),
+        description: editFormData.description.trim(),
+        subject: editFormData.subject.trim()
+      });
+    }
+  };
+
   const createSampleExam = async () => {
     try {
       const examData = {
@@ -241,17 +327,93 @@ export default function CATExamTest() {
                     <div className="space-y-4">
                       {catExams.map((exam: any) => (
                         <div key={exam.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div>
+                          <div className="flex-1">
                             <h3 className="font-semibold">{exam.title}</h3>
                             <p className="text-sm text-gray-600">{exam.description}</p>
+                            {exam.subject && (
+                              <Badge variant="secondary" className="mt-1">{exam.subject}</Badge>
+                            )}
                           </div>
-                          <Button
-                            onClick={() => startSessionMutation.mutate(exam.id)}
-                            disabled={startSessionMutation.isPending || !!activeSession}
-                          >
-                            <Play className="h-4 w-4 mr-2" />
-                            Start
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditExam(exam)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Edit CAT Exam</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="title">Title</Label>
+                                    <Input
+                                      id="title"
+                                      value={editFormData.title}
+                                      onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+                                      placeholder="Enter exam title"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="description">Description</Label>
+                                    <Textarea
+                                      id="description"
+                                      value={editFormData.description}
+                                      onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                                      placeholder="Enter exam description"
+                                      rows={3}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="subject">Subject</Label>
+                                    <Input
+                                      id="subject"
+                                      value={editFormData.subject}
+                                      onChange={(e) => setEditFormData(prev => ({ ...prev, subject: e.target.value }))}
+                                      placeholder="Enter subject area"
+                                    />
+                                  </div>
+                                  <div className="flex justify-end gap-2">
+                                    <Button variant="outline" onClick={() => setEditingExam(null)}>
+                                      Cancel
+                                    </Button>
+                                    <Button 
+                                      onClick={handleSaveEdit}
+                                      disabled={!editFormData.title.trim() || editExamMutation.isPending}
+                                    >
+                                      {editExamMutation.isPending ? 'Saving...' : 'Save Changes'}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to delete "${exam.title}"?`)) {
+                                  deleteExamMutation.mutate(exam.id);
+                                }
+                              }}
+                              disabled={deleteExamMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            
+                            <Button
+                              onClick={() => startSessionMutation.mutate(exam.id)}
+                              disabled={startSessionMutation.isPending || !!activeSession}
+                            >
+                              <Play className="h-4 w-4 mr-2" />
+                              Start
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
