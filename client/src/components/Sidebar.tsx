@@ -137,8 +137,10 @@ export default function Sidebar() {
 
   // Effect to handle scroll events and auto-scroll to active item
   useEffect(() => {
-    checkScrollable();
-    scrollToActiveItem();
+    const timer = setTimeout(() => {
+      checkScrollable();
+      scrollToActiveItem();
+    }, 100);
     
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -148,10 +150,13 @@ export default function Sidebar() {
     };
     
     container.addEventListener('scroll', handleScroll);
-    const resizeObserver = new ResizeObserver(checkScrollable);
+    const resizeObserver = new ResizeObserver(() => {
+      setTimeout(checkScrollable, 50);
+    });
     resizeObserver.observe(container);
     
     return () => {
+      clearTimeout(timer);
       container.removeEventListener('scroll', handleScroll);
       resizeObserver.disconnect();
     };
@@ -187,8 +192,9 @@ export default function Sidebar() {
       {/* Navigation - Scrollable */}
       <div 
         ref={scrollContainerRef}
-        className="flex flex-col mt-2 flex-1 pb-4 px-2 sidebar-scroll"
+        className="flex flex-col flex-1 pb-4 px-2 sidebar-scroll"
         onScroll={checkScrollable}
+        style={{ minHeight: 0 }}
       >
         <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
           Main Menu

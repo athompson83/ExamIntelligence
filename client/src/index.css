@@ -33,8 +33,8 @@
   
   /* Force scrolling for sidebar navigation with smooth behavior */
   .sidebar-scroll {
-    overflow-y: scroll !important;
-    max-height: calc(100vh - 140px) !important;
+    overflow-y: auto !important;
+    height: calc(100vh - 120px) !important;
     scrollbar-width: thin !important;
     scrollbar-color: #cbd5e0 #f7fafc !important;
     -ms-overflow-style: auto !important;
