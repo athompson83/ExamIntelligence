@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Brain, 
   Target, 
@@ -35,6 +36,9 @@ export default function CATExamTest() {
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [catState, setCatState] = useState<any>(null);
   const [sessionResults, setSessionResults] = useState<any>(null);
+  const [previewExam, setPreviewExam] = useState<any>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewQuestions, setPreviewQuestions] = useState<any[]>([]);
 
   // Fetch available CAT exams
   const { data: catExams, isLoading: examsLoading } = useQuery({
@@ -46,6 +50,44 @@ export default function CATExamTest() {
   const { data: testbanks } = useQuery({
     queryKey: ['/api/testbanks'],
     enabled: !!user
+  });
+
+  // Preview CAT exam (show questions in popup)
+  const previewExamMutation = useMutation({
+    mutationFn: async (examId: string) => {
+      // Get exam details
+      const exam = await apiRequest(`/api/cat-exams/${examId}`);
+      
+      // Get sample questions from associated testbanks
+      const sampleQuestions = [];
+      if (exam.itemBanks && exam.itemBanks.length > 0) {
+        for (const itemBank of exam.itemBanks) {
+          try {
+            const questions = await apiRequest(`/api/testbanks/${itemBank.testbankId || itemBank.bankId}/questions`);
+            if (questions && questions.length > 0) {
+              // Take first 3 questions from each item bank for preview
+              sampleQuestions.push(...questions.slice(0, 3));
+            }
+          } catch (error) {
+            console.error('Error fetching questions for preview:', error);
+          }
+        }
+      }
+      
+      return { exam, questions: sampleQuestions };
+    },
+    onSuccess: ({ exam, questions }) => {
+      setPreviewExam(exam);
+      setPreviewQuestions(questions);
+      setIsPreviewOpen(true);
+    },
+    onError: (error) => {
+      toast({
+        title: "Preview Failed",
+        description: error.message || "Failed to load exam preview",
+        variant: "destructive"
+      });
+    }
   });
 
   // Start CAT exam session
@@ -312,15 +354,118 @@ export default function CATExamTest() {
                               Schedule
                             </Button>
                             
-                            <Button
-                              size="sm"
-                              onClick={() => startSessionMutation.mutate(exam.id)}
-                              disabled={startSessionMutation.isPending || !!activeSession}
-                              title="Preview/Test Exam"
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              Preview
-                            </Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  onClick={() => previewExamMutation.mutate(exam.id)}
+                                  disabled={previewExamMutation.isPending}
+                                  title="Preview Exam Questions"
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Preview
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <Eye className="h-5 w-5" />
+                                    Preview: {previewExam?.title}
+                                  </DialogTitle>
+                                </DialogHeader>
+                                
+                                {previewExam && (
+                                  <div className="space-y-6">
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                      <h3 className="font-semibold mb-2">Exam Information</h3>
+                                      <p className="text-sm text-gray-600 mb-2">{previewExam.description}</p>
+                                      <div className="flex gap-4 text-sm">
+                                        <span><strong>Subject:</strong> {previewExam.subject || 'General'}</span>
+                                        <span><strong>Duration:</strong> {previewExam.estimatedDuration || 60} minutes</span>
+                                        <span><strong>Item Banks:</strong> {previewExam.itemBanks?.length || 0}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div>
+                                      <h3 className="font-semibold mb-4">Sample Questions</h3>
+                                      {previewQuestions.length > 0 ? (
+                                        <div className="space-y-6">
+                                          {previewQuestions.map((question: any, index: number) => (
+                                            <div key={question.id} className="p-4 border rounded-lg">
+                                              <div className="flex items-start justify-between mb-3">
+                                                <h4 className="font-medium">Question {index + 1}</h4>
+                                                <div className="flex gap-2">
+                                                  <Badge variant="outline">
+                                                    Difficulty: {question.difficultyScore}/10
+                                                  </Badge>
+                                                  <Badge variant="secondary">
+                                                    {question.questionType?.replace('_', ' ')}
+                                                  </Badge>
+                                                </div>
+                                              </div>
+                                              
+                                              <div className="mb-4">
+                                                <p className="text-gray-800">{question.questionText}</p>
+                                              </div>
+                                              
+                                              {question.answerOptions && question.answerOptions.length > 0 && (
+                                                <div className="space-y-2">
+                                                  <p className="text-sm font-medium text-gray-600">Answer Options:</p>
+                                                  {question.answerOptions.map((option: any) => (
+                                                    <div
+                                                      key={option.id}
+                                                      className={`p-2 rounded border ${
+                                                        option.isCorrect 
+                                                          ? 'bg-green-50 border-green-200' 
+                                                          : 'bg-gray-50'
+                                                      }`}
+                                                    >
+                                                      <span className="font-medium mr-2">
+                                                        {String.fromCharCode(65 + (option.displayOrder || 0))}.
+                                                      </span>
+                                                      {option.answerText}
+                                                      {option.isCorrect && (
+                                                        <Badge variant="secondary" className="ml-2 text-xs">
+                                                          Correct
+                                                        </Badge>
+                                                      )}
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              )}
+                                              
+                                              {question.explanation && (
+                                                <div className="mt-3 p-3 bg-blue-50 rounded">
+                                                  <p className="text-sm">
+                                                    <strong>Explanation:</strong> {question.explanation}
+                                                  </p>
+                                                </div>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <div className="text-center py-8">
+                                          <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                          <h3 className="text-lg font-semibold mb-2">No Questions Available</h3>
+                                          <p className="text-gray-600">This exam doesn't have any questions yet.</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="flex justify-end pt-4 border-t">
+                                      <Button
+                                        onClick={() => startSessionMutation.mutate(previewExam.id)}
+                                        disabled={startSessionMutation.isPending || !!activeSession}
+                                      >
+                                        <Play className="h-4 w-4 mr-2" />
+                                        Start Practice Session
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </DialogContent>
+                            </Dialog>
                           </div>
                         </div>
                       ))}

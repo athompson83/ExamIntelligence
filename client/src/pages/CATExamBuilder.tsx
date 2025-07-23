@@ -101,6 +101,14 @@ export default function CATExamBuilder() {
   const editExamId = urlParams.get('examId');
   const isEditMode = !!editExamId;
   
+  // Debug URL parsing
+  console.log('URL parsing debug:', { 
+    location, 
+    urlParams: location.split('?')[1], 
+    editExamId, 
+    isEditMode 
+  });
+  
   const [examConfig, setExamConfig] = useState<CATExamConfig>({
     title: '',
     description: '',
