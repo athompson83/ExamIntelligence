@@ -180,25 +180,59 @@ export default function CATExamBuilder() {
   // Initialize form with existing exam data in edit mode
   React.useEffect(() => {
     if (existingExam && isEditMode) {
+      console.log('Loading existing exam data:', existingExam);
       setExamConfig(prevConfig => ({
         ...prevConfig,
         title: existingExam.title || '',
         description: existingExam.description || '',
-        instructions: existingExam.instructions || '',
+        instructions: existingExam.instructions || existingExam.learningObjectives?.join('; ') || '',
         itemBanks: existingExam.itemBanks || [],
-        // Preserve other settings from existing exam if available
-        ...(existingExam.adaptiveSettings && { adaptiveSettings: existingExam.adaptiveSettings }),
-        ...(existingExam.scoringSettings && { scoringSettings: existingExam.scoringSettings }),
-        ...(existingExam.securitySettings && { securitySettings: existingExam.securitySettings }),
-        ...(existingExam.accessSettings && { accessSettings: existingExam.accessSettings })
+        // Map existing exam data to expected format
+        adaptiveSettings: {
+          ...prevConfig.adaptiveSettings,
+          ...(existingExam.adaptiveSettings || {}),
+          ...(existingExam.catSettings && {
+            minQuestions: existingExam.catSettings.min_items || prevConfig.adaptiveSettings.minQuestions,
+            maxQuestions: existingExam.catSettings.max_items || prevConfig.adaptiveSettings.maxQuestions,
+            startingDifficulty: existingExam.difficulty?.min || prevConfig.adaptiveSettings.startingDifficulty
+          })
+        },
+        scoringSettings: {
+          ...prevConfig.scoringSettings,
+          ...(existingExam.scoringSettings || {}),
+          ...(existingExam.additionalSettings && {
+            passingScore: existingExam.additionalSettings.passingGrade || prevConfig.scoringSettings.passingScore
+          })
+        },
+        securitySettings: {
+          ...prevConfig.securitySettings,
+          ...(existingExam.securitySettings || {}),
+          ...(existingExam.additionalSettings && {
+            allowCalculator: existingExam.additionalSettings.allowCalculator ?? prevConfig.securitySettings.allowCalculator,
+            calculatorType: existingExam.additionalSettings.calculatorType || prevConfig.securitySettings.calculatorType,
+            enableProctoring: existingExam.additionalSettings.proctoring ?? prevConfig.securitySettings.enableProctoring
+          })
+        },
+        accessSettings: {
+          ...prevConfig.accessSettings,
+          ...(existingExam.accessSettings || {}),
+          ...(existingExam.additionalSettings && {
+            timeLimit: existingExam.additionalSettings.timeLimit || existingExam.estimatedDuration || prevConfig.accessSettings.timeLimit
+          })
+        }
       }));
     }
   }, [existingExam, isEditMode]);
 
   const createCATExamMutation = useMutation({
     mutationFn: async (config: CATExamConfig) => {
-      const response = await fetch('/api/cat-exams', {
-        method: 'POST',
+      const url = isEditMode ? `/api/cat-exams/${editExamId}` : '/api/cat-exams';
+      const method = isEditMode ? 'PUT' : 'POST';
+      
+      console.log(`${isEditMode ? 'Updating' : 'Creating'} CAT exam:`, config);
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json'
         },
@@ -206,17 +240,22 @@ export default function CATExamBuilder() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to create CAT exam');
+        throw new Error(`Failed to ${isEditMode ? 'update' : 'create'} CAT exam`);
       }
       
       return await response.json();
     },
     onSuccess: (data) => {
       toast({
-        title: "CAT Exam Created",
-        description: "Your Computer Adaptive Test has been created successfully. Redirecting to exam list..."
+        title: isEditMode ? "CAT Exam Updated" : "CAT Exam Created",
+        description: isEditMode 
+          ? "Your Computer Adaptive Test has been updated successfully. Redirecting to exam list..."
+          : "Your Computer Adaptive Test has been created successfully. Redirecting to exam list..."
       });
       queryClient.invalidateQueries({ queryKey: ['/api/cat-exams'] });
+      if (editExamId) {
+        queryClient.invalidateQueries({ queryKey: ['/api/cat-exams', editExamId] });
+      }
       
       // Redirect to CAT Exam list after a brief delay
       setTimeout(() => {
@@ -224,9 +263,10 @@ export default function CATExamBuilder() {
       }, 1500);
     },
     onError: (error) => {
+      console.error('CAT exam mutation error:', error);
       toast({
         title: "Error",
-        description: "Failed to create CAT exam",
+        description: `Failed to ${isEditMode ? 'update' : 'create'} CAT exam`,
         variant: "destructive"
       });
     }

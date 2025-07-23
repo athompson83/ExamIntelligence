@@ -227,16 +227,18 @@ export default function AICATExamGenerator() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: config.title,
-          description: config.description,
+          title: examTitle, // Use user's original title
+          description: config.description || `Computer Adaptive Test: ${examTitle}`,
           subject: config.subject,
           difficulty: config.difficulty,
           estimatedDuration: config.estimatedDuration,
           targetAudience: config.targetAudience,
           learningObjectives: config.learningObjectives,
           itemBanks: processedItemBanks.map(bank => ({
-            testbankId: bank.id,
+            bankId: bank.id,
+            testbankId: bank.id, // For backward compatibility
             weight: 1.0,
+            percentage: bank.percentage || Math.floor(100 / processedItemBanks.length),
             minQuestions: Math.floor(bank.questionCount * 0.3),
             maxQuestions: Math.floor(bank.questionCount * 0.8)
           })),

@@ -9243,18 +9243,21 @@ Please generate a detailed CAT exam configuration that includes:
    - targetAudience: Description of intended audience
    - learningObjectives: Array of 3-5 specific learning objectives
 
-2. ITEM BANKS ANALYSIS:
-   For each needed content area, determine if existing testbanks can be used or if new ones need to be created.
-   - Analyze existing testbanks for relevance
-   - Create new item banks for missing content areas
-   - For each item bank (new or existing):
-     * id: (null for new, existing id for reused)
-     * name: Descriptive name
-     * description: Detailed description
-     * subject: Subject area
-     * questionCount: Number of questions needed
-     * isNew: true/false
-     * questions: Array of sample questions for new item banks (include full question structure with answerOptions)
+2. ITEM BANKS ANALYSIS AND CREATION:
+   Based on the prompt requirements, create 2-4 item banks covering different content areas with specific question counts and percentages that total 100%.
+   For each content area identified in the requirements:
+   - Create new item banks for comprehensive coverage
+   - Each item bank should have specific question counts based on the prompt requirements
+   - Distribute percentage weights that total exactly 100%
+   - For each item bank (prioritize creating new ones):
+     * id: null (for new item banks)
+     * name: Descriptive name reflecting specific content area
+     * description: Detailed description of what this bank covers
+     * subject: Subject area matching the exam
+     * questionCount: Specific number of questions needed (minimum 10, recommended 15-25)
+     * percentage: Percentage weight of this bank in the exam (must total 100% across all banks)
+     * isNew: true (prioritize creating new content)
+     * questions: Array of 5-10 sample questions with complete structure including answerOptions, difficulty levels, and explanations
 
 3. CAT SETTINGS:
    - model: "2pl" or "3pl" (Item Response Theory model)
@@ -9326,40 +9329,72 @@ Return the response as valid JSON with all the above sections.`;
         return res.status(500).json({ message: 'Failed to parse AI response from OpenAI' });
       }
 
-      // Ensure we always have at least one item bank
+      // Ensure we always have proper item banks with percentages that total 100%
       if (!examConfig.itemBanks || examConfig.itemBanks.length === 0) {
         examConfig.itemBanks = [
           {
             id: null,
-            name: `${examConfig.subject || title} Questions`,
-            description: `Comprehensive question bank for ${title}`,
+            name: `${examConfig.subject || title} - Core Concepts`,
+            description: `Fundamental concepts and principles for ${title}`,
             subject: examConfig.subject || 'General',
             questionCount: 20,
+            percentage: 60,
             isNew: true,
-            questions: [
-              {
-                questionText: `Sample question for ${title}`,
-                type: 'multiple_choice',
-                difficulty: 5,
-                bloomsLevel: 'apply',
-                answerOptions: [
-                  {"answerText": "Option A", "isCorrect": false, "displayOrder": 0},
-                  {"answerText": "Option B", "isCorrect": true, "displayOrder": 1},
-                  {"answerText": "Option C", "isCorrect": false, "displayOrder": 2},
-                  {"answerText": "Option D", "isCorrect": false, "displayOrder": 3}
-                ],
-                explanation: "Sample explanation",
-                tags: [examConfig.subject || 'General']
-              }
-            ]
+            questions: Array.from({length: 5}, (_, i) => ({
+              questionText: `Core concept question ${i + 1} for ${title}`,
+              type: 'multiple_choice',
+              difficulty: 4 + i,
+              bloomsLevel: ['remember', 'understand', 'apply', 'analyze', 'evaluate'][i],
+              answerOptions: [
+                {"answerText": "Option A", "isCorrect": false, "displayOrder": 0},
+                {"answerText": "Option B", "isCorrect": i === 1, "displayOrder": 1},
+                {"answerText": "Option C", "isCorrect": i !== 1, "displayOrder": 2},
+                {"answerText": "Option D", "isCorrect": false, "displayOrder": 3}
+              ],
+              explanation: `Explanation for core concept question ${i + 1}`,
+              tags: [examConfig.subject || 'General', 'core-concepts']
+            }))
+          },
+          {
+            id: null,
+            name: `${examConfig.subject || title} - Applied Skills`,
+            description: `Practical application and problem-solving for ${title}`,
+            subject: examConfig.subject || 'General',
+            questionCount: 15,
+            percentage: 40,
+            isNew: true,
+            questions: Array.from({length: 5}, (_, i) => ({
+              questionText: `Applied skills question ${i + 1} for ${title}`,
+              type: 'multiple_choice',
+              difficulty: 6 + i,
+              bloomsLevel: ['apply', 'analyze', 'evaluate', 'create', 'apply'][i],
+              answerOptions: [
+                {"answerText": "Option A", "isCorrect": i === 2, "displayOrder": 0},
+                {"answerText": "Option B", "isCorrect": false, "displayOrder": 1},
+                {"answerText": "Option C", "isCorrect": i !== 2, "displayOrder": 2},
+                {"answerText": "Option D", "isCorrect": false, "displayOrder": 3}
+              ],
+              explanation: `Explanation for applied skills question ${i + 1}`,
+              tags: [examConfig.subject || 'General', 'applied-skills']
+            }))
           }
         ];
       }
 
-      // Validate and structure the response
+      // Validate that percentages total 100%
+      const totalPercentage = examConfig.itemBanks.reduce((sum: number, bank: any) => sum + (bank.percentage || 0), 0);
+      if (totalPercentage !== 100) {
+        // Adjust percentages to total 100%
+        const adjustment = 100 / totalPercentage;
+        examConfig.itemBanks.forEach((bank: any) => {
+          bank.percentage = Math.round((bank.percentage || 0) * adjustment);
+        });
+      }
+
+      // Validate and structure the response - ALWAYS preserve user's title and description
       const structuredConfig = {
         title: title, // Always use the user's provided title
-        description: examConfig.description || 'AI-generated CAT exam',
+        description: examConfig.description || `AI-generated Computer Adaptive Test: ${title}`,
         subject: examConfig.subject || 'General',
         difficulty: examConfig.difficulty || { min: 3, max: 8 },
         estimatedDuration: examConfig.estimatedDuration || 60,
