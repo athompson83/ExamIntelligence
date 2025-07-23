@@ -9885,7 +9885,36 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
 
       console.log('Final structured config with', structuredConfig.itemBanks.length, 'item banks');
 
-      res.json(structuredConfig);
+      // STEP 8: Save the generated CAT exam to the database
+      const user = req.user;
+      const catExamData = {
+        title: structuredConfig.title,
+        description: structuredConfig.description,
+        subject: structuredConfig.subject,
+        itemBanks: structuredConfig.itemBanks,
+        adaptiveSettings: structuredConfig.adaptiveSettings,
+        additionalSettings: structuredConfig.additionalSettings,
+        status: 'draft',
+        createdBy: user.id,
+        accountId: user.accountId || "00000000-0000-0000-0000-000000000001",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      console.log(`Saving generated CAT exam "${catExamData.title}" with ${catExamData.itemBanks.length} item banks to database...`);
+      const savedExam = await storage.createCATExam(catExamData);
+      
+      console.log(`Successfully saved CAT exam with ID: ${savedExam.id}`);
+      
+      // Return the saved exam data with ID for frontend display
+      res.json({
+        ...structuredConfig,
+        id: savedExam.id,
+        status: 'draft',
+        createdBy: user.id,
+        createdAt: savedExam.createdAt,
+        savedToDatabase: true
+      });
     } catch (error) {
       console.error('Error generating CAT exam:', error);
       res.status(500).json({ message: 'Failed to generate CAT exam configuration' });
