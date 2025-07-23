@@ -10,6 +10,7 @@ import OnboardingTour from "@/components/OnboardingTour";
 import AITooltipMascot from "@/components/AITooltipMascot";
 import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense } from "react";
+import CATExamBuilder from "@/pages/CATExamBuilder";
 
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -50,7 +51,6 @@ const LearningFeedback = lazy(() => import("@/pages/learning-feedback"));
 const StudentLogin = lazy(() => import("@/pages/student-login"));
 const StudentDashboard = lazy(() => import("@/pages/student-dashboard"));
 const StudentQuiz = lazy(() => import("@/pages/student-quiz"));
-const CATExamBuilder = lazy(() => import("@/pages/CATExamBuilder"));
 const CATExamTest = lazy(() => import("@/pages/CATExamTest"));
 const CATExamManager = lazy(() => import("@/pages/CATExamManager"));
 const AICATExamGenerator = lazy(() => import("@/pages/AICATExamGenerator"));

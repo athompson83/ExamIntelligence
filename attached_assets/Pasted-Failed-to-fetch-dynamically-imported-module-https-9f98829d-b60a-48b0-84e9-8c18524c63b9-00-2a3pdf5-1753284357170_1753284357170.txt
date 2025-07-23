@@ -1,0 +1,21 @@
+Failed to fetch dynamically imported module: https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/src/pages/CATExamBuilder.tsx
+The above error occurred in one of your React components:
+
+    at Lazy
+    at Suspense
+    at Route (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=12f93d77:265:16)
+    at Switch (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=12f93d77:321:17)
+    at Router (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/src/App.tsx?v=Ubr-n9XUkzf7YiQCtUYBd:180:42)
+    at OnboardingTourProvider (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/src/contexts/OnboardingTourContext.tsx:30:42)
+    at AITooltipProvider (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/src/contexts/AITooltipContext.tsx:20:37)
+    at TooltipProvider (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/src/components/TooltipProvider.tsx:30:35)
+    at Provider (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=12f93d77:38:15)
+    at TooltipProvider (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=12f93d77:64:5)
+    at QueryClientProvider (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=12f93d77:2805:3)
+    at _a (https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-helmet-async.js?v=12f93d77:624:5)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Failed to fetch dynamically imported module: https://9f98829d-b60a-48b0-84e9-8c18524c63b9-00-2a3pdf5j5yrk9.spock.replit.dev/src/pages/CATExamBuilder.tsx
+Attempting to reconnect WebSocket...
