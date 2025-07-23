@@ -1,0 +1,36 @@
+[vite] connecting...
+DOMException {}
+
+AI did not generate item banks, creating defaults...
+Generated config with item banks: 
+(2) [{…}, {…}]
+Creating new testbank: Core - Fundamentals
+✅ Created testbank: Core - Fundamentals (ID: 90ba356e-3a5b-47b5-a48b-ef00dbab81b1)
+✅ Successfully created question 1: "Fundamental concept question 1 for the exam..." (ID: b2cc406e-3201-4a0d-9fbb-81cc34d6c3b4)
+✅ Successfully created question 2: "Fundamental concept question 2 for the exam..." (ID: cc45c2e4-a448-474c-a5aa-09063bc6a1cd)
+✅ Successfully created question 3: "Fundamental concept question 3 for the exam..." (ID: b54d6977-46e5-4484-9eb9-da4b0dda3662)
+✅ Successfully created question 4: "Fundamental concept question 4 for the exam..." (ID: 6d701fba-dd1f-42d5-ac7f-04bb5981cee1)
+✅ Successfully created question 5: "Fundamental concept question 5 for the exam..." (ID: b06f85a3-7bda-46e5-b2cc-85cc209acd0d)
+✅ Successfully created question 6: "Fundamental concept question 6 for the exam..." (ID: 3fca7544-97b5-4413-9ba4-72f6a5e73520)
+✅ Successfully created question 7: "Fundamental concept question 7 for the exam..." (ID: ebafc69d-39ad-4a33-ab55-e616e4637490)
+✅ Successfully created question 8: "Fundamental concept question 8 for the exam..." (ID: 2c132dae-bdf0-48e5-be6f-b25b428dc0b2)
+Successfully created item bank with 8 questions
+Creating new testbank: Advanced - Applications
+✅ Created testbank: Advanced - Applications (ID: 4873d557-906b-424c-b303-6761b4caad80)
+✅ Successfully created question 1: "Advanced application question 1 for the exam..." (ID: 2076d44c-0929-4b3c-a58e-7e636381e280)
+✅ Successfully created question 2: "Advanced application question 2 for the exam..." (ID: e3a5b1d9-2a47-43cd-bbca-4c509c42b61f)
+✅ Successfully created question 3: "Advanced application question 3 for the exam..." (ID: 9210a365-cb7f-476b-bd56-750edd2405df)
+✅ Successfully created question 4: "Advanced application question 4 for the exam..." (ID: ee765932-194b-4049-aff4-2d1de39a1efe)
+✅ Successfully created question 5: "Advanced application question 5 for the exam..." (ID: 80f45050-9076-4665-8d7b-1b86613109c1)
+✅ Successfully created question 6: "Advanced application question 6 for the exam..." (ID: d4b15ed4-2215-4b81-90de-8e0f5b2c0ebd)
+✅ Successfully created question 7: "Advanced application question 7 for the exam..." (ID: 69d4bd4d-be76-4b62-9117-8b02798c90e9)
+Successfully created item bank with 7 questions
+Processed item banks: 
+(2) [{…}, {…}]
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+Exam data for preview: 
+Object {id: "cat_1753276878587", title: "NREMT Paramedic Practice X", description: "AI generated CAT exam configuration", subject: "General", difficulty: {…}, …}
+Item banks available: 
+(2) [{…}, {…}]
+Fetching questions for testbank: 90ba356e-3a5b-47b5-a48b-ef00dbab81b1
+Found 8 questions for testbank 90ba356e-3a5b-47b5-a48b-ef00dbab81b1
