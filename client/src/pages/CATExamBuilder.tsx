@@ -197,44 +197,49 @@ export default function CATExamBuilder() {
       console.log('Loading existing exam data:', existingExam);
       console.log('Current examConfig before update:', examConfig);
       
+      // Map server data structure to form structure
       const newConfig = {
         ...examConfig,
         title: existingExam.title || '',
         description: existingExam.description || '',
         instructions: existingExam.instructions || existingExam.learningObjectives?.join('; ') || '',
-        itemBanks: existingExam.itemBanks || [],
-        // Map existing exam data to expected format
+        itemBanks: existingExam.itemBanks?.map((bank: any) => ({
+          id: bank.bankId || bank.testbankId || bank.id,
+          name: bank.name || 'Item Bank',
+          description: bank.description || '',
+          questionCount: bank.questionCount || 0,
+          subject: bank.subject || 'General',
+          difficulty: bank.difficulty || { min: 1, max: 10 },
+          percentage: bank.percentage || bank.weight || 25,
+          minQuestions: bank.minQuestions || 5,
+          maxQuestions: bank.maxQuestions || 15
+        })) || [],
         adaptiveSettings: {
           ...examConfig.adaptiveSettings,
-          ...(existingExam.adaptiveSettings || {}),
-          ...(existingExam.catSettings && {
-            minQuestions: existingExam.catSettings.min_items || examConfig.adaptiveSettings.minQuestions,
-            maxQuestions: existingExam.catSettings.max_items || examConfig.adaptiveSettings.maxQuestions,
-            startingDifficulty: existingExam.difficulty?.min || examConfig.adaptiveSettings.startingDifficulty
-          })
+          startingDifficulty: existingExam.catSettings?.theta_start + 5 || 5, // Convert from -4/4 to 1-10 scale
+          difficultyAdjustment: 0.5,
+          minQuestions: existingExam.catSettings?.min_items || 10,
+          maxQuestions: existingExam.catSettings?.max_items || 50,
+          terminationCriteria: {
+            confidenceLevel: 0.95,
+            standardError: existingExam.catSettings?.se_target || 0.3,
+            timeLimit: existingExam.timeLimit || existingExam.estimatedDuration || 120
+          }
         },
         scoringSettings: {
           ...examConfig.scoringSettings,
-          ...(existingExam.scoringSettings || {}),
-          ...(existingExam.additionalSettings && {
-            passingScore: existingExam.additionalSettings.passingGrade || examConfig.scoringSettings.passingScore
-          })
+          passingScore: existingExam.passingGrade || existingExam.passingScore || 70
         },
         securitySettings: {
           ...examConfig.securitySettings,
-          ...(existingExam.securitySettings || {}),
-          ...(existingExam.additionalSettings && {
-            allowCalculator: existingExam.additionalSettings.allowCalculator ?? examConfig.securitySettings.allowCalculator,
-            calculatorType: existingExam.additionalSettings.calculatorType || examConfig.securitySettings.calculatorType,
-            enableProctoring: existingExam.additionalSettings.proctoring ?? examConfig.securitySettings.enableProctoring
-          })
+          allowCalculator: existingExam.allowCalculator || false,
+          calculatorType: existingExam.calculatorType || 'basic',
+          enableProctoring: existingExam.proctoring || false
         },
         accessSettings: {
           ...examConfig.accessSettings,
-          ...(existingExam.accessSettings || {}),
-          ...(existingExam.additionalSettings && {
-            timeLimit: existingExam.additionalSettings.timeLimit || existingExam.estimatedDuration || examConfig.accessSettings.timeLimit
-          })
+          timeLimit: existingExam.timeLimit || existingExam.estimatedDuration || 120,
+          assignedStudents: existingExam.assignedStudents || []
         }
       };
       
