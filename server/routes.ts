@@ -9240,7 +9240,7 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
-  // AI CAT Exam Generation endpoint - Enhanced with comprehensive coverage
+  // AI CAT Exam Generation endpoint - Enhanced with comprehensive coverage  
   app.post('/api/ai/generate-cat-exam', mockAuth, async (req, res) => {
     try {
       const { prompt, title, existingTestbanks } = req.body;
@@ -9253,69 +9253,6 @@ Initialize all interactions with these principles as your foundation.`,
       console.log('Exam title:', title);
       console.log('Existing testbanks available:', existingTestbanks?.length || 0);
 
-      // STEP 1: Analyze existing testbanks for applicable content
-      const analyzeExistingContent = async (requirements: string, availableTestbanks: any[]) => {
-        if (!availableTestbanks || availableTestbanks.length === 0) {
-          return { applicableTestbanks: [], missingTopics: [] };
-        }
-
-        const analysisPrompt = `
-Analyze the following existing testbanks to determine which ones contain content applicable to these requirements:
-
-REQUIREMENTS: ${requirements}
-
-EXISTING TESTBANKS:
-${JSON.stringify(availableTestbanks.map((tb: any) => ({
-  id: tb.id,
-  title: tb.title,
-  description: tb.description,
-  subject: tb.subject || tb.tags?.[0] || 'General',
-  questionCount: tb.questionCount || 0,
-  tags: tb.tags || []
-})), null, 2)}
-
-Respond with JSON containing:
-{
-  "applicableTestbanks": [
-    {
-      "id": "testbank-id",
-      "relevanceScore": 0.85,
-      "contentAlignment": "High - covers cardiac emergencies relevant to NREMT paramedic training",
-      "suggestedPercentage": 35,
-      "topicsCovered": ["cardiac arrest", "arrhythmias", "ACS"]
-    }
-  ],
-  "missingTopics": [
-    {
-      "topic": "Airway Management",
-      "description": "Advanced airway techniques for paramedic certification",
-      "suggestedPercentage": 30,
-      "questionCount": 35
-    }
-  ]
-}
-
-Only include testbanks with relevanceScore >= 0.6. Ensure all percentages total 100%.
-`;
-
-        try {
-          const analysisResponse = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-              { role: "system", content: "You are an expert educational content analyst. Analyze testbank content for alignment with exam requirements." },
-              { role: "user", content: analysisPrompt }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.3,
-          });
-
-          return JSON.parse(analysisResponse.choices[0].message.content || '{"applicableTestbanks": [], "missingTopics": []}');
-        } catch (error) {
-          console.error('Content analysis failed:', error);
-          return { applicableTestbanks: [], missingTopics: [] };
-        }
-      };
-
       // Use direct OpenAI call for configuration generation
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -9326,151 +9263,10 @@ Only include testbanks with relevanceScore >= 0.6. Ensure all percentages total 
         });
       }
 
-      // STEP 2: Perform content analysis
-      const contentAnalysis = await analyzeExistingContent(prompt, existingTestbanks);
-      console.log('Content analysis result:', JSON.stringify(contentAnalysis, null, 2));
+      // Generate AI prompt for CAT exam configuration
+      const aiPrompt = 'You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT) and comprehensive exam development.\n\nUSER REQUIREMENTS:\n' + prompt + '\n\nEXAM TITLE: ' + title + '\n\nCRITICAL INSTRUCTIONS:\n- Generate comprehensive content with multiple item banks\n- Each item bank MUST have 50-70 questions for proper CAT randomization\n- Create realistic, subject-specific questions across difficulty levels 3-9\n- Ensure questions cover the full spectrum: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)\n- Generate scenario-based questions with professional terminology\n- NO generic placeholders - all content must be subject-specific\n\nGenerate a detailed CAT exam configuration with complete question sets.';
 
-      // STEP 3: Create enhanced AI prompt for missing content generation
-      const aiPrompt = `
-You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT) and comprehensive exam development.
-
-USER REQUIREMENTS:
-${prompt}
-
-EXAM TITLE: ${title}
-
-EXISTING APPLICABLE CONTENT:
-${JSON.stringify(contentAnalysis.applicableTestbanks, null, 2)}
-
-MISSING CONTENT TO GENERATE:
-${JSON.stringify(contentAnalysis.missingTopics, null, 2)}
-
-CRITICAL INSTRUCTIONS:
-- Generate ONLY the missing content identified in the analysis
-- Each new item bank MUST have 50-70 questions for proper CAT randomization (not just samples)
-- Create realistic, subject-specific questions across difficulty levels 3-9
-- Ensure questions cover the full spectrum: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)
-- Generate scenario-based questions with professional terminology
-- NO generic placeholders - all content must be subject-specific
-- GENERATE COMPLETE QUESTION SETS - not just 10-15 samples but the full 50-70 questions per bank
-
-Generate a detailed CAT exam configuration in JSON format:
-
-{
-  "title": "${title}",
-  "description": "Detailed description based on the user requirements - make it specific to the subject area",
-  "subject": "Extract the main subject from user requirements",
-  "difficulty": {"min": 3, "max": 9},
-  "estimatedDuration": 90,
-  "targetAudience": "Specific audience based on requirements",
-  "learningObjectives": [
-    "Comprehensive learning objectives based on user requirements"
-  ],
-  "existingItemBanks": ${JSON.stringify(contentAnalysis.applicableTestbanks)},
-  "newItemBanks": [
-    // Generate ALL missing topic areas with comprehensive question sets
-    // For NREMT, generate ALL 5 core areas: cardiac, trauma, airway, pharmacology, assessment
-    // Each item bank must contain 50-70 complete questions
-    {
-      "id": null,
-      "name": "Advanced Cardiac Life Support",
-      "description": "Comprehensive ACLS protocols, arrhythmia management, and cardiovascular emergencies",
-      "subject": "NREMT Paramedic",
-      "questionCount": 60,
-      "percentage": 25,
-      "isNew": true,
-      "questions": [
-        // Generate 60 complete cardiac questions across all difficulty levels
-      ]
-    },
-    {
-      "id": null,
-      "name": "Trauma Assessment and Management", 
-      "description": "Systematic trauma evaluation, injury recognition, and emergency interventions",
-      "subject": "NREMT Paramedic",
-      "questionCount": 55,
-      "percentage": 25,
-      "isNew": true,
-      "questions": [
-        // Generate 55 complete trauma questions across all difficulty levels
-      ]
-    },
-    {
-      "id": null,
-      "name": "Airway Management and Ventilation",
-      "description": "Advanced airway techniques, ventilation strategies, and respiratory emergencies", 
-      "subject": "NREMT Paramedic",
-      "questionCount": 50,
-      "percentage": 20,
-      "isNew": true,
-      "questions": [
-        // Generate 50 complete airway questions across all difficulty levels
-      ]
-    },
-    {
-      "id": null,
-      "name": "Pharmacology and Medication Administration",
-      "description": "Drug classifications, dosage calculations, and medication protocols for emergency care",
-      "subject": "NREMT Paramedic", 
-      "questionCount": 45,
-      "percentage": 15,
-      "isNew": true,
-      "questions": [
-        // Generate 45 complete pharmacology questions across all difficulty levels
-      ]
-    },
-    {
-      "id": null,
-      "name": "Patient Assessment and Clinical Decision Making",
-      "description": "Systematic patient evaluation, diagnostic reasoning, and treatment prioritization",
-      "subject": "NREMT Paramedic",
-      "questionCount": 40,
-      "percentage": 15, 
-      "isNew": true,
-      "questions": [
-        // Generate 40 complete assessment questions across all difficulty levels
-      ]
-    }
-  ],
-  "catSettings": {
-    "model": "irt_2pl",
-    "theta_start": 0,
-    "theta_min": -4,
-    "theta_max": 4,
-    "se_target": 0.3,
-    "min_items": 20,
-    "max_items": 60,
-    "exposure_control": true,
-    "content_balancing": true
-  },
-  "additionalSettings": {
-    "passingGrade": 70,
-    "timeLimit": 120,
-    "allowCalculator": false,
-    "calculatorType": "basic", 
-    "proctoring": true,
-    "shuffleQuestions": true,
-    "showCorrectAnswers": false
-  }
-}
-
-CRITICAL REQUIREMENTS FOR QUESTION GENERATION:
-- Generate COMPLETE QUESTION SETS - NOT SAMPLES (50-70 full questions per item bank)
-- For NREMT exams: Generate ALL 5 core topic areas with full question counts
-- Distribution per bank: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)
-- Each question must be scenario-based with authentic medical terminology
-- NO generic content - all answers must use professional NREMT terminology
-- Include comprehensive explanations with medical rationale
-- MANDATORY: Generate the COMPLETE questions array for each item bank
-
-EXAMPLE: If requesting 60 cardiac questions, generate ALL 60 questions:
-- 12 easy cardiac questions (difficulty 3-4)
-- 30 medium cardiac questions (difficulty 5-7) 
-- 18 hard cardiac questions (difficulty 8-9)
-
-DO NOT generate sample questions - generate COMPLETE question sets for CAT randomization.
-
-      // STEP 4: Get AI response for missing content generation
+      // Generate AI response for CAT exam configuration
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
@@ -9949,8 +9745,8 @@ DO NOT generate sample questions - generate COMPLETE question sets for CAT rando
     try {
       event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (err: any) {
-      console.log(`Webhook signature verification failed.`, err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+      console.log('Webhook signature verification failed.', err.message);
+      return res.status(400).send('Webhook Error: ' + err.message);
     }
     
     // Handle the event
@@ -9978,7 +9774,7 @@ DO NOT generate sample questions - generate COMPLETE question sets for CAT rando
         break;
       
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        console.log('Unhandled event type ' + event.type);
     }
     
     res.json({ received: true });
