@@ -257,13 +257,18 @@ export default function AICATExamGenerator() {
               isPublished: true
             };
             
-            const newTestbank = await apiRequest('/api/testbanks', {
+            const testbankResponse = await fetch('/api/testbanks', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(testbankData)
             });
             
-            console.log(`Created testbank:`, newTestbank);
+            if (!testbankResponse.ok) {
+              throw new Error(`Failed to create testbank: ${testbankResponse.status}`);
+            }
+            
+            const newTestbank = await testbankResponse.json();
+            console.log(`✅ Created testbank: ${newTestbank.title} (ID: ${newTestbank.id})`);
             let createdQuestionsCount = 0;
 
             // Generate and add questions to the new testbank
@@ -289,15 +294,21 @@ export default function AICATExamGenerator() {
                     answerOptions: questionData.answerOptions || []
                   };
                   
-                  const createdQuestion = await apiRequest('/api/questions', {
+                  const response = await fetch('/api/questions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(questionToCreate)
                   });
                   
+                  if (!response.ok) {
+                    throw new Error(`Failed to create question: ${response.status}`);
+                  }
+                  
+                  const createdQuestion = await response.json();
+                  
                   if (createdQuestion && createdQuestion.id) {
                     createdQuestionsCount++;
-                    console.log(`✅ Successfully created question ${i + 1}: "${questionData.questionText?.substring(0, 50)}..."`);
+                    console.log(`✅ Successfully created question ${i + 1}: "${questionData.questionText?.substring(0, 50)}..." (ID: ${createdQuestion.id})`);
                   } else {
                     console.warn(`❌ Question ${i + 1} creation failed or returned no ID:`, createdQuestion);
                   }
