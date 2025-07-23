@@ -130,7 +130,7 @@ export default function AICATExamGenerator() {
               bloomsLevel: ['remember', 'understand', 'apply', 'analyze', 'evaluate', 'create', 'apply', 'understand'][i],
               points: "1.00",
               aiConfidenceScore: "0.85",
-              creatorId: null, // Will be set during creation
+              creatorId: null,
               answerOptions: [
                 {"answerText": "Option A", "isCorrect": false, "displayOrder": 0},
                 {"answerText": "Option B", "isCorrect": i % 4 === 1, "displayOrder": 1},
@@ -156,7 +156,7 @@ export default function AICATExamGenerator() {
               bloomsLevel: ['apply', 'analyze', 'evaluate', 'create', 'analyze', 'evaluate', 'create'][i],
               points: "1.00",
               aiConfidenceScore: "0.85",
-              creatorId: null, // Will be set during creation
+              creatorId: null,
               answerOptions: [
                 {"answerText": "Option A", "isCorrect": i % 3 === 0, "displayOrder": 0},
                 {"answerText": "Option B", "isCorrect": i % 3 === 1, "displayOrder": 1},
@@ -338,7 +338,8 @@ export default function AICATExamGenerator() {
             // Continue with other item banks even if one fails
           }
         } else {
-          // Use existing testbank
+          // Use existing testbank - no need to create questions
+          console.log(`Using existing testbank: ${itemBank.name} (${itemBank.questionCount} questions)`);
           processedItemBanks.push({
             ...itemBank,
             percentage: itemBank.percentage || Math.floor(100 / config.itemBanks.length)
