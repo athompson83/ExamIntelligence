@@ -181,7 +181,13 @@ export default function CATExamBuilder() {
   // Load existing exam data when in edit mode
   const { data: existingExam, isLoading: examLoading } = useQuery({
     queryKey: ['/api/cat-exams', editExamId],
-    queryFn: () => editExamId ? apiRequest(`/api/cat-exams/${editExamId}`) : null,
+    queryFn: async () => {
+      if (!editExamId) return null;
+      const response = await fetch(`/api/cat-exams/${editExamId}`, {
+        credentials: 'include'
+      });
+      return await response.json();
+    },
     enabled: !!editExamId,
     staleTime: 2 * 60 * 1000,
   });

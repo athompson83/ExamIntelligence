@@ -55,8 +55,11 @@ export default function CATExamTest() {
   // Preview CAT exam (show questions in popup)
   const previewExamMutation = useMutation({
     mutationFn: async (examId: string) => {
-      // Get exam details
-      const exam = await apiRequest(`/api/cat-exams/${examId}`);
+      // Get exam details - use fetch directly to ensure JSON parsing
+      const response = await fetch(`/api/cat-exams/${examId}`, {
+        credentials: 'include'
+      });
+      const exam = await response.json();
       
       // Get sample questions from associated testbanks
       const sampleQuestions = [];
@@ -71,7 +74,10 @@ export default function CATExamTest() {
             console.log(`Fetching questions for testbank: ${testbankId}`);
             
             if (testbankId) {
-              const questions = await apiRequest(`/api/testbanks/${testbankId}/questions`);
+              const questionsResponse = await fetch(`/api/testbanks/${testbankId}/questions`, {
+                credentials: 'include'
+              });
+              const questions = await questionsResponse.json();
               console.log(`Found ${questions?.length || 0} questions for testbank ${testbankId}`);
               
               if (questions && questions.length > 0) {
