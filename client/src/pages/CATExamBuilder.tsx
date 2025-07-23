@@ -96,15 +96,16 @@ export default function CATExamBuilder() {
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   
-  // Parse URL parameters for edit mode
-  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  // Parse URL parameters for edit mode - Fix URL parsing
+  const urlParams = new URLSearchParams(window.location.search);
   const editExamId = urlParams.get('examId');
   const isEditMode = !!editExamId;
   
   // Debug URL parsing
   console.log('URL parsing debug:', { 
     location, 
-    urlParams: location.split('?')[1], 
+    windowLocationSearch: window.location.search,
+    urlParams: window.location.search, 
     editExamId, 
     isEditMode 
   });
