@@ -125,9 +125,12 @@ export default function AICATExamGenerator() {
             isNew: true,
             questions: Array.from({length: 8}, (_, i) => ({
               questionText: `Fundamental concept question ${i + 1} for ${data.title || 'the exam'}`,
-              type: 'multiple_choice',
-              difficulty: 3 + i,
+              questionType: 'multiple_choice',
+              difficultyScore: (3 + i).toString(),
               bloomsLevel: ['remember', 'understand', 'apply', 'analyze', 'evaluate', 'create', 'apply', 'understand'][i],
+              points: "1.00",
+              aiConfidenceScore: "0.85",
+              creatorId: null, // Will be set during creation
               answerOptions: [
                 {"answerText": "Option A", "isCorrect": false, "displayOrder": 0},
                 {"answerText": "Option B", "isCorrect": i % 4 === 1, "displayOrder": 1},
@@ -148,9 +151,12 @@ export default function AICATExamGenerator() {
             isNew: true,
             questions: Array.from({length: 7}, (_, i) => ({
               questionText: `Advanced application question ${i + 1} for ${data.title || 'the exam'}`,
-              type: 'multiple_choice',
-              difficulty: 6 + i,
+              questionType: 'multiple_choice',
+              difficultyScore: (6 + i).toString(),
               bloomsLevel: ['apply', 'analyze', 'evaluate', 'create', 'analyze', 'evaluate', 'create'][i],
+              points: "1.00",
+              aiConfidenceScore: "0.85",
+              creatorId: null, // Will be set during creation
               answerOptions: [
                 {"answerText": "Option A", "isCorrect": i % 3 === 0, "displayOrder": 0},
                 {"answerText": "Option B", "isCorrect": i % 3 === 1, "displayOrder": 1},
@@ -268,16 +274,19 @@ export default function AICATExamGenerator() {
                 const questionData = itemBank.questions[i];
                 
                 try {
-                  // Create question with proper structure
+                  // Create question with proper structure - all numeric fields as strings
                   const questionToCreate = {
                     questionText: questionData.questionText,
-                    questionType: questionData.type || 'multiple_choice',
-                    difficultyScore: questionData.difficulty || 5,
+                    questionType: questionData.questionType || 'multiple_choice',
+                    difficultyScore: questionData.difficultyScore || "5.0",
                     bloomsLevel: questionData.bloomsLevel || 'understand',
-                    points: 1,
+                    points: questionData.points || "1.00",
+                    aiConfidenceScore: questionData.aiConfidenceScore || "0.85",
                     explanation: questionData.explanation || '',
                     tags: questionData.tags || [itemBank.subject || 'General'],
-                    testbankId: newTestbank.id
+                    testbankId: newTestbank.id,
+                    creatorId: user?.id || 'test-user',
+                    answerOptions: questionData.answerOptions || []
                   };
                   
                   const createdQuestion = await apiRequest('/api/questions', {
@@ -286,25 +295,12 @@ export default function AICATExamGenerator() {
                     body: JSON.stringify(questionToCreate)
                   });
                   
-                  // Add answer options if they exist
-                  if (questionData.answerOptions && questionData.answerOptions.length > 0) {
-                    for (const answerOption of questionData.answerOptions) {
-                      const answerData = {
-                        questionId: createdQuestion.id,
-                        answerText: answerOption.answerText,
-                        isCorrect: answerOption.isCorrect || false,
-                        displayOrder: answerOption.displayOrder || 0
-                      };
-                      
-                      await apiRequest('/api/answer-options', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(answerData)
-                      });
-                    }
+                  if (createdQuestion && createdQuestion.id) {
+                    createdQuestionsCount++;
+                    console.log(`✅ Successfully created question ${i + 1}: "${questionData.questionText?.substring(0, 50)}..."`);
+                  } else {
+                    console.warn(`❌ Question ${i + 1} creation failed or returned no ID:`, createdQuestion);
                   }
-                  
-                  createdQuestionsCount++;
                   
                   // Update progress
                   const progressBase = 20 + (bankIndex - 1) * 20;
