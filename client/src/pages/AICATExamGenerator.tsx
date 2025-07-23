@@ -174,50 +174,115 @@ export default function AICATExamGenerator() {
 
       // Create new item banks and questions if needed
       const processedItemBanks = [];
+      let bankIndex = 0;
+      
       for (const itemBank of config.itemBanks) {
+        bankIndex++;
+        setCurrentStep(`Processing item bank ${bankIndex}/${config.itemBanks.length}: ${itemBank.name}`);
+        
         if (itemBank.isNew) {
-          setCurrentStep(`Creating item bank: ${itemBank.name}...`);
-          
-          // Create the testbank
-          const newTestbank = await apiRequest('/api/testbanks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          try {
+            console.log(`Creating new testbank: ${itemBank.name}`);
+            
+            // Create the testbank with proper structure
+            const testbankData = {
               title: itemBank.name,
               description: itemBank.description,
-              subject: itemBank.subject,
-              tags: [itemBank.subject]
-            })
-          });
+              subject: itemBank.subject || 'General',
+              tags: [itemBank.subject || 'General'],
+              accountId: user?.accountId || 'default-account',
+              isPublished: true
+            };
+            
+            const newTestbank = await apiRequest('/api/testbanks', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(testbankData)
+            });
+            
+            console.log(`Created testbank:`, newTestbank);
+            let createdQuestionsCount = 0;
 
-          setCurrentStep(`Generating questions for ${itemBank.name}...`);
-          
-          // Generate questions for the new testbank
-          if (itemBank.questions && itemBank.questions.length > 0) {
-            for (let i = 0; i < itemBank.questions.length; i++) {
-              const question = itemBank.questions[i];
-              await apiRequest('/api/questions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  ...question,
-                  testbankId: newTestbank.id
-                })
-              });
+            // Generate and add questions to the new testbank
+            if (itemBank.questions && itemBank.questions.length > 0) {
+              setCurrentStep(`Adding ${itemBank.questions.length} questions to ${itemBank.name}`);
               
-              const progressPercent = 20 + ((i + 1) / itemBank.questions.length) * 30;
-              setGenerationProgress(progressPercent);
+              for (let i = 0; i < itemBank.questions.length; i++) {
+                const questionData = itemBank.questions[i];
+                
+                try {
+                  // Create question with proper structure
+                  const questionToCreate = {
+                    questionText: questionData.questionText,
+                    questionType: questionData.type || 'multiple_choice',
+                    difficultyScore: questionData.difficulty || 5,
+                    bloomsLevel: questionData.bloomsLevel || 'understand',
+                    points: 1,
+                    explanation: questionData.explanation || '',
+                    tags: questionData.tags || [itemBank.subject || 'General'],
+                    testbankId: newTestbank.id
+                  };
+                  
+                  const createdQuestion = await apiRequest('/api/questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(questionToCreate)
+                  });
+                  
+                  // Add answer options if they exist
+                  if (questionData.answerOptions && questionData.answerOptions.length > 0) {
+                    for (const answerOption of questionData.answerOptions) {
+                      const answerData = {
+                        questionId: createdQuestion.id,
+                        answerText: answerOption.answerText,
+                        isCorrect: answerOption.isCorrect || false,
+                        displayOrder: answerOption.displayOrder || 0
+                      };
+                      
+                      await apiRequest('/api/answer-options', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(answerData)
+                      });
+                    }
+                  }
+                  
+                  createdQuestionsCount++;
+                  
+                  // Update progress
+                  const progressBase = 20 + (bankIndex - 1) * 20;
+                  const progressIncrement = ((i + 1) / itemBank.questions.length) * 20;
+                  setGenerationProgress(Math.min(progressBase + progressIncrement, 70));
+                  
+                } catch (questionError) {
+                  console.error(`Error creating question ${i + 1}:`, questionError);
+                }
+              }
             }
-          }
 
-          processedItemBanks.push({
-            ...newTestbank,
-            questionCount: itemBank.questions?.length || 0
-          });
+            processedItemBanks.push({
+              ...newTestbank,
+              id: newTestbank.id,
+              questionCount: createdQuestionsCount,
+              percentage: itemBank.percentage || Math.floor(100 / config.itemBanks.length)
+            });
+            
+            console.log(`Successfully created item bank with ${createdQuestionsCount} questions`);
+            
+          } catch (testbankError) {
+            console.error(`Error creating testbank ${itemBank.name}:`, testbankError);
+            // Continue with other item banks even if one fails
+          }
         } else {
-          processedItemBanks.push(itemBank);
+          // Use existing testbank
+          processedItemBanks.push({
+            ...itemBank,
+            percentage: itemBank.percentage || Math.floor(100 / config.itemBanks.length)
+          });
         }
       }
+      
+      console.log('Processed item banks:', processedItemBanks);
 
       setCurrentStep('Creating CAT exam configuration...');
       setGenerationProgress(80);

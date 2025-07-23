@@ -170,57 +170,67 @@ export default function CATExamBuilder() {
   });
   
   // Load existing exam data when in edit mode
-  const { data: existingExam } = useQuery({
+  const { data: existingExam, isLoading: examLoading } = useQuery({
     queryKey: ['/api/cat-exams', editExamId],
     queryFn: () => editExamId ? apiRequest(`/api/cat-exams/${editExamId}`) : null,
     enabled: !!editExamId,
     staleTime: 2 * 60 * 1000,
   });
+
+  // Debug logging for edit mode
+  React.useEffect(() => {
+    console.log('Edit mode state:', { isEditMode, editExamId, existingExam, examLoading });
+  }, [isEditMode, editExamId, existingExam, examLoading]);
   
   // Initialize form with existing exam data in edit mode
   React.useEffect(() => {
     if (existingExam && isEditMode) {
       console.log('Loading existing exam data:', existingExam);
-      setExamConfig(prevConfig => ({
-        ...prevConfig,
+      console.log('Current examConfig before update:', examConfig);
+      
+      const newConfig = {
+        ...examConfig,
         title: existingExam.title || '',
         description: existingExam.description || '',
         instructions: existingExam.instructions || existingExam.learningObjectives?.join('; ') || '',
         itemBanks: existingExam.itemBanks || [],
         // Map existing exam data to expected format
         adaptiveSettings: {
-          ...prevConfig.adaptiveSettings,
+          ...examConfig.adaptiveSettings,
           ...(existingExam.adaptiveSettings || {}),
           ...(existingExam.catSettings && {
-            minQuestions: existingExam.catSettings.min_items || prevConfig.adaptiveSettings.minQuestions,
-            maxQuestions: existingExam.catSettings.max_items || prevConfig.adaptiveSettings.maxQuestions,
-            startingDifficulty: existingExam.difficulty?.min || prevConfig.adaptiveSettings.startingDifficulty
+            minQuestions: existingExam.catSettings.min_items || examConfig.adaptiveSettings.minQuestions,
+            maxQuestions: existingExam.catSettings.max_items || examConfig.adaptiveSettings.maxQuestions,
+            startingDifficulty: existingExam.difficulty?.min || examConfig.adaptiveSettings.startingDifficulty
           })
         },
         scoringSettings: {
-          ...prevConfig.scoringSettings,
+          ...examConfig.scoringSettings,
           ...(existingExam.scoringSettings || {}),
           ...(existingExam.additionalSettings && {
-            passingScore: existingExam.additionalSettings.passingGrade || prevConfig.scoringSettings.passingScore
+            passingScore: existingExam.additionalSettings.passingGrade || examConfig.scoringSettings.passingScore
           })
         },
         securitySettings: {
-          ...prevConfig.securitySettings,
+          ...examConfig.securitySettings,
           ...(existingExam.securitySettings || {}),
           ...(existingExam.additionalSettings && {
-            allowCalculator: existingExam.additionalSettings.allowCalculator ?? prevConfig.securitySettings.allowCalculator,
-            calculatorType: existingExam.additionalSettings.calculatorType || prevConfig.securitySettings.calculatorType,
-            enableProctoring: existingExam.additionalSettings.proctoring ?? prevConfig.securitySettings.enableProctoring
+            allowCalculator: existingExam.additionalSettings.allowCalculator ?? examConfig.securitySettings.allowCalculator,
+            calculatorType: existingExam.additionalSettings.calculatorType || examConfig.securitySettings.calculatorType,
+            enableProctoring: existingExam.additionalSettings.proctoring ?? examConfig.securitySettings.enableProctoring
           })
         },
         accessSettings: {
-          ...prevConfig.accessSettings,
+          ...examConfig.accessSettings,
           ...(existingExam.accessSettings || {}),
           ...(existingExam.additionalSettings && {
-            timeLimit: existingExam.additionalSettings.timeLimit || existingExam.estimatedDuration || prevConfig.accessSettings.timeLimit
+            timeLimit: existingExam.additionalSettings.timeLimit || existingExam.estimatedDuration || examConfig.accessSettings.timeLimit
           })
         }
-      }));
+      };
+      
+      console.log('New config to set:', newConfig);
+      setExamConfig(newConfig);
     }
   }, [existingExam, isEditMode]);
 

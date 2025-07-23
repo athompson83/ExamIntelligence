@@ -305,28 +305,21 @@ export default function CATExamTest() {
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() => setLocation(`/live-exams?examId=${exam.id}&type=cat`)}
+                              title="Schedule Exam"
+                            >
+                              <Calendar className="h-4 w-4 mr-2" />
+                              Schedule
+                            </Button>
+                            
+                            <Button
+                              size="sm"
                               onClick={() => startSessionMutation.mutate(exam.id)}
                               disabled={startSessionMutation.isPending || !!activeSession}
                               title="Preview/Test Exam"
                             >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setLocation(`/live-exams?examId=${exam.id}&type=cat`)}
-                              title="Schedule Exam"
-                            >
-                              <Calendar className="h-4 w-4" />
-                            </Button>
-                            
-                            <Button
-                              onClick={() => startSessionMutation.mutate(exam.id)}
-                              disabled={startSessionMutation.isPending || !!activeSession}
-                            >
-                              <Play className="h-4 w-4 mr-2" />
-                              Start
+                              <Eye className="h-4 w-4 mr-2" />
+                              Preview
                             </Button>
                           </div>
                         </div>
