@@ -9215,139 +9215,70 @@ Initialize all interactions with these principles as your foundation.`,
 
       console.log('Generating CAT exam with prompt:', prompt);
       console.log('Exam title:', title);
+      console.log('Existing testbanks available:', existingTestbanks?.length || 0);
 
-      // Create enhanced AI prompt for CAT exam generation with specific subject focus
-      const aiPrompt = `
-You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT) and NREMT paramedic certification exams. 
-Generate a comprehensive CAT exam configuration based on these specific requirements:
+      // STEP 1: Analyze existing testbanks for applicable content
+      const analyzeExistingContent = async (requirements: string, availableTestbanks: any[]) => {
+        if (!availableTestbanks || availableTestbanks.length === 0) {
+          return { applicableTestbanks: [], missingTopics: [] };
+        }
 
-USER REQUIREMENTS:
-${prompt}
+        const analysisPrompt = `
+Analyze the following existing testbanks to determine which ones contain content applicable to these requirements:
 
-EXAM TITLE: ${title}
+REQUIREMENTS: ${requirements}
 
-CRITICAL INSTRUCTIONS:
-- Focus on NREMT paramedic exam content if mentioned in requirements
-- Generate realistic, subject-specific questions (NOT generic placeholders)
-- Create detailed, medical/paramedic-specific answer options
-- Each item bank should have 25-40 questions for proper CAT functionality
-- Questions must be practical, scenario-based for paramedic training
+EXISTING TESTBANKS:
+${JSON.stringify(availableTestbanks.map((tb: any) => ({
+  id: tb.id,
+  title: tb.title,
+  description: tb.description,
+  subject: tb.subject || tb.tags?.[0] || 'General',
+  questionCount: tb.questionCount || 0,
+  tags: tb.tags || []
+})), null, 2)}
 
-Generate a detailed CAT exam configuration in JSON format:
-
+Respond with JSON containing:
 {
-  "title": "${title}",
-  "description": "Detailed description based on the user requirements - make it specific to the subject area",
-  "subject": "Extract the main subject from user requirements (e.g., 'NREMT Paramedic', 'Emergency Medicine', etc.)",
-  "difficulty": {"min": 3, "max": 9},
-  "estimatedDuration": 60,
-  "targetAudience": "Specific audience based on requirements",
-  "learningObjectives": [
-    "Specific learning objective 1 based on user requirements",
-    "Specific learning objective 2 based on user requirements", 
-    "Specific learning objective 3 based on user requirements"
-  ],
-  "itemBanks": [
+  "applicableTestbanks": [
     {
-      "id": null,
-      "name": "Specific Content Area 1 Name (e.g., 'Cardiac Emergencies' for NREMT)",
-      "description": "Detailed description of this content area",
-      "subject": "Subject area",
-      "questionCount": 30,
-      "percentage": 40,
-      "isNew": true,
-      "questions": [
-        {
-          "questionText": "Realistic, scenario-based question specific to the subject area",
-          "type": "multiple_choice",
-          "difficulty": 5,
-          "bloomsLevel": "apply",
-          "answerOptions": [
-            {"answerText": "Realistic wrong answer option", "isCorrect": false, "displayOrder": 0},
-            {"answerText": "Correct answer with specific terminology", "isCorrect": true, "displayOrder": 1},
-            {"answerText": "Another realistic wrong option", "isCorrect": false, "displayOrder": 2},
-            {"answerText": "Third realistic wrong option", "isCorrect": false, "displayOrder": 3}
-          ],
-          "explanation": "Detailed explanation why this is correct",
-          "tags": ["subject-specific", "keywords"]
-        }
-      ]
-    },
-    {
-      "id": null, 
-      "name": "Specific Content Area 2 Name",
-      "description": "Detailed description of second content area",
-      "subject": "Subject area",
-      "questionCount": 25,
-      "percentage": 35,
-      "isNew": true,
-      "questions": [
-        {
-          "questionText": "Another realistic, scenario-based question",
-          "type": "multiple_choice", 
-          "difficulty": 6,
-          "bloomsLevel": "analyze",
-          "answerOptions": [
-            {"answerText": "Specific, realistic option", "isCorrect": false, "displayOrder": 0},
-            {"answerText": "Another specific option", "isCorrect": false, "displayOrder": 1},
-            {"answerText": "Correct answer with subject terminology", "isCorrect": true, "displayOrder": 2},
-            {"answerText": "Final specific wrong option", "isCorrect": false, "displayOrder": 3}
-          ],
-          "explanation": "Clear explanation with reasoning",
-          "tags": ["subject-specific", "scenario-based"]
-        }
-      ]
-    },
-    {
-      "id": null,
-      "name": "Specific Content Area 3 Name", 
-      "description": "Third content area description",
-      "subject": "Subject area",
-      "questionCount": 20,
-      "percentage": 25,
-      "isNew": true,
-      "questions": [
-        {
-          "questionText": "Third realistic question with practical application",
-          "type": "multiple_choice",
-          "difficulty": 7,
-          "bloomsLevel": "evaluate", 
-          "answerOptions": [
-            {"answerText": "Detailed, subject-specific option A", "isCorrect": true, "displayOrder": 0},
-            {"answerText": "Detailed, subject-specific option B", "isCorrect": false, "displayOrder": 1},
-            {"answerText": "Detailed, subject-specific option C", "isCorrect": false, "displayOrder": 2},
-            {"answerText": "Detailed, subject-specific option D", "isCorrect": false, "displayOrder": 3}
-          ],
-          "explanation": "Professional explanation with context",
-          "tags": ["advanced", "practical-application"]
-        }
-      ]
+      "id": "testbank-id",
+      "relevanceScore": 0.85,
+      "contentAlignment": "High - covers cardiac emergencies relevant to NREMT paramedic training",
+      "suggestedPercentage": 35,
+      "topicsCovered": ["cardiac arrest", "arrhythmias", "ACS"]
     }
   ],
-  "catSettings": {
-    "model": "2pl",
-    "theta_start": 0,
-    "theta_min": -4,
-    "theta_max": 4,
-    "se_target": 0.4,
-    "min_items": 15,
-    "max_items": 50,
-    "exposure_control": true,
-    "content_balancing": true
-  },
-  "additionalSettings": {
-    "passingGrade": 70,
-    "timeLimit": 90,
-    "allowCalculator": false,
-    "calculatorType": "basic",
-    "proctoring": true,
-    "shuffleQuestions": true,
-    "showCorrectAnswers": false
-  }
+  "missingTopics": [
+    {
+      "topic": "Airway Management",
+      "description": "Advanced airway techniques for paramedic certification",
+      "suggestedPercentage": 30,
+      "questionCount": 35
+    }
+  ]
 }
 
-CRITICAL: Generate realistic, subject-specific content. NO generic placeholders like "Option A", "Option B". 
-Each question and answer must be relevant to the exam subject area.`;
+Only include testbanks with relevanceScore >= 0.6. Ensure all percentages total 100%.
+`;
+
+        try {
+          const analysisResponse = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              { role: "system", content: "You are an expert educational content analyst. Analyze testbank content for alignment with exam requirements." },
+              { role: "user", content: analysisPrompt }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.3,
+          });
+
+          return JSON.parse(analysisResponse.choices[0].message.content || '{"applicableTestbanks": [], "missingTopics": []}');
+        } catch (error) {
+          console.error('Content analysis failed:', error);
+          return { applicableTestbanks: [], missingTopics: [] };
+        }
+      };
 
       // Use direct OpenAI call for configuration generation
       const OpenAI = (await import('openai')).default;
@@ -9359,12 +9290,114 @@ Each question and answer must be relevant to the exam subject area.`;
         });
       }
 
+      // STEP 2: Perform content analysis
+      const contentAnalysis = await analyzeExistingContent(prompt, existingTestbanks);
+      console.log('Content analysis result:', JSON.stringify(contentAnalysis, null, 2));
+
+      // STEP 3: Create enhanced AI prompt for missing content generation
+      const aiPrompt = `
+You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT) and comprehensive exam development.
+
+USER REQUIREMENTS:
+${prompt}
+
+EXAM TITLE: ${title}
+
+EXISTING APPLICABLE CONTENT:
+${JSON.stringify(contentAnalysis.applicableTestbanks, null, 2)}
+
+MISSING CONTENT TO GENERATE:
+${JSON.stringify(contentAnalysis.missingTopics, null, 2)}
+
+CRITICAL INSTRUCTIONS:
+- Generate ONLY the missing content identified in the analysis
+- Each new item bank should have 40-60 questions for proper CAT randomization
+- Create realistic, subject-specific questions across difficulty levels 3-9
+- Ensure questions cover the full spectrum: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)
+- Generate scenario-based questions with professional terminology
+- NO generic placeholders - all content must be subject-specific
+
+Generate a detailed CAT exam configuration in JSON format:
+
+{
+  "title": "${title}",
+  "description": "Detailed description based on the user requirements - make it specific to the subject area",
+  "subject": "Extract the main subject from user requirements",
+  "difficulty": {"min": 3, "max": 9},
+  "estimatedDuration": 90,
+  "targetAudience": "Specific audience based on requirements",
+  "learningObjectives": [
+    "Comprehensive learning objectives based on user requirements"
+  ],
+  "existingItemBanks": ${JSON.stringify(contentAnalysis.applicableTestbanks)},
+  "newItemBanks": [
+    // Generate ONLY for missing topics - each with 50-70 questions
+    {
+      "id": null,
+      "name": "Topic Name from missing content",
+      "description": "Detailed description",
+      "subject": "Subject area",
+      "questionCount": 55,
+      "percentage": "From missing topics analysis",
+      "isNew": true,
+      "questions": [
+        // Generate 10-15 sample questions across difficulty spectrum:
+        // 3 easy questions (difficulty 3-4)
+        // 6 medium questions (difficulty 5-7) 
+        // 3-4 hard questions (difficulty 8-9)
+        {
+          "questionText": "Realistic scenario-based question",
+          "type": "multiple_choice",
+          "difficulty": "3-9 based on distribution",
+          "bloomsLevel": "remember|understand|apply|analyze|evaluate|create",
+          "answerOptions": [
+            {"answerText": "Realistic, subject-specific option", "isCorrect": false, "displayOrder": 0},
+            {"answerText": "Correct answer with professional terminology", "isCorrect": true, "displayOrder": 1},
+            {"answerText": "Plausible distractor option", "isCorrect": false, "displayOrder": 2},
+            {"answerText": "Another realistic wrong option", "isCorrect": false, "displayOrder": 3}
+          ],
+          "explanation": "Professional explanation with reasoning",
+          "tags": ["topic-specific", "scenario-based"]
+        }
+      ]
+    }
+  ],
+  "catSettings": {
+    "model": "irt_2pl",
+    "theta_start": 0,
+    "theta_min": -4,
+    "theta_max": 4,
+    "se_target": 0.3,
+    "min_items": 20,
+    "max_items": 60,
+    "exposure_control": true,
+    "content_balancing": true
+  },
+  "additionalSettings": {
+    "passingGrade": 70,
+    "timeLimit": 120,
+    "allowCalculator": false,
+    "calculatorType": "basic", 
+    "proctoring": true,
+    "shuffleQuestions": true,
+    "showCorrectAnswers": false
+  }
+}
+
+CRITICAL REQUIREMENTS:
+- Generate 50-70 questions per new item bank for proper randomization
+- Questions must span difficulty levels 3-9 with proper distribution
+- Each question must be scenario-based and subject-specific
+- NO generic content - all answers must use professional terminology
+- Include comprehensive explanations for learning value`;
+
+      // STEP 4: Get AI response for missing content generation
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           { 
             role: "system", 
-            content: "You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). You generate comprehensive CAT exam configurations in valid JSON format." 
+            content: "You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). Generate comprehensive exam configurations with realistic content." 
           },
           { role: "user", content: aiPrompt }
         ],
@@ -9383,263 +9416,337 @@ Each question and answer must be relevant to the exam subject area.`;
         return res.status(500).json({ message: 'Failed to parse AI response from OpenAI' });
       }
 
-      // Ensure we always have proper item banks with percentages that total 100%
-      if (!examConfig.itemBanks || examConfig.itemBanks.length === 0) {
-        console.warn('AI did not generate item banks, creating subject-specific defaults...');
+      // STEP 5: Combine existing applicable testbanks with new generated content
+      let combinedItemBanks = [];
+      
+      // Add existing applicable testbanks
+      if (contentAnalysis.applicableTestbanks && contentAnalysis.applicableTestbanks.length > 0) {
+        combinedItemBanks = contentAnalysis.applicableTestbanks.map((bank: any) => ({
+          id: bank.id,
+          name: existingTestbanks.find((tb: any) => tb.id === bank.id)?.title || bank.name,
+          description: existingTestbanks.find((tb: any) => tb.id === bank.id)?.description || bank.contentAlignment,
+          subject: existingTestbanks.find((tb: any) => tb.id === bank.id)?.subject || examConfig.subject,
+          questionCount: existingTestbanks.find((tb: any) => tb.id === bank.id)?.questionCount || 20,
+          percentage: bank.suggestedPercentage,
+          isNew: false,
+          questions: [] // Existing questions will be loaded separately
+        }));
+        console.log('Using existing applicable testbanks:', combinedItemBanks.length);
+      }
+
+      // Add new generated item banks
+      if (examConfig.newItemBanks && examConfig.newItemBanks.length > 0) {
+        const newBanks = examConfig.newItemBanks.map((bank: any) => ({
+          ...bank,
+          subject: examConfig.subject || bank.subject
+        }));
+        combinedItemBanks = [...combinedItemBanks, ...newBanks];
+        console.log('Adding new generated item banks:', newBanks.length);
+      }
+
+      // STEP 6: Intelligent fallback for missing content analysis
+      if (combinedItemBanks.length === 0) {
+        console.warn('No applicable existing content and AI did not generate new banks, creating intelligent fallback...');
         
-        // Create subject-specific fallback based on prompt content
+        // Analyze the prompt to create topic-specific fallback content
         const isNREMT = prompt.toLowerCase().includes('nremt') || prompt.toLowerCase().includes('paramedic') || prompt.toLowerCase().includes('ems');
         const isMedical = prompt.toLowerCase().includes('medical') || prompt.toLowerCase().includes('health') || isNREMT;
         
         if (isNREMT) {
-          examConfig.itemBanks = [
+          combinedItemBanks = [
             {
               id: null,
-              name: "NREMT - Airway and Breathing",
-              description: "Assessment and management of airway, breathing, and ventilation emergencies",
+              name: "NREMT - Airway and Breathing Management",
+              description: "Advanced airway assessment, management techniques, and ventilation strategies for paramedic certification",
               subject: "NREMT Paramedic",
-              questionCount: 30,
+              questionCount: 45,
               percentage: 35,
               isNew: true,
-              questions: [
-                {
-                  questionText: "A 45-year-old patient presents with severe respiratory distress. You note paradoxical chest wall movement on the right side. Breath sounds are absent on the right. What is your immediate priority?",
-                  type: "multiple_choice",
-                  difficulty: 7,
-                  bloomsLevel: "analyze",
-                  answerOptions: [
-                    {"answerText": "Establish IV access for fluid resuscitation", "isCorrect": false, "displayOrder": 0},
-                    {"answerText": "Perform immediate needle thoracostomy", "isCorrect": true, "displayOrder": 1},
-                    {"answerText": "Administer high-flow oxygen via non-rebreather mask", "isCorrect": false, "displayOrder": 2},
-                    {"answerText": "Prepare for immediate intubation", "isCorrect": false, "displayOrder": 3}
-                  ],
-                  explanation: "Paradoxical chest movement with absent breath sounds indicates tension pneumothorax requiring immediate needle decompression",
-                  tags: ["airway", "breathing", "emergency-procedures"]
-                },
-                {
-                  questionText: "You are ventilating an unconscious patient with a bag-mask device. Which finding indicates effective ventilation?",
-                  type: "multiple_choice",
-                  difficulty: 5,
-                  bloomsLevel: "evaluate",
-                  answerOptions: [
-                    {"answerText": "Chest rise and fall with each ventilation", "isCorrect": true, "displayOrder": 0},
-                    {"answerText": "Heart rate increasing to 120 bpm", "isCorrect": false, "displayOrder": 1},
-                    {"answerText": "Blood pressure rising to 160/90", "isCorrect": false, "displayOrder": 2},
-                    {"answerText": "Patient begins to show purposeful movement", "isCorrect": false, "displayOrder": 3}
-                  ],
-                  explanation: "Effective ventilation is indicated by adequate chest rise and fall, ensuring proper air exchange",
-                  tags: ["ventilation", "assessment", "airway-management"]
-                }
-              ]
+              questions: createNREMTAirwayQuestions()
             },
             {
               id: null,
-              name: "NREMT - Cardiac Emergencies", 
-              description: "Assessment and management of cardiovascular emergencies including arrhythmias and cardiac arrest",
+              name: "NREMT - Cardiac Emergencies and ECG Interpretation", 
+              description: "Cardiovascular emergency management, arrhythmia recognition, and 12-lead ECG interpretation for advanced life support",
               subject: "NREMT Paramedic",
-              questionCount: 25,
+              questionCount: 40,
+              percentage: 35,
+              isNew: true,
+              questions: createNREMTCardiacQuestions()
+            },
+            {
+              id: null,
+              name: "NREMT - Trauma Assessment and Management",
+              description: "Systematic trauma assessment, injury pattern recognition, and emergency intervention protocols",
+              subject: "NREMT Paramedic", 
+              questionCount: 35,
               percentage: 30,
               isNew: true,
-              questions: [
-                {
-                  questionText: "A 68-year-old male presents with crushing chest pain radiating to his left arm. His 12-lead ECG shows ST-elevation in leads II, III, and aVF. What is the most likely diagnosis?",
-                  type: "multiple_choice",
-                  difficulty: 6,
-                  bloomsLevel: "analyze",
-                  answerOptions: [
-                    {"answerText": "Anterior wall myocardial infarction", "isCorrect": false, "displayOrder": 0},
-                    {"answerText": "Inferior wall myocardial infarction", "isCorrect": true, "displayOrder": 1},
-                    {"answerText": "Lateral wall myocardial infarction", "isCorrect": false, "displayOrder": 2},
-                    {"answerText": "Unstable angina", "isCorrect": false, "displayOrder": 3}
-                  ],
-                  explanation: "ST-elevation in leads II, III, and aVF indicates inferior wall myocardial infarction",
-                  tags: ["cardiac", "12-lead-ecg", "mi-recognition"]
-                }
-              ]
-            },
-            {
-              id: null,
-              name: "NREMT - Trauma Assessment",
-              description: "Systematic assessment and management of trauma patients using established protocols",
-              subject: "NREMT Paramedic", 
-              questionCount: 20,
-              percentage: 35,
-              isNew: true,
-              questions: [
-                {
-                  questionText: "During the primary assessment of a trauma patient, you discover an open chest wound with air bubbling through it. What is your immediate intervention?",
-                  type: "multiple_choice",
-                  difficulty: 6,
-                  bloomsLevel: "apply",
-                  answerOptions: [
-                    {"answerText": "Cover with an occlusive dressing taped on three sides", "isCorrect": true, "displayOrder": 0},
-                    {"answerText": "Cover completely with an occlusive dressing", "isCorrect": false, "displayOrder": 1},
-                    {"answerText": "Leave the wound open to allow air to escape", "isCorrect": false, "displayOrder": 2},
-                    {"answerText": "Apply direct pressure with a sterile gauze pad", "isCorrect": false, "displayOrder": 3}
-                  ],
-                  explanation: "Open chest wounds require three-sided occlusive dressing to prevent tension pneumothorax while allowing air to escape",
-                  tags: ["trauma", "chest-injury", "wound-care"]
-                }
-              ]
+              questions: createNREMTTraumaQuestions()
             }
           ];
+          examConfig.subject = 'NREMT Paramedic';
         } else if (isMedical) {
-          examConfig.itemBanks = [
+          combinedItemBanks = [
             {
               id: null,
-              name: "Medical Assessment Principles",
-              description: "Fundamental principles of medical assessment and patient evaluation",
+              name: "Medical Assessment and Diagnosis",
+              description: "Systematic patient assessment, diagnostic reasoning, and clinical decision-making principles",
               subject: "Medical Education",
-              questionCount: 25,
+              questionCount: 35,
               percentage: 50,
               isNew: true,
-              questions: [
-                {
-                  questionText: "When performing a systematic physical examination, which assessment technique should be used last when examining the abdomen?",
-                  type: "multiple_choice",
-                  difficulty: 4,
-                  bloomsLevel: "remember",
-                  answerOptions: [
-                    {"answerText": "Inspection", "isCorrect": false, "displayOrder": 0},
-                    {"answerText": "Auscultation", "isCorrect": false, "displayOrder": 1},
-                    {"answerText": "Percussion", "isCorrect": false, "displayOrder": 2},
-                    {"answerText": "Palpation", "isCorrect": true, "displayOrder": 3}
-                  ],
-                  explanation: "Palpation should be performed last as it may alter bowel sounds heard during auscultation",
-                  tags: ["assessment", "physical-examination", "technique"]
-                }
-              ]
+              questions: createMedicalAssessmentQuestions()
             },
             {
               id: null,
-              name: "Clinical Decision Making",
-              description: "Application of clinical reasoning and evidence-based decision making in patient care",
+              name: "Clinical Application and Case Management",
+              description: "Real-world application of medical knowledge, case-based reasoning, and treatment protocols",
               subject: "Medical Education",
-              questionCount: 20,
+              questionCount: 30,
               percentage: 50,
               isNew: true,
-              questions: [
-                {
-                  questionText: "A patient presents with acute shortness of breath, chest pain, and unilateral leg swelling. Which diagnostic test would be most appropriate to confirm your suspected diagnosis?",
-                  type: "multiple_choice",
-                  difficulty: 7,
-                  bloomsLevel: "analyze",
-                  answerOptions: [
-                    {"answerText": "Chest X-ray", "isCorrect": false, "displayOrder": 0},
-                    {"answerText": "CT pulmonary angiogram", "isCorrect": true, "displayOrder": 1},
-                    {"answerText": "Echocardiogram", "isCorrect": false, "displayOrder": 2},
-                    {"answerText": "Complete blood count", "isCorrect": false, "displayOrder": 3}
-                  ],
-                  explanation: "Clinical presentation suggests pulmonary embolism; CT pulmonary angiogram is the gold standard for diagnosis",
-                  tags: ["clinical-reasoning", "diagnostics", "pulmonary-embolism"]
-                }
-              ]
+              questions: createClinicalApplicationQuestions()
             }
           ];
+          examConfig.subject = 'Medical Education';
         } else {
-          // Generic but more sophisticated fallback
-          examConfig.itemBanks = [
+          // Create topic-specific content based on title and prompt analysis
+          const subjectArea = examConfig.subject || extractSubjectFromPrompt(prompt, title);
+          combinedItemBanks = [
             {
               id: null,
-              name: `${title} - Fundamental Concepts`,
-              description: `Core theoretical knowledge and foundational principles for ${title}`,
-              subject: examConfig.subject || 'General Education',
-              questionCount: 25,
+              name: `${subjectArea} - Core Knowledge`,
+              description: `Fundamental concepts, principles, and theoretical foundations in ${subjectArea}`,
+              subject: subjectArea,
+              questionCount: 40,
               percentage: 60,
               isNew: true,
-              questions: [
-                {
-                  questionText: `Which fundamental principle is most critical when applying the core concepts covered in ${title}?`,
-                  type: "multiple_choice",
-                  difficulty: 5,
-                  bloomsLevel: "understand",
-                  answerOptions: [
-                    {"answerText": "Systematic approach to problem-solving", "isCorrect": true, "displayOrder": 0},
-                    {"answerText": "Memorization of specific procedures", "isCorrect": false, "displayOrder": 1},
-                    {"answerText": "Following predetermined protocols only", "isCorrect": false, "displayOrder": 2},
-                    {"answerText": "Relying on instinct and experience alone", "isCorrect": false, "displayOrder": 3}
-                  ],
-                  explanation: "A systematic approach ensures consistent, reliable application of knowledge across various scenarios",
-                  tags: ["fundamentals", "problem-solving", "methodology"]
-                }
-              ]
+              questions: createGenericKnowledgeQuestions(subjectArea, title)
             },
             {
               id: null,
-              name: `${title} - Practical Applications`,
-              description: `Real-world application and implementation of knowledge from ${title}`,
-              subject: examConfig.subject || 'General Education',
-              questionCount: 15,
-              percentage: 40,
+              name: `${subjectArea} - Applied Skills`,
+              description: `Practical application, problem-solving, and real-world implementation of ${subjectArea} concepts`,
+              subject: subjectArea,
+              questionCount: 30,
+              percentage: 40, 
               isNew: true,
-              questions: [
-                {
-                  questionText: `When applying the concepts from ${title} in a practical setting, what is the most important factor to consider?`,
-                  type: "multiple_choice",
-                  difficulty: 6,
-                  bloomsLevel: "apply",
-                  answerOptions: [
-                    {"answerText": "Context and situational factors", "isCorrect": true, "displayOrder": 0},
-                    {"answerText": "Speed of implementation", "isCorrect": false, "displayOrder": 1},
-                    {"answerText": "Textbook accuracy over adaptation", "isCorrect": false, "displayOrder": 2},
-                    {"answerText": "Personal preference and style", "isCorrect": false, "displayOrder": 3}
-                  ],
-                  explanation: "Practical application requires understanding context and adapting theoretical knowledge to specific situations",
-                  tags: ["application", "context", "adaptation"]
-                }
-              ]
+              questions: createGenericApplicationQuestions(subjectArea, title)
             }
           ];
         }
-        
-        // Set reasonable default values for the exam if AI didn't provide them
-        examConfig.subject = examConfig.subject || (isNREMT ? 'NREMT Paramedic' : (isMedical ? 'Medical Education' : 'General Education'));
-        examConfig.description = examConfig.description || `Computer Adaptive Test for ${title}`;
-        examConfig.targetAudience = examConfig.targetAudience || 'Students';
-        examConfig.learningObjectives = examConfig.learningObjectives || [`Master key concepts in ${title}`, `Apply knowledge in practical scenarios`, `Demonstrate proficiency in ${examConfig.subject}`];
       }
 
-      // Validate that percentages total 100%
-      const totalPercentage = examConfig.itemBanks.reduce((sum: number, bank: any) => sum + (bank.percentage || 0), 0);
+      // Helper function to create NREMT airway questions
+      function createNREMTAirwayQuestions() {
+        return [
+          {
+            questionText: "A 45-year-old patient presents with severe respiratory distress and stridor. You observe paradoxical chest movement on the right side with absent breath sounds. What is your immediate priority?",
+            type: "multiple_choice",
+            difficulty: 8,
+            bloomsLevel: "analyze",
+            answerOptions: [
+              {"answerText": "Establish IV access for medication administration", "isCorrect": false, "displayOrder": 0},
+              {"answerText": "Perform immediate needle thoracostomy", "isCorrect": true, "displayOrder": 1},
+              {"answerText": "Administer albuterol via nebulizer", "isCorrect": false, "displayOrder": 2},
+              {"answerText": "Prepare for emergency cricothyrotomy", "isCorrect": false, "displayOrder": 3}
+            ],
+            explanation: "Paradoxical chest movement with absent breath sounds indicates tension pneumothorax requiring immediate needle decompression",
+            tags: ["airway", "breathing", "emergency-procedures", "tension-pneumothorax"]
+          },
+          {
+            questionText: "During bag-mask ventilation of an unconscious patient, which assessment finding best indicates effective ventilation?",
+            type: "multiple_choice", 
+            difficulty: 5,
+            bloomsLevel: "evaluate",
+            answerOptions: [
+              {"answerText": "Bilateral chest rise and fall with adequate tidal volume", "isCorrect": true, "displayOrder": 0},
+              {"answerText": "Heart rate increasing from 60 to 100 bpm", "isCorrect": false, "displayOrder": 1},
+              {"answerText": "Blood pressure improving to 120/80 mmHg", "isCorrect": false, "displayOrder": 2},
+              {"answerText": "Return of spontaneous movement", "isCorrect": false, "displayOrder": 3}
+            ],
+            explanation: "Effective ventilation is confirmed by observing adequate chest expansion and fall, indicating proper air exchange and ventilation",
+            tags: ["ventilation", "assessment", "airway-management"]
+          }
+        ];
+      }
+
+      // Helper function to create NREMT cardiac questions
+      function createNREMTCardiacQuestions() {
+        return [
+          {
+            questionText: "A 68-year-old male presents with crushing substernal chest pain radiating to his left arm and jaw. His 12-lead ECG shows ST-elevation in leads II, III, and aVF. What is the most likely diagnosis?",
+            type: "multiple_choice",
+            difficulty: 6,
+            bloomsLevel: "analyze", 
+            answerOptions: [
+              {"answerText": "Anterior STEMI involving the LAD territory", "isCorrect": false, "displayOrder": 0},
+              {"answerText": "Inferior STEMI involving the RCA territory", "isCorrect": true, "displayOrder": 1},
+              {"answerText": "Lateral STEMI involving the circumflex territory", "isCorrect": false, "displayOrder": 2},
+              {"answerText": "Non-ST elevation myocardial infarction (NSTEMI)", "isCorrect": false, "displayOrder": 3}
+            ],
+            explanation: "ST-elevation in leads II, III, and aVF indicates inferior wall myocardial infarction typically involving the right coronary artery",
+            tags: ["cardiac", "12-lead-ecg", "stemi", "mi-recognition"]
+          }
+        ];
+      }
+
+      // Helper function to create NREMT trauma questions
+      function createNREMTTraumaQuestions() {
+        return [
+          {
+            questionText: "During primary assessment of a multi-trauma patient, you discover a penetrating chest wound with air bubbling through it during inspiration. What is your immediate intervention?",
+            type: "multiple_choice",
+            difficulty: 7,
+            bloomsLevel: "apply",
+            answerOptions: [
+              {"answerText": "Apply an occlusive dressing sealed on three sides", "isCorrect": true, "displayOrder": 0},
+              {"answerText": "Completely seal the wound with an occlusive dressing", "isCorrect": false, "displayOrder": 1},
+              {"answerText": "Leave the wound uncovered to allow continued air escape", "isCorrect": false, "displayOrder": 2},
+              {"answerText": "Pack the wound with sterile gauze and apply pressure", "isCorrect": false, "displayOrder": 3}
+            ],
+            explanation: "A three-sided occlusive dressing allows air to escape during expiration while preventing air entry during inspiration, preventing tension pneumothorax",
+            tags: ["trauma", "chest-injury", "sucking-chest-wound", "wound-care"]
+          }
+        ];
+      }
+
+      // Helper functions for medical and generic content
+      function createMedicalAssessmentQuestions() {
+        return [
+          {
+            questionText: "When performing a systematic physical examination of the abdomen, which assessment technique should be performed last to avoid altering findings?",
+            type: "multiple_choice",
+            difficulty: 4,
+            bloomsLevel: "remember",
+            answerOptions: [
+              {"answerText": "Visual inspection", "isCorrect": false, "displayOrder": 0},
+              {"answerText": "Auscultation of bowel sounds", "isCorrect": false, "displayOrder": 1}, 
+              {"answerText": "Percussion for organ borders", "isCorrect": false, "displayOrder": 2},
+              {"answerText": "Palpation for masses and tenderness", "isCorrect": true, "displayOrder": 3}
+            ],
+            explanation: "Palpation should be performed last as it may stimulate bowel activity and alter auscultatory findings",
+            tags: ["assessment", "physical-examination", "abdominal-exam"]
+          }
+        ];
+      }
+
+      function createClinicalApplicationQuestions() {
+        return [
+          {
+            questionText: "A patient presents with acute dyspnea, pleuritic chest pain, and unilateral lower extremity swelling. Which diagnostic test would be most appropriate to confirm the suspected diagnosis?",
+            type: "multiple_choice",
+            difficulty: 7,
+            bloomsLevel: "analyze",
+            answerOptions: [
+              {"answerText": "Chest radiograph", "isCorrect": false, "displayOrder": 0},
+              {"answerText": "CT pulmonary angiogram (CTPA)", "isCorrect": true, "displayOrder": 1},
+              {"answerText": "Transthoracic echocardiogram", "isCorrect": false, "displayOrder": 2},
+              {"answerText": "Complete blood count with differential", "isCorrect": false, "displayOrder": 3}
+            ],
+            explanation: "The clinical presentation strongly suggests pulmonary embolism; CTPA is the gold standard diagnostic test for PE confirmation",
+            tags: ["clinical-reasoning", "diagnostics", "pulmonary-embolism", "evidence-based-medicine"]
+          }
+        ];
+      }
+
+      function extractSubjectFromPrompt(prompt: string, title: string) {
+        // Extract subject area from prompt keywords
+        const keywords = prompt.toLowerCase();
+        if (keywords.includes('biology') || keywords.includes('anatomy')) return 'Biology';
+        if (keywords.includes('chemistry') || keywords.includes('biochemistry')) return 'Chemistry';
+        if (keywords.includes('physics') || keywords.includes('mechanics')) return 'Physics';
+        if (keywords.includes('mathematics') || keywords.includes('calculus')) return 'Mathematics';
+        if (keywords.includes('psychology') || keywords.includes('behavior')) return 'Psychology';
+        if (keywords.includes('history') || keywords.includes('historical')) return 'History';
+        if (keywords.includes('literature') || keywords.includes('english')) return 'Literature';
+        if (keywords.includes('computer') || keywords.includes('programming')) return 'Computer Science';
+        return title || 'General Education';
+      }
+
+      function createGenericKnowledgeQuestions(subject: string, title: string) {
+        return [
+          {
+            questionText: `Which fundamental principle is most critical when applying core concepts in ${subject}?`,
+            type: "multiple_choice",
+            difficulty: 5,
+            bloomsLevel: "understand", 
+            answerOptions: [
+              {"answerText": "Systematic approach to problem analysis", "isCorrect": true, "displayOrder": 0},
+              {"answerText": "Memorization of specific procedures", "isCorrect": false, "displayOrder": 1},
+              {"answerText": "Strict adherence to predetermined protocols", "isCorrect": false, "displayOrder": 2},
+              {"answerText": "Relying primarily on intuition and experience", "isCorrect": false, "displayOrder": 3}
+            ],
+            explanation: "A systematic approach ensures consistent, evidence-based application of knowledge across various scenarios and contexts",
+            tags: ["fundamentals", "methodology", "critical-thinking"]
+          }
+        ];
+      }
+
+      function createGenericApplicationQuestions(subject: string, title: string) {
+        return [
+          {
+            questionText: `When applying ${subject} concepts in real-world situations, what factor should be prioritized?`,
+            type: "multiple_choice",
+            difficulty: 6,
+            bloomsLevel: "apply",
+            answerOptions: [
+              {"answerText": "Contextual factors and situational variables", "isCorrect": true, "displayOrder": 0},
+              {"answerText": "Speed of implementation", "isCorrect": false, "displayOrder": 1},
+              {"answerText": "Exact replication of textbook methods", "isCorrect": false, "displayOrder": 2},
+              {"answerText": "Personal preferences and comfort level", "isCorrect": false, "displayOrder": 3}
+            ],
+            explanation: "Effective application requires understanding context and adapting theoretical knowledge to specific situational demands",
+            tags: ["application", "context-analysis", "adaptive-thinking"]
+          }
+        ];
+      }
+
+      // STEP 7: Validate that percentages total 100%
+      const totalPercentage = combinedItemBanks.reduce((sum: number, bank: any) => sum + (bank.percentage || 0), 0);
       if (totalPercentage !== 100) {
         // Adjust percentages to total 100%
         const adjustment = 100 / totalPercentage;
-        examConfig.itemBanks.forEach((bank: any) => {
+        combinedItemBanks.forEach((bank: any) => {
           bank.percentage = Math.round((bank.percentage || 0) * adjustment);
         });
+        console.log('Adjusted percentages to total 100%');
       }
 
-      // Validate and structure the response - ALWAYS preserve user's title and description
+      // STEP 8: Structure the final response with combined content
       const structuredConfig = {
-        title: title, // Always use the user's provided title
+        title: title, // Always preserve user's title
         description: examConfig.description || `AI-generated Computer Adaptive Test: ${title}`,
         subject: examConfig.subject || 'General',
-        difficulty: examConfig.difficulty || { min: 3, max: 8 },
-        estimatedDuration: examConfig.estimatedDuration || 60,
+        difficulty: examConfig.difficulty || { min: 3, max: 9 },
+        estimatedDuration: examConfig.estimatedDuration || 90,
         targetAudience: examConfig.targetAudience || 'Students',
         learningObjectives: examConfig.learningObjectives || ['Assess understanding of core concepts'],
-        itemBanks: examConfig.itemBanks || [],
+        itemBanks: combinedItemBanks, // Use the intelligently combined item banks
         catSettings: {
-          model: examConfig.catSettings?.model || '2pl',
+          model: examConfig.catSettings?.model || 'irt_2pl',
           theta_start: examConfig.catSettings?.theta_start || 0,
           theta_min: examConfig.catSettings?.theta_min || -4,
           theta_max: examConfig.catSettings?.theta_max || 4,
-          se_target: examConfig.catSettings?.se_target || 0.4,
-          min_items: examConfig.catSettings?.min_items || 10,
-          max_items: examConfig.catSettings?.max_items || 50,
+          se_target: examConfig.catSettings?.se_target || 0.3,
+          min_items: examConfig.catSettings?.min_items || 20,
+          max_items: examConfig.catSettings?.max_items || 60,
           exposure_control: examConfig.catSettings?.exposure_control ?? true,
           content_balancing: examConfig.catSettings?.content_balancing ?? true
         },
         additionalSettings: {
           passingGrade: examConfig.additionalSettings?.passingGrade || 70,
-          timeLimit: examConfig.additionalSettings?.timeLimit || 60,
+          timeLimit: examConfig.additionalSettings?.timeLimit || 120,
           allowCalculator: examConfig.additionalSettings?.allowCalculator ?? false,
           calculatorType: examConfig.additionalSettings?.calculatorType || 'basic',
-          proctoring: examConfig.additionalSettings?.proctoring ?? false,
+          proctoring: examConfig.additionalSettings?.proctoring ?? true,
           shuffleQuestions: examConfig.additionalSettings?.shuffleQuestions ?? true,
           showCorrectAnswers: examConfig.additionalSettings?.showCorrectAnswers ?? false
         }
       };
+
+      console.log('Final structured config with', structuredConfig.itemBanks.length, 'item banks');
 
       res.json(structuredConfig);
     } catch (error) {
