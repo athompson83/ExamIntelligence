@@ -9319,68 +9319,87 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
       }
 
       // STEP 6: Ensure comprehensive coverage - generate missing NREMT topic areas
-      if (combinedItemBanks.length < 3 && (prompt.toLowerCase().includes('nremt') || prompt.toLowerCase().includes('paramedic'))) {
-        console.log('Ensuring comprehensive NREMT coverage with all required topic areas...');
+      if (combinedItemBanks.length < 5 && (prompt.toLowerCase().includes('nremt') || prompt.toLowerCase().includes('paramedic'))) {
+        console.log('Ensuring comprehensive NREMT coverage with all 5 required topic areas...');
         
         // Define the 5 core NREMT topic areas that must be covered
         const requiredNREMTTopics = [
           {
             name: "Advanced Cardiac Life Support",
-            description: "Comprehensive ACLS protocols, arrhythmia management, and cardiovascular emergencies",
-            questionCount: 55,
+            description: "Comprehensive ACLS protocols, arrhythmia management, and cardiovascular emergencies including cardiac arrest, rhythm interpretation, and advanced interventions",
+            questionCount: 60,
             percentage: 25
           },
           {
             name: "Trauma Assessment and Management", 
-            description: "Systematic trauma evaluation, injury recognition, and emergency interventions",
-            questionCount: 50,
+            description: "Systematic trauma evaluation, injury recognition, spinal immobilization, and emergency trauma interventions",
+            questionCount: 55,
             percentage: 25
           },
           {
             name: "Airway Management and Ventilation",
-            description: "Advanced airway techniques, ventilation strategies, and respiratory emergencies",
-            questionCount: 45,
+            description: "Advanced airway techniques, intubation procedures, ventilation strategies, and respiratory emergency management",
+            questionCount: 50,
             percentage: 20
           },
           {
             name: "Pharmacology and Medication Administration",
-            description: "Drug classifications, dosage calculations, and medication protocols for emergency care",
-            questionCount: 40,
+            description: "Emergency drug classifications, IV therapy, dosage calculations, and medication protocols for paramedic practice",
+            questionCount: 45,
             percentage: 15
           },
           {
-            name: "Patient Assessment and Clinical Decision Making",
-            description: "Systematic patient evaluation, diagnostic reasoning, and treatment prioritization",
-            questionCount: 35,
+            name: "Patient Assessment and EMS Operations",
+            description: "Systematic patient evaluation, scene safety, diagnostic reasoning, and EMS operational procedures",
+            questionCount: 40,
             percentage: 15
           }
         ];
 
-        // Generate comprehensive item banks for all missing topics
-        const existingTopics = combinedItemBanks.map(bank => bank.name.toLowerCase());
+        // Generate comprehensive item banks for ALL required topics
+        const existingTopicNames = combinedItemBanks.map(bank => bank.name.toLowerCase());
         
+        let generatedCount = 0;
         for (const topic of requiredNREMTTopics) {
-          const topicExists = existingTopics.some(existing => 
-            existing.includes(topic.name.toLowerCase().split(' ')[0]) || 
-            existing.includes(topic.name.toLowerCase().split(' ')[1])
+          // Check if this specific topic already exists
+          const topicKeywords = topic.name.toLowerCase().split(' ');
+          const topicExists = existingTopicNames.some(existing => 
+            topicKeywords.some(keyword => existing.includes(keyword))
           );
           
           if (!topicExists) {
-            console.log('Generating comprehensive ' + topic.name + ' item bank with ' + topic.questionCount + ' questions...');
+            console.log(`Generating comprehensive ${topic.name} item bank with ${topic.questionCount} questions...`);
             
-            // Generate questions for this specific topic using focused AI generation
-            const topicQuestions = await generateTopicQuestions(openai, topic.name, topic.description, topic.questionCount);
-            
-            combinedItemBanks.push({
-              id: null,
-              name: 'NREMT - ' + topic.name,
-              description: topic.description,
-              subject: "NREMT Paramedic",
-              questionCount: topic.questionCount,
-              percentage: topic.percentage,
-              isNew: true,
-              questions: topicQuestions
-            });
+            try {
+              // Generate questions for this specific topic using focused AI generation
+              const topicQuestions = await generateTopicQuestions(openai, topic.name, topic.description, topic.questionCount);
+              
+              if (topicQuestions && topicQuestions.length > 0) {
+                combinedItemBanks.push({
+                  id: null,
+                  name: `NREMT - ${topic.name}`,
+                  description: topic.description,
+                  subject: "NREMT Paramedic",
+                  questionCount: topicQuestions.length,
+                  percentage: topic.percentage,
+                  isNew: true,
+                  questions: topicQuestions
+                });
+                generatedCount++;
+                console.log(`Successfully generated ${topicQuestions.length} questions for ${topic.name}`);
+              } else {
+                console.warn(`Failed to generate questions for ${topic.name}, using fallback`);
+              }
+            } catch (error) {
+              console.error(`Error generating questions for ${topic.name}:`, error);
+              // Continue with other topics even if one fails
+            }
+          }
+          
+          // Limit generation to prevent hanging
+          if (generatedCount >= 3) {
+            console.log('Generated maximum topics for this session');
+            break;
           }
         }
       }
@@ -9481,61 +9500,101 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
 
       // Helper function to generate comprehensive topic-specific questions
       async function generateTopicQuestions(openaiClient: any, topicName: string, topicDescription: string, questionCount: number) {
-        console.log('Generating ' + questionCount + ' questions for ' + topicName + '...');
+        console.log(`Generating ${questionCount} questions for ${topicName}...`);
         
-        const topicPrompt = `Generate exactly ${questionCount} comprehensive NREMT paramedic questions for:
+        // For large question counts, generate in smaller batches
+        const batchSize = Math.min(25, questionCount);
+        const batches = Math.ceil(questionCount / batchSize);
+        let allQuestions = [];
+        
+        for (let batch = 0; batch < batches; batch++) {
+          const questionsInBatch = batch === batches - 1 
+            ? questionCount - (batch * batchSize) 
+            : batchSize;
+          
+          console.log(`Generating batch ${batch + 1}/${batches} with ${questionsInBatch} questions...`);
+          
+          const topicPrompt = `Generate exactly ${questionsInBatch} comprehensive NREMT paramedic questions for:
 
 TOPIC: ${topicName}
 DESCRIPTION: ${topicDescription}
 
 CRITICAL REQUIREMENTS:
-- Generate EXACTLY ${questionCount} complete questions
-- Use authentic NREMT paramedic terminology and scenarios
+- Generate EXACTLY ${questionsInBatch} complete questions in this batch
+- Use authentic NREMT paramedic terminology and realistic emergency scenarios
 - Distribute difficulties: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)
 - Each question must be scenario-based with realistic patient presentations
-- Include proper medical rationale in explanations
+- Include detailed medical rationale in explanations
+- Make questions unique and non-repetitive
 
-Please respond with a JSON object with questions array containing exactly ${questionCount} questions:
+IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBatch} questions:
 {
   "questions": [
     {
-      "questionText": "Realistic NREMT scenario question",
+      "questionText": "A 45-year-old male presents with crushing chest pain radiating to his left arm. He is diaphoretic and nauseated. What is your immediate priority?",
       "type": "multiple_choice",
-      "difficulty": 3,
-      "bloomsLevel": "apply",
+      "difficulty": 5,
+      "bloomsLevel": "apply", 
       "answerOptions": [
-        {"answerText": "Professional medical option", "isCorrect": false, "displayOrder": 0},
-        {"answerText": "Correct NREMT protocol", "isCorrect": true, "displayOrder": 1},
-        {"answerText": "Plausible medical distractor", "isCorrect": false, "displayOrder": 2},
-        {"answerText": "Alternative medical option", "isCorrect": false, "displayOrder": 3}
+        {"answerText": "Obtain a 12-lead ECG", "isCorrect": false, "displayOrder": 0},
+        {"answerText": "Administer high-flow oxygen", "isCorrect": true, "displayOrder": 1},
+        {"answerText": "Start an IV line", "isCorrect": false, "displayOrder": 2},
+        {"answerText": "Give aspirin 324mg", "isCorrect": false, "displayOrder": 3}
       ],
-      "explanation": "Medical rationale with NREMT protocol justification",
-      "tags": ["${topicName.toLowerCase()}", "scenario-based"]
+      "explanation": "High-flow oxygen is the immediate priority to optimize oxygen delivery in suspected MI. Other interventions follow in sequence.",
+      "tags": ["${topicName.toLowerCase()}", "cardiac-emergency"]
     }
   ]
 }`;
 
-        try {
-          const response = await openaiClient.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-              { role: "system", content: "You are an expert NREMT paramedic exam developer. Generate comprehensive question sets with authentic medical content. Always respond with valid JSON format." },
-              { role: "user", content: topicPrompt }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.7,
-          });
+          try {
+            const response = await openaiClient.chat.completions.create({
+              model: "gpt-4o",
+              messages: [
+                { 
+                  role: "system", 
+                  content: "You are an expert NREMT paramedic exam developer with extensive experience in emergency medicine. Generate comprehensive, realistic question sets with authentic medical content. Always respond with valid JSON format containing the exact number of questions requested." 
+                },
+                { role: "user", content: topicPrompt }
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.7,
+              max_tokens: 4000
+            });
 
-          const result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
-          const questions = result.questions || result || [];
+            let result;
+            try {
+              result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
+            } catch (parseError) {
+              console.error(`JSON parse error in batch ${batch + 1}:`, parseError);
+              console.log('Raw response:', response.choices[0].message.content);
+              result = { questions: [] };
+            }
+            const questions = result.questions || [];
+            
+            if (questions.length === 0) {
+              console.warn(`No questions generated in batch ${batch + 1}, using fallback`);
+              const fallbackQuestions = createFallbackQuestions(topicName, questionsInBatch);
+              allQuestions.push(...fallbackQuestions);
+            } else {
+              console.log(`Generated ${questions.length} questions in batch ${batch + 1}`);
+              allQuestions.push(...questions.slice(0, questionsInBatch));
+            }
+            
+          } catch (error) {
+            console.error(`Error generating batch ${batch + 1} for ${topicName}:`, error);
+            const fallbackQuestions = createFallbackQuestions(topicName, questionsInBatch);
+            allQuestions.push(...fallbackQuestions);
+          }
           
-          console.log('Generated ' + questions.length + ' questions for ' + topicName);
-          return questions.slice(0, questionCount); // Ensure exact count
-          
-        } catch (error) {
-          console.error('Error generating questions for ' + topicName + ':', error);
-          return createFallbackQuestions(topicName, questionCount);
+          // Add small delay between batches to prevent rate limiting
+          if (batch < batches - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
+        
+        console.log(`Total generated questions for ${topicName}: ${allQuestions.length}`);
+        return allQuestions.slice(0, questionCount); // Ensure exact count
       }
 
       // Fallback function for topic-specific questions
@@ -9543,10 +9602,77 @@ Please respond with a JSON object with questions array containing exactly ${ques
         const baseQuestions = getTopicSpecificQuestions(topicName);
         return Array.from({length: count}, (_, i) => ({
           ...baseQuestions[i % baseQuestions.length],
-          questionText: baseQuestions[i % baseQuestions.length].questionText + ' (Scenario ' + (i + 1) + ')',
+          questionText: baseQuestions[i % baseQuestions.length].questionText + ` (Scenario ${i + 1})`,
           difficulty: 3 + (i % 7), // Distribute 3-9
           tags: [topicName.toLowerCase(), "scenario-based"]
         }));
+      }
+
+      // Get topic-specific base questions for fallback
+      function getTopicSpecificQuestions(topicName: string) {
+        const lowerTopic = topicName.toLowerCase();
+        
+        if (lowerTopic.includes('cardiac') || lowerTopic.includes('heart')) {
+          return [
+            {
+              questionText: "A patient presents with chest pain and diaphoresis. What is your immediate assessment priority?",
+              type: "multiple_choice",
+              bloomsLevel: "apply",
+              answerOptions: [
+                { answerText: "Check blood pressure", isCorrect: false, displayOrder: 0 },
+                { answerText: "Obtain 12-lead ECG", isCorrect: true, displayOrder: 1 },
+                { answerText: "Start IV access", isCorrect: false, displayOrder: 2 },
+                { answerText: "Administer oxygen", isCorrect: false, displayOrder: 3 }
+              ],
+              explanation: "12-lead ECG is essential for cardiac assessment and potential STEMI identification."
+            }
+          ];
+        } else if (lowerTopic.includes('trauma')) {
+          return [
+            {
+              questionText: "In a multi-trauma patient, what is the primary survey priority?",
+              type: "multiple_choice", 
+              bloomsLevel: "apply",
+              answerOptions: [
+                { answerText: "Airway management", isCorrect: true, displayOrder: 0 },
+                { answerText: "Spinal immobilization", isCorrect: false, displayOrder: 1 },
+                { answerText: "IV fluid resuscitation", isCorrect: false, displayOrder: 2 },
+                { answerText: "Pain management", isCorrect: false, displayOrder: 3 }
+              ],
+              explanation: "Airway is the first priority in the ABC approach to trauma assessment."
+            }
+          ];
+        } else if (lowerTopic.includes('airway') || lowerTopic.includes('breathing')) {
+          return [
+            {
+              questionText: "A patient presents with severe respiratory distress and stridor. What is your immediate concern?",
+              type: "multiple_choice",
+              bloomsLevel: "apply", 
+              answerOptions: [
+                { answerText: "Upper airway obstruction", isCorrect: true, displayOrder: 0 },
+                { answerText: "Pneumothorax", isCorrect: false, displayOrder: 1 },
+                { answerText: "Asthma exacerbation", isCorrect: false, displayOrder: 2 },
+                { answerText: "Pulmonary edema", isCorrect: false, displayOrder: 3 }
+              ],
+              explanation: "Stridor indicates upper airway obstruction requiring immediate intervention."
+            }
+          ];
+        } else {
+          return [
+            {
+              questionText: "What is the most important consideration in emergency patient assessment?",
+              type: "multiple_choice",
+              bloomsLevel: "analyze",
+              answerOptions: [
+                { answerText: "Patient safety", isCorrect: true, displayOrder: 0 },
+                { answerText: "Documentation", isCorrect: false, displayOrder: 1 },
+                { answerText: "Family communication", isCorrect: false, displayOrder: 2 },
+                { answerText: "Equipment preparation", isCorrect: false, displayOrder: 3 }
+              ],
+              explanation: "Patient safety is always the primary concern in emergency situations."
+            }
+          ];
+        }
       }
 
       // Helper function to create NREMT airway questions
