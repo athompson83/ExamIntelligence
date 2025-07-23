@@ -9264,7 +9264,22 @@ Initialize all interactions with these principles as your foundation.`,
       }
 
       // Generate AI prompt for CAT exam configuration
-      const aiPrompt = 'You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT) and comprehensive exam development.\n\nUSER REQUIREMENTS:\n' + prompt + '\n\nEXAM TITLE: ' + title + '\n\nCRITICAL INSTRUCTIONS:\n- Generate comprehensive content with multiple item banks\n- Each item bank MUST have 50-70 questions for proper CAT randomization\n- Create realistic, subject-specific questions across difficulty levels 3-9\n- Ensure questions cover the full spectrum: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)\n- Generate scenario-based questions with professional terminology\n- NO generic placeholders - all content must be subject-specific\n\nGenerate a detailed CAT exam configuration with complete question sets.';
+      const aiPrompt = `You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT) and comprehensive exam development.
+
+USER REQUIREMENTS:
+${prompt}
+
+EXAM TITLE: ${title}
+
+CRITICAL INSTRUCTIONS:
+- Generate comprehensive content with multiple item banks
+- Each item bank MUST have 50-70 questions for proper CAT randomization
+- Create realistic, subject-specific questions across difficulty levels 3-9
+- Ensure questions cover the full spectrum: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)
+- Generate scenario-based questions with professional terminology
+- NO generic placeholders - all content must be subject-specific
+
+Please respond with a valid JSON object containing the detailed CAT exam configuration with complete question sets. Format your entire response as JSON.`;
 
       // Generate AI response for CAT exam configuration
       const response = await openai.chat.completions.create({
@@ -9272,7 +9287,7 @@ Initialize all interactions with these principles as your foundation.`,
         messages: [
           { 
             role: "system", 
-            content: "You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). Generate comprehensive exam configurations with realistic content." 
+            content: "You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). Generate comprehensive exam configurations with realistic content. Always respond with valid JSON format." 
           },
           { role: "user", content: aiPrompt }
         ],
@@ -9291,32 +9306,16 @@ Initialize all interactions with these principles as your foundation.`,
         return res.status(500).json({ message: 'Failed to parse AI response from OpenAI' });
       }
 
-      // STEP 5: Combine existing applicable testbanks with new generated content
+      // Create item banks from AI generated configuration
       let combinedItemBanks = [];
       
-      // Add existing applicable testbanks
-      if (contentAnalysis.applicableTestbanks && contentAnalysis.applicableTestbanks.length > 0) {
-        combinedItemBanks = contentAnalysis.applicableTestbanks.map((bank: any) => ({
-          id: bank.id,
-          name: existingTestbanks.find((tb: any) => tb.id === bank.id)?.title || bank.name,
-          description: existingTestbanks.find((tb: any) => tb.id === bank.id)?.description || bank.contentAlignment,
-          subject: existingTestbanks.find((tb: any) => tb.id === bank.id)?.subject || examConfig.subject,
-          questionCount: existingTestbanks.find((tb: any) => tb.id === bank.id)?.questionCount || 20,
-          percentage: bank.suggestedPercentage,
-          isNew: false,
-          questions: [] // Existing questions will be loaded separately
-        }));
-        console.log('Using existing applicable testbanks:', combinedItemBanks.length);
-      }
-
-      // Add new generated item banks
-      if (examConfig.newItemBanks && examConfig.newItemBanks.length > 0) {
-        const newBanks = examConfig.newItemBanks.map((bank: any) => ({
+      // Add new generated item banks from AI response
+      if (examConfig.itemBanks && examConfig.itemBanks.length > 0) {
+        combinedItemBanks = examConfig.itemBanks.map((bank: any) => ({
           ...bank,
-          subject: examConfig.subject || bank.subject
+          subject: examConfig.subject || bank.subject || 'General'
         }));
-        combinedItemBanks = [...combinedItemBanks, ...newBanks];
-        console.log('Adding new generated item banks:', newBanks.length);
+        console.log('Adding AI generated item banks:', combinedItemBanks.length);
       }
 
       // STEP 6: Ensure comprehensive coverage - generate missing NREMT topic areas
@@ -9484,13 +9483,43 @@ Initialize all interactions with these principles as your foundation.`,
       async function generateTopicQuestions(openaiClient: any, topicName: string, topicDescription: string, questionCount: number) {
         console.log('Generating ' + questionCount + ' questions for ' + topicName + '...');
         
-        const topicPrompt = 'Generate exactly ' + questionCount + ' comprehensive NREMT paramedic questions for:\n\nTOPIC: ' + topicName + '\nDESCRIPTION: ' + topicDescription + '\n\nCRITICAL REQUIREMENTS:\n- Generate EXACTLY ' + questionCount + ' complete questions\n- Use authentic NREMT paramedic terminology and scenarios\n- Distribute difficulties: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)\n- Each question must be scenario-based with realistic patient presentations\n- Include proper medical rationale in explanations\n\nReturn JSON object with questions array containing exactly ' + questionCount + ' questions:\n{\n  "questions": [\n    {\n      "questionText": "Realistic NREMT scenario question",\n      "type": "multiple_choice",\n      "difficulty": 3,\n      "bloomsLevel": "apply",\n      "answerOptions": [\n        {"answerText": "Professional medical option", "isCorrect": false, "displayOrder": 0},\n        {"answerText": "Correct NREMT protocol", "isCorrect": true, "displayOrder": 1},\n        {"answerText": "Plausible medical distractor", "isCorrect": false, "displayOrder": 2},\n        {"answerText": "Alternative medical option", "isCorrect": false, "displayOrder": 3}\n      ],\n      "explanation": "Medical rationale with NREMT protocol justification",\n      "tags": ["' + topicName.toLowerCase() + '", "scenario-based"]\n    }\n  ]\n}';
+        const topicPrompt = `Generate exactly ${questionCount} comprehensive NREMT paramedic questions for:
+
+TOPIC: ${topicName}
+DESCRIPTION: ${topicDescription}
+
+CRITICAL REQUIREMENTS:
+- Generate EXACTLY ${questionCount} complete questions
+- Use authentic NREMT paramedic terminology and scenarios
+- Distribute difficulties: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)
+- Each question must be scenario-based with realistic patient presentations
+- Include proper medical rationale in explanations
+
+Please respond with a JSON object with questions array containing exactly ${questionCount} questions:
+{
+  "questions": [
+    {
+      "questionText": "Realistic NREMT scenario question",
+      "type": "multiple_choice",
+      "difficulty": 3,
+      "bloomsLevel": "apply",
+      "answerOptions": [
+        {"answerText": "Professional medical option", "isCorrect": false, "displayOrder": 0},
+        {"answerText": "Correct NREMT protocol", "isCorrect": true, "displayOrder": 1},
+        {"answerText": "Plausible medical distractor", "isCorrect": false, "displayOrder": 2},
+        {"answerText": "Alternative medical option", "isCorrect": false, "displayOrder": 3}
+      ],
+      "explanation": "Medical rationale with NREMT protocol justification",
+      "tags": ["${topicName.toLowerCase()}", "scenario-based"]
+    }
+  ]
+}`;
 
         try {
           const response = await openaiClient.chat.completions.create({
             model: "gpt-4o",
             messages: [
-              { role: "system", content: "You are an expert NREMT paramedic exam developer. Generate comprehensive question sets with authentic medical content." },
+              { role: "system", content: "You are an expert NREMT paramedic exam developer. Generate comprehensive question sets with authentic medical content. Always respond with valid JSON format." },
               { role: "user", content: topicPrompt }
             ],
             response_format: { type: "json_object" },
