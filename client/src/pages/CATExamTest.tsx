@@ -60,19 +60,32 @@ export default function CATExamTest() {
       
       // Get sample questions from associated testbanks
       const sampleQuestions = [];
+      console.log('Exam data for preview:', exam);
+      console.log('Item banks available:', exam.itemBanks);
+      
       if (exam.itemBanks && exam.itemBanks.length > 0) {
         for (const itemBank of exam.itemBanks) {
           try {
-            const questions = await apiRequest(`/api/testbanks/${itemBank.testbankId || itemBank.bankId}/questions`);
-            if (questions && questions.length > 0) {
-              // Take first 3 questions from each item bank for preview
-              sampleQuestions.push(...questions.slice(0, 3));
+            // Use the testbank ID from itemBank - could be 'id', 'testbankId', or 'bankId'
+            const testbankId = itemBank.id || itemBank.testbankId || itemBank.bankId;
+            console.log(`Fetching questions for testbank: ${testbankId}`);
+            
+            if (testbankId) {
+              const questions = await apiRequest(`/api/testbanks/${testbankId}/questions`);
+              console.log(`Found ${questions?.length || 0} questions for testbank ${testbankId}`);
+              
+              if (questions && questions.length > 0) {
+                // Take first 3 questions from each item bank for preview
+                sampleQuestions.push(...questions.slice(0, 3));
+              }
             }
           } catch (error) {
             console.error('Error fetching questions for preview:', error);
           }
         }
       }
+      
+      console.log(`Total sample questions for preview: ${sampleQuestions.length}`);
       
       return { exam, questions: sampleQuestions };
     },

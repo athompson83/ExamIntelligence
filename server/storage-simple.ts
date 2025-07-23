@@ -3313,8 +3313,12 @@ Return JSON with the new question data:
         estimatedDuration: catExamData.estimatedDuration || '20-45 minutes',
         proctoringEnabled: catExamData.proctoringEnabled || false,
         subject: catExamData.subject || 'General',
-        categories: catExamData.categories || []
+        categories: catExamData.categories || [],
+        // CRITICAL: Preserve itemBanks data for question retrieval
+        itemBanks: catExamData.itemBanks || []
       };
+      
+      console.log('Creating CAT exam with itemBanks:', catExam.itemBanks);
       
       // Add to storage
       this.catExamsStorage.push(catExam);

@@ -204,13 +204,8 @@ export default function CATExamBuilder() {
         description: existingExam.description || '',
         instructions: existingExam.instructions || existingExam.learningObjectives?.join('; ') || '',
         itemBanks: existingExam.itemBanks?.map((bank: any) => ({
-          id: bank.bankId || bank.testbankId || bank.id,
-          name: bank.name || 'Item Bank',
-          description: bank.description || '',
-          questionCount: bank.questionCount || 0,
-          subject: bank.subject || 'General',
-          difficulty: bank.difficulty || { min: 1, max: 10 },
-          percentage: bank.percentage || bank.weight || 25,
+          bankId: bank.id || bank.testbankId || bank.bankId,
+          percentage: bank.percentage || 25,
           minQuestions: bank.minQuestions || 5,
           maxQuestions: bank.maxQuestions || 15
         })) || [],
