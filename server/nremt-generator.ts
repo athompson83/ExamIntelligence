@@ -15,7 +15,9 @@ export interface NREMTItemBank {
 export async function generateComprehensiveNREMTExam(
   openai: OpenAI, 
   title: string, 
-  description: string
+  description: string,
+  existingTestbanks: any[] = [],
+  storage?: any
 ): Promise<{
   title: string;
   description: string;
@@ -24,63 +26,144 @@ export async function generateComprehensiveNREMTExam(
   catSettings: any;
   additionalSettings: any;
 }> {
-  console.log('Generating comprehensive NREMT exam with full coverage...');
+  console.log('🚀 Generating comprehensive NREMT exam with full coverage and intelligent testbank integration...');
+  console.log(`📚 Processing ${existingTestbanks.length} existing testbanks for incorporation`);
 
-  // Define the 5 core NREMT topic areas with proper question counts
+  // Analyze existing testbanks for NREMT topic matching
+  const existingNREMTBanks = existingTestbanks.filter(bank => 
+    bank.subject?.toLowerCase().includes('nremt') || 
+    bank.subject?.toLowerCase().includes('paramedic') ||
+    bank.title?.toLowerCase().includes('cardiac') ||
+    bank.title?.toLowerCase().includes('trauma') ||
+    bank.title?.toLowerCase().includes('airway') ||
+    bank.title?.toLowerCase().includes('medical') ||
+    bank.title?.toLowerCase().includes('acls')
+  );
+
+  console.log(`🔍 Found ${existingNREMTBanks.length} existing NREMT-related testbanks to incorporate`);
+
+  // Define the 5 core NREMT topic areas with enhanced question counts for CAT optimization
   const nremtTopics = [
     {
       name: 'Advanced Cardiac Life Support',
       description: 'Comprehensive ACLS protocols, arrhythmia management, and cardiovascular emergencies',
-      questionCount: 60,
-      percentage: 25
+      questionCount: 65, // Increased for better CAT performance
+      percentage: 25,
+      existingBank: existingNREMTBanks.find(bank => 
+        bank.title?.toLowerCase().includes('cardiac') || 
+        bank.title?.toLowerCase().includes('acls') ||
+        bank.subject?.toLowerCase().includes('cardiac')
+      )
     },
     {
       name: 'Trauma Assessment and Management',
       description: 'Systematic trauma evaluation, injury recognition, and emergency interventions',
-      questionCount: 55,
-      percentage: 25
+      questionCount: 60, // Increased for better CAT performance
+      percentage: 25,
+      existingBank: existingNREMTBanks.find(bank => 
+        bank.title?.toLowerCase().includes('trauma') ||
+        bank.subject?.toLowerCase().includes('trauma')
+      )
     },
     {
       name: 'Airway Management and Ventilation',
       description: 'Advanced airway techniques, ventilation strategies, and respiratory emergencies',
-      questionCount: 50,
-      percentage: 20
+      questionCount: 55, // Increased for better CAT performance
+      percentage: 20,
+      existingBank: existingNREMTBanks.find(bank => 
+        bank.title?.toLowerCase().includes('airway') || 
+        bank.title?.toLowerCase().includes('ventilation') ||
+        bank.subject?.toLowerCase().includes('airway')
+      )
     },
     {
       name: 'Pharmacology and Medication Administration',
       description: 'Drug classifications, dosage calculations, and medication protocols for emergency care',
-      questionCount: 45,
-      percentage: 15
+      questionCount: 50, // Increased for better CAT performance
+      percentage: 15,
+      existingBank: existingNREMTBanks.find(bank => 
+        bank.title?.toLowerCase().includes('pharmacology') || 
+        bank.title?.toLowerCase().includes('medication') ||
+        bank.subject?.toLowerCase().includes('pharmacology')
+      )
     },
     {
       name: 'Patient Assessment and Clinical Decision Making',
       description: 'Systematic patient evaluation, diagnostic reasoning, and treatment prioritization',
-      questionCount: 40,
-      percentage: 15
+      questionCount: 45, // Increased for better CAT performance
+      percentage: 15,
+      existingBank: existingNREMTBanks.find(bank => 
+        bank.title?.toLowerCase().includes('assessment') || 
+        bank.title?.toLowerCase().includes('clinical') ||
+        bank.subject?.toLowerCase().includes('assessment')
+      )
     }
   ];
 
-  // Generate item banks with full question sets
+  // Generate comprehensive item banks with intelligent existing testbank integration
   const itemBanks: NREMTItemBank[] = [];
   
   for (const topic of nremtTopics) {
-    console.log(`Generating ${topic.questionCount} questions for ${topic.name}...`);
+    console.log(`\n🎯 Processing ${topic.name} - Target: ${topic.questionCount} questions`);
     
-    // Generate questions for this topic
-    const questions = await generateNREMTTopicQuestions(openai, topic.name, topic.description, topic.questionCount);
+    let questions: any[] = [];
+    let existingQuestions: any[] = [];
     
-    itemBanks.push({
-      id: null,
-      name: `NREMT - ${topic.name}`,
+    // If we have an existing bank for this topic, get its questions
+    if (topic.existingBank && storage) {
+      try {
+        console.log(`📖 Found existing testbank: "${topic.existingBank.title}" - incorporating questions...`);
+        existingQuestions = await storage.getQuestionsByTestbank(topic.existingBank.id);
+        console.log(`✅ Retrieved ${existingQuestions.length} existing questions from "${topic.existingBank.title}"`);
+        
+        // Use existing questions as the foundation
+        questions = [...existingQuestions];
+      } catch (error) {
+        console.log(`⚠️ Error retrieving existing questions: ${error.message}`);
+      }
+    }
+    
+    // Calculate how many new questions we need to generate
+    const questionsNeeded = Math.max(0, topic.questionCount - questions.length);
+    
+    if (questionsNeeded > 0) {
+      console.log(`🔄 Need to generate ${questionsNeeded} additional questions for ${topic.name}`);
+      
+      // Generate the remaining questions needed
+      const newQuestions = await generateNREMTTopicQuestions(
+        openai, 
+        topic.name, 
+        topic.description, 
+        questionsNeeded
+      );
+      
+      console.log(`✅ Generated ${newQuestions.length} new questions for ${topic.name}`);
+      questions.push(...newQuestions);
+    } else {
+      console.log(`✅ Using ${questions.length} existing questions for ${topic.name}`);
+    }
+    
+    // Ensure we have exactly the target number of questions
+    if (questions.length > topic.questionCount) {
+      questions = questions.slice(0, topic.questionCount);
+      console.log(`📏 Trimmed to exactly ${topic.questionCount} questions for ${topic.name}`);
+    }
+    
+    // Create the comprehensive item bank
+    const itemBank: NREMTItemBank = {
+      id: topic.existingBank?.id || null,
+      name: topic.existingBank?.title || `NREMT - ${topic.name}`,
       description: topic.description,
       subject: 'NREMT Paramedic',
-      questionCount: topic.questionCount,
+      questionCount: questions.length,
       percentage: topic.percentage,
-      isNew: true,
+      isNew: !topic.existingBank,
       questions: questions
-    });
+    };
     
-    console.log(`Generated ${questions.length} questions for ${topic.name}`);
+    itemBanks.push(itemBank);
+    
+    console.log(`🎉 Completed ${topic.name}: ${questions.length}/${topic.questionCount} questions (${existingQuestions.length} existing + ${questions.length - existingQuestions.length} new)`);
   }
 
   return {
@@ -117,26 +200,124 @@ async function generateNREMTTopicQuestions(
   topicDescription: string,
   questionCount: number
 ): Promise<any[]> {
+  console.log(`🎯 Starting generation of ${questionCount} questions for ${topicName}`);
+  
   try {
-    const prompt = `Generate exactly ${questionCount} comprehensive NREMT paramedic questions for:
+    // Generate questions in batches to avoid API timeouts and ensure quality
+    const batchSize = 15; // Smaller batches for more reliable generation
+    const batches = Math.ceil(questionCount / batchSize);
+    const allQuestions: any[] = [];
+    
+    for (let i = 0; i < batches; i++) {
+      const questionsInThisBatch = Math.min(batchSize, questionCount - allQuestions.length);
+      
+      console.log(`📝 Generating batch ${i + 1}/${batches} - ${questionsInThisBatch} questions for ${topicName}`);
+      
+      const prompt = `Generate exactly ${questionsInThisBatch} comprehensive NREMT paramedic questions for:
 
 TOPIC: ${topicName}
 DESCRIPTION: ${topicDescription}
 
 REQUIREMENTS:
-- Generate EXACTLY ${questionCount} complete questions
+- Generate EXACTLY ${questionsInThisBatch} complete questions (no more, no less)
 - Use authentic NREMT paramedic terminology and scenarios  
 - Distribute difficulties: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)
 - Each question must be scenario-based with realistic patient presentations
 - Include proper medical rationale in explanations
+- Ensure all questions are unique and cover different aspects of the topic
 
-Return JSON object with questions array:
+Return JSON object with questions array containing exactly ${questionsInThisBatch} questions:
 {
   "questions": [
     {
       "questionText": "Realistic NREMT scenario question",
       "type": "multiple_choice",
-      "difficulty": 3,
+      "difficulty": 5,
+      "bloomsLevel": "apply",
+      "answerOptions": [
+        {"answerText": "Professional medical option", "isCorrect": false, "displayOrder": 0},
+        {"answerText": "Correct NREMT protocol", "isCorrect": true, "displayOrder": 1},
+        {"answerText": "Plausible medical distractor", "isCorrect": false, "displayOrder": 2},
+        {"answerText": "Alternative medical option", "isCorrect": false, "displayOrder": 3}
+      ],
+      "explanation": "Medical rationale with NREMT protocol justification",
+      "tags": ["${topicName.toLowerCase()}", "scenario-based"]
+    }
+  ]
+}`;
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: 'You are an expert NREMT paramedic exam developer. Generate comprehensive question sets with authentic medical content. Return exactly the number of questions requested.' },
+          { role: 'user', content: prompt }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+        max_tokens: 4000,
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
+      const batchQuestions = result.questions || [];
+      
+      console.log(`✅ Generated ${batchQuestions.length} questions in batch ${i + 1}`);
+      allQuestions.push(...batchQuestions);
+      
+      // Small delay between batches to avoid rate limiting
+      if (i < batches - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    
+    console.log(`🎉 Total questions generated for ${topicName}: ${allQuestions.length}/${questionCount}`);
+    
+    // Ensure we have the target number of questions
+    if (allQuestions.length < questionCount) {
+      console.log(`⚠️ Generated ${allQuestions.length} questions, need ${questionCount}. Generating additional questions...`);
+      const additionalNeeded = questionCount - allQuestions.length;
+      const additionalQuestions = await generateAdditionalQuestions(openai, topicName, topicDescription, additionalNeeded, []);
+      allQuestions.push(...additionalQuestions);
+    }
+    
+    // Return exactly the requested number of questions
+    return allQuestions.slice(0, questionCount);
+    
+  } catch (error) {
+    console.error(`❌ Error generating questions for ${topicName}:`, error);
+    console.log(`🔄 Falling back to generating ${questionCount} fallback questions`);
+    return generateFallbackNREMTQuestions(topicName, questionCount);
+  }
+}
+
+async function generateAdditionalQuestions(
+  openai: OpenAI,
+  topicName: string,
+  topicDescription: string,
+  needed: number,
+  existingQuestions: any[]
+): Promise<any[]> {
+  console.log(`🔄 Generating ${needed} additional questions for ${topicName}`);
+  
+  try {
+    const prompt = `Generate exactly ${needed} additional NREMT paramedic questions for:
+
+TOPIC: ${topicName}
+DESCRIPTION: ${topicDescription}
+
+REQUIREMENTS:
+- Generate EXACTLY ${needed} complete questions (no more, no less)
+- Use authentic NREMT paramedic terminology and scenarios
+- Ensure all questions are unique and cover different aspects of the topic
+- Distribute difficulties: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)
+- Each question must be scenario-based with realistic patient presentations
+
+Return JSON object with questions array containing exactly ${needed} questions:
+{
+  "questions": [
+    {
+      "questionText": "Realistic NREMT scenario question",
+      "type": "multiple_choice",
+      "difficulty": 5,
       "bloomsLevel": "apply",
       "answerOptions": [
         {"answerText": "Professional medical option", "isCorrect": false, "displayOrder": 0},
@@ -153,74 +334,31 @@ Return JSON object with questions array:
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
-        { role: 'system', content: 'You are an expert NREMT paramedic exam developer. Generate comprehensive question sets with authentic medical content.' },
-        { role: 'user', content: prompt }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-    });
-
-    const result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
-    const questions = result.questions || [];
-    
-    // Ensure we have the right number of questions with proper difficulty distribution
-    if (questions.length >= questionCount * 0.8) {
-      return questions.slice(0, questionCount);
-    } else {
-      // Generate additional questions if needed
-      console.log(`Generated ${questions.length} questions, generating additional questions to reach ${questionCount}...`);
-      return await generateAdditionalQuestions(openai, topicName, topicDescription, questionCount, questions);
-    }
-    
-  } catch (error) {
-    console.error(`Error generating questions for ${topicName}:`, error);
-    return generateFallbackNREMTQuestions(topicName, questionCount);
-  }
-}
-
-async function generateAdditionalQuestions(
-  openai: OpenAI,
-  topicName: string,
-  topicDescription: string,
-  targetCount: number,
-  existingQuestions: any[]
-): Promise<any[]> {
-  const needed = targetCount - existingQuestions.length;
-  
-  try {
-    const prompt = `Generate exactly ${needed} additional NREMT paramedic questions for:
-
-TOPIC: ${topicName}
-DESCRIPTION: ${topicDescription}
-
-Generate ${needed} more unique questions that complement the existing set.
-Use different scenarios and terminology to ensure variety.
-
-Return JSON object with questions array containing exactly ${needed} questions.`;
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: 'Generate additional unique NREMT questions with varied scenarios.' },
+        { role: 'system', content: 'Generate additional unique NREMT questions with varied scenarios. Return exactly the number of questions requested.' },
         { role: 'user', content: prompt }
       ],
       response_format: { type: 'json_object' },
       temperature: 0.8,
+      max_tokens: 4000,
     });
 
     const result = JSON.parse(response.choices[0].message.content || '{"questions": []}');
     const additionalQuestions = result.questions || [];
     
-    return [...existingQuestions, ...additionalQuestions].slice(0, targetCount);
+    console.log(`✅ Generated ${additionalQuestions.length} additional questions for ${topicName}`);
+    return additionalQuestions.slice(0, needed);
     
   } catch (error) {
-    console.error('Error generating additional questions:', error);
-    return [...existingQuestions, ...generateFallbackNREMTQuestions(topicName, needed)].slice(0, targetCount);
+    console.error(`❌ Error generating additional questions for ${topicName}:`, error);
+    console.log(`🔄 Using fallback questions for ${topicName}`);
+    return generateFallbackNREMTQuestions(topicName, needed);
   }
 }
 
 function generateFallbackNREMTQuestions(topicName: string, count: number): any[] {
-  // Fallback realistic NREMT questions if AI generation fails
+  console.log(`⚠️ Generating ${count} fallback questions for ${topicName}`);
+  
+  // Comprehensive fallback NREMT questions by topic
   const baseQuestions = {
     'Advanced Cardiac Life Support': [
       {
@@ -236,17 +374,76 @@ function generateFallbackNREMTQuestions(topicName: string, count: number): any[]
         ],
         explanation: 'Initiating chest compressions is critical in the initial management of cardiac arrest to maintain circulation.',
         tags: ['cardiac arrest', 'ACLS']
+      },
+      {
+        questionText: 'A 45-year-old female presents with chest pain radiating to her left arm. 12-lead ECG shows ST elevation in leads II, III, and aVF. What is your priority intervention?',
+        type: 'multiple_choice',
+        difficulty: 5,
+        bloomsLevel: 'analyze',
+        answerOptions: [
+          { answerText: 'Administer aspirin and prepare for transport', isCorrect: true, displayOrder: 0 },
+          { answerText: 'Administer nitroglycerin immediately', isCorrect: false, displayOrder: 1 },
+          { answerText: 'Start IV fluids at 200ml/hr', isCorrect: false, displayOrder: 2 },
+          { answerText: 'Obtain blood pressure before treatment', isCorrect: false, displayOrder: 3 }
+        ],
+        explanation: 'Inferior STEMI indicated by ST elevation in leads II, III, aVF. Aspirin is the priority treatment, but check BP before nitroglycerin.',
+        tags: ['cardiac', 'STEMI', 'ECG']
+      }
+    ],
+    'Trauma Assessment and Management': [
+      {
+        questionText: 'During primary assessment of a multi-trauma patient, you discover a penetrating chest wound with air bubbling through it. What is your immediate intervention?',
+        type: 'multiple_choice',
+        difficulty: 6,
+        bloomsLevel: 'apply',
+        answerOptions: [
+          { answerText: 'Apply an occlusive dressing sealed on three sides', isCorrect: true, displayOrder: 0 },
+          { answerText: 'Completely seal the wound with an occlusive dressing', isCorrect: false, displayOrder: 1 },
+          { answerText: 'Leave the wound uncovered to allow air escape', isCorrect: false, displayOrder: 2 },
+          { answerText: 'Pack the wound with sterile gauze', isCorrect: false, displayOrder: 3 }
+        ],
+        explanation: 'Three-sided occlusive dressing prevents air entry during inspiration while allowing escape during expiration.',
+        tags: ['trauma', 'chest injury', 'sucking chest wound']
+      }
+    ],
+    'Airway Management and Ventilation': [
+      {
+        questionText: 'A patient presents with severe respiratory distress and stridor. You observe paradoxical chest movement. What is your immediate priority?',
+        type: 'multiple_choice',
+        difficulty: 7,
+        bloomsLevel: 'analyze',
+        answerOptions: [
+          { answerText: 'Perform immediate needle thoracostomy', isCorrect: true, displayOrder: 0 },
+          { answerText: 'Prepare for emergency cricothyrotomy', isCorrect: false, displayOrder: 1 },
+          { answerText: 'Administer albuterol via nebulizer', isCorrect: false, displayOrder: 2 },
+          { answerText: 'Establish IV access first', isCorrect: false, displayOrder: 3 }
+        ],
+        explanation: 'Paradoxical chest movement with stridor suggests tension pneumothorax requiring immediate decompression.',
+        tags: ['airway', 'tension pneumothorax', 'emergency procedures']
       }
     ]
-    // Add more base questions for other topics...
   };
 
+  // Get base questions for this topic or default to cardiac
   const topicQuestions = baseQuestions[topicName] || baseQuestions['Advanced Cardiac Life Support'];
   
-  return Array.from({ length: count }, (_, i) => ({
-    ...topicQuestions[i % topicQuestions.length],
-    questionText: topicQuestions[i % topicQuestions.length].questionText + ` (Scenario ${i + 1})`,
-    difficulty: 3 + (i % 7),
-    tags: [topicName.toLowerCase(), 'scenario-based']
-  }));
+  // Generate the required number of questions by repeating and modifying base questions
+  const questions = [];
+  for (let i = 0; i < count; i++) {
+    const baseIndex = i % topicQuestions.length;
+    const baseQuestion = topicQuestions[baseIndex];
+    
+    // Create variations to meet the count requirement
+    const question = {
+      ...baseQuestion,
+      questionText: baseQuestion.questionText + (i > topicQuestions.length - 1 ? ` (Variation ${Math.floor(i / topicQuestions.length) + 1})` : ''),
+      difficulty: Math.max(3, Math.min(9, baseQuestion.difficulty + Math.floor(i / topicQuestions.length))),
+      tags: [...(baseQuestion.tags || []), topicName.toLowerCase()]
+    };
+    
+    questions.push(question);
+  }
+  
+  console.log(`✅ Generated ${questions.length} fallback questions for ${topicName}`);
+  return questions;
 }
