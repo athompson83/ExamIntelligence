@@ -4255,6 +4255,80 @@ Return JSON with the new question data:
     }
     return result.reverse();
   }
+
+  // Get recent quiz attempts for account (for activities feed)
+  async getQuizAttemptsForAccount(accountId: string, limit: number = 10): Promise<any[]> {
+    try {
+      // Get recent quiz attempts with quiz and user information
+      const attempts = (this.quizAttempts || [])
+        .filter(attempt => {
+          // Find the user who took the quiz
+          const user = this.users.find(u => u.id === attempt.userId);
+          return user && user.accountId === accountId;
+        })
+        .sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime())
+        .slice(0, limit);
+
+      // Enrich with quiz and user information
+      return attempts.map(attempt => {
+        const quiz = this.quizzes.find(q => q.id === attempt.quizId);
+        const user = this.users.find(u => u.id === attempt.userId);
+        return {
+          ...attempt,
+          quizTitle: quiz?.title || 'Unknown Quiz',
+          studentName: user?.username || user?.email || 'Unknown Student'
+        };
+      });
+    } catch (error) {
+      console.error('Error getting quiz attempts for account:', error);
+      return [];
+    }
+  }
+
+  // Get recent users for account (for activities feed)
+  async getRecentUsersForAccount(accountId: string, limit: number = 5): Promise<any[]> {
+    try {
+      return this.users
+        .filter(user => user.accountId === accountId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error getting recent users for account:', error);
+      return [];
+    }
+  }
+
+  // Get CAT exams for account (for activities feed)
+  async getCATExamsForAccount(accountId: string): Promise<any[]> {
+    try {
+      return (this.catExams || [])
+        .filter(exam => exam.accountId === accountId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } catch (error) {
+      console.error('Error getting CAT exams for account:', error);
+      return [];
+    }
+  }
+
+  // Get testbanks for account (for activities feed)
+  async getTestbanksForAccount(accountId: string): Promise<any[]> {
+    try {
+      return (this.testbanks || [])
+        .filter(testbank => testbank.accountId === accountId)
+        .map(testbank => {
+          // Add question count for each testbank
+          const questionCount = (this.questions || []).filter(q => q.testbankId === testbank.id).length;
+          return {
+            ...testbank,
+            questionCount
+          };
+        })
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } catch (error) {
+      console.error('Error getting testbanks for account:', error);
+      return [];
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
