@@ -10164,6 +10164,62 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     }
   });
 
+  // Error Logging and Bug Reporting API endpoints
+  app.post('/api/error-logs', async (req, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const accountId = req.user?.accountId || "00000000-0000-0000-0000-000000000001";
+      
+      const errorLog = await storage.createErrorLog({
+        ...req.body,
+        userId,
+        accountId,
+        timestamp: new Date(),
+        resolved: false
+      });
+      
+      res.json(errorLog);
+    } catch (error) {
+      console.error('Error creating error log:', error);
+      res.status(500).json({ message: 'Failed to create error log' });
+    }
+  });
+
+  app.get('/api/error-logs', async (req, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const accountId = req.user?.accountId;
+      const userRole = req.user?.role || "student";
+      
+      let errorLogs;
+      if (userRole === 'super_admin') {
+        errorLogs = await storage.getAllErrorLogs();
+      } else if (userRole === 'admin') {
+        errorLogs = await storage.getErrorLogsByAccount(accountId);
+      } else {
+        errorLogs = await storage.getErrorLogsByUser(userId);
+      }
+      
+      res.json(errorLogs);
+    } catch (error) {
+      console.error('Error getting error logs:', error);
+      res.status(500).json({ message: 'Failed to get error logs' });
+    }
+  });
+
+  app.put('/api/error-logs/:id/resolve', async (req, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const { resolution } = req.body;
+      
+      const errorLog = await storage.resolveErrorLog(req.params.id, userId, resolution);
+      res.json(errorLog);
+    } catch (error) {
+      console.error('Error resolving error log:', error);
+      res.status(500).json({ message: 'Failed to resolve error log' });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 

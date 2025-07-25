@@ -4339,6 +4339,88 @@ Return JSON with the new question data:
     }
   }
 
+  // Error Logging implementation
+  async createErrorLog(errorData: any): Promise<any> {
+    try {
+      const result = await db.execute(sql`
+        INSERT INTO error_logs (
+          user_id, account_id, error_type, severity, source, message, 
+          stack_trace, user_agent, ip_address, metadata, resolved, timestamp
+        ) VALUES (
+          ${errorData.userId}, ${errorData.accountId}, ${errorData.errorType}, 
+          ${errorData.severity}, ${errorData.source}, ${errorData.message},
+          ${errorData.stackTrace}, ${errorData.userAgent}, ${errorData.ipAddress},
+          ${JSON.stringify(errorData.metadata)}, ${errorData.resolved}, ${new Date()}
+        ) RETURNING *
+      `);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating error log:', error);
+      return null;
+    }
+  }
+
+  async getAllErrorLogs(): Promise<any[]> {
+    try {
+      const result = await db.execute(sql`
+        SELECT * FROM error_logs 
+        ORDER BY timestamp DESC 
+        LIMIT 1000
+      `);
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting all error logs:', error);
+      return [];
+    }
+  }
+
+  async getErrorLogsByAccount(accountId: string): Promise<any[]> {
+    try {
+      const result = await db.execute(sql`
+        SELECT * FROM error_logs 
+        WHERE account_id = ${accountId} 
+        ORDER BY timestamp DESC 
+        LIMIT 500
+      `);
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting error logs by account:', error);
+      return [];
+    }
+  }
+
+  async getErrorLogsByUser(userId: string): Promise<any[]> {
+    try {
+      const result = await db.execute(sql`
+        SELECT * FROM error_logs 
+        WHERE user_id = ${userId} 
+        ORDER BY timestamp DESC 
+        LIMIT 100
+      `);
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting error logs by user:', error);
+      return [];
+    }
+  }
+
+  async resolveErrorLog(errorId: string, resolvedBy: string, resolution: string): Promise<any> {
+    try {
+      const result = await db.execute(sql`
+        UPDATE error_logs 
+        SET resolved = true, resolved_by = ${resolvedBy}, resolved_at = ${new Date()}, resolution = ${resolution}
+        WHERE id = ${errorId}
+        RETURNING *
+      `);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error resolving error log:', error);
+      return null;
+    }
+  }
+
   // Exam References implementation
   async createExamReference(reference: any): Promise<any> {
     try {
