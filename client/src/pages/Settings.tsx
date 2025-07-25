@@ -23,8 +23,10 @@ import {
   Mail,
   Monitor,
   Smartphone,
-  MessageCircle
+  MessageCircle,
+  BookOpen
 } from "lucide-react";
+import ExamReferencesManager from '@/components/ExamReferencesManager';
 import { useForm } from "react-hook-form";
 export default function Settings() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
@@ -204,6 +206,14 @@ export default function Settings() {
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Interface
+                </Button>
+                <Button
+                  variant={activeTab === "exam-references" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => setActiveTab("exam-references")}
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Exam References
                 </Button>
                 {user?.role === 'admin' && (
                   <Button
@@ -836,6 +846,20 @@ export default function Settings() {
                       </Button>
                     </form>
                   </Form>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === "exam-references" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    Exam References
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ExamReferencesManager />
                 </CardContent>
               </Card>
             )}

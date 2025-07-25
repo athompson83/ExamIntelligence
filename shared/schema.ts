@@ -861,6 +861,52 @@ export const assignmentSubmissions = pgTable("assignment_submissions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Exam References table for universal CAT generation
+export const examReferences = pgTable("exam_references", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  category: varchar("category").notNull(), // e.g., "Medical", "Engineering", "Legal", "NREMT", etc.
+  subject: varchar("subject"), // specific subject within category
+  topics: text("topics").array(), // array of topic keywords for matching
+  
+  // Reference content
+  contentType: varchar("content_type", { enum: ["blueprint", "guidelines", "standards", "curriculum"] }).notNull(),
+  content: text("content").notNull(), // The actual reference content/guidelines
+  
+  // Coverage and structure
+  examStructure: jsonb("exam_structure").$type<{
+    totalQuestions: number;
+    timeLimit: number;
+    passingScore: number;
+    sections: Array<{
+      name: string;
+      description: string;
+      questionCount: number;
+      percentage: number;
+      difficultyRange: { min: number; max: number };
+    }>;
+  }>(),
+  
+  // Question generation parameters
+  questionGuidelines: jsonb("question_guidelines").$type<{
+    questionTypes: string[];
+    difficultyDistribution: { easy: number; medium: number; hard: number };
+    scenarioBasedPercentage: number;
+    bloomsTaxonomyLevels: string[];
+    keyCompetencies: string[];
+  }>(),
+  
+  // Metadata
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  isPublic: boolean("is_public").default(false),
+  isActive: boolean("is_active").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Study Aids table - AI-generated study materials for students
 export const studyAids = pgTable("study_aids", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -1095,6 +1141,7 @@ export const accountsRelations = relations(accounts, ({ many }) => ({
   testbanks: many(testbanks),
   quizzes: many(quizzes),
   scheduledAssignments: many(scheduledAssignments),
+  examReferences: many(examReferences),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -1108,6 +1155,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   scheduledAssignments: many(scheduledAssignments),
   assignmentSubmissions: many(assignmentSubmissions),
   studyAids: many(studyAids),
+  examReferences: many(examReferences),
   mobileDevices: many(mobileDevices),
   moodEntries: many(moodEntries),
   difficultyEntries: many(difficultyEntries),
@@ -1219,6 +1267,11 @@ export const assignmentSubmissionsRelations = relations(assignmentSubmissions, (
 export const studyAidsRelations = relations(studyAids, ({ one }) => ({
   student: one(users, { fields: [studyAids.studentId], references: [users.id] }),
   quiz: one(quizzes, { fields: [studyAids.quizId], references: [quizzes.id] }),
+}));
+
+export const examReferencesRelations = relations(examReferences, ({ one }) => ({
+  creator: one(users, { fields: [examReferences.createdBy], references: [users.id] }),
+  account: one(accounts, { fields: [examReferences.accountId], references: [accounts.id] }),
 }));
 
 // CAT Exam Relations

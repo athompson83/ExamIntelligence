@@ -9318,47 +9318,67 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
         console.log('Adding AI generated item banks:', combinedItemBanks.length);
       }
 
-      // Enhanced NREMT Detection and Comprehensive Generation
-      if (prompt.toLowerCase().includes('nremt') || 
-          prompt.toLowerCase().includes('paramedic') || 
-          prompt.toLowerCase().includes('emergency medical') ||
-          title.toLowerCase().includes('nremt')) {
+      // Universal CAT generation with reference-based enhancement
+      console.log('🔧 Enhancing item banks with adequate question counts for CAT...');
+      
+      // Check if we need to use reference materials for enhanced generation
+      const user = req.user;
+      const accountId = user?.accountId || "00000000-0000-0000-0000-000000000001";
+      
+      // Get exam references that match the prompt/title for enhanced generation
+      const examReferences = await storage.getExamReferencesByTopic(accountId, prompt, title);
+      
+      if (examReferences && examReferences.length > 0) {
+        console.log(`📚 Found ${examReferences.length} reference materials for enhanced generation`);
         
-        console.log('🚀 NREMT exam detected - switching to comprehensive NREMT generation system...');
+        // Use reference-based comprehensive generation
+        console.log('🔧 Generating enhanced exam with reference materials...');
         
-        // Get existing testbanks for intelligent incorporation
-        const user = req.user;
-        const accountId = user?.accountId || "00000000-0000-0000-0000-000000000001";
-        const existingTestbanks = await storage.getTestbanksByAccount(accountId);
+        // Create enhanced prompt with reference content
+        const referencesContent = examReferences.map(ref => 
+          `${ref.title} (${ref.category}): ${ref.content}`
+        ).join('\n\n');
         
-        // Use the dedicated comprehensive NREMT generator
-        const { generateComprehensiveNREMTExam } = await import('./nremt-generator');
+        const enhancedPrompt = `${prompt}\n\nReference Materials:\n${referencesContent}`;
         
-        const comprehensiveExam = await generateComprehensiveNREMTExam(
-          openai,
-          title,
-          'Comprehensive NREMT paramedic certification exam covering all core competency areas with 50-70 questions per topic for proper CAT randomization',
-          existingTestbanks,
-          storage
-        );
+        // Generate enhanced exam using reference context
+        const enhancedResponse = await openai.chat.completions.create({
+          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert assessment designer creating Computer Adaptive Testing (CAT) exams. Generate comprehensive item banks with 50-70 questions each, using the provided reference materials for accuracy and structure.`
+            },
+            {
+              role: "user",
+              content: enhancedPrompt
+            }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.7,
+        });
         
-        console.log(`🎯 Generated comprehensive NREMT exam with ${comprehensiveExam.itemBanks.length} item banks`);
-        console.log(`📊 Total questions: ${comprehensiveExam.itemBanks.reduce((sum, bank) => sum + bank.questionCount, 0)}`);
+        let enhancedExam;
+        try {
+          enhancedExam = JSON.parse(enhancedResponse.choices[0].message.content || '{}');
+        } catch (error) {
+          console.log('Failed to parse enhanced exam, falling back to standard generation');
+          enhancedExam = null;
+        }
         
-        // Use the comprehensive exam structure instead of AI-generated config
-        combinedItemBanks = comprehensiveExam.itemBanks;
-        examConfig = {
-          ...examConfig,
-          title: comprehensiveExam.title,
-          description: comprehensiveExam.description,
-          subject: comprehensiveExam.subject,
-          itemBanks: comprehensiveExam.itemBanks,
-          catSettings: comprehensiveExam.catSettings
-        };
-        
+        if (enhancedExam && enhancedExam.itemBanks.length > 0) {
+          console.log(`🎯 Generated reference-based exam with ${enhancedExam.itemBanks.length} item banks`);
+          console.log(`📊 Total questions: ${enhancedExam.itemBanks.reduce((sum, bank) => sum + bank.questionCount, 0)}`);
+          
+          combinedItemBanks = enhancedExam.itemBanks;
+          examConfig = {
+            ...examConfig,
+            ...enhancedExam
+          };
+        }
       } else {
-        // For non-NREMT exams, ensure adequate question counts for each item bank
-        console.log('🔧 Enhancing item banks with adequate question counts for CAT...');
+        // Standard CAT generation - ensure adequate question counts for each item bank
+        console.log('📝 No matching exam references found, using standard CAT generation...');
         
         for (let i = 0; i < combinedItemBanks.length; i++) {
           const bank = combinedItemBanks[i];
@@ -9870,7 +9890,7 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
       console.log('Final structured config with', structuredConfig.itemBanks.length, 'item banks');
 
       // STEP 8: Save the generated CAT exam to the database
-      const user = req.user;
+      const userForSave = req.user;
       const catExamData = {
         title: structuredConfig.title,
         description: structuredConfig.description,
@@ -9879,8 +9899,8 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
         adaptiveSettings: structuredConfig.adaptiveSettings,
         additionalSettings: structuredConfig.additionalSettings,
         status: 'draft',
-        createdBy: user.id,
-        accountId: user.accountId || "00000000-0000-0000-0000-000000000001",
+        createdBy: userForSave.id,
+        accountId: userForSave.accountId || "00000000-0000-0000-0000-000000000001",
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -9895,7 +9915,7 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
         ...structuredConfig,
         id: savedExam.id,
         status: 'draft',
-        createdBy: user.id,
+        createdBy: userForSave.id,
         createdAt: savedExam.createdAt,
         savedToDatabase: true
       });
@@ -10076,6 +10096,72 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     }
     
     res.json({ received: true });
+  });
+
+  // Exam References API endpoints
+  app.post('/api/exam-references', async (req, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const accountId = req.user?.accountId || "00000000-0000-0000-0000-000000000001";
+      
+      const reference = await storage.createExamReference({
+        ...req.body,
+        accountId
+      });
+      
+      res.json(reference);
+    } catch (error) {
+      console.error('Error creating exam reference:', error);
+      res.status(500).json({ message: 'Failed to create exam reference' });
+    }
+  });
+
+  app.get('/api/exam-references', async (req, res) => {
+    try {
+      const accountId = req.user?.accountId || "00000000-0000-0000-0000-000000000001";
+      
+      const references = await storage.getExamReferencesByAccount(accountId);
+      res.json(references);
+    } catch (error) {
+      console.error('Error getting exam references:', error);
+      res.status(500).json({ message: 'Failed to get exam references' });
+    }
+  });
+
+  app.get('/api/exam-references/:id', async (req, res) => {
+    try {
+      const reference = await storage.getExamReference(req.params.id);
+      if (!reference) {
+        return res.status(404).json({ message: 'Exam reference not found' });
+      }
+      res.json(reference);
+    } catch (error) {
+      console.error('Error getting exam reference:', error);
+      res.status(500).json({ message: 'Failed to get exam reference' });
+    }
+  });
+
+  app.put('/api/exam-references/:id', async (req, res) => {
+    try {
+      const reference = await storage.updateExamReference(req.params.id, req.body);
+      res.json(reference);
+    } catch (error) {
+      console.error('Error updating exam reference:', error);
+      res.status(500).json({ message: 'Failed to update exam reference' });
+    }
+  });
+
+  app.delete('/api/exam-references/:id', async (req, res) => {
+    try {
+      const success = await storage.deleteExamReference(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: 'Exam reference not found' });
+      }
+      res.json({ message: 'Exam reference deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting exam reference:', error);
+      res.status(500).json({ message: 'Failed to delete exam reference' });
+    }
   });
 
   // Setup WebSocket

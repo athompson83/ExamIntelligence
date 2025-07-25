@@ -20,6 +20,7 @@ import {
   catExamSessions,
   proctoringLobbies,
   proctoringParticipants,
+  examReferences,
   type User,
   type UpsertUser,
   type Testbank,
@@ -261,6 +262,14 @@ export interface IStorage {
   getStudentsInLobby(lobbyId: string): Promise<any[]>;
   updateStudentStatus(participantId: string, status: string, notes?: string): Promise<any>;
   startExamForStudent(lobbyId: string, studentId: string, catExamId: string): Promise<any>;
+  
+  // Exam References operations
+  createExamReference(reference: any): Promise<any>;
+  getExamReference(id: string): Promise<any>;
+  getExamReferencesByAccount(accountId: string): Promise<any[]>;
+  getExamReferencesByTopic(accountId: string, prompt: string, title: string): Promise<any[]>;
+  updateExamReference(id: string, reference: any): Promise<any>;
+  deleteExamReference(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4327,6 +4336,115 @@ Return JSON with the new question data:
     } catch (error) {
       console.error('Error getting testbanks for account:', error);
       return [];
+    }
+  }
+
+  // Exam References implementation
+  async createExamReference(reference: any): Promise<any> {
+    try {
+      const [newReference] = await db
+        .insert(examReferences)
+        .values({
+          id: crypto.randomUUID(),
+          accountId: reference.accountId,
+          title: reference.title,
+          category: reference.category,
+          content: reference.content,
+          examType: reference.examType || 'general',
+          tags: reference.tags || [],
+          active: reference.active ?? true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      return newReference;
+    } catch (error) {
+      console.error('Error creating exam reference:', error);
+      throw error;
+    }
+  }
+
+  async getExamReference(id: string): Promise<any> {
+    try {
+      const [reference] = await db
+        .select()
+        .from(examReferences)
+        .where(eq(examReferences.id, id));
+      return reference;
+    } catch (error) {
+      console.error('Error getting exam reference:', error);
+      return null;
+    }
+  }
+
+  async getExamReferencesByAccount(accountId: string): Promise<any[]> {
+    try {
+      return await db
+        .select()
+        .from(examReferences)
+        .where(and(
+          eq(examReferences.accountId, accountId),
+          eq(examReferences.active, true)
+        ))
+        .orderBy(desc(examReferences.createdAt));
+    } catch (error) {
+      console.error('Error getting exam references by account:', error);
+      return [];
+    }
+  }
+
+  async getExamReferencesByTopic(accountId: string, prompt: string, title: string): Promise<any[]> {
+    try {
+      const searchTerms = [
+        ...prompt.toLowerCase().split(' ').filter(word => word.length > 3),
+        ...title.toLowerCase().split(' ').filter(word => word.length > 3)
+      ];
+
+      const references = await db
+        .select()
+        .from(examReferences)
+        .where(and(
+          eq(examReferences.accountId, accountId),
+          eq(examReferences.active, true)
+        ));
+
+      return references.filter(ref => {
+        const refContent = (ref.title + ' ' + ref.content + ' ' + ref.category + ' ' + ref.examType).toLowerCase();
+        return searchTerms.some(term => refContent.includes(term));
+      });
+    } catch (error) {
+      console.error('Error getting exam references by topic:', error);
+      return [];
+    }
+  }
+
+  async updateExamReference(id: string, reference: any): Promise<any> {
+    try {
+      const [updatedReference] = await db
+        .update(examReferences)
+        .set({
+          ...reference,
+          updatedAt: new Date()
+        })
+        .where(eq(examReferences.id, id))
+        .returning();
+      return updatedReference;
+    } catch (error) {
+      console.error('Error updating exam reference:', error);
+      throw error;
+    }
+  }
+
+  async deleteExamReference(id: string): Promise<boolean> {
+    try {
+      await db
+        .update(examReferences)
+        .set({ active: false, updatedAt: new Date() })
+        .where(eq(examReferences.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting exam reference:', error);
+      return false;
     }
   }
 }
