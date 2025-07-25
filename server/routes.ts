@@ -9318,88 +9318,72 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
         console.log('Adding AI generated item banks:', combinedItemBanks.length);
       }
 
-      // STEP 6: Ensure comprehensive coverage - generate missing NREMT topic areas
-      if (combinedItemBanks.length < 5 && (prompt.toLowerCase().includes('nremt') || prompt.toLowerCase().includes('paramedic'))) {
-        console.log('Ensuring comprehensive NREMT coverage with all 5 required topic areas...');
+      // Enhanced NREMT Detection and Comprehensive Generation
+      if (prompt.toLowerCase().includes('nremt') || 
+          prompt.toLowerCase().includes('paramedic') || 
+          prompt.toLowerCase().includes('emergency medical') ||
+          title.toLowerCase().includes('nremt')) {
         
-        // Define the 5 core NREMT topic areas that must be covered
-        const requiredNREMTTopics = [
-          {
-            name: "Advanced Cardiac Life Support",
-            description: "Comprehensive ACLS protocols, arrhythmia management, and cardiovascular emergencies including cardiac arrest, rhythm interpretation, and advanced interventions",
-            questionCount: 60,
-            percentage: 25
-          },
-          {
-            name: "Trauma Assessment and Management", 
-            description: "Systematic trauma evaluation, injury recognition, spinal immobilization, and emergency trauma interventions",
-            questionCount: 55,
-            percentage: 25
-          },
-          {
-            name: "Airway Management and Ventilation",
-            description: "Advanced airway techniques, intubation procedures, ventilation strategies, and respiratory emergency management",
-            questionCount: 50,
-            percentage: 20
-          },
-          {
-            name: "Pharmacology and Medication Administration",
-            description: "Emergency drug classifications, IV therapy, dosage calculations, and medication protocols for paramedic practice",
-            questionCount: 45,
-            percentage: 15
-          },
-          {
-            name: "Patient Assessment and EMS Operations",
-            description: "Systematic patient evaluation, scene safety, diagnostic reasoning, and EMS operational procedures",
-            questionCount: 40,
-            percentage: 15
-          }
-        ];
-
-        // Generate comprehensive item banks for ALL required topics
-        const existingTopicNames = combinedItemBanks.map(bank => bank.name.toLowerCase());
+        console.log('🚀 NREMT exam detected - switching to comprehensive NREMT generation system...');
         
-        let generatedCount = 0;
-        for (const topic of requiredNREMTTopics) {
-          // Check if this specific topic already exists
-          const topicKeywords = topic.name.toLowerCase().split(' ');
-          const topicExists = existingTopicNames.some(existing => 
-            topicKeywords.some(keyword => existing.includes(keyword))
-          );
-          
-          if (!topicExists) {
-            console.log(`Generating comprehensive ${topic.name} item bank with ${topic.questionCount} questions...`);
+        // Get existing testbanks for intelligent incorporation
+        const user = req.user;
+        const accountId = user?.accountId || "00000000-0000-0000-0000-000000000001";
+        const existingTestbanks = await storage.getTestbanksByAccount(accountId);
+        
+        // Use the dedicated comprehensive NREMT generator
+        const { generateComprehensiveNREMTExam } = await import('./nremt-generator');
+        
+        const comprehensiveExam = await generateComprehensiveNREMTExam(
+          openai,
+          title,
+          'Comprehensive NREMT paramedic certification exam covering all core competency areas with 50-70 questions per topic for proper CAT randomization',
+          existingTestbanks,
+          storage
+        );
+        
+        console.log(`🎯 Generated comprehensive NREMT exam with ${comprehensiveExam.itemBanks.length} item banks`);
+        console.log(`📊 Total questions: ${comprehensiveExam.itemBanks.reduce((sum, bank) => sum + bank.questionCount, 0)}`);
+        
+        // Use the comprehensive exam structure instead of AI-generated config
+        combinedItemBanks = comprehensiveExam.itemBanks;
+        examConfig = {
+          ...examConfig,
+          title: comprehensiveExam.title,
+          description: comprehensiveExam.description,
+          subject: comprehensiveExam.subject,
+          itemBanks: comprehensiveExam.itemBanks,
+          catSettings: comprehensiveExam.catSettings
+        };
+        
+      } else {
+        // For non-NREMT exams, ensure adequate question counts for each item bank
+        console.log('🔧 Enhancing item banks with adequate question counts for CAT...');
+        
+        for (let i = 0; i < combinedItemBanks.length; i++) {
+          const bank = combinedItemBanks[i];
+          if (!bank.questions || bank.questions.length < 40) {
+            console.log(`📈 Enhancing ${bank.name} - generating additional questions for CAT optimization`);
             
-            try {
-              // Generate questions for this specific topic using focused AI generation
-              const topicQuestions = await generateTopicQuestions(openai, topic.name, topic.description, topic.questionCount);
+            // Generate 50+ questions for proper CAT functionality
+            const targetQuestions = 50;
+            const existingQuestions = bank.questions || [];
+            const questionsNeeded = targetQuestions - existingQuestions.length;
+            
+            if (questionsNeeded > 0) {
+              // Use the same robust question generation from the NREMT generator
+              const { generateNREMTTopicQuestions } = await import('./nremt-generator');
+              const enhancedQuestions = await generateNREMTTopicQuestions(
+                openai,
+                bank.name,
+                bank.description || `Questions for ${bank.name}`,
+                questionsNeeded
+              );
               
-              if (topicQuestions && topicQuestions.length > 0) {
-                combinedItemBanks.push({
-                  id: null,
-                  name: `NREMT - ${topic.name}`,
-                  description: topic.description,
-                  subject: "NREMT Paramedic",
-                  questionCount: topicQuestions.length,
-                  percentage: topic.percentage,
-                  isNew: true,
-                  questions: topicQuestions
-                });
-                generatedCount++;
-                console.log(`Successfully generated ${topicQuestions.length} questions for ${topic.name}`);
-              } else {
-                console.warn(`Failed to generate questions for ${topic.name}, using fallback`);
-              }
-            } catch (error) {
-              console.error(`Error generating questions for ${topic.name}:`, error);
-              // Continue with other topics even if one fails
+              bank.questions = [...existingQuestions, ...enhancedQuestions];
+              bank.questionCount = bank.questions.length;
+              console.log(`✅ Enhanced ${bank.name} to ${bank.questions.length} questions`);
             }
-          }
-          
-          // Limit generation to prevent hanging
-          if (generatedCount >= 3) {
-            console.log('Generated maximum topics for this session');
-            break;
           }
         }
       }
