@@ -4342,20 +4342,21 @@ Return JSON with the new question data:
   // Exam References implementation
   async createExamReference(reference: any): Promise<any> {
     try {
+      const referenceData = {
+        accountId: reference.accountId,
+        title: reference.title,
+        category: reference.category,
+        content: reference.content,
+        contentType: 'guidelines',
+        isActive: reference.active ?? true,
+        createdBy: "test-user"
+      };
+      
+      console.log('Creating exam reference with data:', referenceData);
+      
       const [newReference] = await db
         .insert(examReferences)
-        .values({
-          id: crypto.randomUUID(),
-          accountId: reference.accountId,
-          title: reference.title,
-          category: reference.category,
-          content: reference.content,
-          examType: reference.examType || 'general',
-          tags: reference.tags || [],
-          active: reference.active ?? true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
+        .values(referenceData)
         .returning();
       return newReference;
     } catch (error) {
@@ -4379,14 +4380,13 @@ Return JSON with the new question data:
 
   async getExamReferencesByAccount(accountId: string): Promise<any[]> {
     try {
-      return await db
-        .select()
-        .from(examReferences)
-        .where(and(
-          eq(examReferences.accountId, accountId),
-          eq(examReferences.active, true)
-        ))
-        .orderBy(desc(examReferences.createdAt));
+      const result = await db.execute(sql`
+        SELECT * FROM exam_references 
+        WHERE account_id = ${accountId} 
+        AND is_active = true 
+        ORDER BY created_at DESC
+      `);
+      return result.rows;
     } catch (error) {
       console.error('Error getting exam references by account:', error);
       return [];
@@ -4400,16 +4400,14 @@ Return JSON with the new question data:
         ...title.toLowerCase().split(' ').filter(word => word.length > 3)
       ];
 
-      const references = await db
-        .select()
-        .from(examReferences)
-        .where(and(
-          eq(examReferences.accountId, accountId),
-          eq(examReferences.active, true)
-        ));
-
-      return references.filter(ref => {
-        const refContent = (ref.title + ' ' + ref.content + ' ' + ref.category + ' ' + ref.examType).toLowerCase();
+      const result = await db.execute(sql`
+        SELECT * FROM exam_references 
+        WHERE account_id = ${accountId} 
+        AND is_active = true
+      `);
+      
+      return result.rows.filter((ref: any) => {
+        const refContent = (ref.title + ' ' + ref.content + ' ' + ref.category + ' ' + ref.exam_type).toLowerCase();
         return searchTerms.some(term => refContent.includes(term));
       });
     } catch (error) {
