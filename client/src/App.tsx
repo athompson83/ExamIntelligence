@@ -97,6 +97,7 @@ const Billing = lazy(() => import("@/pages/billing"));
 const UserActivityDashboard = lazy(() => import("@/pages/admin/UserActivityDashboard"));
 const ErrorLogsManagement = lazy(() => import("@/pages/ErrorLogsManagement"));
 const BugReportingDemo = lazy(() => import("@/pages/BugReportingDemo"));
+const CATExamGenerationTest = lazy(() => import("@/pages/CATExamGenerationTest"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -275,6 +276,9 @@ function Router() {
           </Route>
           <Route path="/bug-reporting-demo">
             {() => <Suspense fallback={<LoadingSpinner />}><BugReportingDemo /></Suspense>}
+          </Route>
+          <Route path="/cat-generation-test">
+            {() => <Suspense fallback={<LoadingSpinner />}><CATExamGenerationTest /></Suspense>}
           </Route>
           <Route path="/announcements">
             {() => <Suspense fallback={<LoadingSpinner />}><Announcements /></Suspense>}

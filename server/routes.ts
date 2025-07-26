@@ -9289,7 +9289,10 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
             role: "system", 
             content: "You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). Generate comprehensive exam configurations with realistic content. Always respond with valid JSON format." 
           },
-          { role: "user", content: aiPrompt }
+          { 
+            role: "user", 
+            content: `${aiPrompt}\n\nPlease provide your complete response in JSON format with all required exam configuration data.`
+          }
         ],
         response_format: { type: "json_object" },
         temperature: 0.7,
@@ -9347,11 +9350,11 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
           messages: [
             {
               role: "system",
-              content: `You are an expert assessment designer creating Computer Adaptive Testing (CAT) exams. Generate comprehensive item banks with 50-70 questions each, using the provided reference materials for accuracy and structure.`
+              content: `You are an expert assessment designer creating Computer Adaptive Testing (CAT) exams. Generate comprehensive item banks with 50-70 questions each, using the provided reference materials for accuracy and structure. Always respond with valid JSON format.`
             },
             {
               role: "user",
-              content: enhancedPrompt
+              content: `${enhancedPrompt}\n\nPlease provide your complete response in JSON format with the detailed CAT exam structure.`
             }
           ],
           response_format: { type: "json_object" },
