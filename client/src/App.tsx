@@ -8,7 +8,7 @@ import { OnboardingTourProvider } from "@/contexts/OnboardingTourContext";
 import { AITooltipProvider } from "@/contexts/AITooltipContext";
 import OnboardingTour from "@/components/OnboardingTour";
 import AITooltipMascot from "@/components/AITooltipMascot";
-import FloatingBugReportButton from "@/components/FloatingBugReportButton";
+import ConditionalBugReporter from "@/components/ConditionalBugReporter";
 import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense } from "react";
 import CATExamBuilder from "@/pages/CATExamBuilder";
@@ -96,6 +96,7 @@ const Subscribe = lazy(() => import("@/pages/subscribe"));
 const Billing = lazy(() => import("@/pages/billing"));
 const UserActivityDashboard = lazy(() => import("@/pages/admin/UserActivityDashboard"));
 const ErrorLogsManagement = lazy(() => import("@/pages/ErrorLogsManagement"));
+const BugReportingDemo = lazy(() => import("@/pages/BugReportingDemo"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -272,6 +273,9 @@ function Router() {
           <Route path="/error-logs">
             {() => <Suspense fallback={<LoadingSpinner />}><ErrorLogsManagement /></Suspense>}
           </Route>
+          <Route path="/bug-reporting-demo">
+            {() => <Suspense fallback={<LoadingSpinner />}><BugReportingDemo /></Suspense>}
+          </Route>
           <Route path="/announcements">
             {() => <Suspense fallback={<LoadingSpinner />}><Announcements /></Suspense>}
           </Route>
@@ -395,7 +399,7 @@ function App() {
                 <Toaster />
                 <Router />
                 <OnboardingTour />
-                <FloatingBugReportButton />
+                <ConditionalBugReporter />
               </OnboardingTourProvider>
             </AITooltipProvider>
           </CustomTooltipProvider>

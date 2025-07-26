@@ -110,6 +110,11 @@ export function useErrorReporting(): UseErrorReportingReturn {
         className: "bg-white text-red-600 px-3 py-1 rounded text-sm hover:bg-gray-100"
       }, "Report Bug")
     });
+    
+    // Auto-show bug report dialog for critical errors
+    if (errorDetails.severity === "critical") {
+      setTimeout(() => setShowBugReportDialog(true), 2000);
+    }
   };
 
   const reportError = useCallback((error: Error | ErrorDetails, context?: Record<string, any>) => {
