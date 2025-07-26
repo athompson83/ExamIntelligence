@@ -31,6 +31,7 @@ import {
   generateQuestionVariationWithContext,
   generateNewAnswerOptionsWithContext
 } from "./aiService";
+import { multiProviderAI } from "./multiProviderAI";
 import { errorLogger } from "./errorLogger";
 import { DifficultyService } from "./difficultyService";
 import { offlineSyncService } from "./offlineSync";
@@ -9346,26 +9347,20 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
         
         const enhancedPrompt = `${prompt}\n\nReference Materials:\n${referencesContent}`;
         
-        // Generate enhanced exam using reference context
-        const enhancedResponse = await openai.chat.completions.create({
-          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-          messages: [
-            {
-              role: "system",
-              content: `You are an expert assessment designer creating Computer Adaptive Testing (CAT) exams. Generate comprehensive item banks with 50-70 questions each, using the provided reference materials for accuracy and structure. Always respond with valid JSON format.`
-            },
-            {
-              role: "user",
-              content: `${enhancedPrompt}\n\nPlease provide your complete response in JSON format with the detailed CAT exam structure.`
-            }
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.7,
-        });
+        // Generate enhanced exam using multi-provider AI system
+        const aiResponse = await multiProviderAI.generateCATExam(
+          `You are an expert assessment designer creating Computer Adaptive Testing (CAT) exams. Generate comprehensive item banks with 50-70 questions each, using the provided reference materials for accuracy and structure. Always respond with valid JSON format.\n\n${enhancedPrompt}`,
+          {
+            maxTokens: 4000,
+            temperature: 0.7
+          }
+        );
+        
+        console.log(`✅ Generated with ${aiResponse.provider} (${aiResponse.tokensUsed} tokens, $${aiResponse.cost?.toFixed(4)})`);
         
         let enhancedExam;
         try {
-          const rawContent = enhancedResponse.choices[0].message.content || '{}';
+          const rawContent = aiResponse.content || '{}';
           console.log('Raw enhanced response:', rawContent.substring(0, 500) + '...');
           enhancedExam = JSON.parse(rawContent);
           console.log('Parsed enhanced exam structure:', {
@@ -9375,7 +9370,7 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
           });
         } catch (error) {
           console.error('Failed to parse enhanced exam:', error);
-          console.log('Raw enhanced response content:', enhancedResponse.choices[0].message.content);
+          console.log('Raw enhanced response content:', aiResponse.content);
           enhancedExam = null;
         }
         
@@ -9940,24 +9935,24 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     } catch (error) {
       console.error('Error generating CAT exam:', error);
       
-      // Handle specific OpenAI API errors
-      if (error.status === 429) {
+      // Handle specific AI provider errors
+      if (error.status === 429 || error.message?.includes('quota')) {
         res.status(429).json({ 
-          message: 'OpenAI API quota exceeded. Please check your API key plan and billing details.',
+          message: 'AI provider quota exceeded. Trying alternative providers...',
           error: 'quota_exceeded',
-          details: 'The OpenAI API key has reached its usage limit. Please upgrade your plan or try again later.'
+          details: error.message || 'All AI providers have reached their usage limits. Please check your API keys or try again later.'
         });
-      } else if (error.status === 401) {
+      } else if (error.status === 401 || error.message?.includes('API key')) {
         res.status(401).json({ 
-          message: 'OpenAI API key is invalid or missing.',
+          message: 'AI provider authentication failed.',
           error: 'api_key_invalid',
-          details: 'Please check that your OpenAI API key is correctly configured.'
+          details: error.message || 'Please check that your AI provider API keys are correctly configured.'
         });
       } else {
         res.status(500).json({ 
           message: 'Failed to generate CAT exam configuration',
           error: 'generation_failed',
-          details: error.message || 'Unknown error occurred during generation'
+          details: error.message || 'All AI providers failed during generation'
         });
       }
     }
@@ -10255,6 +10250,17 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     } catch (error) {
       console.error('Error resolving error log:', error);
       res.status(500).json({ message: 'Failed to resolve error log' });
+    }
+  });
+
+  // AI Provider Status endpoint
+  app.get('/api/ai-providers/status', isAuthenticated, (req, res) => {
+    try {
+      const status = multiProviderAI.getProviderStatus();
+      res.json(status);
+    } catch (error) {
+      console.error('Error getting AI provider status:', error);
+      res.status(500).json({ message: 'Failed to get AI provider status' });
     }
   });
 

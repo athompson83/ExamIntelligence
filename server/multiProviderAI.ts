@@ -1,283 +1,217 @@
-import OpenAI from "openai";
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { GoogleGenAI } from '@google/genai';
-import { LlmProvider } from "@shared/schema";
+import Anthropic from '@anthropic-ai/sdk';
 
-// OpenAI Configuration
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || "" 
-});
-
-// Anthropic Configuration
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
-});
-
-// Google Gemini Configuration
-const gemini = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY || "" 
-});
-
-// XAI Configuration (using OpenAI-compatible API)
-const xai = new OpenAI({ 
-  baseURL: "https://api.x.ai/v1", 
-  apiKey: process.env.XAI_API_KEY || "" 
-});
-
-interface AIRequest {
-  provider: string;
-  model: string;
-  messages: Array<{
-    role: 'system' | 'user' | 'assistant';
-    content: string;
-  }>;
-  temperature?: number;
-  maxTokens?: number;
-  responseFormat?: { type: "json_object" | "text" };
+export interface AIProvider {
+  name: string;
+  priority: number;
+  available: boolean;
+  costPerToken: number;
 }
 
-interface AIResponse {
+export interface AIResponse {
   content: string;
-  usage?: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
+  provider: string;
+  tokensUsed?: number;
+  cost?: number;
 }
 
-export class MultiProviderAI {
+class MultiProviderAI {
   private providers: Map<string, any> = new Map();
+  private providerConfigs: AIProvider[] = [
+    { name: 'deepseek', priority: 1, available: true, costPerToken: 0.00000014 }, // Cheapest
+    { name: 'gemini', priority: 2, available: true, costPerToken: 0.00000075 }, // Mid-range
+    { name: 'openai', priority: 3, available: true, costPerToken: 0.000015 }, // Most expensive
+    { name: 'anthropic', priority: 4, available: true, costPerToken: 0.000015 }
+  ];
 
   constructor() {
-    this.providers.set('openai', openai);
-    this.providers.set('anthropic', anthropic);
-    this.providers.set('google', gemini);
-    this.providers.set('xai', xai);
+    this.initializeProviders();
   }
 
-  async generateCompletion(request: AIRequest): Promise<AIResponse> {
-    const { provider, model, messages, temperature = 0.7, maxTokens = 2000, responseFormat } = request;
+  private initializeProviders() {
+    // Initialize OpenAI
+    if (process.env.OPENAI_API_KEY) {
+      this.providers.set('openai', new OpenAI({ apiKey: process.env.OPENAI_API_KEY }));
+    }
 
-    try {
-      switch (provider.toLowerCase()) {
-        case 'openai':
-          return await this.generateOpenAI(model, messages, temperature, maxTokens, responseFormat);
-        
-        case 'anthropic':
-          return await this.generateAnthropic(model, messages, temperature, maxTokens);
-        
-        case 'google':
-          return await this.generateGemini(model, messages, temperature, maxTokens, responseFormat);
-        
-        case 'xai':
-          return await this.generateXAI(model, messages, temperature, maxTokens, responseFormat);
-        
-        default:
-          throw new Error(`Unsupported provider: ${provider}`);
-      }
-    } catch (error) {
-      console.error(`Error with ${provider} provider:`, error);
-      throw new Error(`AI generation failed with ${provider}: ${error.message}`);
+    // Initialize Google Gemini
+    if (process.env.GEMINI_API_KEY) {
+      this.providers.set('gemini', new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }));
+    }
+
+    // Initialize Anthropic Claude
+    if (process.env.ANTHROPIC_API_KEY) {
+      this.providers.set('anthropic', new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }));
+    }
+
+    // Initialize Deepseek (using OpenAI-compatible API)
+    if (process.env.DEEPSEEK_API_KEY) {
+      this.providers.set('deepseek', new OpenAI({
+        apiKey: process.env.DEEPSEEK_API_KEY,
+        baseURL: 'https://api.deepseek.com/v1'
+      }));
     }
   }
 
-  private async generateOpenAI(
-    model: string, 
-    messages: any[], 
-    temperature: number, 
-    maxTokens: number,
-    responseFormat?: { type: "json_object" | "text" }
-  ): Promise<AIResponse> {
-    const response = await openai.chat.completions.create({
-      model: model || "gpt-4o",
-      messages,
-      temperature,
-      max_tokens: maxTokens,
-      response_format: responseFormat,
-    });
-
-    return {
-      content: response.choices[0].message.content || "",
-      usage: {
-        promptTokens: response.usage?.prompt_tokens || 0,
-        completionTokens: response.usage?.completion_tokens || 0,
-        totalTokens: response.usage?.total_tokens || 0,
-      }
-    };
+  private getAvailableProviders(): string[] {
+    return this.providerConfigs
+      .filter(config => this.providers.has(config.name))
+      .sort((a, b) => a.priority - b.priority)
+      .map(config => config.name);
   }
 
-  private async generateAnthropic(
-    model: string, 
-    messages: any[], 
-    temperature: number, 
-    maxTokens: number
-  ): Promise<AIResponse> {
-    // Extract system message if present
-    const systemMessage = messages.find(m => m.role === 'system')?.content || "";
-    const conversationMessages = messages.filter(m => m.role !== 'system');
-
-    const response = await anthropic.messages.create({
-      model: model || "claude-sonnet-4-20250514",
-      system: systemMessage,
-      messages: conversationMessages,
-      temperature,
-      max_tokens: maxTokens,
-    });
-
-    const content = response.content[0]?.type === 'text' ? response.content[0].text : "";
-
-    return {
-      content,
-      usage: {
-        promptTokens: response.usage.input_tokens,
-        completionTokens: response.usage.output_tokens,
-        totalTokens: response.usage.input_tokens + response.usage.output_tokens,
-      }
-    };
-  }
-
-  private async generateGemini(
-    model: string, 
-    messages: any[], 
-    temperature: number, 
-    maxTokens: number,
-    responseFormat?: { type: "json_object" | "text" }
-  ): Promise<AIResponse> {
-    // Extract system message if present
-    const systemMessage = messages.find(m => m.role === 'system')?.content || "";
-    const userMessage = messages.filter(m => m.role === 'user').map(m => m.content).join('\n');
-
-    const config: any = {
-      temperature,
-      maxOutputTokens: maxTokens,
-    };
-
-    if (systemMessage) {
-      config.systemInstruction = systemMessage;
+  async generateCATExam(prompt: string, options: any): Promise<AIResponse> {
+    const availableProviders = this.getAvailableProviders();
+    
+    if (availableProviders.length === 0) {
+      throw new Error('No AI providers available. Please configure API keys.');
     }
 
-    if (responseFormat?.type === "json_object") {
-      config.responseMimeType = "application/json";
+    let lastError: Error | null = null;
+
+    // Try each provider in priority order (cheapest first)
+    for (const providerName of availableProviders) {
+      try {
+        console.log(`🔄 Attempting CAT generation with ${providerName}...`);
+        const response = await this.callProvider(providerName, prompt, options);
+        console.log(`✅ Successfully generated with ${providerName}`);
+        return response;
+      } catch (error: any) {
+        console.warn(`❌ ${providerName} failed:`, error.message);
+        lastError = error;
+        
+        // Skip to next provider on quota/rate limit errors
+        if (error.status === 429 || error.code === 'insufficient_quota') {
+          continue;
+        }
+        
+        // For other errors, try next provider
+        continue;
+      }
     }
 
-    const response = await gemini.models.generateContent({
-      model: model || "gemini-2.5-flash",
-      contents: userMessage,
-      config,
-    });
-
-    return {
-      content: response.text || "",
-      usage: {
-        promptTokens: 0, // Gemini doesn't provide detailed usage
-        completionTokens: 0,
-        totalTokens: 0,
-      }
-    };
+    // All providers failed
+    throw new Error(`All AI providers failed. Last error: ${lastError?.message || 'Unknown error'}`);
   }
 
-  private async generateXAI(
-    model: string, 
-    messages: any[], 
-    temperature: number, 
-    maxTokens: number,
-    responseFormat?: { type: "json_object" | "text" }
-  ): Promise<AIResponse> {
-    const response = await xai.chat.completions.create({
-      model: model || "grok-2-1212",
-      messages,
-      temperature,
-      max_tokens: maxTokens,
-      response_format: responseFormat,
-    });
-
-    return {
-      content: response.choices[0].message.content || "",
-      usage: {
-        promptTokens: response.usage?.prompt_tokens || 0,
-        completionTokens: response.usage?.completion_tokens || 0,
-        totalTokens: response.usage?.total_tokens || 0,
-      }
-    };
-  }
-
-  getAvailableModels(provider: string): string[] {
-    switch (provider.toLowerCase()) {
+  private async callProvider(providerName: string, prompt: string, options: any): Promise<AIResponse> {
+    const provider = this.providers.get(providerName);
+    
+    switch (providerName) {
       case 'openai':
-        return ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"];
+        return this.callOpenAI(provider, prompt, options);
+      
+      case 'gemini':
+        return this.callGemini(provider, prompt, options);
+      
+      case 'deepseek':
+        return this.callDeepseek(provider, prompt, options);
       
       case 'anthropic':
-        return ["claude-sonnet-4-20250514", "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022", "claude-3-haiku-20240307"];
-      
-      case 'google':
-        return ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"];
-      
-      case 'xai':
-        return ["grok-2-1212", "grok-2-vision-1212", "grok-beta", "grok-vision-beta"];
+        return this.callAnthropic(provider, prompt, options);
       
       default:
-        return [];
+        throw new Error(`Unknown provider: ${providerName}`);
     }
   }
 
-  async testProviderConnection(provider: string, apiKey?: string): Promise<boolean> {
-    try {
-      const testRequest: AIRequest = {
-        provider,
-        model: this.getAvailableModels(provider)[0],
-        messages: [
-          { role: 'user', content: 'Test connection - respond with "OK"' }
-        ],
-        temperature: 0,
-        maxTokens: 10,
-      };
-
-      // Temporarily override API key if provided
-      if (apiKey) {
-        const originalKey = this.getProviderApiKey(provider);
-        this.setProviderApiKey(provider, apiKey);
-        
-        try {
-          await this.generateCompletion(testRequest);
-          return true;
-        } finally {
-          this.setProviderApiKey(provider, originalKey);
+  private async callOpenAI(client: OpenAI, prompt: string, options: any): Promise<AIResponse> {
+    const response = await client.chat.completions.create({
+      model: options.model || 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: `${prompt}\n\nPlease provide your complete response in JSON format with the detailed CAT exam structure.`
         }
-      } else {
-        await this.generateCompletion(testRequest);
-        return true;
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens: options.maxTokens || 4000,
+      temperature: options.temperature || 0.7
+    });
+
+    return {
+      content: response.choices[0].message.content || '',
+      provider: 'openai',
+      tokensUsed: response.usage?.total_tokens,
+      cost: (response.usage?.total_tokens || 0) * 0.000015
+    };
+  }
+
+  private async callGemini(client: any, prompt: string, options: any): Promise<AIResponse> {
+    const model = client.models.generateContent({
+      model: options.model || 'gemini-2.5-flash',
+      contents: `${prompt}\n\nPlease provide your complete response in JSON format with the detailed CAT exam structure.`,
+      config: {
+        responseMimeType: "application/json",
+        maxOutputTokens: options.maxTokens || 4000,
+        temperature: options.temperature || 0.7
       }
-    } catch (error) {
-      console.error(`Provider ${provider} test failed:`, error);
-      return false;
-    }
+    });
+
+    const response = await model;
+    
+    return {
+      content: response.text || '',
+      provider: 'gemini',
+      tokensUsed: response.usageMetadata?.totalTokenCount,
+      cost: (response.usageMetadata?.totalTokenCount || 0) * 0.00000075
+    };
   }
 
-  private getProviderApiKey(provider: string): string {
-    switch (provider.toLowerCase()) {
-      case 'openai': return process.env.OPENAI_API_KEY || "";
-      case 'anthropic': return process.env.ANTHROPIC_API_KEY || "";
-      case 'google': return process.env.GEMINI_API_KEY || "";
-      case 'xai': return process.env.XAI_API_KEY || "";
-      default: return "";
-    }
+  private async callDeepseek(client: OpenAI, prompt: string, options: any): Promise<AIResponse> {
+    const response = await client.chat.completions.create({
+      model: options.model || 'deepseek-chat',
+      messages: [
+        {
+          role: 'user',
+          content: `${prompt}\n\nPlease provide your complete response in JSON format with the detailed CAT exam structure.`
+        }
+      ],
+      max_tokens: options.maxTokens || 4000,
+      temperature: options.temperature || 0.7,
+      response_format: { type: 'json_object' }
+    });
+
+    return {
+      content: response.choices[0].message.content || '',
+      provider: 'deepseek',
+      tokensUsed: response.usage?.total_tokens,
+      cost: (response.usage?.total_tokens || 0) * 0.00000014
+    };
   }
 
-  private setProviderApiKey(provider: string, apiKey: string): void {
-    switch (provider.toLowerCase()) {
-      case 'openai':
-        this.providers.set('openai', new OpenAI({ apiKey }));
-        break;
-      case 'anthropic':
-        this.providers.set('anthropic', new Anthropic({ apiKey }));
-        break;
-      case 'google':
-        this.providers.set('google', new GoogleGenAI({ apiKey }));
-        break;
-      case 'xai':
-        this.providers.set('xai', new OpenAI({ baseURL: "https://api.x.ai/v1", apiKey }));
-        break;
-    }
+  private async callAnthropic(client: Anthropic, prompt: string, options: any): Promise<AIResponse> {
+    const response = await client.messages.create({
+      model: options.model || 'claude-3-5-sonnet-20241022',
+      max_tokens: options.maxTokens || 4000,
+      temperature: options.temperature || 0.7,
+      messages: [
+        {
+          role: 'user',
+          content: `${prompt}\n\nPlease provide your complete response in JSON format with the detailed CAT exam structure.`
+        }
+      ]
+    });
+
+    const content = response.content[0];
+    const textContent = 'text' in content ? content.text : '';
+
+    return {
+      content: textContent,
+      provider: 'anthropic',
+      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+      cost: (response.usage.input_tokens + response.usage.output_tokens) * 0.000015
+    };
+  }
+
+  getProviderStatus(): { provider: string; available: boolean; priority: number; costPerToken: number }[] {
+    return this.providerConfigs.map(config => ({
+      provider: config.name,
+      available: this.providers.has(config.name),
+      priority: config.priority,
+      costPerToken: config.costPerToken
+    }));
   }
 }
 

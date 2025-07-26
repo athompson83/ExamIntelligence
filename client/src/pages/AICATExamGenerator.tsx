@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Brain, Zap, BookOpen, Settings, Clock, Users, Target, CheckCircle } from 'lucide-react';
+import AIProviderStatus from '@/components/AIProviderStatus';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 import Layout from '@/components/Layout';
@@ -550,6 +551,9 @@ export default function AICATExamGenerator() {
   return (
     <Layout>
       <div className="space-y-6">
+        {/* AI Provider Status */}
+        <AIProviderStatus />
+
         {/* Breadcrumb */}
         <Breadcrumb 
           items={[
