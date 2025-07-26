@@ -301,6 +301,16 @@ export default function AICATExamGenerator() {
     },
     onError: (error: any) => {
       console.error('Generation error:', error);
+      
+      // Report the CAT exam generation failure contextually
+      if (typeof window !== 'undefined' && (window as any).reportFeatureFailure) {
+        (window as any).reportFeatureFailure(
+          'CAT Exam Generation',
+          error instanceof Error ? error : new Error(error?.message || 'CAT exam generation failed'),
+          `User attempted to generate exam with title: "${examTitle}"`
+        );
+      }
+      
       toast({
         title: "Generation Failed",
         description: error.message || "Failed to generate CAT exam configuration",

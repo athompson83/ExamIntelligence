@@ -9330,9 +9330,11 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
       
       // Get exam references that match the prompt/title for enhanced generation
       const examReferences = await storage.getExamReferencesByTopic(accountId, prompt, title);
+      console.log(`🔍 Search terms from prompt/title:`, prompt.toLowerCase().split(' ').filter(word => word.length > 3));
       
       if (examReferences && examReferences.length > 0) {
         console.log(`📚 Found ${examReferences.length} reference materials for enhanced generation`);
+        examReferences.forEach(ref => console.log(`  - ${ref.title} (${ref.category})`));
         
         // Use reference-based comprehensive generation
         console.log('🔧 Generating enhanced exam with reference materials...');
@@ -9363,15 +9365,28 @@ Please respond with a valid JSON object containing the detailed CAT exam configu
         
         let enhancedExam;
         try {
-          enhancedExam = JSON.parse(enhancedResponse.choices[0].message.content || '{}');
+          const rawContent = enhancedResponse.choices[0].message.content || '{}';
+          console.log('Raw enhanced response:', rawContent.substring(0, 500) + '...');
+          enhancedExam = JSON.parse(rawContent);
+          console.log('Parsed enhanced exam structure:', {
+            hasItemBanks: !!enhancedExam.itemBanks,
+            itemBanksIsArray: Array.isArray(enhancedExam.itemBanks),
+            itemBanksLength: enhancedExam.itemBanks ? enhancedExam.itemBanks.length : 0
+          });
         } catch (error) {
-          console.log('Failed to parse enhanced exam, falling back to standard generation');
+          console.error('Failed to parse enhanced exam:', error);
+          console.log('Raw enhanced response content:', enhancedResponse.choices[0].message.content);
           enhancedExam = null;
         }
         
-        if (enhancedExam && enhancedExam.itemBanks.length > 0) {
+        if (enhancedExam && enhancedExam.itemBanks && Array.isArray(enhancedExam.itemBanks) && enhancedExam.itemBanks.length > 0) {
           console.log(`🎯 Generated reference-based exam with ${enhancedExam.itemBanks.length} item banks`);
-          console.log(`📊 Total questions: ${enhancedExam.itemBanks.reduce((sum, bank) => sum + bank.questionCount, 0)}`);
+          // Safely calculate total questions with proper error handling
+          const totalQuestions = enhancedExam.itemBanks.reduce((sum, bank) => {
+            const bankQuestions = bank.questionCount || bank.questions?.length || 0;
+            return sum + bankQuestions;
+          }, 0);
+          console.log(`📊 Total questions: ${totalQuestions}`);
           
           combinedItemBanks = enhancedExam.itemBanks;
           examConfig = {
