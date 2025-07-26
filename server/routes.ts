@@ -9939,7 +9939,27 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
       });
     } catch (error) {
       console.error('Error generating CAT exam:', error);
-      res.status(500).json({ message: 'Failed to generate CAT exam configuration' });
+      
+      // Handle specific OpenAI API errors
+      if (error.status === 429) {
+        res.status(429).json({ 
+          message: 'OpenAI API quota exceeded. Please check your API key plan and billing details.',
+          error: 'quota_exceeded',
+          details: 'The OpenAI API key has reached its usage limit. Please upgrade your plan or try again later.'
+        });
+      } else if (error.status === 401) {
+        res.status(401).json({ 
+          message: 'OpenAI API key is invalid or missing.',
+          error: 'api_key_invalid',
+          details: 'Please check that your OpenAI API key is correctly configured.'
+        });
+      } else {
+        res.status(500).json({ 
+          message: 'Failed to generate CAT exam configuration',
+          error: 'generation_failed',
+          details: error.message || 'Unknown error occurred during generation'
+        });
+      }
     }
   });
 

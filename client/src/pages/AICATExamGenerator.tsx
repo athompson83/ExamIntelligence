@@ -12,6 +12,7 @@ import { Brain, Zap, BookOpen, Settings, Clock, Users, Target, CheckCircle } fro
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 import Layout from '@/components/Layout';
+import APIQuotaWarning from '@/components/APIQuotaWarning';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -302,18 +303,33 @@ export default function AICATExamGenerator() {
     onError: (error: any) => {
       console.error('Generation error:', error);
       
+      let errorTitle = "Generation Failed";
+      let errorDescription = "Failed to generate CAT exam configuration";
+      
+      // Handle specific API errors with user-friendly messages
+      if (error?.response?.data?.error === 'quota_exceeded') {
+        errorTitle = "OpenAI API Quota Exceeded";
+        errorDescription = "The API usage limit has been reached. Please contact your administrator to upgrade the OpenAI plan or try again later.";
+        setShowQuotaWarning(true);
+      } else if (error?.response?.data?.error === 'api_key_invalid') {
+        errorTitle = "API Configuration Issue";
+        errorDescription = "The OpenAI API key is not properly configured. Please contact your administrator to check the API settings.";
+      } else if (error?.message) {
+        errorDescription = error.message;
+      }
+      
       // Report the CAT exam generation failure contextually
       if (typeof window !== 'undefined' && (window as any).reportFeatureFailure) {
         (window as any).reportFeatureFailure(
           'CAT Exam Generation',
-          error instanceof Error ? error : new Error(error?.message || 'CAT exam generation failed'),
-          `User attempted to generate exam with title: "${examTitle}"`
+          error instanceof Error ? error : new Error(errorDescription),
+          `User attempted to generate exam with title: "${examTitle}". Error type: ${error?.response?.data?.error || 'unknown'}`
         );
       }
       
       toast({
-        title: "Generation Failed",
-        description: error.message || "Failed to generate CAT exam configuration",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive"
       });
       setIsGenerating(false);
