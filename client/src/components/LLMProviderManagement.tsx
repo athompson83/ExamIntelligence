@@ -90,6 +90,7 @@ const PROVIDER_CONFIGS = {
 export default function LLMProviderManagement() {
   const [showApiKeys, setShowApiKeys] = useState<{[key: string]: boolean}>({});
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
+  const [localApiKeys, setLocalApiKeys] = useState<{[key: string]: string}>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -102,7 +103,7 @@ export default function LLMProviderManagement() {
     mutationFn: async (provider: Partial<LLMProvider>) => {
       return apiRequest('/api/super-admin/llm-providers', {
         method: 'POST',
-        body: provider
+        body: JSON.stringify(provider)
       });
     },
     onSuccess: () => {
@@ -261,10 +262,19 @@ export default function LLMProviderManagement() {
                         id={`${providerId}-apikey`}
                         type={showApiKeys[providerId] ? "text" : "password"}
                         placeholder={`Enter ${config.displayName} API key`}
-                        value={provider.apiKey || ''}
-                        onChange={(e) => 
-                          handleUpdateProvider(providerId, { apiKey: e.target.value })
-                        }
+                        value={localApiKeys[providerId] !== undefined ? localApiKeys[providerId] : (provider.apiKey || '')}
+                        onChange={(e) => {
+                          setLocalApiKeys(prev => ({
+                            ...prev,
+                            [providerId]: e.target.value
+                          }));
+                        }}
+                        onBlur={(e) => {
+                          const apiKey = e.target.value.trim();
+                          if (apiKey && apiKey !== (provider.apiKey || '')) {
+                            handleUpdateProvider(providerId, { apiKey });
+                          }
+                        }}
                         className="pr-10"
                       />
                       <Button

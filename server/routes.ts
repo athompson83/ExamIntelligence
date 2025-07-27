@@ -6656,8 +6656,12 @@ Initialize all interactions with these principles as your foundation.`,
         return res.status(403).json({ message: 'Super admin access required' });
       }
 
-      // Ensure the request body is properly parsed
-      const providerData = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      // Validate request body
+      if (!req.body || typeof req.body !== 'object') {
+        return res.status(400).json({ message: 'Invalid request body' });
+      }
+      
+      const providerData = req.body;
       console.log('Updating LLM provider with data:', providerData);
       
       const provider = await storage.createOrUpdateLLMProvider(providerData);
