@@ -9328,32 +9328,57 @@ CRITICAL INSTRUCTIONS:
 
 Please respond with a valid JSON object containing the detailed CAT exam configuration with complete question sets. Format your entire response as JSON.`;
 
-      // Generate AI response for CAT exam configuration
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          { 
-            role: "system", 
-            content: "You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). Generate comprehensive exam configurations with realistic content. Always respond with valid JSON format." 
-          },
-          { 
-            role: "user", 
-            content: `${aiPrompt}\n\nPlease provide your complete response in JSON format with all required exam configuration data.`
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.7,
-      });
+      // Use multi-provider AI system with automatic fallback
+      let response;
+      try {
+        const { multiProviderAI } = await import('./multiProviderAI');
+        response = await multiProviderAI.generateContent({
+          messages: [
+            { 
+              role: "system", 
+              content: "You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). Generate comprehensive exam configurations with realistic content. Always respond with valid JSON format." 
+            },
+            { 
+              role: "user", 
+              content: `${aiPrompt}\n\nPlease provide your complete response in JSON format with all required exam configuration data.`
+            }
+          ],
+          responseFormat: { type: "json_object" },
+          temperature: 0.7,
+          taskType: 'cat_exam_generation'
+        });
+      } catch (multiProviderError) {
+        console.error('Multi-provider AI failed, falling back to OpenAI:', multiProviderError);
+        // Fallback to direct OpenAI call
+        response = await openai.chat.completions.create({
+          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+          messages: [
+            { 
+              role: "system", 
+              content: "You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT). Generate comprehensive exam configurations with realistic content. Always respond with valid JSON format." 
+            },
+            { 
+              role: "user", 
+              content: `${aiPrompt}\n\nPlease provide your complete response in JSON format with all required exam configuration data.`
+            }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.7,
+        });
+      }
 
       // Parse the AI response
       let examConfig;
       try {
-        examConfig = JSON.parse(response.choices[0].message.content || '{}');
+        // Handle both multi-provider and direct OpenAI response formats
+        const responseContent = response.content || response.choices?.[0]?.message?.content || '{}';
+        examConfig = JSON.parse(responseContent);
         console.log('AI generated config:', JSON.stringify(examConfig, null, 2));
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
-        console.log('Raw AI response:', response.choices[0].message.content);
-        return res.status(500).json({ message: 'Failed to parse AI response from OpenAI' });
+        const responseContent = response.content || response.choices?.[0]?.message?.content;
+        console.log('Raw AI response:', responseContent);
+        return res.status(500).json({ message: 'Failed to parse AI response from AI provider' });
       }
 
       // Create item banks from AI generated configuration
