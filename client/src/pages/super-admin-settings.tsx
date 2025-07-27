@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import QRCode from 'qrcode';
+import LLMProviderManagement from "@/components/LLMProviderManagement";
 
 interface Account {
   id: string;
@@ -514,8 +515,8 @@ export default function SuperAdminSettings() {
               AI Prompts
             </TabsTrigger>
             <TabsTrigger value="providers">
-              <Bot className="h-4 w-4 mr-2" />
-              AI Providers
+              <Key className="h-4 w-4 mr-2" />
+              LLM Providers
             </TabsTrigger>
             <TabsTrigger value="system">
               <Cog className="h-4 w-4 mr-2" />
@@ -742,43 +743,9 @@ export default function SuperAdminSettings() {
             </Card>
           </TabsContent>
 
-          {/* AI Providers Tab */}
+          {/* LLM Providers Tab */}
           <TabsContent value="providers">
-            <Card>
-              <CardHeader>
-                <CardTitle>AI Provider Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Provider</TableHead>
-                      <TableHead>Account</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {llmProviders.map((provider: LLMProvider) => (
-                      <TableRow key={provider.id}>
-                        <TableCell className="font-medium">{provider.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{provider.provider}</Badge>
-                        </TableCell>
-                        <TableCell>{provider.accountName}</TableCell>
-                        <TableCell>
-                          <Badge variant={provider.isActive ? "default" : "secondary"}>
-                            {provider.isActive ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(provider.createdAt).toLocaleDateString()}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <LLMProviderManagement />
           </TabsContent>
 
           {/* System Tab */}

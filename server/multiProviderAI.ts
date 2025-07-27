@@ -213,6 +213,78 @@ class MultiProviderAI {
       costPerToken: config.costPerToken
     }));
   }
+
+  async testProvider(providerId: string, providerConfig: any): Promise<{ success: boolean; message: string; error?: string }> {
+    try {
+      // Initialize provider for testing
+      let testClient;
+      
+      switch (providerId) {
+        case 'openai':
+          testClient = new OpenAI({ apiKey: providerConfig.apiKey });
+          break;
+        case 'gemini':
+          testClient = new GoogleGenAI({ apiKey: providerConfig.apiKey });
+          break;
+        case 'deepseek':
+          testClient = new OpenAI({
+            apiKey: providerConfig.apiKey,
+            baseURL: 'https://api.deepseek.com/v1'
+          });
+          break;
+        case 'anthropic':
+          testClient = new Anthropic({ apiKey: providerConfig.apiKey });
+          break;
+        case 'groq':
+          testClient = new OpenAI({
+            apiKey: providerConfig.apiKey,
+            baseURL: 'https://api.groq.com/openai/v1'
+          });
+          break;
+        default:
+          return { success: false, message: 'Unknown provider', error: 'Provider not supported' };
+      }
+
+      // Test with a simple request
+      const testPrompt = "Say 'Test successful' if you can read this message.";
+      
+      if (providerId === 'gemini') {
+        const response = await testClient.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: testPrompt,
+        });
+        const result = response.text || '';
+        return { success: true, message: `Test successful. Response: ${result.substring(0, 50)}...` };
+      } else if (providerId === 'anthropic') {
+        const response = await testClient.messages.create({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 50,
+          messages: [{ role: 'user', content: testPrompt }]
+        });
+        const content = response.content[0];
+        const result = 'text' in content ? content.text : '';
+        return { success: true, message: `Test successful. Response: ${result.substring(0, 50)}...` };
+      } else {
+        // OpenAI-compatible APIs (OpenAI, Deepseek, Groq)
+        const response = await testClient.chat.completions.create({
+          model: providerId === 'openai' ? 'gpt-4o' : 
+                 providerId === 'deepseek' ? 'deepseek-chat' : 
+                 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: testPrompt }],
+          max_tokens: 50
+        });
+        const result = response.choices[0].message.content || '';
+        return { success: true, message: `Test successful. Response: ${result.substring(0, 50)}...` };
+      }
+    } catch (error: any) {
+      console.error(`Provider ${providerId} test failed:`, error);
+      return { 
+        success: false, 
+        message: 'Test failed', 
+        error: error.message || error.toString() 
+      };
+    }
+  }
 }
 
 export const multiProviderAI = new MultiProviderAI();

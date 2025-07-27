@@ -4527,6 +4527,52 @@ Return JSON with the new question data:
       return false;
     }
   }
+
+  // LLM Provider Management (in-memory for now)
+  private llmProviders: any[] = [];
+
+  async getAllLLMProviders(): Promise<any[]> {
+    return this.llmProviders;
+  }
+
+  async getLLMProviderById(id: string): Promise<any | null> {
+    return this.llmProviders.find(p => p.id === id) || null;
+  }
+
+  async createOrUpdateLLMProvider(provider: any): Promise<any> {
+    const existingIndex = this.llmProviders.findIndex(p => p.id === provider.id);
+    const updatedProvider = {
+      ...provider,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (existingIndex >= 0) {
+      this.llmProviders[existingIndex] = updatedProvider;
+    } else {
+      updatedProvider.createdAt = new Date().toISOString();
+      this.llmProviders.push(updatedProvider);
+    }
+
+    return updatedProvider;
+  }
+
+  async updateLLMProviderStatus(id: string, status: any): Promise<any> {
+    const provider = this.llmProviders.find(p => p.id === id);
+    if (provider) {
+      Object.assign(provider, status, { updatedAt: new Date().toISOString() });
+      return provider;
+    }
+    return null;
+  }
+
+  async deleteLLMProvider(id: string): Promise<boolean> {
+    const index = this.llmProviders.findIndex(p => p.id === id);
+    if (index >= 0) {
+      this.llmProviders.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
 }
 
 export const storage = new DatabaseStorage();

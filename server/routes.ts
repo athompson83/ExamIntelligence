@@ -10264,6 +10264,74 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     }
   });
 
+  // LLM Provider Management endpoints (Super Admin only)
+  app.get('/api/admin/llm-providers', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUserById(userId);
+      
+      if (user?.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const providers = await storage.getAllLLMProviders();
+      res.json(providers);
+    } catch (error) {
+      console.error('Error getting LLM providers:', error);
+      res.status(500).json({ message: 'Failed to get LLM providers' });
+    }
+  });
+
+  app.post('/api/admin/llm-providers', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUserById(userId);
+      
+      if (user?.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const provider = await storage.createOrUpdateLLMProvider(req.body);
+      res.json(provider);
+    } catch (error) {
+      console.error('Error updating LLM provider:', error);
+      res.status(500).json({ message: 'Failed to update LLM provider' });
+    }
+  });
+
+  app.post('/api/admin/llm-providers/:id/test', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUserById(userId);
+      
+      if (user?.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const providerId = req.params.id;
+      const provider = await storage.getLLMProviderById(providerId);
+      
+      if (!provider || !provider.apiKey) {
+        return res.status(400).json({ message: 'Provider not configured or missing API key' });
+      }
+
+      // Test the provider with a simple request
+      const testResult = await multiProviderAI.testProvider(providerId, provider);
+      
+      // Update provider status
+      await storage.updateLLMProviderStatus(providerId, {
+        status: testResult.success ? 'active' : 'error',
+        lastTested: new Date().toISOString(),
+        errorMessage: testResult.error
+      });
+
+      res.json({ success: testResult.success, message: testResult.message });
+    } catch (error) {
+      console.error('Error testing LLM provider:', error);
+      res.status(500).json({ message: 'Failed to test LLM provider' });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 
