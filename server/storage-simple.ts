@@ -4529,7 +4529,120 @@ Return JSON with the new question data:
   }
 
   // LLM Provider Management (in-memory for now)
-  private llmProviders: any[] = [];
+  private llmProviders: any[] = [
+    {
+      id: 'openai',
+      name: 'openai',
+      displayName: 'OpenAI GPT-4o',
+      apiKey: '',
+      baseUrl: 'https://api.openai.com/v1',
+      isEnabled: false,
+      priority: 1,
+      costPerToken: 0.000015,
+      maxTokens: 4096,
+      description: 'Most reliable and versatile. Best for complex reasoning and high-quality outputs.',
+      status: 'inactive',
+      lastTested: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'anthropic',
+      name: 'anthropic',
+      displayName: 'Anthropic Claude',
+      apiKey: '',
+      baseUrl: 'https://api.anthropic.com/v1',
+      isEnabled: false,
+      priority: 2,
+      costPerToken: 0.000015,
+      maxTokens: 4096,
+      description: 'Superior reasoning and safety. Best for educational content and complex analysis.',
+      status: 'inactive',
+      lastTested: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'google',
+      name: 'google',
+      displayName: 'Google Gemini',
+      apiKey: '',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+      isEnabled: false,
+      priority: 3,
+      costPerToken: 0.00000075,
+      maxTokens: 8192,
+      description: "Google's multimodal AI. Great balance of speed, cost, and quality.",
+      status: 'inactive',
+      lastTested: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'xai',
+      name: 'xai',
+      displayName: 'xAI Grok',
+      apiKey: '',
+      baseUrl: 'https://api.x.ai/v1',
+      isEnabled: false,
+      priority: 4,
+      costPerToken: 0.000002,
+      maxTokens: 8192,
+      description: 'Real-time data access and advanced reasoning with Grok models.',
+      status: 'inactive',
+      lastTested: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'deepseek',
+      name: 'deepseek',
+      displayName: 'Deepseek',
+      apiKey: '',
+      baseUrl: 'https://api.deepseek.com/v1',
+      isEnabled: false,
+      priority: 5,
+      costPerToken: 0.00000014,
+      maxTokens: 4096,
+      description: 'Most cost-effective option. Excellent for high-volume generation tasks.',
+      status: 'inactive',
+      lastTested: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'groq',
+      name: 'groq',
+      displayName: 'Groq',
+      apiKey: '',
+      baseUrl: 'https://api.groq.com/openai/v1',
+      isEnabled: false,
+      priority: 6,
+      costPerToken: 0.00000059,
+      maxTokens: 8192,
+      description: 'Ultra-fast inference speed. Ideal for real-time applications and rapid generation.',
+      status: 'inactive',
+      lastTested: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'llama',
+      name: 'llama',
+      displayName: 'Meta Llama',
+      apiKey: '',
+      baseUrl: 'https://api.together.xyz/v1',
+      isEnabled: false,
+      priority: 7,
+      costPerToken: 0.0000009,
+      maxTokens: 4096,
+      description: 'Open-source large language model. Great for research and educational applications.',
+      status: 'inactive',
+      lastTested: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+  ];
 
   async getAllLLMProviders(): Promise<any[]> {
     return this.llmProviders;
@@ -4572,6 +4685,19 @@ Return JSON with the new question data:
       return true;
     }
     return false;
+  }
+
+  async updateLLMProviderStatus(id: string, status: { status: string; lastTested: string }): Promise<any> {
+    const providerIndex = this.llmProviders.findIndex(p => p.id === id);
+    if (providerIndex >= 0) {
+      this.llmProviders[providerIndex] = {
+        ...this.llmProviders[providerIndex],
+        ...status,
+        updatedAt: new Date().toISOString()
+      };
+      return this.llmProviders[providerIndex];
+    }
+    return null;
   }
 }
 

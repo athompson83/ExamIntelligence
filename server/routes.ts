@@ -6615,21 +6615,7 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
-  // Get all LLM providers across accounts (super admin only)
-  app.get('/api/super-admin/llm-providers', async (req: any, res) => {
-    try {
-      const user = req.user;
-      if (!user || user.role !== 'super_admin') {
-        return res.status(403).json({ message: 'Super admin access required' });
-      }
 
-      const providers = await storage.getAllLLMProvidersWithAccountInfo();
-      res.json(providers);
-    } catch (error) {
-      console.error('Error fetching LLM providers:', error);
-      res.status(500).json({ message: 'Failed to fetch LLM providers' });
-    }
-  });
 
   // Get system statistics (super admin only)
   app.get('/api/super-admin/system-stats', mockAuth, async (req: any, res) => {
@@ -6670,11 +6656,15 @@ Initialize all interactions with these principles as your foundation.`,
         return res.status(403).json({ message: 'Super admin access required' });
       }
 
-      const provider = await storage.createOrUpdateLLMProvider(req.body);
+      // Ensure the request body is properly parsed
+      const providerData = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      console.log('Updating LLM provider with data:', providerData);
+      
+      const provider = await storage.createOrUpdateLLMProvider(providerData);
       res.json(provider);
     } catch (error) {
       console.error('Error updating LLM provider:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(500).json({ message: 'Internal server error', error: error.message });
     }
   });
 
@@ -8419,20 +8409,7 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
-  app.get('/api/super-admin/llm-providers', mockAuth, async (req: any, res) => {
-    try {
-      const user = req.user;
-      if (!user || user.role !== 'super_admin') {
-        return res.status(403).json({ message: 'Super admin access required' });
-      }
-      
-      const providers = await storage.getAllLLMProvidersWithAccountInfo();
-      res.json(providers);
-    } catch (error) {
-      console.error('Error fetching LLM providers:', error);
-      res.status(500).json({ message: 'Failed to fetch LLM providers' });
-    }
-  });
+
 
   // ============= OFFLINE SYNC API ROUTES =============
   
