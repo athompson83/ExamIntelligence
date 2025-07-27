@@ -94,7 +94,7 @@ export default function LLMProviderManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: providers, isLoading } = useQuery({
+  const { data: providers, isLoading } = useQuery<LLMProvider[]>({
     queryKey: ['/api/super-admin/llm-providers'],
     staleTime: 30000,
   });
@@ -207,7 +207,8 @@ export default function LLMProviderManagement() {
             LLM Provider Management
           </CardTitle>
           <p className="text-sm text-gray-600">
-            Configure API keys and settings for AI providers. The system automatically selects the best provider based on cost, availability, and task requirements.
+            Configure API keys and settings for AI providers. Use the toggle switches to enable/disable providers. 
+            The system automatically selects the best enabled provider based on cost, availability, and task requirements.
           </p>
         </CardHeader>
       </Card>
@@ -222,15 +223,15 @@ export default function LLMProviderManagement() {
 
       <div className="grid gap-6">
         {Object.entries(PROVIDER_CONFIGS).map(([providerId, config]) => {
-          const provider = providers?.find(p => p.id === providerId) || {};
-          const isConfigured = !!provider.apiKey;
+          const provider = providers?.find(p => p.id === providerId);
+          const isConfigured = !!provider?.apiKey;
           
           return (
             <Card key={providerId} className="relative">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${getStatusColor(provider.status)}`} />
+                    <div className={`w-3 h-3 rounded-full ${getStatusColor(provider?.status || 'inactive')}`} />
                     <CardTitle className="text-lg">{config.displayName}</CardTitle>
                     <Badge variant={isConfigured ? "default" : "secondary"}>
                       {isConfigured ? "Configured" : "Not Configured"}
@@ -241,13 +242,18 @@ export default function LLMProviderManagement() {
                       <DollarSign className="h-3 w-3" />
                       {formatCost(config.costPerToken)}
                     </Badge>
-                    <Switch
-                      checked={provider.isEnabled || false}
-                      onCheckedChange={(enabled) => 
-                        handleUpdateProvider(providerId, { isEnabled: enabled })
-                      }
-                      disabled={!isConfigured}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={provider?.isEnabled || false}
+                        onCheckedChange={(enabled) => 
+                          handleUpdateProvider(providerId, { isEnabled: enabled })
+                        }
+                        disabled={!isConfigured}
+                      />
+                      <span className="text-xs text-gray-500">
+                        {provider?.isEnabled ? "Active" : "Disabled"}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">{config.description}</p>
@@ -262,7 +268,7 @@ export default function LLMProviderManagement() {
                         id={`${providerId}-apikey`}
                         type={showApiKeys[providerId] ? "text" : "password"}
                         placeholder={`Enter ${config.displayName} API key`}
-                        value={localApiKeys[providerId] !== undefined ? localApiKeys[providerId] : (provider.apiKey || '')}
+                        value={localApiKeys[providerId] !== undefined ? localApiKeys[providerId] : (provider?.apiKey || '')}
                         onChange={(e) => {
                           setLocalApiKeys(prev => ({
                             ...prev,
@@ -271,7 +277,7 @@ export default function LLMProviderManagement() {
                         }}
                         onBlur={(e) => {
                           const apiKey = e.target.value.trim();
-                          if (apiKey && apiKey !== (provider.apiKey || '')) {
+                          if (apiKey && apiKey !== (provider?.apiKey || '')) {
                             handleUpdateProvider(providerId, { apiKey });
                           }
                         }}
@@ -295,7 +301,7 @@ export default function LLMProviderManagement() {
                   <div className="space-y-2">
                     <Label htmlFor={`${providerId}-priority`}>Priority</Label>
                     <Select
-                      value={provider.priority?.toString() || "3"}
+                      value={provider?.priority?.toString() || "3"}
                       onValueChange={(value) => 
                         handleUpdateProvider(providerId, { priority: parseInt(value) })
                       }
@@ -334,14 +340,14 @@ export default function LLMProviderManagement() {
                     )}
                   </Button>
 
-                  {provider.lastTested && (
+                  {provider?.lastTested && (
                     <Badge variant="outline" className="text-xs">
                       Last tested: {new Date(provider.lastTested).toLocaleDateString()}
                     </Badge>
                   )}
                 </div>
 
-                {provider.status === 'error' && (
+                {provider?.status === 'error' && (
                   <Alert variant="destructive">
                     <XCircle className="h-4 w-4" />
                     <AlertDescription>
