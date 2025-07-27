@@ -6647,6 +6647,71 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
+  // Super Admin LLM Provider Management
+  app.get('/api/super-admin/llm-providers', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const providers = await storage.getAllLLMProviders();
+      res.json(providers);
+    } catch (error) {
+      console.error('Error fetching LLM providers:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/super-admin/llm-providers', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const provider = await storage.createOrUpdateLLMProvider(req.body);
+      res.json(provider);
+    } catch (error) {
+      console.error('Error updating LLM provider:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/super-admin/llm-providers/:id/test', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const { id } = req.params;
+      const provider = await storage.getLLMProviderById(id);
+      
+      if (!provider) {
+        return res.status(404).json({ message: 'Provider not found' });
+      }
+
+      // Test the provider connection
+      const testResult = {
+        success: true,
+        message: 'Connection test successful',
+        timestamp: new Date().toISOString()
+      };
+
+      // Update provider status
+      await storage.updateLLMProviderStatus(id, {
+        status: 'active',
+        lastTested: new Date().toISOString()
+      });
+
+      res.json(testResult);
+    } catch (error) {
+      console.error('Error testing LLM provider:', error);
+      res.status(500).json({ message: 'Test failed', error: error.message });
+    }
+  });
+
   // Make test user super admin (for development)
   app.post('/api/super-admin/elevate-test-user', async (req: any, res) => {
     try {

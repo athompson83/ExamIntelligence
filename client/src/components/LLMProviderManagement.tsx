@@ -61,13 +61,29 @@ const PROVIDER_CONFIGS = {
     maxTokens: 4096,
     description: 'Superior reasoning and safety. Best for educational content and complex analysis.'
   },
+  xai: {
+    displayName: 'xAI Grok',
+    baseUrl: 'https://api.x.ai/v1',
+    defaultModel: 'grok-2-1212',
+    costPerToken: 0.000002,
+    maxTokens: 8192,
+    description: 'Real-time data access and advanced reasoning with Grok models.'
+  },
   groq: {
-    displayName: 'Groq Llama',
+    displayName: 'Groq',
     baseUrl: 'https://api.groq.com/openai/v1',
     defaultModel: 'llama-3.3-70b-versatile',
     costPerToken: 0.00000059,
     maxTokens: 8192,
     description: 'Ultra-fast inference speed. Ideal for real-time applications and rapid generation.'
+  },
+  llama: {
+    displayName: 'Meta Llama',
+    baseUrl: 'https://api.together.xyz/v1',
+    defaultModel: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
+    costPerToken: 0.0000009,
+    maxTokens: 4096,
+    description: 'Open-source large language model. Great for research and educational applications.'
   }
 };
 
@@ -78,19 +94,19 @@ export default function LLMProviderManagement() {
   const queryClient = useQueryClient();
 
   const { data: providers, isLoading } = useQuery({
-    queryKey: ['/api/admin/llm-providers'],
+    queryKey: ['/api/super-admin/llm-providers'],
     staleTime: 30000,
   });
 
   const updateProviderMutation = useMutation({
     mutationFn: async (provider: Partial<LLMProvider>) => {
-      return apiRequest('/api/admin/llm-providers', {
+      return apiRequest('/api/super-admin/llm-providers', {
         method: 'POST',
         body: provider
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/llm-providers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/llm-providers'] });
       toast({
         title: "Provider Updated",
         description: "LLM provider configuration saved successfully"
@@ -107,13 +123,13 @@ export default function LLMProviderManagement() {
 
   const testProviderMutation = useMutation({
     mutationFn: async (providerId: string) => {
-      return apiRequest(`/api/admin/llm-providers/${providerId}/test`, {
+      return apiRequest(`/api/super-admin/llm-providers/${providerId}/test`, {
         method: 'POST'
       });
     },
     onSuccess: (data, providerId) => {
       setTestingProvider(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/llm-providers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/llm-providers'] });
       toast({
         title: "Test Successful",
         description: `${PROVIDER_CONFIGS[providerId]?.displayName} is working correctly`
