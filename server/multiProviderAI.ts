@@ -21,8 +21,9 @@ class MultiProviderAI {
   private providerConfigs: AIProvider[] = [
     { name: 'deepseek', priority: 1, available: true, costPerToken: 0.00000014 }, // Cheapest
     { name: 'gemini', priority: 2, available: true, costPerToken: 0.00000075 }, // Mid-range
-    { name: 'openai', priority: 3, available: true, costPerToken: 0.000015 }, // Most expensive
-    { name: 'anthropic', priority: 4, available: true, costPerToken: 0.000015 }
+    { name: 'xai', priority: 3, available: true, costPerToken: 0.000002 }, // xAI Grok
+    { name: 'openai', priority: 4, available: true, costPerToken: 0.000015 }, // Most expensive
+    { name: 'anthropic', priority: 5, available: true, costPerToken: 0.000015 }
   ];
 
   constructor() {
@@ -41,10 +42,22 @@ class MultiProviderAI {
     const storage = new DatabaseStorage();
     
     try {
-      const providers = await storage.getLLMProviders();
+      const providers = await storage.getAllLLMProviders();
+      console.log('🔍 Available providers from database:', providers.map(p => ({ 
+        id: p.id, 
+        hasApiKey: !!p.apiKey, 
+        keyLength: p.apiKey ? p.apiKey.length : 0,
+        isEnabled: p.isEnabled 
+      })));
       
       for (const provider of providers) {
-        if (!provider.apiKey || !provider.isEnabled) continue;
+        // Skip if no API key or explicitly disabled
+        if (!provider.apiKey || provider.isEnabled === false) {
+          console.log(`⏭️ Skipping ${provider.id}: apiKey=${!!provider.apiKey}, isEnabled=${provider.isEnabled}`);
+          continue;
+        }
+        
+        console.log(`✅ Initializing ${provider.id} provider`);
         
         switch (provider.id) {
           case 'openai':
@@ -73,8 +86,18 @@ class MultiProviderAI {
               }));
             }
             break;
+            
+          case 'xai':
+            if (provider.apiKey) {
+              this.providers.set('xai', new OpenAI({
+                apiKey: provider.apiKey,
+                baseURL: 'https://api.x.ai/v1'
+              }));
+            }
+            break;
         }
       }
+      console.log(`🎯 Total providers initialized: ${this.providers.size}`);
     } catch (error) {
       console.error('Failed to initialize providers from database:', error);
       // Fallback to environment variables
@@ -141,6 +164,9 @@ class MultiProviderAI {
       case 'anthropic':
         return this.callAnthropic(provider, messages, options);
       
+      case 'xai':
+        return this.callXAI(provider, messages, options);
+      
       default:
         throw new Error(`Unknown provider: ${providerName}`);
     }
@@ -148,7 +174,9 @@ class MultiProviderAI {
 
   async generateContent(options: any): Promise<AIResponse> {
     // Reinitialize providers to get latest API keys from database
-    await this.reinitialize();
+    console.log('🔄 Reinitializing providers for content generation...');
+    await this.initializeProviders();
+    console.log(`🎯 Providers available after reinit: ${this.providers.size}`);
     return this.generateCATExam('', options);
   }
 
@@ -217,6 +245,22 @@ class MultiProviderAI {
       provider: 'anthropic',
       tokensUsed: response.usage?.total_tokens,
       cost: (response.usage?.total_tokens || 0) * 0.000015
+    };
+  }
+
+  private async callXAI(client: OpenAI, messages: any[], options: any): Promise<AIResponse> {
+    const response = await client.chat.completions.create({
+      model: options.model || 'grok-2-1212',
+      messages: messages,
+      response_format: options.responseFormat || { type: "json_object" },
+      temperature: options.temperature || 0.7
+    });
+
+    return {
+      content: response.choices[0].message.content || '',
+      provider: 'xai',
+      tokensUsed: response.usage?.total_tokens,
+      cost: (response.usage?.total_tokens || 0) * 0.000002
     };
   }
 }

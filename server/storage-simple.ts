@@ -4654,19 +4654,28 @@ Return JSON with the new question data:
 
   async createOrUpdateLLMProvider(provider: any): Promise<any> {
     const existingIndex = this.llmProviders.findIndex(p => p.id === provider.id);
-    const updatedProvider = {
-      ...provider,
-      updatedAt: new Date().toISOString()
-    };
-
+    
     if (existingIndex >= 0) {
+      // Update existing provider with new data, keeping existing values for undefined fields
+      const existing = this.llmProviders[existingIndex];
+      const updatedProvider = {
+        ...existing,
+        ...provider,
+        updatedAt: new Date().toISOString()
+      };
       this.llmProviders[existingIndex] = updatedProvider;
+      console.log(`Updated provider ${provider.id} with API key: ${!!provider.apiKey}`);
+      return updatedProvider;
     } else {
-      updatedProvider.createdAt = new Date().toISOString();
-      this.llmProviders.push(updatedProvider);
+      const newProvider = {
+        ...provider,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      this.llmProviders.push(newProvider);
+      console.log(`Created new provider ${provider.id} with API key: ${!!provider.apiKey}`);
+      return newProvider;
     }
-
-    return updatedProvider;
   }
 
   async updateLLMProviderStatus(id: string, status: any): Promise<any> {
