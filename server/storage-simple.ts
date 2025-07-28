@@ -4649,8 +4649,16 @@ Return JSON with the new question data:
     try {
       // First try to get from database
       const providers = await db.select().from(llmProviders);
+      console.log('📊 Database query result:', providers.length, 'providers found');
       
       if (providers.length > 0) {
+        console.log('🔍 Raw database providers:', providers.map(p => ({ 
+          name: p.name, 
+          hasApiKey: !!p.apiKey, 
+          keyLength: p.apiKey ? p.apiKey.length : 0,
+          isActive: p.isActive 
+        })));
+        
         return providers.map(p => ({
           id: p.name,
           name: p.name,
@@ -4718,8 +4726,8 @@ Return JSON with the new question data:
           defaultModel: 'default',
           isActive: provider.isEnabled || false,
           priority: provider.priority || 1,
-          accountId: '00000000-0000-0000-0000-000000000000', // Default account
-          createdBy: 'system'
+          accountId: '00000000-0000-0000-0000-000000000001', // Use existing account
+          createdBy: 'test-user'
         }).returning();
         
         console.log(`Created new provider ${provider.id} with API key: ${!!provider.apiKey}`);
