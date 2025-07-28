@@ -81,8 +81,9 @@ export default function CATExamTest() {
               console.log(`Found ${questions?.length || 0} questions for testbank ${testbankId}`);
               
               if (questions && questions.length > 0) {
-                // Take first 3 questions from each item bank for preview
-                sampleQuestions.push(...questions.slice(0, 3));
+                // For CAT preview, only take one sample question since next question is selected adaptively
+                sampleQuestions.push(questions[0]);
+                break; // Only take one question total for CAT preview
               }
             }
           } catch (error) {
@@ -406,13 +407,17 @@ export default function CATExamTest() {
                                     </div>
                                     
                                     <div>
-                                      <h3 className="font-semibold mb-4">Sample Questions</h3>
+                                      <h3 className="font-semibold mb-4">Sample Question Preview</h3>
+                                      <p className="text-sm text-gray-600 mb-4">
+                                        In CAT exams, questions are presented one at a time. The next question is selected 
+                                        based on your performance on the current question.
+                                      </p>
                                       {previewQuestions.length > 0 ? (
                                         <div className="space-y-6">
                                           {previewQuestions.map((question: any, index: number) => (
                                             <div key={question.id} className="p-4 border rounded-lg">
                                               <div className="flex items-start justify-between mb-3">
-                                                <h4 className="font-medium">Question {index + 1}</h4>
+                                                <h4 className="font-medium">Sample Question</h4>
                                                 <div className="flex gap-2">
                                                   <Badge variant="outline">
                                                     Difficulty: {question.difficultyScore}/10
