@@ -3263,8 +3263,42 @@ Return JSON with the new question data:
 
   async getCATExams(): Promise<any[]> {
     try {
-      // Return all CAT exams including created ones
-      return [...this.catExamsStorage];
+      // Fetch CAT exams from PostgreSQL database
+      const exams = await db.select().from(catExams).orderBy(desc(catExams.createdAt));
+      
+      // Fetch categories for each exam
+      const examsWithCategories = await Promise.all(
+        exams.map(async (exam) => {
+          const categories = await db
+            .select({
+              bankId: catExamCategories.testbankId,
+              percentage: catExamCategories.percentage,
+              minQuestions: catExamCategories.minQuestions,
+              maxQuestions: catExamCategories.maxQuestions
+            })
+            .from(catExamCategories)
+            .where(eq(catExamCategories.catExamId, exam.id));
+          
+          return {
+            ...exam,
+            itemBanks: categories.map(cat => ({
+              bankId: cat.bankId,
+              testbankId: cat.bankId,
+              id: cat.bankId,
+              percentage: parseFloat(cat.percentage.toString()),
+              minQuestions: cat.minQuestions,
+              maxQuestions: cat.maxQuestions
+            })),
+            estimatedDuration: '20-45 minutes',
+            sessions: 0,
+            avgScore: 0,
+            categories: []
+          };
+        })
+      );
+      
+      console.log(`Retrieved ${examsWithCategories.length} CAT exams from database`);
+      return examsWithCategories;
     } catch (error) {
       console.error('Error fetching CAT exams:', error);
       throw error;
@@ -3312,27 +3346,86 @@ Return JSON with the new question data:
 
   async createCATExam(catExamData: any): Promise<any> {
     try {
-      const catExam = {
-        id: 'cat_' + Date.now(),
-        ...catExamData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: 'draft',
-        sessions: 0,
-        avgScore: 0,
-        estimatedDuration: catExamData.estimatedDuration || '20-45 minutes',
-        proctoringEnabled: catExamData.proctoringEnabled || false,
+      // Prepare data for database insertion
+      const insertData = {
+        title: catExamData.title,
+        description: catExamData.description,
+        instructions: catExamData.instructions || catExamData.description,
+        creatorId: catExamData.createdBy,
+        accountId: catExamData.accountId,
+        
+        // CAT-specific settings from adaptiveSettings
+        startingDifficulty: catExamData.adaptiveSettings?.startingDifficulty?.toString() || "5.0",
+        difficultyAdjustment: catExamData.adaptiveSettings?.difficultyAdjustment?.toString() || "0.5",
+        minQuestions: catExamData.adaptiveSettings?.minQuestions || 10,
+        maxQuestions: catExamData.adaptiveSettings?.maxQuestions || 50,
+        
+        // Termination criteria
+        confidenceLevel: catExamData.adaptiveSettings?.terminationCriteria?.confidenceLevel?.toString() || "0.95",
+        standardError: catExamData.adaptiveSettings?.terminationCriteria?.standardError?.toString() || "0.3",
+        timeLimit: catExamData.adaptiveSettings?.terminationCriteria?.timeLimit || 120,
+        
+        // Scoring settings
+        passingScore: catExamData.scoringSettings?.passingScore?.toString() || "70.0",
+        scalingMethod: catExamData.scoringSettings?.scalingMethod || "irt",
+        reportingScaleMin: catExamData.scoringSettings?.reportingScale?.min || 200,
+        reportingScaleMax: catExamData.scoringSettings?.reportingScale?.max || 800,
+        
+        // Security settings
+        allowCalculator: catExamData.securitySettings?.allowCalculator || false,
+        calculatorType: catExamData.securitySettings?.calculatorType || "basic",
+        enableProctoring: catExamData.securitySettings?.enableProctoring || false,
+        preventCopyPaste: catExamData.securitySettings?.preventCopyPaste || true,
+        preventTabSwitching: catExamData.securitySettings?.preventTabSwitching || true,
+        requireWebcam: catExamData.securitySettings?.requireWebcam || false,
+        
+        // Access settings stored as JSON
+        accessSettings: {
+          availableFrom: catExamData.accessSettings?.availableFrom,
+          availableTo: catExamData.accessSettings?.availableTo,
+          timeLimit: catExamData.accessSettings?.timeLimit || 120,
+          allowedAttempts: catExamData.accessSettings?.allowedAttempts || 1,
+          assignedStudents: catExamData.accessSettings?.assignedStudents || []
+        },
+        
+        // Additional metadata
         subject: catExamData.subject || 'General',
-        categories: catExamData.categories || [],
-        // CRITICAL: Preserve itemBanks data for question retrieval
+        status: 'draft',
+        
+        // Store itemBanks as JSON for retrieval
         itemBanks: catExamData.itemBanks || []
       };
       
-      console.log('Creating CAT exam with itemBanks:', catExam.itemBanks);
+      console.log('Saving CAT exam to PostgreSQL database:', insertData.title);
       
-      // Add to storage
-      this.catExamsStorage.push(catExam);
-      return catExam;
+      // Insert into PostgreSQL database
+      const [savedExam] = await db.insert(catExams).values(insertData).returning();
+      
+      console.log('CAT exam saved to database with ID:', savedExam.id);
+      
+      // Create category relationships for item banks
+      if (catExamData.itemBanks && catExamData.itemBanks.length > 0) {
+        const categoryInserts = catExamData.itemBanks.map((itemBank: any) => ({
+          catExamId: savedExam.id,
+          testbankId: itemBank.bankId || itemBank.testbankId || itemBank.id,
+          percentage: itemBank.percentage?.toString() || "25.0",
+          minQuestions: itemBank.minQuestions || 5,
+          maxQuestions: itemBank.maxQuestions || 15
+        }));
+        
+        await db.insert(catExamCategories).values(categoryInserts);
+        console.log('CAT exam categories saved:', categoryInserts.length);
+      }
+      
+      // Return complete exam data for frontend
+      return {
+        ...savedExam,
+        itemBanks: catExamData.itemBanks || [],
+        estimatedDuration: catExamData.estimatedDuration || '20-45 minutes',
+        sessions: 0,
+        avgScore: 0,
+        categories: catExamData.categories || []
+      };
     } catch (error) {
       console.error('Error creating CAT exam:', error);
       throw error;
@@ -3341,9 +3434,40 @@ Return JSON with the new question data:
 
   async getCATExam(id: string): Promise<any | undefined> {
     try {
-      // Find exam in storage
-      const exam = this.catExamsStorage.find(exam => exam.id === id);
-      return exam || undefined;
+      // Fetch CAT exam from PostgreSQL database
+      const [exam] = await db.select().from(catExams).where(eq(catExams.id, id));
+      
+      if (!exam) {
+        return undefined;
+      }
+      
+      // Fetch categories for this exam
+      const categories = await db
+        .select({
+          bankId: catExamCategories.testbankId,
+          percentage: catExamCategories.percentage,
+          minQuestions: catExamCategories.minQuestions,
+          maxQuestions: catExamCategories.maxQuestions
+        })
+        .from(catExamCategories)
+        .where(eq(catExamCategories.catExamId, id));
+      
+      // Return complete exam data with itemBanks
+      return {
+        ...exam,
+        itemBanks: categories.map(cat => ({
+          bankId: cat.bankId,
+          testbankId: cat.bankId,
+          id: cat.bankId,
+          percentage: parseFloat(cat.percentage.toString()),
+          minQuestions: cat.minQuestions,
+          maxQuestions: cat.maxQuestions
+        })),
+        estimatedDuration: '20-45 minutes',
+        sessions: 0,
+        avgScore: 0,
+        categories: []
+      };
     } catch (error) {
       console.error('Error getting CAT exam:', error);
       throw error;
