@@ -21,6 +21,7 @@ import {
   proctoringLobbies,
   proctoringParticipants,
   examReferences,
+  llmProviders,
   type User,
   type UpsertUser,
   type Testbank,
@@ -4645,7 +4646,35 @@ Return JSON with the new question data:
   ];
 
   async getAllLLMProviders(): Promise<any[]> {
-    return this.llmProviders;
+    try {
+      // First try to get from database
+      const providers = await db.select().from(llmProviders);
+      
+      if (providers.length > 0) {
+        return providers.map(p => ({
+          id: p.name,
+          name: p.name,
+          displayName: p.name,
+          apiKey: p.apiKey || "",
+          baseUrl: p.apiEndpoint || "",
+          isEnabled: p.isActive,
+          priority: p.priority,
+          costPerToken: 0.000015,
+          maxTokens: 4096,
+          description: `${p.provider} provider`,
+          status: p.isActive ? "active" : "inactive",
+          lastTested: p.updatedAt,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt
+        }));
+      }
+      
+      // Return defaults if no database entries
+      return this.llmProviders;
+    } catch (error) {
+      console.error('Error getting LLM providers from database:', error);
+      return this.llmProviders;
+    }
   }
 
   async getLLMProviderById(id: string): Promise<any | null> {
@@ -4653,28 +4682,82 @@ Return JSON with the new question data:
   }
 
   async createOrUpdateLLMProvider(provider: any): Promise<any> {
-    const existingIndex = this.llmProviders.findIndex(p => p.id === provider.id);
-    
-    if (existingIndex >= 0) {
-      // Update existing provider with new data, keeping existing values for undefined fields
-      const existing = this.llmProviders[existingIndex];
-      const updatedProvider = {
-        ...existing,
-        ...provider,
-        updatedAt: new Date().toISOString()
-      };
-      this.llmProviders[existingIndex] = updatedProvider;
-      console.log(`Updated provider ${provider.id} with API key: ${!!provider.apiKey}`);
-      return updatedProvider;
-    } else {
-      const newProvider = {
-        ...provider,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      this.llmProviders.push(newProvider);
-      console.log(`Created new provider ${provider.id} with API key: ${!!provider.apiKey}`);
-      return newProvider;
+    try {
+      // Try to update existing provider in database
+      const [existing] = await db.select().from(llmProviders).where(eq(llmProviders.name, provider.id));
+      
+      if (existing) {
+        const [updated] = await db.update(llmProviders)
+          .set({
+            apiKey: provider.apiKey || existing.apiKey,
+            isActive: provider.isEnabled !== undefined ? provider.isEnabled : existing.isActive,
+            priority: provider.priority || existing.priority,
+            updatedAt: new Date()
+          })
+          .where(eq(llmProviders.name, provider.id))
+          .returning();
+        
+        console.log(`Updated provider ${provider.id} with API key: ${!!provider.apiKey}`);
+        return {
+          id: updated.name,
+          name: updated.name,
+          displayName: provider.displayName || updated.name,
+          apiKey: updated.apiKey || "",
+          baseUrl: provider.baseUrl || updated.apiEndpoint,
+          isEnabled: updated.isActive,
+          priority: updated.priority,
+          updatedAt: updated.updatedAt
+        };
+      } else {
+        // Create new provider in database
+        const [created] = await db.insert(llmProviders).values({
+          name: provider.id,
+          provider: provider.id,
+          apiKey: provider.apiKey || '',
+          apiEndpoint: provider.baseUrl || '',
+          defaultModel: 'default',
+          isActive: provider.isEnabled || false,
+          priority: provider.priority || 1,
+          accountId: '00000000-0000-0000-0000-000000000000', // Default account
+          createdBy: 'system'
+        }).returning();
+        
+        console.log(`Created new provider ${provider.id} with API key: ${!!provider.apiKey}`);
+        return {
+          id: created.name,
+          name: created.name,
+          displayName: provider.displayName || created.name,
+          apiKey: created.apiKey || "",
+          baseUrl: created.apiEndpoint || "",
+          isEnabled: created.isActive,
+          priority: created.priority,
+          createdAt: created.createdAt,
+          updatedAt: created.updatedAt
+        };
+      }
+    } catch (error) {
+      console.error('Error creating/updating LLM provider:', error);
+      // Fallback to in-memory update
+      const existingIndex = this.llmProviders.findIndex(p => p.id === provider.id);
+      
+      if (existingIndex >= 0) {
+        const existing = this.llmProviders[existingIndex];
+        const updatedProvider = {
+          ...existing,
+          ...provider,
+          updatedAt: new Date().toISOString()
+        };
+        this.llmProviders[existingIndex] = updatedProvider;
+        return updatedProvider;
+      } else {
+        const newProvider = {
+          ...provider,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        this.llmProviders.push(newProvider);
+        return newProvider;
+      }
     }
   }
 
