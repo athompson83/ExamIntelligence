@@ -24,9 +24,11 @@ import {
   Edit,
   Trash2,
   Eye,
-  Calendar
+  Calendar,
+  Monitor
 } from "lucide-react";
 import { useLocation } from 'wouter';
+import AdaptiveExamPreview from "@/components/AdaptiveExamPreview";
 
 export default function CATExamTest() {
   const { user } = useAuth();
@@ -310,8 +312,9 @@ export default function CATExamTest() {
         </div>
 
         <Tabs defaultValue="exams" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
             <TabsTrigger value="exams">Available Exams</TabsTrigger>
+            <TabsTrigger value="preview">Adaptive Preview</TabsTrigger>
             <TabsTrigger value="session">Active Session</TabsTrigger>
             <TabsTrigger value="results">Results</TabsTrigger>
             <TabsTrigger value="debug">Debug Info</TabsTrigger>
@@ -528,6 +531,69 @@ export default function CATExamTest() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="preview" className="space-y-6">
+            {catExams && catExams.length > 0 ? (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Monitor className="h-5 w-5" />
+                      Select Exam for Adaptive Preview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {catExams.map((exam: any) => (
+                        <div
+                          key={exam.id}
+                          className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                            previewExam?.id === exam.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                          }`}
+                          onClick={() => setPreviewExam(exam)}
+                        >
+                          <h3 className="font-semibold mb-2">{exam.title}</h3>
+                          <p className="text-sm text-gray-600 mb-3">{exam.description}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {exam.subject && (
+                              <Badge variant="secondary" className="text-xs">
+                                {exam.subject}
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className="text-xs">
+                              {exam.itemBanks?.length || 0} Banks
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {exam.minQuestions}-{exam.maxQuestions} Questions
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {previewExam && (
+                  <AdaptiveExamPreview 
+                    examData={previewExam}
+                    onStartExam={() => {
+                      startSessionMutation.mutate(previewExam.id);
+                    }}
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Monitor className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Exams Available</h3>
+                <p className="text-gray-600 mb-4">Create a CAT exam first to see the adaptive preview</p>
+                <Button onClick={createSampleExam}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Sample Exam
+                </Button>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="session" className="space-y-6">
