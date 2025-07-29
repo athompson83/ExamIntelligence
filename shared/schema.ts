@@ -405,39 +405,47 @@ export const catExams = pgTable("cat_exams", {
   title: varchar("title").notNull(),
   description: text("description"),
   instructions: text("instructions"),
-  creatorId: varchar("creator_id").references(() => users.id).notNull(),
-  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  creatorId: varchar("creator_id").notNull(),
+  accountId: varchar("account_id").notNull(),
   
-  // CAT-specific settings
-  startingDifficulty: numeric("starting_difficulty", { precision: 3, scale: 1 }).default("5.0"),
-  difficultyAdjustment: numeric("difficulty_adjustment", { precision: 3, scale: 2 }).default("0.5"),
-  minQuestions: integer("min_questions").default(10),
-  maxQuestions: integer("max_questions").default(50),
+  // All settings stored as JSONB to match actual database structure
+  adaptiveSettings: jsonb("adaptive_settings").$type<{
+    startingDifficulty?: number;
+    difficultyAdjustment?: number;
+    minQuestions?: number;
+    maxQuestions?: number;
+    terminationCriteria?: {
+      confidenceLevel?: number;
+      standardError?: number;
+      timeLimit?: number;
+    };
+  }>(),
   
-  // Termination criteria
-  confidenceLevel: numeric("confidence_level", { precision: 3, scale: 2 }).default("0.95"),
-  standardError: numeric("standard_error", { precision: 3, scale: 2 }).default("0.3"),
-  timeLimit: integer("time_limit").default(120), // minutes
+  scoringSettings: jsonb("scoring_settings").$type<{
+    passingScore?: number;
+    scalingMethod?: string;
+    reportingScale?: {
+      min?: number;
+      max?: number;
+    };
+  }>(),
   
-  // Scoring settings
-  passingScore: numeric("passing_score", { precision: 5, scale: 2 }).default("70.0"),
-  scalingMethod: varchar("scaling_method", { enum: ["irt", "percent", "scaled"] }).default("irt"),
-  reportingScaleMin: integer("reporting_scale_min").default(200),
-  reportingScaleMax: integer("reporting_scale_max").default(800),
+  securitySettings: jsonb("security_settings").$type<{
+    allowCalculator?: boolean;
+    calculatorType?: string;
+    enableProctoring?: boolean;
+    preventCopyPaste?: boolean;
+    preventTabSwitching?: boolean;
+    requireWebcam?: boolean;
+  }>(),
   
-  // Security settings
-  allowCalculator: boolean("allow_calculator").default(false),
-  calculatorType: varchar("calculator_type", { enum: ["basic", "scientific", "graphing"] }).default("basic"),
-  enableProctoring: boolean("enable_proctoring").default(false),
-  preventCopyPaste: boolean("prevent_copy_paste").default(true),
-  preventTabSwitching: boolean("prevent_tab_switching").default(true),
-  requireWebcam: boolean("require_webcam").default(false),
-  
-  // Access settings
-  availableFrom: timestamp("available_from"),
-  availableTo: timestamp("available_to"),
-  allowedAttempts: integer("allowed_attempts").default(1),
-  isActive: boolean("is_active").default(true),
+  accessSettings: jsonb("access_settings").$type<{
+    availableFrom?: string;
+    availableTo?: string;
+    timeLimit?: number;
+    allowedAttempts?: number;
+    assignedStudents?: string[];
+  }>(),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

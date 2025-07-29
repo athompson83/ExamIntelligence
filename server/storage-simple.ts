@@ -3346,7 +3346,7 @@ Return JSON with the new question data:
 
   async createCATExam(catExamData: any): Promise<any> {
     try {
-      // Prepare data for database insertion
+      // Prepare data for database insertion using JSONB structure
       const insertData = {
         title: catExamData.title,
         description: catExamData.description,
@@ -3354,49 +3354,51 @@ Return JSON with the new question data:
         creatorId: catExamData.createdBy,
         accountId: catExamData.accountId,
         
-        // CAT-specific settings from adaptiveSettings
-        startingDifficulty: catExamData.adaptiveSettings?.startingDifficulty?.toString() || "5.0",
-        difficultyAdjustment: catExamData.adaptiveSettings?.difficultyAdjustment?.toString() || "0.5",
-        minQuestions: catExamData.adaptiveSettings?.minQuestions || 10,
-        maxQuestions: catExamData.adaptiveSettings?.maxQuestions || 50,
+        // Adaptive settings stored as JSONB
+        adaptiveSettings: {
+          startingDifficulty: catExamData.adaptiveSettings?.startingDifficulty || 5.0,
+          difficultyAdjustment: catExamData.adaptiveSettings?.difficultyAdjustment || 0.5,
+          minQuestions: catExamData.adaptiveSettings?.minQuestions || 10,
+          maxQuestions: catExamData.adaptiveSettings?.maxQuestions || 50,
+          terminationCriteria: {
+            confidenceLevel: catExamData.adaptiveSettings?.terminationCriteria?.confidenceLevel || 0.95,
+            standardError: catExamData.adaptiveSettings?.terminationCriteria?.standardError || 0.3,
+            timeLimit: catExamData.adaptiveSettings?.terminationCriteria?.timeLimit || 120
+          }
+        },
         
-        // Termination criteria
-        confidenceLevel: catExamData.adaptiveSettings?.terminationCriteria?.confidenceLevel?.toString() || "0.95",
-        standardError: catExamData.adaptiveSettings?.terminationCriteria?.standardError?.toString() || "0.3",
-        timeLimit: catExamData.adaptiveSettings?.terminationCriteria?.timeLimit || 120,
+        // Scoring settings stored as JSONB
+        scoringSettings: {
+          passingScore: catExamData.scoringSettings?.passingScore || 70.0,
+          scalingMethod: catExamData.scoringSettings?.scalingMethod || "irt",
+          reportingScale: {
+            min: catExamData.scoringSettings?.reportingScale?.min || 200,
+            max: catExamData.scoringSettings?.reportingScale?.max || 800
+          }
+        },
         
-        // Scoring settings
-        passingScore: catExamData.scoringSettings?.passingScore?.toString() || "70.0",
-        scalingMethod: catExamData.scoringSettings?.scalingMethod || "irt",
-        reportingScaleMin: catExamData.scoringSettings?.reportingScale?.min || 200,
-        reportingScaleMax: catExamData.scoringSettings?.reportingScale?.max || 800,
+        // Security settings stored as JSONB
+        securitySettings: {
+          allowCalculator: catExamData.securitySettings?.allowCalculator || false,
+          calculatorType: catExamData.securitySettings?.calculatorType || "basic",
+          enableProctoring: catExamData.securitySettings?.enableProctoring || false,
+          preventCopyPaste: catExamData.securitySettings?.preventCopyPaste || true,
+          preventTabSwitching: catExamData.securitySettings?.preventTabSwitching || true,
+          requireWebcam: catExamData.securitySettings?.requireWebcam || false
+        },
         
-        // Security settings
-        allowCalculator: catExamData.securitySettings?.allowCalculator || false,
-        calculatorType: catExamData.securitySettings?.calculatorType || "basic",
-        enableProctoring: catExamData.securitySettings?.enableProctoring || false,
-        preventCopyPaste: catExamData.securitySettings?.preventCopyPaste || true,
-        preventTabSwitching: catExamData.securitySettings?.preventTabSwitching || true,
-        requireWebcam: catExamData.securitySettings?.requireWebcam || false,
-        
-        // Access settings stored as JSON
+        // Access settings stored as JSONB
         accessSettings: {
           availableFrom: catExamData.accessSettings?.availableFrom,
           availableTo: catExamData.accessSettings?.availableTo,
           timeLimit: catExamData.accessSettings?.timeLimit || 120,
           allowedAttempts: catExamData.accessSettings?.allowedAttempts || 1,
           assignedStudents: catExamData.accessSettings?.assignedStudents || []
-        },
-        
-        // Additional metadata
-        subject: catExamData.subject || 'General',
-        status: 'draft',
-        
-        // Store itemBanks as JSON for retrieval
-        itemBanks: catExamData.itemBanks || []
+        }
       };
       
       console.log('Saving CAT exam to PostgreSQL database:', insertData.title);
+      console.log('Insert data structure:', JSON.stringify(insertData, null, 2));
       
       // Insert into PostgreSQL database
       const [savedExam] = await db.insert(catExams).values(insertData).returning();
