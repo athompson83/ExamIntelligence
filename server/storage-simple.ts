@@ -4812,6 +4812,27 @@ Return JSON with the new question data:
   }
 
   async getLLMProviderById(id: string): Promise<any | null> {
+    try {
+      // Try to get from database first
+      const [provider] = await db.select().from(llmProviders).where(eq(llmProviders.name, id));
+      
+      if (provider) {
+        return {
+          id: provider.name,
+          name: provider.name,
+          displayName: provider.name,
+          apiKey: provider.apiKey,
+          baseUrl: provider.apiEndpoint,
+          isEnabled: provider.isActive,
+          priority: provider.priority,
+          updatedAt: provider.updatedAt
+        };
+      }
+    } catch (error) {
+      console.error('Error getting provider from database:', error);
+    }
+    
+    // Fallback to in-memory
     return this.llmProviders.find(p => p.id === id) || null;
   }
 
@@ -4843,10 +4864,22 @@ Return JSON with the new question data:
           updatedAt: updated.updatedAt
         };
       } else {
+        // Map provider IDs to database enum values
+        const providerMap: Record<string, string> = {
+          'gemini': 'google',
+          'claude': 'anthropic',
+          'grok': 'xai',
+          'llama': 'meta',
+          'openai': 'openai',
+          'deepseek': 'deepseek'
+        };
+        
+        const dbProvider = providerMap[provider.id] || 'custom';
+        
         // Create new provider in database
         const [created] = await db.insert(llmProviders).values({
           name: provider.id,
-          provider: provider.id,
+          provider: dbProvider,
           apiKey: provider.apiKey || '',
           apiEndpoint: provider.baseUrl || '',
           defaultModel: 'default',
@@ -4896,24 +4929,32 @@ Return JSON with the new question data:
   }
 
   async updateLLMProviderStatus(id: string, status: any): Promise<any> {
-    const provider = this.llmProviders.find(p => p.id === id);
-    if (provider) {
-      Object.assign(provider, status, { updatedAt: new Date().toISOString() });
-      return provider;
+    try {
+      // Try to update in database first
+      const [updated] = await db.update(llmProviders)
+        .set({
+          ...status,
+          updatedAt: new Date()
+        })
+        .where(eq(llmProviders.name, id))
+        .returning();
+      
+      if (updated) {
+        return {
+          id: updated.name,
+          name: updated.name,
+          isEnabled: updated.isActive,
+          priority: updated.priority,
+          status: status.status || 'active',
+          lastTested: status.lastTested,
+          updatedAt: updated.updatedAt
+        };
+      }
+    } catch (error) {
+      console.error('Error updating provider status in database:', error);
     }
-    return null;
-  }
-
-  async deleteLLMProvider(id: string): Promise<boolean> {
-    const index = this.llmProviders.findIndex(p => p.id === id);
-    if (index >= 0) {
-      this.llmProviders.splice(index, 1);
-      return true;
-    }
-    return false;
-  }
-
-  async updateLLMProviderStatus(id: string, status: { status: string; lastTested: string }): Promise<any> {
+    
+    // Fallback to in-memory update
     const providerIndex = this.llmProviders.findIndex(p => p.id === id);
     if (providerIndex >= 0) {
       this.llmProviders[providerIndex] = {
@@ -4924,6 +4965,22 @@ Return JSON with the new question data:
       return this.llmProviders[providerIndex];
     }
     return null;
+  }
+
+  async deleteLLMProvider(id: string): Promise<boolean> {
+    try {
+      // Try to delete from database first
+      await db.delete(llmProviders).where(eq(llmProviders.name, id));
+    } catch (error) {
+      console.error('Error deleting provider from database:', error);
+    }
+    
+    const index = this.llmProviders.findIndex(p => p.id === id);
+    if (index >= 0) {
+      this.llmProviders.splice(index, 1);
+      return true;
+    }
+    return false;
   }
 }
 

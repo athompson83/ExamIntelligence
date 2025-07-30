@@ -6686,16 +6686,39 @@ Initialize all interactions with these principles as your foundation.`,
         return res.status(404).json({ message: 'Provider not found' });
       }
 
-      // Test the provider connection
-      const testResult = {
-        success: true,
-        message: 'Connection test successful',
-        timestamp: new Date().toISOString()
-      };
+      if (!provider.apiKey) {
+        return res.status(400).json({ message: 'API key required for testing' });
+      }
+
+      // Import and use the multiProviderAI service for actual testing
+      const { multiProviderAI } = await import('./multiProviderAI');
+      
+      let testResult;
+      try {
+        // Test with a simple request
+        const response = await multiProviderAI.generateContent([{
+          role: 'user',
+          content: 'Reply with exactly: "Connection test successful"'
+        }], id);
+        
+        testResult = {
+          success: true,
+          message: 'Connection test successful',
+          response: response.text,
+          timestamp: new Date().toISOString()
+        };
+      } catch (testError) {
+        testResult = {
+          success: false,
+          message: `Connection failed: ${testError.message}`,
+          error: testError.message,
+          timestamp: new Date().toISOString()
+        };
+      }
 
       // Update provider status
       await storage.updateLLMProviderStatus(id, {
-        status: 'active',
+        status: testResult.success ? 'active' : 'error',
         lastTested: new Date().toISOString()
       });
 
