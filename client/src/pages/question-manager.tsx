@@ -512,8 +512,16 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/questions/${id}`);
     },
-    onSuccess: () => {
+    onSuccess: (data, deletedQuestionId) => {
+      // Immediately remove the question from cache using optimistic updates
+      queryClient.setQueryData([`/api/testbanks/${effectiveTestbankId}/questions`], (oldData: any[]) => {
+        if (!oldData) return [];
+        return oldData.filter(question => question.id !== deletedQuestionId);
+      });
+      
+      // Also invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
+      
       toast({
         title: "Success",
         description: "Question deleted successfully",
