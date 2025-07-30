@@ -9343,16 +9343,27 @@ Initialize all interactions with these principles as your foundation.`,
       }
     ];
 
-    const questionsNeeded = Math.max(totalQuestions || 20, 20);
+    // CAT requires substantially more questions than the target exam length
+    // Rule: Each item bank should have 3-5x more questions than needed for adaptive selection
+    const targetExamLength = Math.max(totalQuestions || 20, 20);
+    const questionsPerBank = Math.max(Math.ceil(targetExamLength * 2.5), 50); // Minimum 50 questions per bank
+    const totalQuestionsNeeded = questionsPerBank * 2; // 2 item banks
+    
+    console.log(`Generating CAT fallback with ${questionsPerBank} questions per item bank (${totalQuestionsNeeded} total) for target exam length of ${targetExamLength}`);
+    
     const generatedQuestions = [];
     
-    for (let i = 0; i < questionsNeeded; i++) {
+    // Generate questions across full difficulty spectrum (1.0 to 10.0)
+    for (let i = 0; i < totalQuestionsNeeded; i++) {
       const baseQuestion = sampleQuestions[i % sampleQuestions.length];
+      const difficultyLevel = 1.0 + (i / totalQuestionsNeeded) * 9.0; // Spread across 1.0-10.0
+      
       generatedQuestions.push({
         ...baseQuestion,
         id: `sample_${i + 1}`,
-        questionText: `${baseQuestion.questionText} (Question ${i + 1})`,
-        difficulty: 3.0 + (Math.random() * 4.0)
+        questionText: `${baseQuestion.questionText} (Difficulty Level ${difficultyLevel.toFixed(1)})`,
+        difficulty: difficultyLevel,
+        category: i < totalQuestionsNeeded / 2 ? 'Assessment Theory' : 'Practical Applications'
       });
     }
 
@@ -9364,18 +9375,22 @@ Initialize all interactions with these principles as your foundation.`,
         {
           id: 'sample_bank_1',
           name: 'Assessment Theory',
-          description: 'Questions about adaptive testing principles',
-          questions: generatedQuestions.slice(0, Math.ceil(questionsNeeded / 2)),
-          questionCount: Math.ceil(questionsNeeded / 2),
-          subject: examType || 'General Knowledge'
+          description: `Questions about adaptive testing principles (${questionsPerBank} questions across difficulty levels 1.0-10.0)`,
+          questions: generatedQuestions.filter(q => q.category === 'Assessment Theory'),
+          questionCount: questionsPerBank,
+          subject: examType || 'General Knowledge',
+          difficultyRange: { min: 1.0, max: 10.0 },
+          adaptivePool: true
         },
         {
           id: 'sample_bank_2', 
           name: 'Practical Applications',
-          description: 'Applied questions about assessment implementation',
-          questions: generatedQuestions.slice(Math.ceil(questionsNeeded / 2)),
-          questionCount: Math.floor(questionsNeeded / 2),
-          subject: examType || 'General Knowledge'
+          description: `Applied questions about assessment implementation (${questionsPerBank} questions across difficulty levels 1.0-10.0)`,
+          questions: generatedQuestions.filter(q => q.category === 'Practical Applications'),
+          questionCount: questionsPerBank,
+          subject: examType || 'General Knowledge',
+          difficultyRange: { min: 1.0, max: 10.0 },
+          adaptivePool: true
         }
       ],
       adaptiveSettings: {
@@ -9383,8 +9398,9 @@ Initialize all interactions with these principles as your foundation.`,
         difficultyAdjustment: 0.5,
         terminationCriteria: 'standard_error',
         targetSE: 0.3,
-        minQuestions: Math.max(Math.floor(questionsNeeded * 0.5), 10),
-        maxQuestions: questionsNeeded
+        minQuestions: Math.max(Math.floor(targetExamLength * 0.5), 10),
+        maxQuestions: targetExamLength,
+        totalQuestionsAvailable: totalQuestionsNeeded
       },
       additionalSettings: {
         timeLimit: 60,
@@ -9419,21 +9435,29 @@ Initialize all interactions with these principles as your foundation.`,
         });
       }
 
-      // Generate AI prompt for CAT exam configuration
+      // Generate AI prompt for CAT exam configuration with emphasis on question pool size
+      const targetExamLength = req.body.totalQuestions || 20;
+      const questionsPerBank = Math.max(Math.ceil(targetExamLength * 3), 60); // Minimum 60 questions per bank for CAT
+      
       const aiPrompt = `You are an expert educational assessment designer specializing in Computer Adaptive Testing (CAT) and comprehensive exam development.
 
 USER REQUIREMENTS:
 ${prompt}
 
 EXAM TITLE: ${title}
+TARGET EXAM LENGTH: ${targetExamLength} questions
+REQUIRED QUESTION POOL SIZE: ${questionsPerBank} questions per item bank
 
-CRITICAL INSTRUCTIONS:
+CRITICAL CAT REQUIREMENTS:
+- Each item bank MUST contain ${questionsPerBank} questions minimum for proper adaptive testing
+- Questions must span the full difficulty spectrum (1.0 to 10.0) for optimal CAT performance
 - Generate comprehensive content with multiple item banks
-- Each item bank MUST have 50-70 questions for proper CAT randomization
-- Create realistic, subject-specific questions across difficulty levels 3-9
-- Ensure questions cover the full spectrum: 20% easy (3-4), 50% medium (5-7), 30% hard (8-9)
-- Generate scenario-based questions with professional terminology
-- NO generic placeholders - all content must be subject-specific
+- Each item bank MUST contain ${questionsPerBank} questions minimum for CAT adaptive selection
+- Questions MUST span difficulty levels 1.0 to 10.0 evenly distributed for proper adaptation
+- Include detailed adaptive settings with starting difficulty, adjustment parameters, and termination criteria  
+- Ensure comprehensive coverage of the subject matter across multiple cognitive levels
+- Generate questions at easy (1.0-3.0), medium (4.0-7.0), and hard (8.0-10.0) difficulty levels
+- CAT requires large question pools - each bank needs ${questionsPerBank} questions for effective adaptation
 
 Please respond with a valid JSON object containing the detailed CAT exam configuration with complete question sets. Format your entire response as JSON.`;
 
