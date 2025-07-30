@@ -46,7 +46,8 @@ import {
   ExternalLink,
   CheckCircle,
   Link,
-  Download
+  Download,
+  ArrowRightLeft
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import QRCode from 'qrcode';
@@ -386,6 +387,72 @@ export default function SuperAdminSettings() {
     }
   };
 
+  // Account switching mutation
+  const switchAccountMutation = useMutation({
+    mutationFn: async (accountId: string) => {
+      return await apiRequest("POST", "/api/super-admin/switch-account", { accountId });
+    },
+    onSuccess: (data, accountId) => {
+      const account = accounts.find((acc: Account) => acc.id === accountId);
+      toast({
+        title: "Account Switched",
+        description: `Now viewing data from account: ${account?.name || accountId}`,
+      });
+      // Invalidate all relevant queries to refresh data in new account context
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/testbanks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to switch account context",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Reset account context mutation
+  const resetAccountMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/super-admin/reset-account", {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account Reset",
+        description: "Returned to your original account context",
+      });
+      // Invalidate all relevant queries to refresh data in original account context
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/testbanks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to reset account context",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle account switching
+  const handleSwitchAccount = (accountId: string) => {
+    const account = accounts.find((acc: Account) => acc.id === accountId);
+    if (window.confirm(`Switch to account: ${account?.name}? This will change your dashboard view to show data from this account.`)) {
+      switchAccountMutation.mutate(accountId);
+    }
+  };
+
+  // Handle account reset
+  const handleResetAccount = () => {
+    if (window.confirm("Reset to your original account context? This will return your dashboard to show data from your original account.")) {
+      resetAccountMutation.mutate();
+    }
+  };
+
   // Edit handlers
   const handleEditAccount = (account: Account) => {
     setSelectedAccount(account);
@@ -538,16 +605,26 @@ export default function SuperAdminSettings() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Account Management</CardTitle>
-                  <Button 
-                    onClick={() => {
-                      setSelectedAccount(null);
-                      accountForm.reset();
-                      setIsAccountDialogOpen(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Account
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={handleResetAccount}
+                      title="Reset to original account context"
+                    >
+                      <ArrowRightLeft className="h-4 w-4 mr-2" />
+                      Reset Account
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setSelectedAccount(null);
+                        accountForm.reset();
+                        setIsAccountDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Account
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -580,6 +657,14 @@ export default function SuperAdminSettings() {
                         <TableCell>{new Date(account.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleSwitchAccount(account.id)}
+                              title="Switch to this account context"
+                            >
+                              <ArrowRightLeft className="h-4 w-4" />
+                            </Button>
                             <Button 
                               variant="outline" 
                               size="sm"

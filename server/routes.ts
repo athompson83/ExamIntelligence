@@ -10604,6 +10604,54 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     }
   });
 
+  // Account switching endpoint for super admin
+  app.post('/api/super-admin/switch-account', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUserById(userId);
+      
+      if (user?.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const { accountId } = req.body;
+      
+      if (!accountId) {
+        return res.status(400).json({ message: 'Account ID is required' });
+      }
+
+      // Update user's account context
+      req.user.switchedAccountId = accountId;
+      req.session.switchedAccountId = accountId;
+      
+      res.json({ message: 'Account switched successfully', accountId });
+    } catch (error) {
+      console.error('Error switching account:', error);
+      res.status(500).json({ message: 'Failed to switch account' });
+    }
+  });
+
+  // Reset account context for super admin
+  app.post('/api/super-admin/reset-account', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUserById(userId);
+      
+      if (user?.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      // Reset to original account
+      delete req.user.switchedAccountId;
+      delete req.session.switchedAccountId;
+      
+      res.json({ message: 'Account context reset successfully' });
+    } catch (error) {
+      console.error('Error resetting account:', error);
+      res.status(500).json({ message: 'Failed to reset account context' });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 
