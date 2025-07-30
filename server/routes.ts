@@ -9310,6 +9310,92 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
+  // Helper function to create fallback CAT exam structure
+  function createFallbackCATExam(title: string, prompt: string, examType: string, totalQuestions: number) {
+    const sampleQuestions = [
+      {
+        id: 'sample_1',
+        questionText: 'Which of the following is the primary purpose of Computer Adaptive Testing?',
+        difficulty: 5.0,
+        type: 'multiple_choice',
+        options: [
+          { id: 'a', text: 'To adapt question difficulty based on student performance', isCorrect: true },
+          { id: 'b', text: 'To provide the same questions to all students', isCorrect: false },
+          { id: 'c', text: 'To reduce testing time regardless of accuracy', isCorrect: false },
+          { id: 'd', text: 'To eliminate multiple choice questions', isCorrect: false }
+        ],
+        category: 'Assessment Theory',
+        tags: ['CAT', 'adaptive', 'assessment']
+      },
+      {
+        id: 'sample_2',
+        questionText: 'In adaptive testing, what happens when a student answers a question correctly?',
+        difficulty: 6.0,
+        type: 'multiple_choice',
+        options: [
+          { id: 'a', text: 'The next question becomes easier', isCorrect: false },
+          { id: 'b', text: 'The next question becomes harder', isCorrect: true },
+          { id: 'c', text: 'The question difficulty remains the same', isCorrect: false },
+          { id: 'd', text: 'The test ends immediately', isCorrect: false }
+        ],
+        category: 'Assessment Theory',
+        tags: ['CAT', 'difficulty', 'adaptation']
+      }
+    ];
+
+    const questionsNeeded = Math.max(totalQuestions || 20, 20);
+    const generatedQuestions = [];
+    
+    for (let i = 0; i < questionsNeeded; i++) {
+      const baseQuestion = sampleQuestions[i % sampleQuestions.length];
+      generatedQuestions.push({
+        ...baseQuestion,
+        id: `sample_${i + 1}`,
+        questionText: `${baseQuestion.questionText} (Question ${i + 1})`,
+        difficulty: 3.0 + (Math.random() * 4.0)
+      });
+    }
+
+    return {
+      title: title || 'Sample Computer Adaptive Test',
+      description: 'This is a sample CAT exam created as a fallback when AI generation is unavailable.',
+      subject: examType || 'General Knowledge',
+      itemBanks: [
+        {
+          id: 'sample_bank_1',
+          name: 'Assessment Theory',
+          description: 'Questions about adaptive testing principles',
+          questions: generatedQuestions.slice(0, Math.ceil(questionsNeeded / 2)),
+          questionCount: Math.ceil(questionsNeeded / 2),
+          subject: examType || 'General Knowledge'
+        },
+        {
+          id: 'sample_bank_2', 
+          name: 'Practical Applications',
+          description: 'Applied questions about assessment implementation',
+          questions: generatedQuestions.slice(Math.ceil(questionsNeeded / 2)),
+          questionCount: Math.floor(questionsNeeded / 2),
+          subject: examType || 'General Knowledge'
+        }
+      ],
+      adaptiveSettings: {
+        startingDifficulty: 5.0,
+        difficultyAdjustment: 0.5,
+        terminationCriteria: 'standard_error',
+        targetSE: 0.3,
+        minQuestions: Math.max(Math.floor(questionsNeeded * 0.5), 10),
+        maxQuestions: questionsNeeded
+      },
+      additionalSettings: {
+        timeLimit: 60,
+        shuffleQuestions: true,
+        allowReview: false,
+        showResults: true
+      },
+      status: 'draft'
+    };
+  }
+
   // AI CAT Exam Generation endpoint - Enhanced with comprehensive coverage  
   app.post('/api/ai/generate-cat-exam', mockAuth, async (req, res) => {
     try {
@@ -10029,13 +10115,35 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     } catch (error) {
       console.error('Error generating CAT exam:', error);
       
-      // Handle specific AI provider errors
+      // Handle specific AI provider errors with fallback CAT exam creation
       if (error.status === 429 || error.message?.includes('quota')) {
-        res.status(429).json({ 
-          message: 'AI provider quota exceeded. Trying alternative providers...',
-          error: 'quota_exceeded',
-          details: error.message || 'All AI providers have reached their usage limits. Please check your API keys or try again later.'
-        });
+        console.log('Quota exceeded, creating fallback CAT exam...');
+        
+        const fallbackExam = createFallbackCATExam(req.body.title, req.body.prompt, req.body.examType, req.body.totalQuestions);
+        
+        try {
+          const savedExam = await storage.createCATExam({
+            ...fallbackExam,
+            createdBy: req.user.id,
+            accountId: req.user.accountId || "00000000-0000-0000-0000-000000000001",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          
+          res.json({
+            success: true,
+            message: 'CAT exam created with sample content (AI quota exceeded)',
+            id: savedExam.id,
+            ...fallbackExam,
+            warning: 'Using sample content due to AI service quota limits'
+          });
+        } catch (saveError) {
+          res.status(500).json({ 
+            message: 'Failed to create fallback CAT exam',
+            error: 'fallback_failed',
+            details: saveError.message
+          });
+        }
       } else if (error.status === 401 || error.message?.includes('API key')) {
         // Create fallback CAT exam when API keys are invalid
         console.log('API key validation failed, creating fallback CAT exam structure...');
