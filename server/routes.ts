@@ -10037,17 +10037,63 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
           details: error.message || 'All AI providers have reached their usage limits. Please check your API keys or try again later.'
         });
       } else if (error.status === 401 || error.message?.includes('API key')) {
-        res.status(401).json({ 
-          message: 'AI provider authentication failed.',
-          error: 'api_key_invalid',
-          details: error.message || 'Please check that your AI provider API keys are correctly configured.'
-        });
+        // Create fallback CAT exam when API keys are invalid
+        console.log('API key validation failed, creating fallback CAT exam structure...');
+        
+        const fallbackExam = createFallbackCATExam(req.body.title, req.body.prompt, req.body.examType, req.body.totalQuestions);
+        
+        try {
+          const savedExam = await storage.createCATExam({
+            ...fallbackExam,
+            createdBy: req.user.id,
+            accountId: req.user.accountId || "00000000-0000-0000-0000-000000000001",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          
+          res.json({
+            success: true,
+            message: 'CAT exam created with sample content (API authentication failed)',
+            id: savedExam.id,
+            ...fallbackExam,
+            warning: 'Using sample content due to AI service unavailability'
+          });
+        } catch (saveError) {
+          res.status(500).json({ 
+            message: 'Failed to create fallback CAT exam',
+            error: 'fallback_failed',
+            details: saveError.message
+          });
+        }
       } else {
-        res.status(500).json({ 
-          message: 'Failed to generate CAT exam configuration',
-          error: 'generation_failed',
-          details: error.message || 'All AI providers failed during generation'
-        });
+        // Create fallback for any other error
+        console.log('CAT generation failed, creating comprehensive fallback...');
+        
+        const fallbackExam = createFallbackCATExam(req.body.title, req.body.prompt, req.body.examType, req.body.totalQuestions);
+        
+        try {
+          const savedExam = await storage.createCATExam({
+            ...fallbackExam,
+            createdBy: req.user.id,
+            accountId: req.user.accountId || "00000000-0000-0000-0000-000000000001",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          
+          res.json({
+            success: true,
+            message: 'CAT exam created with sample content',
+            id: savedExam.id,
+            ...fallbackExam,
+            warning: 'Using sample content due to generation service issues'
+          });
+        } catch (saveError) {
+          res.status(500).json({ 
+            message: 'Failed to create fallback CAT exam',
+            error: 'fallback_failed',
+            details: saveError.message
+          });
+        }
       }
     }
   });
