@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Sidebar } from "@/components/layout/Sidebar";
+import Sidebar from "@/components/Sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { QuestionGroupBuilder } from "@/components/quiz/QuestionGroupBuilder";
 import { Button } from "@/components/ui/button";
