@@ -6,6 +6,7 @@ ProficiencyAI is a comprehensive educational assessment platform designed to com
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Research-based approach: Follow educational assessment standards and evidence-based practices for question generation.
+UI/UX Design: Modern, beautiful interface following current design trends with smooth animations and professional styling.
 
 ## System Architecture
 
