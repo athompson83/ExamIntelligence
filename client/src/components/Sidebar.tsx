@@ -97,14 +97,6 @@ export default function Sidebar() {
       ]
     },
     {
-      id: "mobile",
-      label: "Mobile & Apps",
-      icon: Smartphone,
-      items: [
-        { href: "/mobile", label: "Mobile App", icon: Smartphone, tourId: "mobile" },
-      ]
-    },
-    {
       id: "support",
       label: "Support & Feedback",
       icon: LifeBuoy,
@@ -123,6 +115,7 @@ export default function Sidebar() {
       icon: Settings,
       items: [
         ...(['admin', 'teacher', 'super_admin'].includes((user as any)?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
+        { href: "/mobile", label: "Mobile App", icon: Smartphone, tourId: "mobile" },
         { href: "/core-functionality-test", label: "Core Tests", icon: Shield, tourId: "core-tests" },
         { href: "/pricing", label: "Pricing", icon: DollarSign, tourId: "pricing" },
         { href: "/billing", label: "Billing", icon: CreditCard, tourId: "billing" },
