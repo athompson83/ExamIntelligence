@@ -91,7 +91,7 @@ export default function Sidebar() {
       items: [
         { href: "/live-exams", label: "Live Exams", icon: PlayCircle, tourId: "live-exams" },
         { href: "/cat-exam-builder", label: "CAT Exam Builder", icon: Brain, tourId: "cat-exam-builder" },
-        { href: "/cat-exam-test", label: "CAT Exam Test", icon: PlayCircle, tourId: "cat-exam-test" },
+        { href: "/cat-exam-test", label: "CAT Exam", icon: PlayCircle, tourId: "cat-exam-test" },
         { href: "/analytics", label: "Analytics", icon: BarChart3, tourId: "analytics" },
         { href: "/study-resources", label: "Study Resources", icon: Brain, tourId: "study-resources" },
       ]
