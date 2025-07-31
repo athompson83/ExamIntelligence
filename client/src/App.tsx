@@ -99,6 +99,7 @@ const ErrorLogsManagement = lazy(() => import("@/pages/ErrorLogsManagement"));
 const BugReportingDemo = lazy(() => import("@/pages/BugReportingDemo"));
 const CATExamGenerationTest = lazy(() => import("@/pages/CATExamGenerationTest"));
 const CATGenerationSuccess = lazy(() => import("@/pages/CATGenerationSuccess"));
+const LTIIntegration = lazy(() => import("@/pages/lti-integration"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -283,6 +284,9 @@ function Router() {
           </Route>
           <Route path="/cat-generation-success">
             {() => <Suspense fallback={<LoadingSpinner />}><CATGenerationSuccess /></Suspense>}
+          </Route>
+          <Route path="/lti-integration">
+            {() => <Suspense fallback={<LoadingSpinner />}><LTIIntegration /></Suspense>}
           </Route>
           <Route path="/announcements">
             {() => <Suspense fallback={<LoadingSpinner />}><Announcements /></Suspense>}

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage-simple";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-// import { initializeLTI, getLTIConfig, requireLTIAuth, getLTIUser, sendGradePassback, createDeepLink } from "./ltiService";
+import { initializeLTI, getLTIConfig, requireLTIAuth, getLTIUser, sendGradePassback, createDeepLink } from "./ltiService";
 import { setupWebSocket } from "./websocket";
 import { 
   generateItemAnalysisReport, 
@@ -64,13 +64,14 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize LTI functionality (temporarily disabled)
-  // try {
-  //   await initializeLTI(app);
-  //   console.log('LTI service initialized successfully');
-  // } catch (error: any) {
-  //   console.log('LTI service initialization failed, continuing without LTI:', error.message);
-  // }
+  // Initialize LTI functionality for seamless LMS integration
+  try {
+    await initializeLTI(app);
+    console.log('✅ LTI service initialized successfully - Ready for LMS integration');
+  } catch (error: any) {
+    console.warn('⚠️  LTI service initialization failed, continuing without LTI:', error.message);
+    console.log('LTI functionality will be limited until proper configuration is provided');
+  }
 
   // Auth middleware - temporarily disabled for testing
   // await setupAuth(app);
@@ -5329,18 +5330,20 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
-  // LTI Configuration endpoints (temporarily disabled)
-  /*
+  // ===== LTI (Learning Tools Interoperability) Integration =====
+  
+  // LTI Configuration endpoint - provides configuration for LMS registration
   app.get('/api/lti/config', (req, res) => {
     try {
       const config = getLTIConfig();
       res.json(config);
     } catch (error) {
+      console.error('LTI config error:', error);
       res.status(500).json({ error: 'Failed to get LTI configuration' });
     }
   });
 
-  // LTI Grade Passback endpoint
+  // LTI Grade Passback endpoint - sends grades back to LMS
   app.post('/api/lti/grade-passback', requireLTIAuth, async (req, res) => {
     try {
       const { score, maxScore = 100 } = req.body;
@@ -5362,7 +5365,7 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
-  // LTI Deep Linking endpoint
+  // LTI Deep Linking endpoint - allows content selection from LMS
   app.post('/api/lti/deep-link', requireLTIAuth, async (req, res) => {
     try {
       const { contentItems } = req.body;
@@ -5378,7 +5381,7 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
-  // LTI User info endpoint
+  // LTI User info endpoint - provides current LTI user information
   app.get('/api/lti/user', requireLTIAuth, (req, res) => {
     try {
       const ltiUser = getLTIUser(req);
@@ -5392,7 +5395,52 @@ Initialize all interactions with these principles as your foundation.`,
       res.status(500).json({ error: 'Internal server error' });
     }
   });
-  */
+
+  // LTI Roster endpoint - gets course participants from LMS
+  app.get('/api/lti/roster', requireLTIAuth, async (req, res) => {
+    try {
+      if (!req.session || !req.session.ltiToken) {
+        return res.status(400).json({ error: 'No LTI context available' });
+      }
+
+      // Implementation would use LTI Names and Role Provisioning Services
+      res.json({ roster: [], message: 'Roster service ready for implementation' });
+    } catch (error) {
+      console.error('LTI roster error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // LTI Content Item Selection endpoint - for selecting quizzes/content
+  app.post('/api/lti/content-selection', requireLTIAuth, async (req, res) => {
+    try {
+      const { quizId, title, description } = req.body;
+      
+      if (!quizId) {
+        return res.status(400).json({ error: 'Quiz ID required' });
+      }
+
+      const quiz = await storage.getQuizById(quizId);
+      if (!quiz) {
+        return res.status(404).json({ error: 'Quiz not found' });
+      }
+
+      const contentItems = [{
+        type: 'ltiResourceLink',
+        title: title || quiz.title,
+        text: description || quiz.description,
+        url: `/api/lti/launch/${quizId}`,
+        custom: {
+          quiz_id: quizId
+        }
+      }];
+
+      await createDeepLink(req, res, contentItems);
+    } catch (error) {
+      console.error('Content selection error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
 
   // Create dummy users endpoint
   app.post('/api/create-dummy-users', async (req, res) => {

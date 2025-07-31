@@ -1,7 +1,22 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import ltijs from 'ltijs';
+import { Provider } from 'ltijs';
+
+// Extend Express Session to include LTI properties
+declare module 'express-session' {
+  interface SessionData {
+    ltiUser?: {
+      id: string;
+      name: string;
+      email: string;
+      roles: string[];
+      context: any;
+    };
+    ltiRole?: string;
+    ltiToken?: any;
+  }
+}
 
 // LTI configuration interface
 interface LTIConfig {
@@ -41,7 +56,7 @@ export async function initializeLTI(app: express.Application) {
     const { publicKey, privateKey } = generateKeyPair();
     
     // Initialize LTI provider
-    ltiProvider = new ltijs.Provider(process.env.LTI_KEY || 'ProficiencyAI_LTI_Key', {
+    ltiProvider = new Provider(process.env.LTI_KEY || 'ProficiencyAI_LTI_Key', {
       url: process.env.DATABASE_URL,
       connection: { 
         user: process.env.PGUSER,
@@ -113,10 +128,11 @@ export async function initializeLTI(app: express.Application) {
       }
 
       // Store LTI session information
-      req.session = req.session || {};
-      req.session.ltiUser = userInfo;
-      req.session.ltiRole = userRole;
-      req.session.ltiToken = token;
+      if (req.session) {
+        req.session.ltiUser = userInfo;
+        req.session.ltiRole = userRole;
+        req.session.ltiToken = token;
+      }
 
       // Redirect to appropriate interface based on role
       if (userRole === 'teacher' || userRole === 'admin') {
@@ -157,7 +173,7 @@ export function getLTIConfig(): LTIConfig {
 
 // Middleware to check LTI authentication
 export function requireLTIAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
-  if (req.session?.ltiUser) {
+  if (req.session && req.session.ltiUser) {
     return next();
   }
   
@@ -167,13 +183,13 @@ export function requireLTIAuth(req: express.Request, res: express.Response, next
 
 // Get current LTI user information
 export function getLTIUser(req: express.Request) {
-  return req.session?.ltiUser || null;
+  return req.session && req.session.ltiUser ? req.session.ltiUser : null;
 }
 
 // LTI Grade Passback functionality
 export async function sendGradePassback(req: express.Request, score: number, maxScore: number = 100) {
   try {
-    if (!ltiProvider || !req.session?.ltiToken) {
+    if (!ltiProvider || !req.session || !req.session.ltiToken) {
       console.log('No LTI context available for grade passback');
       return false;
     }
@@ -210,7 +226,7 @@ export async function sendGradePassback(req: express.Request, score: number, max
 // Deep Linking for content selection
 export async function createDeepLink(req: express.Request, res: express.Response, contentItems: any[]) {
   try {
-    if (!ltiProvider || !req.session?.ltiToken) {
+    if (!ltiProvider || !req.session || !req.session.ltiToken) {
       return res.status(400).json({ error: 'No LTI context available' });
     }
 
