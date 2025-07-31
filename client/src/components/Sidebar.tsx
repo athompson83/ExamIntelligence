@@ -262,10 +262,10 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleGroup(group.id)}
                   className={`
-                    w-full group flex items-center justify-between px-6 py-2 text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap
+                    w-full group flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ease-out whitespace-nowrap mx-2
                     ${groupHasActiveItem 
-                      ? 'bg-primary/10 text-primary border-l-2 border-primary' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-gradient-to-r from-primary/15 to-primary/10 text-primary border-l-2 border-primary shadow-sm' 
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 hover:text-gray-800 dark:hover:text-gray-200'
                     }
                   `}
                 >

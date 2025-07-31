@@ -62,30 +62,46 @@
     background: rgba(160, 174, 192, 0.9) !important;
   }
   
-  /* Enhanced nav item styling */
+  /* Modern nav item styling following best practices */
   .nav-item {
-    @apply flex items-center px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg mx-2;
-    @apply hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white;
-    @apply transition-all duration-200 ease-in-out;
+    @apply flex items-center px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-xl mx-2;
+    @apply hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200;
+    @apply transition-all duration-300 ease-out;
     @apply relative whitespace-nowrap;
     min-width: 0;
     flex-shrink: 0;
+    backdrop-filter: blur(8px);
   }
   
   .nav-item.active {
-    @apply text-primary shadow-sm;
-    background-color: hsl(var(--primary) / 0.1);
+    @apply text-white font-semibold shadow-lg;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    box-shadow: 0 4px 12px hsl(var(--primary) / 0.3), 0 2px 6px hsl(var(--primary) / 0.2);
+    transform: translateY(-1px);
   }
   
   .dark .nav-item.active {
-    background-color: hsl(var(--primary) / 0.2);
-    @apply text-primary-foreground;
+    @apply text-white;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%);
+    box-shadow: 0 4px 12px hsl(var(--primary) / 0.4), 0 2px 6px hsl(var(--primary) / 0.3);
   }
   
   .nav-item.active::before {
     content: '';
-    @apply absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full;
-    @apply transition-all duration-200;
+    @apply absolute -left-1 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-white rounded-full;
+    @apply transition-all duration-300;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  }
+  
+  /* Hover effects for better interactivity */
+  .nav-item:hover:not(.active) {
+    transform: translateX(2px);
+    background-color: hsl(var(--primary) / 0.05);
+    border-left: 2px solid hsl(var(--primary) / 0.3);
+  }
+  
+  .dark .nav-item:hover:not(.active) {
+    background-color: hsl(var(--primary) / 0.08);
   }
   
   /* Scroll indicator animations */
