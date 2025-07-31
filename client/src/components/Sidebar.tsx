@@ -31,7 +31,11 @@ import {
   DollarSign,
   ChevronUp,
   ChevronDown,
-  Home
+  Home,
+  GraduationCap,
+  FileText,
+  Monitor,
+  LifeBuoy
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -42,38 +46,91 @@ export default function Sidebar() {
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
-  const navigationItems = [
-    { href: "/", label: "Dashboard", icon: Home, tourId: "dashboard" },
-    { href: "/item-banks", label: "Item Banks", icon: BookOpen, tourId: "item-banks" },
-    { href: "/quiz-manager", label: "Quiz Manager", icon: Puzzle, tourId: "quiz-manager" },
-    { href: "/assignments", label: "Assignments", icon: ClipboardCheck, tourId: "assignments" },
-    { href: "/section-management", label: "Section Management", icon: Users, tourId: "section-management" },
-    { href: "/mobile", label: "Mobile App", icon: Smartphone, tourId: "mobile" },
-    { href: "/live-exams", label: "Live Exams", icon: PlayCircle, tourId: "live-exams" },
-    { href: "/cat-exam-builder", label: "CAT Exam Builder", icon: Brain, tourId: "cat-exam-builder" },
-    { href: "/cat-exam-test", label: "CAT Exam Test", icon: PlayCircle, tourId: "cat-exam-test" },
-    { href: "/analytics", label: "Analytics", icon: BarChart3, tourId: "analytics" },
-    { href: "/study-resources", label: "Study Resources", icon: Brain, tourId: "study-resources" },
-  ];
+  // Toggle group expansion
+  const toggleGroup = (groupId: string) => {
+    const newExpanded = new Set(expandedGroups);
+    if (newExpanded.has(groupId)) {
+      newExpanded.delete(groupId);
+    } else {
+      newExpanded.add(groupId);
+    }
+    setExpandedGroups(newExpanded);
+  };
 
-  const supportItems = [
-    { href: "/announcements", label: "Announcements", icon: Megaphone, tourId: "announcements" },
-    { href: "/question-feedback", label: "Question Feedback", icon: MessageSquare, tourId: "question-feedback" },
-    { href: "/question-flagging", label: "Question Flagging", icon: Flag, tourId: "question-flagging" },
-    { href: "/bug-reporting", label: "Bug Reports", icon: Bug, tourId: "bug-reporting" },
-    { href: "/notification-settings", label: "Notifications", icon: Bell, tourId: "notifications" },
-    { href: "/anonymous-quiz-access", label: "Anonymous Access", icon: HelpCircle, tourId: "anonymous-access" },
-  ];
+  // Check if any item in a group is currently active
+  const isGroupActive = (items: any[]) => {
+    return items.some(item => isActive(item.href));
+  };
 
-  const systemItems = [
-    ...(['admin', 'teacher', 'super_admin'].includes((user as any)?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
-    { href: "/core-functionality-test", label: "Core Tests", icon: Shield, tourId: "core-tests" },
-    { href: "/pricing", label: "Pricing", icon: DollarSign, tourId: "pricing" },
-    { href: "/billing", label: "Billing", icon: CreditCard, tourId: "billing" },
-    { href: "/offline-sync", label: "Offline Sync", icon: Cloud, tourId: "offline-sync" },
-    { href: "/archive-management", label: "Archive Management", icon: Archive, tourId: "archive-management" },
-    { href: "/settings", label: "Settings", icon: Settings, tourId: "settings" },
+  const menuGroups = [
+    {
+      id: "main",
+      label: "Main",
+      icon: Home,
+      items: [
+        { href: "/", label: "Dashboard", icon: Home, tourId: "dashboard" },
+      ]
+    },
+    {
+      id: "content",
+      label: "Content Management",
+      icon: FileText,
+      items: [
+        { href: "/item-banks", label: "Item Banks", icon: BookOpen, tourId: "item-banks" },
+        { href: "/quiz-manager", label: "Quiz Manager", icon: Puzzle, tourId: "quiz-manager" },
+        { href: "/assignments", label: "Assignments", icon: ClipboardCheck, tourId: "assignments" },
+        { href: "/section-management", label: "Section Management", icon: Users, tourId: "section-management" },
+      ]
+    },
+    {
+      id: "assessment",
+      label: "Assessment & Testing",
+      icon: GraduationCap,
+      items: [
+        { href: "/live-exams", label: "Live Exams", icon: PlayCircle, tourId: "live-exams" },
+        { href: "/cat-exam-builder", label: "CAT Exam Builder", icon: Brain, tourId: "cat-exam-builder" },
+        { href: "/cat-exam-test", label: "CAT Exam Test", icon: PlayCircle, tourId: "cat-exam-test" },
+        { href: "/analytics", label: "Analytics", icon: BarChart3, tourId: "analytics" },
+        { href: "/study-resources", label: "Study Resources", icon: Brain, tourId: "study-resources" },
+      ]
+    },
+    {
+      id: "mobile",
+      label: "Mobile & Apps",
+      icon: Smartphone,
+      items: [
+        { href: "/mobile", label: "Mobile App", icon: Smartphone, tourId: "mobile" },
+      ]
+    },
+    {
+      id: "support",
+      label: "Support & Feedback",
+      icon: LifeBuoy,
+      items: [
+        { href: "/announcements", label: "Announcements", icon: Megaphone, tourId: "announcements" },
+        { href: "/question-feedback", label: "Question Feedback", icon: MessageSquare, tourId: "question-feedback" },
+        { href: "/question-flagging", label: "Question Flagging", icon: Flag, tourId: "question-flagging" },
+        { href: "/bug-reporting", label: "Bug Reports", icon: Bug, tourId: "bug-reporting" },
+        { href: "/notification-settings", label: "Notifications", icon: Bell, tourId: "notifications" },
+        { href: "/anonymous-quiz-access", label: "Anonymous Access", icon: HelpCircle, tourId: "anonymous-access" },
+      ]
+    },
+    {
+      id: "system",
+      label: "System & Settings",
+      icon: Settings,
+      items: [
+        ...(['admin', 'teacher', 'super_admin'].includes((user as any)?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
+        { href: "/core-functionality-test", label: "Core Tests", icon: Shield, tourId: "core-tests" },
+        { href: "/pricing", label: "Pricing", icon: DollarSign, tourId: "pricing" },
+        { href: "/billing", label: "Billing", icon: CreditCard, tourId: "billing" },
+        { href: "/offline-sync", label: "Offline Sync", icon: Cloud, tourId: "offline-sync" },
+        { href: "/archive-management", label: "Archive Management", icon: Archive, tourId: "archive-management" },
+        { href: "/settings", label: "Settings", icon: Settings, tourId: "settings" },
+      ]
+    }
   ];
 
   const isActive = (href: string) => {
@@ -196,79 +253,65 @@ export default function Sidebar() {
         onScroll={checkScrollable}
         style={{ minHeight: 0 }}
       >
-        <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Main Menu
-        </div>
-        
-        <div className="space-y-1">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                ref={active ? activeItemRef : undefined}
-                className={`nav-item ${active ? 'active' : ''}`}
-                data-tour={item.tourId}
-              >
-                <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-        
-        {/* Support & Communication */}
-        <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6">
-          Support & Communication
-        </div>
-        
-        <div className="space-y-1">
-          {supportItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                ref={active ? activeItemRef : undefined}
-                className={`nav-item ${active ? 'active' : ''}`}
-                data-tour={item.tourId}
-              >
-                <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-        
-        {systemItems.length > 0 && (
-          <>
-            <div className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6">
-              System
+        {/* Grouped Navigation */}
+        {menuGroups.map((group) => {
+          const GroupIcon = group.icon;
+          const isExpanded = expandedGroups.has(group.id);
+          const groupHasActiveItem = isGroupActive(group.items);
+          
+          // Always expand Dashboard group, and expand groups with active items
+          const shouldBeExpanded = group.id === "main" || isExpanded || groupHasActiveItem;
+          
+          return (
+            <div key={group.id} className="mb-2">
+              {/* Group Header */}
+              {group.id !== "main" && (
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  className={`
+                    w-full group flex items-center justify-between px-6 py-2 text-sm font-medium rounded-md transition-colors duration-200
+                    ${groupHasActiveItem 
+                      ? 'bg-primary/10 text-primary border-l-2 border-primary' 
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }
+                  `}
+                >
+                  <div className="flex items-center">
+                    <GroupIcon className="mr-3 h-5 w-5 flex-shrink-0" />
+                    {group.label}
+                  </div>
+                  {shouldBeExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+              
+              {/* Group Items */}
+              {shouldBeExpanded && (
+                <div className={group.id === "main" ? "space-y-1" : "ml-4 mt-1 space-y-1"}>
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const active = isActive(item.href);
+                    return (
+                      <Link 
+                        key={item.href}
+                        href={item.href}
+                        ref={active ? activeItemRef : undefined}
+                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm" : ""}`}
+                        data-tour={item.tourId}
+                      >
+                        <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            
-            <div className="space-y-1">
-              {systemItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    ref={active ? activeItemRef : undefined}
-                    className={`nav-item ${active ? 'active' : ''}`}
-                    data-tour={item.tourId}
-                  >
-                    <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </>
-        )}
+          );
+        })}
       </div>
       
       {/* Scroll down indicator */}
