@@ -213,7 +213,7 @@ export default function Sidebar() {
   }, [location]);
 
   return (
-    <nav className="sidebar w-64 fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-900 shadow-sm border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <nav className="sidebar w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-900 shadow-sm border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
       <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
         <div className="flex items-center">
@@ -262,7 +262,7 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleGroup(group.id)}
                   className={`
-                    w-full group flex items-center justify-between px-6 py-2 text-sm font-medium rounded-md transition-colors duration-200
+                    w-full group flex items-center justify-between px-6 py-2 text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap
                     ${groupHasActiveItem 
                       ? 'bg-primary/10 text-primary border-l-2 border-primary' 
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -296,7 +296,7 @@ export default function Sidebar() {
                         data-tour={item.tourId}
                       >
                         <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate whitespace-nowrap flex-1 min-w-0">{item.label}</span>
                       </Link>
                     );
                   })}

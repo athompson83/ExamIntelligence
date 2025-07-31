@@ -67,7 +67,9 @@
     @apply flex items-center px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg mx-2;
     @apply hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white;
     @apply transition-all duration-200 ease-in-out;
-    @apply relative;
+    @apply relative whitespace-nowrap;
+    min-width: 0;
+    flex-shrink: 0;
   }
   
   .nav-item.active {
