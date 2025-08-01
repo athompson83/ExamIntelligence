@@ -11,8 +11,7 @@ import { Copy, CheckCircle, ExternalLink, Settings, BookOpen, GraduationCap, Hom
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import Sidebar from '@/components/Sidebar';
-import { TopBar } from '@/components/layout/top-bar';
+import Layout from '@/components/Layout';
 
 interface LTIConfig {
   issuer: string;
@@ -141,12 +140,8 @@ export default function LTIIntegration() {
   );
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar />
-        <div className="flex-1 overflow-auto">
-          <div className="container max-w-6xl mx-auto p-6 space-y-6">
+    <Layout>
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
             {/* Breadcrumb Navigation */}
             <Breadcrumb>
               <BreadcrumbList>
@@ -455,9 +450,7 @@ export default function LTIIntegration() {
           </Card>
         </TabsContent>
       </Tabs>
-          </div>
-        </div>
       </div>
-    </div>
+    </Layout>
   );
 }
