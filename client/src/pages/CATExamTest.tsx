@@ -130,9 +130,10 @@ export default function CATExamTest() {
         questionDifficulties: []
       });
       getNextQuestion(session.id);
+      setIsPreviewOpen(false); // Close the preview dialog
       toast({
         title: "Session Started",
-        description: "CAT exam session has begun"
+        description: "CAT exam session has begun - Taking you to the test interface"
       });
     },
     onError: (error) => {

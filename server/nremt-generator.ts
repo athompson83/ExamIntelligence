@@ -123,31 +123,38 @@ export async function generateComprehensiveNREMTExam(
       }
     }
     
-    // Calculate how many new questions we need to generate
-    const questionsNeeded = Math.max(0, topic.questionCount - questions.length);
+    // Always generate comprehensive question banks - CAT needs extensive question pools
+    const minQuestionsForCAT = Math.max(topic.questionCount, 50); // Minimum 50 questions per topic for effective CAT
+    const questionsNeeded = Math.max(30, minQuestionsForCAT - questions.length); // Always generate at least 30 new questions
     
-    if (questionsNeeded > 0) {
-      console.log(`🔄 Need to generate ${questionsNeeded} additional questions for ${topic.name}`);
-      
-      // Generate the remaining questions needed
-      const newQuestions = await generateNREMTTopicQuestions(
-        openai, 
-        topic.name, 
-        topic.description, 
-        questionsNeeded
-      );
-      
-      console.log(`✅ Generated ${newQuestions.length} new questions for ${topic.name}`);
-      questions.push(...newQuestions);
-    } else {
-      console.log(`✅ Using ${questions.length} existing questions for ${topic.name}`);
+    console.log(`🔄 Generating ${questionsNeeded} comprehensive questions for ${topic.name} (have ${questions.length}, targeting ${minQuestionsForCAT}+ total)`);
+    
+    // Generate questions across multiple difficulty levels for better CAT performance
+    const difficultyLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const questionsPerLevel = Math.ceil(questionsNeeded / difficultyLevels.length);
+    
+    for (const difficulty of difficultyLevels) {
+      try {
+        const levelQuestions = await generateNREMTTopicQuestionsWithDifficulty(
+          openai, 
+          topic.name, 
+          topic.description, 
+          questionsPerLevel,
+          difficulty
+        );
+        
+        console.log(`✅ Generated ${levelQuestions.length} level-${difficulty} questions for ${topic.name}`);
+        questions.push(...levelQuestions);
+      } catch (error) {
+        console.log(`⚠️ Error generating level-${difficulty} questions: ${error.message}`);
+        // Create fallback questions for this difficulty level
+        const fallbackQuestions = generateFallbackNREMTQuestions(topic.name, questionsPerLevel);
+        questions.push(...fallbackQuestions);
+      }
     }
     
-    // Ensure we have exactly the target number of questions
-    if (questions.length > topic.questionCount) {
-      questions = questions.slice(0, topic.questionCount);
-      console.log(`📏 Trimmed to exactly ${topic.questionCount} questions for ${topic.name}`);
-    }
+    // Keep all generated questions for better CAT performance - don't trim
+    console.log(`🎯 Final question count for ${topic.name}: ${questions.length} questions`)
     
     // Create the comprehensive item bank
     const itemBank: NREMTItemBank = {
@@ -194,11 +201,12 @@ export async function generateComprehensiveNREMTExam(
   };
 }
 
-async function generateNREMTTopicQuestions(
+async function generateNREMTTopicQuestionsWithDifficulty(
   openai: OpenAI,
   topicName: string,
   topicDescription: string,
-  questionCount: number
+  questionCount: number,
+  difficultyLevel: number
 ): Promise<any[]> {
   console.log(`🎯 Starting generation of ${questionCount} questions for ${topicName}`);
   
