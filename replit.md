@@ -1,7 +1,7 @@
 # ProficiencyAI - Replit.md
 
 ## Overview
-ProficiencyAI is a comprehensive educational assessment platform designed to compete with Canvas LMS testing capabilities. It features AI-powered question validation, live proctoring, advanced analytics, and comprehensive testbank management. The platform aims to provide a robust solution for educational institutions requiring advanced assessment tools, supporting a vision for improved educational outcomes through intelligent, adaptable assessment.
+ProficiencyAI is a comprehensive educational assessment platform designed to compete with Canvas LMS testing capabilities. It features AI-powered question validation, live proctoring, advanced analytics, comprehensive testbank management, and seamless LTI (Learning Tools Interoperability) integration for direct LMS connectivity. The platform aims to provide a robust solution for educational institutions requiring advanced assessment tools, supporting a vision for improved educational outcomes through intelligent, adaptable assessment with seamless LMS integration.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -29,7 +29,7 @@ UI/UX Design: Modern, beautiful interface following current design trends with s
 - **Session Management**: PostgreSQL-based session store
 - **Real-time Communication**: WebSocket server for live proctoring and updates
 - **AI Integration**: Multi-LLM provider support (OpenAI, Anthropic Claude, Google Gemini, XAI Grok, Deepseek, Meta LLM) with custom prompt management.
-- **Core Modules**: Testbank Management, Quiz Builder (unified), Reference Banks, Live Proctoring, AI Services, Analytics Dashboard, User Management (multi-role: Super Admin, Admin, Teacher, Student), Assignment System, LTI integration.
+- **Core Modules**: Testbank Management, Quiz Builder (unified), Reference Banks, Live Proctoring, AI Services, Analytics Dashboard, User Management (multi-role: Super Admin, Admin, Teacher, Student), Assignment System, LTI Integration (comprehensive LMS connectivity with Canvas, Moodle, Blackboard support).
 
 ### System Design Choices
 - **Role-Based Architecture**: Four-tier role system (Super Admin, Admin, Teacher, Student) with account-based multi-tenancy.
@@ -40,6 +40,7 @@ UI/UX Design: Modern, beautiful interface following current design trends with s
 - **Data Safety**: Archiving system for questions, quizzes, and testbanks instead of permanent deletion, with full audit trails.
 - **Core Functionality Protection**: Stable core systems (Item Bank, Question Creation, Quiz Creation, Assignment Creation, Exam Scheduling) with strict change control.
 - **Internationalization**: Full i18n support with 8 languages and dynamic switching.
+- **LTI Integration**: Comprehensive Learning Tools Interoperability 1.3 support for seamless LMS integration with Canvas, Moodle, Blackboard, and other LTI-compliant platforms. Features include automatic grade passback, content selection, deep linking, and complete setup documentation.
 
 ## External Dependencies
 

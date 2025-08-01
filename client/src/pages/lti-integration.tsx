@@ -6,9 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Copy, CheckCircle, ExternalLink, Settings, BookOpen, GraduationCap } from 'lucide-react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Copy, CheckCircle, ExternalLink, Settings, BookOpen, GraduationCap, Home, LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
+import Sidebar from '@/components/Sidebar';
+import { TopBar } from '@/components/layout/top-bar';
 
 interface LTIConfig {
   issuer: string;
@@ -30,6 +34,7 @@ interface Quiz {
 
 export default function LTIIntegration() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [selectedQuiz, setSelectedQuiz] = useState<string>('');
@@ -136,29 +141,57 @@ export default function LTIIntegration() {
   );
 
   return (
-    <div className="container max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">LTI Integration</h1>
-          <p className="text-muted-foreground mt-2">
-            Seamless Learning Management System integration for ProficiencyAI
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => testConnection.mutate()}
-            disabled={testConnection.isPending}
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Test Connection
-          </Button>
-          <Badge variant={ltiConfig ? "default" : "secondary"}>
-            {ltiConfig ? "Configured" : "Setup Required"}
-          </Badge>
-        </div>
-      </div>
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopBar />
+        <div className="flex-1 overflow-auto">
+          <div className="container max-w-6xl mx-auto p-6 space-y-6">
+            {/* Breadcrumb Navigation */}
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/" className="flex items-center">
+                    <Home className="h-4 w-4 mr-1" />
+                    Dashboard
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/settings">System & Settings</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="flex items-center">
+                    <LinkIcon className="h-4 w-4 mr-1" />
+                    LTI Integration
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">LTI Integration</h1>
+                <p className="text-muted-foreground mt-2">
+                  Seamless Learning Management System integration for ProficiencyAI
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => testConnection.mutate()}
+                  disabled={testConnection.isPending}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Test Connection
+                </Button>
+                <Badge variant={ltiConfig ? "default" : "secondary"}>
+                  {ltiConfig ? "Configured" : "Setup Required"}
+                </Badge>
+              </div>
+            </div>
 
       <Tabs defaultValue="setup" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
@@ -422,6 +455,9 @@ export default function LTIIntegration() {
           </Card>
         </TabsContent>
       </Tabs>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
