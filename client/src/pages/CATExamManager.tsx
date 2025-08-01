@@ -124,8 +124,9 @@ export default function CATExamManager() {
   };
 
   const handleStartSession = (exam: CATExam) => {
-    // Navigate to CAT exam testing page
-    window.location.href = `/cat-exam-test?examId=${exam.id}`;
+    // Start a practice session and navigate to the testing interface
+    setShowPreview(false); // Close preview dialog
+    window.location.href = `/cat-exam-test?examId=${exam.id}&mode=practice`;
   };
 
   if (isLoading) {

@@ -10187,34 +10187,98 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     } catch (error) {
       console.error('Error generating CAT exam:', error);
       
-      // Handle specific AI provider errors with fallback CAT exam creation
+      // Handle specific AI provider errors with comprehensive NREMT CAT exam creation
       if (error.status === 429 || error.message?.includes('quota')) {
-        console.log('Quota exceeded, creating fallback CAT exam...');
-        
-        const fallbackExam = createFallbackCATExam(req.body.title, req.body.prompt, req.body.examType, req.body.totalQuestions);
+        console.log('Quota exceeded, creating comprehensive NREMT CAT exam with enhanced generator...');
         
         try {
-          const savedExam = await storage.createCATExam({
-            ...fallbackExam,
+          // Use enhanced NREMT generator instead of basic fallback
+          const { generateComprehensiveNREMTExam } = await import('./nremt-generator');
+          const testbanks = await storage.getTestbanks(req.user.accountId);
+          
+          const comprehensiveExam = await generateComprehensiveNREMTExam(
+            openai,
+            req.body.title || 'NREMT Comprehensive CAT',
+            'Comprehensive NREMT paramedic certification exam with enhanced question coverage',
+            testbanks,
+            storage
+          );
+          
+          console.log(`Generated comprehensive NREMT exam with ${comprehensiveExam.itemBanks.length} item banks and ${comprehensiveExam.itemBanks.reduce((sum, bank) => sum + bank.questionCount, 0)} total questions`);
+          
+          // Convert NREMT exam format to CAT exam format
+          const catExamData = {
+            title: comprehensiveExam.title,
+            description: comprehensiveExam.description,
+            subject: comprehensiveExam.subject,
+            itemBanks: comprehensiveExam.itemBanks.map(bank => ({
+              bankId: bank.id,
+              testbankId: bank.id,
+              percentage: bank.percentage,
+              minQuestions: Math.min(10, bank.questionCount),
+              maxQuestions: Math.min(30, bank.questionCount)
+            })),
+            adaptiveSettings: comprehensiveExam.catSettings,
+            scoringSettings: {
+              passingScore: comprehensiveExam.additionalSettings.passingGrade || 70,
+              scalingMethod: 'irt',
+              reportingScale: { min: 200, max: 800 }
+            },
+            securitySettings: {
+              allowCalculator: comprehensiveExam.additionalSettings.allowCalculator || false,
+              calculatorType: comprehensiveExam.additionalSettings.calculatorType || 'basic',
+              enableProctoring: comprehensiveExam.additionalSettings.proctoring || false,
+              preventCopyPaste: true,
+              preventTabSwitching: true,
+              requireWebcam: false
+            },
+            accessSettings: {
+              timeLimit: comprehensiveExam.additionalSettings.timeLimit || 120,
+              allowedAttempts: 1,
+              assignedStudents: []
+            },
             createdBy: req.user.id,
             accountId: req.user.accountId || "00000000-0000-0000-0000-000000000001",
             createdAt: new Date(),
             updatedAt: new Date()
-          });
+          };
+          
+          const savedExam = await storage.createCATExam(catExamData);
           
           res.json({
             success: true,
-            message: 'CAT exam created with sample content (AI quota exceeded)',
+            message: `Comprehensive NREMT CAT exam created with ${comprehensiveExam.itemBanks.length} item banks`,
             id: savedExam.id,
-            ...fallbackExam,
-            warning: 'Using sample content due to AI service quota limits'
+            ...comprehensiveExam,
+            warning: 'Using enhanced NREMT generator due to AI quota limits - comprehensive question coverage provided'
           });
-        } catch (saveError) {
-          res.status(500).json({ 
-            message: 'Failed to create fallback CAT exam',
-            error: 'fallback_failed',
-            details: saveError.message
-          });
+        } catch (nremtError) {
+          console.error('Enhanced NREMT generator failed, using basic fallback:', nremtError);
+          const fallbackExam = createFallbackCATExam(req.body.title, req.body.prompt, req.body.examType, req.body.totalQuestions);
+          
+          try {
+            const savedExam = await storage.createCATExam({
+              ...fallbackExam,
+              createdBy: req.user.id,
+              accountId: req.user.accountId || "00000000-0000-0000-0000-000000000001",
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+            
+            res.json({
+              success: true,
+              message: 'CAT exam created with sample content (AI quota exceeded)',
+              id: savedExam.id,
+              ...fallbackExam,
+              warning: 'Using sample content due to AI service quota limits'
+            });
+          } catch (saveError) {
+            res.status(500).json({ 
+              message: 'Failed to create fallback CAT exam',
+              error: 'fallback_failed',
+              details: saveError.message
+            });
+          }
         }
       } else if (error.status === 401 || error.message?.includes('API key')) {
         // Create fallback CAT exam when API keys are invalid

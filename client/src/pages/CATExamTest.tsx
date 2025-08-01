@@ -131,14 +131,18 @@ export default function CATExamTest() {
       });
       getNextQuestion(session.id);
       setIsPreviewOpen(false); // Close the preview dialog
+      
+      // Navigate to the CAT test interface  
+      setLocation(`/cat-exam-test?examId=${previewExam?.id}&sessionId=${session.id}`);
+      
       toast({
         title: "Session Started",
-        description: "CAT exam session has begun - Taking you to the test interface"
+        description: "Redirecting to CAT test interface..."
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to start CAT exam session",
         variant: "destructive"
       });
