@@ -303,7 +303,7 @@ export default function SpeedGrader({ quizId }: SpeedGraderProps) {
     return (
       <div className="min-h-screen flex bg-background">
         <Sidebar />
-        <div className="flex-1 ml-64">
+        <div className="flex-1 md:md:ml-64">
           <TopBar />
           <main className="p-6">
             <div className="text-center py-12">
@@ -321,7 +321,7 @@ export default function SpeedGrader({ quizId }: SpeedGraderProps) {
     <div className="min-h-screen flex bg-background">
       <Sidebar />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 md:md:ml-64">
         <TopBar />
         
         {/* SpeedGrader Header */}

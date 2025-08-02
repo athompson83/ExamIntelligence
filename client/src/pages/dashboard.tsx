@@ -42,10 +42,10 @@ export default function Dashboard() {
     <div className="min-h-screen flex bg-background">
       <Sidebar />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 md:ml-64">
         <TopBar />
         
-        <main className="p-6">
+        <main className="p-4 md:p-6 pt-20 md:pt-6">
           <QuickStats />
           
           {/* Main Dashboard Grid */}
