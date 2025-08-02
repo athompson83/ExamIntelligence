@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile-First Responsive Design Utilities */
+@layer base {
+  /* Enable smooth zoom and scaling */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    font-size: 14px;
+  }
+  
+  @media (min-width: 640px) {
+    html {
+      font-size: 16px;
+    }
+  }
+  
+  /* Mobile viewport optimization */
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overscroll-behavior: none;
+  }
+  
+  /* Mobile-friendly touch targets */
+  button, [role="button"], input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent zoom on input focus on iOS */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  
+  @media (min-width: 640px) {
+    input, select, textarea {
+      font-size: 14px;
+    }
+  }
+}
+
 /* Enhanced accessibility and UX improvements */
 @layer base {
   html {
@@ -71,6 +111,61 @@
     min-width: 0;
     flex-shrink: 0;
     backdrop-filter: blur(8px);
+  }
+  
+  /* Mobile-responsive grid patterns */
+  .mobile-grid {
+    @apply grid grid-cols-1 gap-4;
+  }
+  
+  @media (min-width: 640px) {
+    .mobile-grid {
+      @apply grid-cols-2 gap-6;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .mobile-grid {
+      @apply grid-cols-3;
+    }
+  }
+  
+  /* Collapsible mobile sections */
+  .mobile-section {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+    @apply transition-all duration-200 ease-in-out;
+  }
+  
+  .mobile-section-header {
+    @apply p-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer;
+    @apply flex items-center justify-between;
+    @apply hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors;
+  }
+  
+  .mobile-section-content {
+    @apply p-4 space-y-4;
+  }
+  
+  /* Mobile carousel styles */
+  .mobile-carousel {
+    @apply flex overflow-x-auto space-x-4 pb-4;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .mobile-carousel-item {
+    @apply flex-none w-80 sm:w-96;
+    scroll-snap-align: start;
+  }
+  
+  @media (min-width: 1024px) {
+    .mobile-carousel {
+      @apply grid grid-cols-3 gap-6 overflow-visible;
+    }
+    
+    .mobile-carousel-item {
+      @apply w-auto;
+    }
   }
   
   .nav-item.active {

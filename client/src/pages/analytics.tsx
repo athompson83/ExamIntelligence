@@ -121,9 +121,9 @@ export default function Analytics() {
               <p className="text-gray-600">Comprehensive assessment analytics and insights</p>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -134,45 +134,54 @@ export default function Analytics() {
                 </SelectContent>
               </Select>
               
-              <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
-              
-              <Button className="bg-primary hover:bg-primary/90">
-                <Download className="mr-2 h-4 w-4" />
-                Export Report
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 sm:flex-none">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <span className="hidden xs:inline">Filters</span>
+                </Button>
+                
+                <Button className="flex-1 sm:flex-none bg-primary hover:bg-primary/90">
+                  <Download className="mr-2 h-4 w-4" />
+                  <span className="hidden xs:inline">Export Report</span>
+                  <span className="xs:hidden">Export</span>
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Exams</p>
-                    <p className="text-3xl font-bold text-foreground">{data.overview.totalExams}</p>
-                  </div>
-                  <BarChart3 className="h-8 w-8 text-primary" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">+12% from last period</p>
-              </CardContent>
-            </Card>
+          {/* Overview Cards - Mobile Carousel */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Overview</h3>
+            <div className="mobile-carousel lg:grid lg:grid-cols-4 lg:gap-6 lg:space-x-0">
+              <div className="mobile-carousel-item lg:w-auto">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Total Exams</p>
+                        <p className="text-3xl font-bold text-foreground">{data.overview.totalExams}</p>
+                      </div>
+                      <BarChart3 className="h-8 w-8 text-primary" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">+12% from last period</p>
+                  </CardContent>
+                </Card>
+              </div>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Students</p>
-                    <p className="text-3xl font-bold text-foreground">{data.overview.totalStudents}</p>
-                  </div>
-                  <Users className="h-8 w-8 text-secondary" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">+8% from last period</p>
-              </CardContent>
-            </Card>
+              <div className="mobile-carousel-item lg:w-auto">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Total Students</p>
+                        <p className="text-3xl font-bold text-foreground">{data.overview.totalStudents}</p>
+                      </div>
+                      <Users className="h-8 w-8 text-secondary" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">+8% from last period</p>
+                  </CardContent>
+                </Card>
+              </div>
 
             <Card>
               <CardContent className="p-6">

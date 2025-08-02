@@ -255,10 +255,11 @@ export default function ItemBanks() {
         <TopBar />
         
         <main className="p-4 md:p-6 pt-20 md:pt-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Item Banks</h1>
-              <p className="text-gray-600">Manage your question collections</p>
+          {/* Mobile-First Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200 truncate">Item Banks</h1>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">Manage your question collections</p>
             </div>
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -329,19 +330,97 @@ export default function ItemBanks() {
             </Dialog>
           </div>
 
-          {/* Search Bar */}
+          {/* Mobile-Responsive Search Bar */}
           <div className="relative mb-6">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search item banks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-12 text-base"
             />
           </div>
 
-          {/* Item Banks Table */}
-          <div className="bg-white rounded-lg border overflow-hidden">
+          {/* Mobile: Cards, Desktop: Table */}
+          <div className="block lg:hidden space-y-4">
+            {filteredTestbanks.map((testbank: Testbank) => (
+              <div key={testbank.id} className="mobile-section">
+                <div className="mobile-section-content">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{testbank.title}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{testbank.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <Badge variant={testbank.subject ? "default" : "secondary"} className="text-xs">
+                      {testbank.subject || 'General'}
+                    </Badge>
+                    {testbank.tags?.slice(0, 3).map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        <Tag className="h-2 w-2 mr-1" />
+                        {tag}
+                      </Badge>
+                    ))}
+                    {testbank.tags && testbank.tags.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{testbank.tags.length - 3} more
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <div className="flex items-center space-x-4">
+                      <span className="flex items-center">
+                        <FileText className="h-4 w-4 mr-1" />
+                        {testbank.questionCount || 0} questions
+                      </span>
+                      <span className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {format(new Date(testbank.createdAt), 'MMM dd, yyyy')}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setLocation(`/testbanks/${testbank.id}/questions`)}
+                      className="flex-1 min-w-0"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Manage
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setEditingTestbank(testbank); setIsDialogOpen(true); }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteTestbank(testbank.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="w-full overflow-x-auto">
               <table className="w-full min-w-[900px]">
                 <thead className="bg-gray-50 border-b">
