@@ -576,72 +576,76 @@ export default function EnhancedQuizBuilder() {
           </Card>
         </TabsContent>
 
-        {/* Questions Tab */}
+        {/* Enhanced Questions Tab - Mobile Responsive */}
         <TabsContent value="questions">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
+          <Card className="card-mobile">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex-1">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
                     Quiz Questions
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm mt-2">
                     {viewingQuizQuestions 
                       ? "Questions currently included in this quiz"
                       : "Select questions from your testbanks to include in this quiz"
                     }
                   </CardDescription>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex rounded-md border">
+                {/* Mobile-First Toggle Buttons */}
+                <div className="flex items-center w-full sm:w-auto">
+                  <div className="flex w-full sm:w-auto rounded-lg border overflow-hidden">
                     <Button
                       variant={!viewingQuizQuestions ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewingQuizQuestions(false)}
-                      className="rounded-r-none"
+                      className="flex-1 sm:flex-none rounded-none text-base sm:text-sm font-medium px-4 py-3 sm:py-2"
                     >
-                      Item Banks
+                      <span className="hidden sm:inline">Item Banks</span>
+                      <span className="sm:hidden">Item Banks</span>
                     </Button>
                     <Button
                       variant={viewingQuizQuestions ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewingQuizQuestions(true)}
-                      className="rounded-l-none border-l-0"
+                      className="flex-1 sm:flex-none rounded-none text-base sm:text-sm font-medium px-4 py-3 sm:py-2 border-l"
                     >
-                      Quiz Questions
+                      <span className="hidden sm:inline">Quiz Questions</span>
+                      <span className="sm:hidden">Questions</span>
                     </Button>
                   </div>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6 pt-0">
               {viewingQuizQuestions ? (
-                <div className="space-y-4">
+                <div className="space-y-4 sm:space-y-6">
                   {quizQuestions.length === 0 && questionGroups.length === 0 ? (
-                    <div className="text-center py-12">
-                      <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No Questions Added Yet</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="text-center py-12 mobile-section">
+                      <BookOpen className="h-16 w-16 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-6 sm:mb-4" />
+                      <h3 className="text-xl sm:text-lg font-bold mb-3 sm:mb-2">No Questions Added Yet</h3>
+                      <p className="text-base sm:text-sm text-muted-foreground mb-6 sm:mb-4">
                         Switch to "Item Banks" to add questions to this quiz.
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {/* Selection Controls */}
+                      {/* Enhanced Selection Controls - Mobile Responsive */}
                       {quizQuestions.length > 0 && (
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-4 bg-muted/30 rounded-lg border mobile-section"
                         >
                           <div className="flex items-center gap-3">
                             <Checkbox
                               checked={selectedQuestions.length === quizQuestions.length}
                               onCheckedChange={handleSelectAllQuestions}
+                              className="h-6 w-6 sm:h-5 sm:w-5"
                             />
-                            <Label className="text-sm font-medium">
+                            <Label className="text-base sm:text-sm font-medium">
                               {selectedQuestions.length > 0 
                                 ? `${selectedQuestions.length} of ${quizQuestions.length} questions selected`
                                 : 'Select All Questions'
@@ -650,23 +654,26 @@ export default function EnhancedQuizBuilder() {
                           </div>
                           
                           {selectedQuestions.length > 0 && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 w-full sm:w-auto">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setIsAddToGroupDialogOpen(true)}
+                                className="btn-mobile text-base sm:text-sm font-medium justify-center sm:justify-start"
                               >
-                                <FolderPlus className="h-4 w-4 mr-2" />
-                                Add to Group
+                                <FolderPlus className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
+                                <span className="hidden sm:inline">Add to Group</span>
+                                <span className="sm:hidden">Group</span>
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={handleDeleteSelectedQuestions}
-                                className="text-red-500 hover:text-red-700"
+                                className="btn-mobile text-base sm:text-sm font-medium text-red-500 hover:text-red-700 justify-center sm:justify-start"
                               >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Selected
+                                <Trash2 className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
+                                <span className="hidden sm:inline">Delete Selected</span>
+                                <span className="sm:hidden">Delete</span>
                               </Button>
                             </div>
                           )}
@@ -848,19 +855,20 @@ export default function EnhancedQuizBuilder() {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      <div className="flex gap-4 items-center">
+                    <div className="space-y-4 sm:space-y-6">
+                      {/* Enhanced Search & Filter - Mobile Responsive */}
+                      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
                         <div className="flex-1">
                           <Input
                             placeholder="Search questions..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full"
+                            className="mobile-input text-base w-full"
                           />
                         </div>
-                        <div className="min-w-[200px]">
+                        <div className="w-full sm:min-w-[200px] sm:w-auto">
                           <Select value={selectedTestbank} onValueChange={setSelectedTestbank}>
-                            <SelectTrigger>
+                            <SelectTrigger className="mobile-select text-base w-full">
                               <SelectValue placeholder="All Testbanks" />
                             </SelectTrigger>
                             <SelectContent>
@@ -875,11 +883,12 @@ export default function EnhancedQuizBuilder() {
                         </div>
                       </div>
 
-                      <div className="grid gap-4">
+                      {/* Enhanced Question List - Mobile Responsive */}
+                      <div className="grid gap-4 sm:gap-4">
                         {filteredQuestions.map((question) => (
                           <div
                             key={question.id}
-                            className="border rounded-lg p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                            className="border rounded-xl p-4 sm:p-4 hover:bg-muted/50 active:bg-muted/70 transition-all duration-200 cursor-pointer mobile-section"
                             onClick={() => {
                               setSelectedQuestions(prev => 
                                 prev.includes(question.id) 
@@ -888,15 +897,25 @@ export default function EnhancedQuizBuilder() {
                               );
                             }}
                           >
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-start gap-4 sm:gap-3">
                               <Checkbox 
                                 checked={selectedQuestions.includes(question.id)}
-                                className="mt-1"
+                                className="mt-1 h-6 w-6 sm:h-5 sm:w-5"
                               />
-                              <div className="flex-1">
-                                <div className="font-medium">{question.questionText}</div>
-                                <div className="text-sm text-muted-foreground mt-1">
-                                  {question.questionType} • Difficulty: {question.difficulty}/10 • Blooms: {question.bloomsLevel}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-base sm:text-sm leading-relaxed mb-2 sm:mb-1">
+                                  {question.questionText}
+                                </div>
+                                <div className="text-sm sm:text-xs text-muted-foreground flex flex-wrap gap-1 sm:gap-2">
+                                  <span className="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md text-xs font-medium">
+                                    {question.questionType}
+                                  </span>
+                                  <span className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-md text-xs font-medium">
+                                    Difficulty: {question.difficulty}/10
+                                  </span>
+                                  <span className="inline-flex items-center px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-md text-xs font-medium">
+                                    Blooms: {question.bloomsLevel}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -904,14 +923,20 @@ export default function EnhancedQuizBuilder() {
                         ))}
                       </div>
 
+                      {/* Enhanced Add Selected - Mobile Responsive */}
                       {selectedQuestions.length > 0 && (
-                        <div className="flex justify-end pt-4">
+                        <div className="flex flex-col sm:flex-row justify-center sm:justify-end pt-6 sm:pt-4">
                           <Button
                             onClick={() => setIsAddToGroupDialogOpen(true)}
-                            className="flex items-center gap-2"
+                            className="btn-mobile w-full sm:w-auto flex items-center justify-center gap-2 text-base sm:text-sm font-medium"
                           >
-                            <Plus className="h-4 w-4" />
-                            Add {selectedQuestions.length} Selected Question{selectedQuestions.length === 1 ? '' : 's'}
+                            <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
+                            <span className="hidden sm:inline">
+                              Add {selectedQuestions.length} Selected Question{selectedQuestions.length === 1 ? '' : 's'}
+                            </span>
+                            <span className="sm:hidden">
+                              Add {selectedQuestions.length} Question{selectedQuestions.length === 1 ? '' : 's'}
+                            </span>
                           </Button>
                         </div>
                       )}
@@ -1098,38 +1123,36 @@ export default function EnhancedQuizBuilder() {
         </TabsContent>
       </Tabs>
 
-      {/* Action Buttons */}
-      {/* Mobile-responsive action buttons */}
-      <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-8">
+      {/* Enhanced Action Buttons - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-8 pb-4 sm:pb-0">
         <Button 
           variant="outline" 
           onClick={() => navigate('/quiz-manager')}
-          className="btn-mobile w-full sm:w-auto"
+          className="btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium"
         >
           Cancel
         </Button>
         <Button 
           variant="outline"
-          className="btn-mobile w-full sm:w-auto"
+          className="btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium"
         >
-          <Eye className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">Preview</span>
-          <span className="sm:hidden">Preview</span>
+          <Eye className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
+          Preview
         </Button>
         <Button 
           variant="outline" 
           onClick={handleSaveQuiz}
-          className="btn-mobile w-full sm:w-auto"
+          className="btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium"
         >
-          <Save className="h-4 w-4 mr-2" />
+          <Save className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
           <span className="hidden sm:inline">Save as Draft</span>
           <span className="sm:hidden">Save</span>
         </Button>
         <Button 
           onClick={handlePublishQuiz} 
-          className="bg-green-600 hover:bg-green-700 btn-mobile w-full sm:w-auto"
+          className="bg-green-600 hover:bg-green-700 btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium"
         >
-          <Upload className="h-4 w-4 mr-2" />
+          <Upload className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
           <span className="hidden sm:inline">Publish Quiz</span>
           <span className="sm:hidden">Publish</span>
         </Button>

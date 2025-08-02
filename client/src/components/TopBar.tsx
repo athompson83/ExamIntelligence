@@ -73,13 +73,13 @@ export default function TopBar() {
           />
         </div>
         
-        {/* Notifications */}
+        {/* Enhanced Notifications - Mobile Responsive */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="relative" data-tour="notifications">
-              <Bell className="h-5 w-5" />
+            <Button variant="ghost" size="sm" className="relative btn-mobile min-h-[52px] min-w-[52px] md:min-h-[44px] md:min-w-[44px]" data-tour="notifications">
+              <Bell className="h-6 w-6 md:h-5 md:w-5" />
               {unreadCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                <Badge className="absolute -top-1 -right-1 h-6 w-6 md:h-5 md:w-5 rounded-full p-0 flex items-center justify-center text-sm md:text-xs font-bold">
                   {unreadCount}
                 </Badge>
               )}
@@ -108,23 +108,24 @@ export default function TopBar() {
         {/* Tour Control */}
         <TourControl />
         
-        {/* User Switcher */}
+        {/* Enhanced User Switcher - Mobile Responsive */}
         <UserRoleSwitcher 
           currentUser={currentUser} 
           onUserSwitch={switchUser}
           trigger={
-            <Button variant="outline" size="sm" className="text-xs">
-              <Users className="h-4 w-4 mr-1" />
-              {isSwitched ? 'Test User' : 'Switch User'}
+            <Button variant="outline" size="sm" className="text-base md:text-xs btn-mobile px-3 py-2">
+              <Users className="h-5 w-5 md:h-4 md:w-4 mr-2 md:mr-1" />
+              <span className="hidden sm:inline">{isSwitched ? 'Test User' : 'Switch User'}</span>
+              <span className="sm:hidden">{isSwitched ? 'Test' : 'Switch'}</span>
             </Button>
           }
         />
         
-        {/* User Profile */}
+        {/* Enhanced User Profile - Mobile Responsive */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center space-x-3 p-2">
-              <div className="text-right">
+            <Button variant="ghost" className="flex items-center space-x-2 md:space-x-3 p-3 md:p-2 btn-mobile">
+              <div className="text-right hidden md:block">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {currentUser?.firstName} {currentUser?.lastName}
                   {isSwitched && (
@@ -137,9 +138,9 @@ export default function TopBar() {
                   {currentUser?.role?.replace('_', ' ') || 'User'}
                 </div>
               </div>
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-10 w-10 md:h-8 md:w-8">
                 <AvatarImage src={currentUser?.profileImageUrl || ''} alt="Profile" />
-                <AvatarFallback>
+                <AvatarFallback className="text-base md:text-sm font-bold">
                   {getUserInitials(currentUser?.firstName, currentUser?.lastName)}
                 </AvatarFallback>
               </Avatar>
