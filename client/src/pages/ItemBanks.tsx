@@ -58,9 +58,11 @@ export default function ItemBanks() {
   };
 
   const handleCreateQuestion = () => {
+    console.log("🔍 handleCreateQuestion called - switching to edit-question mode");
     if (!selectedTestbank) return;
     setSelectedQuestion(null);
     setViewMode("edit-question");
+    console.log("🔍 ViewMode should now be 'edit-question'");
   };
 
   const handleEditQuestion = (question: Question) => {
@@ -177,7 +179,10 @@ function TestbankDetail({
             <p className="text-muted-foreground">{testbank.description}</p>
           </div>
         </div>
-        <Button onClick={onCreateQuestion} className="bg-primary hover:bg-primary/90">
+        <Button onClick={() => {
+          console.log("🔍 Add Question button clicked!");
+          onCreateQuestion();
+        }} className="bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4 mr-2" />
           Add Question
         </Button>
