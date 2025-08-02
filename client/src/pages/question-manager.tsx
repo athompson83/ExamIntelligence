@@ -165,7 +165,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const [showSaveInstructionDialog, setShowSaveInstructionDialog] = useState(false);
   const [showLoadInstructionDialog, setShowLoadInstructionDialog] = useState(false);
 
-  // Question Form State
+  // Question Form State with specialized data fields
   const [questionForm, setQuestionForm] = useState({
     questionText: "",
     questionType: "multiple_choice",
@@ -185,7 +185,39 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       { answerText: "", isCorrect: false, displayOrder: 1 },
       { answerText: "", isCorrect: false, displayOrder: 2 },
       { answerText: "", isCorrect: false, displayOrder: 3 }
-    ]
+    ],
+    // Specialized question type data
+    matchingData: {
+      pairs: [
+        { id: "pair-1", leftItem: "", rightItem: "" },
+        { id: "pair-2", leftItem: "", rightItem: "" }
+      ]
+    },
+    orderingData: {
+      items: [
+        { id: "item-1", text: "", correctPosition: 1 },
+        { id: "item-2", text: "", correctPosition: 2 }
+      ]
+    },
+    categorizationData: {
+      categories: [
+        { id: "cat-1", name: "", description: "", items: [] }
+      ],
+      items: [
+        { id: "item-1", text: "", categoryId: "" }
+      ]
+    },
+    hotSpotData: {
+      imageUrl: "",
+      hotSpots: []
+    },
+    formulaData: {
+      formula: "",
+      variables: [],
+      tolerance: 0.01
+    },
+    numericalAnswer: 0,
+    numericalTolerance: 0.01
   });
 
   // Fetch available testbanks when no testbank is selected
@@ -1550,11 +1582,10 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                             🎯 MATCHING EDITOR LOADED! This green border confirms the specialized UI is working.
                           </div>
                           <MatchingQuestionEditor 
-                            leftItems={questionForm.matchingData?.leftItems || []}
-                            rightItems={questionForm.matchingData?.rightItems || []}
-                            onChange={(data) => setQuestionForm(prev => ({ 
+                            pairs={questionForm.matchingData?.pairs || []}
+                            onChange={(pairs) => setQuestionForm(prev => ({ 
                               ...prev, 
-                              matchingData: data 
+                              matchingData: { pairs } 
                             }))}
                           />
                         </div>
@@ -1662,7 +1693,6 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                           <FormulaQuestionEditor 
                             formula={questionForm.formulaData?.formula || ""}
                             variables={questionForm.formulaData?.variables || []}
-                            tolerance={questionForm.formulaData?.tolerance || 0.01}
                             onChange={(data) => setQuestionForm(prev => ({ 
                               ...prev, 
                               formulaData: data 
