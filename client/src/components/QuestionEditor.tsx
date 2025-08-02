@@ -219,7 +219,10 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
   const watchedQuestionType = form.watch("questionType");
   
   // Debug log to verify the question type is changing
-  console.log("Current question type:", watchedQuestionType);
+  console.log("🔍 Current question type:", watchedQuestionType);
+  
+  // Add a visible debug indicator in development
+  const isDebugging = true;
 
   // Initialize question type specific data when question type changes
   useEffect(() => {
@@ -631,6 +634,15 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                       )}
                     />
                   </div>
+
+                  {/* Debug indicator for question type */}
+                  {isDebugging && (
+                    <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-md p-3">
+                      <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                        🔍 Debug: Current Question Type = "{watchedQuestionType}"
+                      </p>
+                    </div>
+                  )}
 
                   {/* Answer Options for Multiple Choice/Response */}
                   {(watchedQuestionType === "multiple_choice" || watchedQuestionType === "multiple_response") && (
@@ -1102,24 +1114,40 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
 
                   {/* Matching Question Editor */}
                   {watchedQuestionType === "matching" && (
-                    <MatchingQuestionEditor
-                      pairs={matchingPairs}
-                      onChange={setMatchingPairs}
-                      distractors={matchingDistractors}
-                      onDistractorsChange={setMatchingDistractors}
-                    />
+                    <div className="space-y-4">
+                      <FormLabel>Matching Question Setup</FormLabel>
+                      <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                        <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                          Create pairs of matching items. Students will drag items from the left column to match with items in the right column.
+                        </p>
+                        <MatchingQuestionEditor
+                          pairs={matchingPairs}
+                          onChange={setMatchingPairs}
+                          distractors={matchingDistractors}
+                          onDistractorsChange={setMatchingDistractors}
+                        />
+                      </div>
+                    </div>
                   )}
 
                   {/* Sorting Question Editor */}
                   {watchedQuestionType === "sorting" && (
-                    <SortingQuestionEditor
-                      items={sortingItems}
-                      onChange={setSortingItems}
-                      sortingCriteria={sortingCriteria}
-                      onCriteriaChange={setSortingCriteria}
-                      sortingType={sortingType}
-                      onSortingTypeChange={setSortingType}
-                    />
+                    <div className="space-y-4">
+                      <FormLabel>Sorting Question Setup</FormLabel>
+                      <div className="p-4 border rounded-lg bg-purple-50 dark:bg-purple-900/20">
+                        <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
+                          Create items that students will sort according to specific criteria. Define the correct order and sorting rules.
+                        </p>
+                        <SortingQuestionEditor
+                          items={sortingItems}
+                          onChange={setSortingItems}
+                          sortingCriteria={sortingCriteria}
+                          onCriteriaChange={setSortingCriteria}
+                          sortingType={sortingType}
+                          onSortingTypeChange={setSortingType}
+                        />
+                      </div>
+                    </div>
                   )}
 
 
