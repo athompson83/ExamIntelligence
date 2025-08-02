@@ -527,6 +527,12 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
 
   return (
     <div className="question-editor">
+      {/* CRITICAL DEBUG: This should always show */}
+      <div className="mb-4 p-4 bg-purple-100 border-2 border-purple-500 rounded">
+        <h2 className="text-purple-800 font-bold text-xl">🚨 MAIN QuestionEditor Component Loaded!</h2>
+        <p className="text-purple-600">If you see this, the correct component is loading.</p>
+        <p className="text-purple-600">Question Type: {watchedQuestionType}</p>
+      </div>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
