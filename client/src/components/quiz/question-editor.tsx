@@ -86,6 +86,7 @@ const bloomsLevels = [
 ];
 
 export function QuestionEditor({ testbankId, question, isOpen, onClose, onCancel, onSave }: QuestionEditorProps) {
+  console.log("🚨 WRONG COMPONENT: quiz/question-editor.tsx is being used instead of main QuestionEditor!");
   console.log("QuestionEditor rendering with:", { testbankId, isOpen, hasQuestion: !!question });
   const { toast } = useToast();
   const queryClient = useQueryClient();
