@@ -48,10 +48,10 @@ export default function Dashboard() {
         <main className="p-4 md:p-6 pt-20 md:pt-6 space-y-6">
           <QuickStats />
           
-          {/* Main Dashboard - Mobile Responsive */}
-          <div className="space-y-6">
+          {/* Enhanced Main Dashboard - Mobile Responsive */}
+          <div className="mobile-section space-y-8">
             {/* Mobile: Stack vertically, Desktop: Side by side */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
               <div className="lg:col-span-2 order-2 lg:order-1">
                 <LiveExamMonitoring />
               </div>
@@ -62,51 +62,51 @@ export default function Dashboard() {
 
             <AnalyticsOverview />
 
-            {/* Quick Actions - Mobile Grid */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Quick Actions</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Enhanced Quick Actions - Mobile Grid */}
+            <div className="space-y-6">
+              <h3 className="text-2xl md:text-xl font-bold text-gray-800 dark:text-gray-200">Quick Actions</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Button 
-                  className="w-full bg-primary text-white p-6 md:p-8 h-auto hover:bg-primary/90 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 btn-mobile min-h-[140px] md:min-h-[160px]"
+                  className="w-full bg-primary text-white p-8 md:p-8 h-auto hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl"
                   onClick={() => setLocation('/item-banks')}
                 >
-                  <div className="flex flex-col items-center space-y-2 md:space-y-3">
-                    <Plus className="h-6 w-6 md:h-8 md:w-8" />
-                    <span className="font-semibold text-sm md:text-base">Create Item Bank</span>
+                  <div className="flex flex-col items-center space-y-3 md:space-y-3">
+                    <Plus className="h-8 w-8 md:h-8 md:w-8" />
+                    <span className="font-semibold text-lg md:text-base text-center">Create Item Bank</span>
                     <span className="text-xs md:text-sm opacity-90 text-center">Build question collections</span>
                   </div>
                 </Button>
                 
                 <Button 
-                  className="w-full bg-blue-600 text-white p-6 md:p-8 h-auto hover:bg-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 btn-mobile min-h-[140px] md:min-h-[160px]"
+                  className="w-full bg-blue-600 text-white p-8 md:p-8 h-auto hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl"
                   onClick={() => setLocation('/quiz-builder')}
                 >
-                  <div className="flex flex-col items-center space-y-2 md:space-y-3">
-                    <Puzzle className="h-6 w-6 md:h-8 md:w-8" />
-                    <span className="font-semibold text-sm md:text-base">Build Quiz</span>
-                    <span className="text-xs md:text-sm opacity-90 text-center">Create assessments</span>
+                  <div className="flex flex-col items-center space-y-3 md:space-y-3">
+                    <Puzzle className="h-8 w-8 md:h-8 md:w-8" />
+                    <span className="font-semibold text-lg md:text-base text-center">Build Quiz</span>
+                    <span className="text-sm md:text-sm opacity-90 text-center">Create assessments</span>
                   </div>
                 </Button>
                 
                 <Button 
-                  className="w-full bg-orange-500 text-white p-6 md:p-8 h-auto hover:bg-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 btn-mobile min-h-[140px] md:min-h-[160px]"
+                  className="w-full bg-orange-500 text-white p-8 md:p-8 h-auto hover:bg-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl"
                   onClick={() => setLocation('/ai-resources')}
                 >
-                  <div className="flex flex-col items-center space-y-2 md:space-y-3">
-                    <Bot className="h-6 w-6 md:h-8 md:w-8" />
-                    <span className="font-semibold text-sm md:text-base">AI Generate</span>
-                    <span className="text-xs md:text-sm opacity-90 text-center">Smart content creation</span>
+                  <div className="flex flex-col items-center space-y-3 md:space-y-3">
+                    <Bot className="h-8 w-8 md:h-8 md:w-8" />
+                    <span className="font-semibold text-lg md:text-base text-center">AI Generate</span>
+                    <span className="text-sm md:text-sm opacity-90 text-center">Smart content creation</span>
                   </div>
                 </Button>
                 
                 <Button 
-                  className="w-full bg-purple-600 text-white p-6 md:p-8 h-auto hover:bg-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 btn-mobile min-h-[140px] md:min-h-[160px]"
+                  className="w-full bg-purple-600 text-white p-8 md:p-8 h-auto hover:bg-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl"
                   onClick={() => setLocation('/live-exams')}
                 >
-                  <div className="flex flex-col items-center space-y-2 md:space-y-3">
-                    <Eye className="h-6 w-6 md:h-8 md:w-8" />
-                    <span className="font-semibold text-sm md:text-base">Monitor Exams</span>
-                    <span className="text-xs md:text-sm opacity-90 text-center">Live proctoring</span>
+                  <div className="flex flex-col items-center space-y-3 md:space-y-3">
+                    <Eye className="h-8 w-8 md:h-8 md:w-8" />
+                    <span className="font-semibold text-lg md:text-base text-center">Monitor Exams</span>
+                    <span className="text-sm md:text-sm opacity-90 text-center">Live proctoring</span>
                   </div>
                 </Button>
               </div>

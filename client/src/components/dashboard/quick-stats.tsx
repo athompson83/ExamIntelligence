@@ -45,18 +45,18 @@ export function QuickStats() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="card-mobile">
-            <CardContent className="p-4 md:p-6">
+          <Card key={i} className="card-mobile hover:shadow-lg transition-all duration-200">
+            <CardContent className="p-6 md:p-8">
               <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-8 w-16" />
+                <div className="space-y-3">
+                  <Skeleton className="h-5 w-28" />
+                  <Skeleton className="h-10 w-20" />
                 </div>
-                <Skeleton className="h-10 w-10 md:h-12 md:w-12 rounded-full" />
+                <Skeleton className="h-14 w-14 md:h-16 md:w-16 rounded-xl" />
               </div>
-              <Skeleton className="h-3 w-20 mt-2" />
+              <Skeleton className="h-4 w-24 mt-4" />
             </CardContent>
           </Card>
         ))}
@@ -65,22 +65,22 @@ export function QuickStats() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
       {statCards.map((stat) => {
         const Icon = stat.icon;
         return (
-          <Card key={stat.title} className="hover:shadow-lg transition-shadow card-mobile">
-            <CardContent className="p-4 md:p-6">
+          <Card key={stat.title} className="hover:shadow-lg transition-all duration-300 card-mobile transform hover:scale-105">
+            <CardContent className="p-6 md:p-8">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                <div className="flex-1">
+                  <p className="text-base md:text-sm font-semibold text-muted-foreground mb-2">{stat.title}</p>
+                  <p className="text-3xl md:text-4xl font-bold text-overflow-mobile">{stat.value.toLocaleString()}</p>
                 </div>
-                <div className={`${stat.bgColor} p-3 rounded-full`}>
-                  <Icon className={`${stat.color} h-5 w-5`} />
+                <div className={`${stat.bgColor} p-4 md:p-3 rounded-xl flex items-center justify-center`}>
+                  <Icon className={`h-7 w-7 md:h-6 md:w-6 ${stat.color}`} />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">{stat.change}</p>
+              <p className="text-sm md:text-xs text-muted-foreground mt-4 md:mt-2 font-medium">{stat.change}</p>
             </CardContent>
           </Card>
         );

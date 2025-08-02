@@ -217,23 +217,23 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Navigation Bar (shown on small screens) */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-primary z-50 px-4 py-3">
+      {/* Enhanced Mobile Navigation Bar (shown on small screens) */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-primary z-50 px-6 py-4 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="bg-white rounded-lg p-1 mr-2">
-              <ClipboardCheck className="h-5 w-5 text-primary" />
+            <div className="bg-white rounded-xl p-2 mr-3">
+              <ClipboardCheck className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="text-white text-lg font-bold">ProficiencyAI</h1>
+            <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg text-white hover:bg-white/10"
+            className="p-3 rounded-xl text-white hover:bg-white/20 transition-colors btn-mobile min-h-[48px] min-w-[48px]"
           >
-            <div className="w-6 h-6 flex flex-col justify-center space-y-1">
-              <div className={`w-6 h-0.5 bg-current transition-all ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
-              <div className={`w-6 h-0.5 bg-current transition-all ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
-              <div className={`w-6 h-0.5 bg-current transition-all ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
+            <div className="w-7 h-7 flex flex-col justify-center space-y-1.5">
+              <div className={`w-7 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></div>
+              <div className={`w-7 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
+              <div className={`w-7 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></div>
             </div>
           </button>
         </div>
@@ -247,21 +247,21 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Desktop Sidebar & Mobile Drawer */}
+      {/* Enhanced Desktop Sidebar & Mobile Drawer */}
       <nav className={`
-        sidebar bg-white dark:bg-gray-900 shadow-sm border-r border-gray-200 dark:border-gray-700 flex flex-col
+        sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
         md:w-64 md:min-w-64 md:max-w-64 md:fixed md:inset-y-0 md:left-0 md:z-50
-        fixed top-0 left-0 h-full w-80 z-50 transform transition-transform duration-300
+        fixed top-0 left-0 h-full w-84 z-50 transform transition-all duration-300
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0
       `}>
-        {/* Logo */}
-        <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
+        {/* Enhanced Logo */}
+        <div className="flex items-center justify-center h-20 md:h-16 bg-primary px-6 md:px-4 flex-shrink-0">
           <div className="flex items-center">
-            <div className="bg-white rounded-lg p-2 mr-3">
-              <ClipboardCheck className="h-6 w-6 text-primary" />
+            <div className="bg-white rounded-xl p-3 md:p-2 mr-4 md:mr-3">
+              <ClipboardCheck className="h-7 w-7 md:h-6 md:w-6 text-primary" />
             </div>
-            <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
+            <h1 className="text-white text-2xl md:text-xl font-bold">ProficiencyAI</h1>
           </div>
         </div>
       
@@ -303,7 +303,7 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleGroup(group.id)}
                   className={`
-                    w-full group flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ease-out whitespace-nowrap mx-2
+                    w-full group flex items-center justify-between px-6 md:px-4 py-4 md:py-2.5 text-lg md:text-sm font-semibold rounded-xl transition-all duration-300 ease-out whitespace-nowrap mx-2 min-h-[56px] md:min-h-[44px]
                     ${groupHasActiveItem 
                       ? 'bg-gradient-to-r from-primary/15 to-primary/10 text-primary border-l-2 border-primary shadow-sm' 
                       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 hover:text-gray-800 dark:hover:text-gray-200'
@@ -311,20 +311,20 @@ export default function Sidebar() {
                   `}
                 >
                   <div className="flex items-center">
-                    <GroupIcon className="mr-3 h-5 w-5 flex-shrink-0" />
-                    {group.label}
+                    <GroupIcon className="mr-4 md:mr-3 h-6 w-6 md:h-5 md:w-5 flex-shrink-0" />
+                    <span className="font-bold md:font-semibold">{group.label}</span>
                   </div>
                   {shouldBeExpanded ? (
-                    <ChevronUp className="h-4 w-4" />
+                    <ChevronUp className="h-5 w-5 md:h-4 md:w-4" />
                   ) : (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-5 w-5 md:h-4 md:w-4" />
                   )}
                 </button>
               )}
               
               {/* Group Items */}
               {shouldBeExpanded && (
-                <div className={group.id === "main" ? "space-y-1" : "ml-4 mt-1 space-y-1"}>
+                <div className={group.id === "main" ? "space-y-2 md:space-y-1" : "ml-6 md:ml-4 mt-2 md:mt-1 space-y-2 md:space-y-1"}>
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
@@ -333,12 +333,12 @@ export default function Sidebar() {
                         key={item.href}
                         href={item.href}
                         ref={active ? activeItemRef : undefined}
-                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm" : ""}`}
+                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-base md:text-sm" : "text-lg md:text-base"} btn-mobile min-h-[52px] md:min-h-[44px]`}
                         data-tour={item.tourId}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
-                        <span className="truncate whitespace-nowrap flex-1 min-w-0">{item.label}</span>
+                        <Icon className="h-6 w-6 md:h-4 md:w-4 mr-4 md:mr-3 flex-shrink-0" />
+                        <span className="truncate whitespace-nowrap flex-1 min-w-0 font-medium">{item.label}</span>
                       </Link>
                     );
                   })}

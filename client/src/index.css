@@ -2,81 +2,126 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Mobile-First Responsive Design Utilities */
+/* Enhanced Mobile-First Responsive Design with Improved Scaling */
 @layer base {
-  /* Enable smooth zoom and scaling */
+  /* Enhanced mobile viewport and scaling */
   html {
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
-    font-size: 16px; /* Larger base font for mobile */
+    font-size: 18px; /* Enhanced base font for mobile readability */
+    line-height: 1.6; /* Better line height for readability */
+    scroll-behavior: smooth;
   }
   
   @media (min-width: 640px) {
     html {
-      font-size: 16px;
+      font-size: 18px; /* Consistent larger font on tablet */
+      line-height: 1.55;
     }
   }
   
   @media (min-width: 1024px) {
     html {
-      font-size: 18px; /* Even larger for desktop */
+      font-size: 19px; /* Even larger for desktop readability */
+      line-height: 1.5;
     }
   }
   
-  /* Mobile viewport optimization */
+  /* Enhanced mobile viewport optimization */
   body {
     min-height: 100vh;
     min-height: -webkit-fill-available;
     overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   
-  /* Mobile-friendly touch targets - larger for better usability */
+  /* Enhanced mobile-friendly touch targets with improved accessibility */
   button, [role="button"], input, select, textarea {
-    min-height: 48px; /* Increased from 44px */
-    min-width: 48px;
+    min-height: 52px; /* Increased for better touch accessibility */
+    min-width: 52px;
+    border-radius: 8px; /* Slightly larger radius for modern look */
   }
   
-  /* Prevent zoom on input focus on iOS - larger text */
+  /* Enhanced input styling to prevent zoom and improve readability */
   input, select, textarea {
-    font-size: 18px; /* Increased from 16px */
-    padding: 12px 16px; /* More generous padding */
+    font-size: 18px !important; /* Force 18px to prevent iOS zoom */
+    padding: 14px 18px; /* More generous padding for touch */
+    line-height: 1.4;
+    border-radius: 8px;
   }
   
   @media (min-width: 640px) {
     input, select, textarea {
-      font-size: 16px;
-      padding: 8px 12px;
+      font-size: 17px;
+      padding: 12px 16px;
     }
   }
   
-  /* Larger text for better mobile readability */
+  @media (min-width: 1024px) {
+    input, select, textarea {
+      font-size: 16px;
+      padding: 10px 14px;
+    }
+  }
+  
+  /* Enhanced typography hierarchy for better mobile readability */
   h1 {
-    font-size: 2rem; /* Larger on mobile */
+    font-size: 2.25rem; /* Larger on mobile for impact */
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
   
   h2 {
-    font-size: 1.75rem;
+    font-size: 1.875rem;
+    line-height: 1.25;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
   
   h3 {
     font-size: 1.5rem;
+    line-height: 1.3;
+    font-weight: 600;
+  }
+  
+  h4 {
+    font-size: 1.25rem;
+    line-height: 1.35;
+    font-weight: 500;
   }
   
   p, span, div {
     font-size: 1rem; /* Base size, will scale with html font-size */
+    line-height: 1.6; /* Better readability */
   }
   
+  /* Enhanced desktop typography scaling */
   @media (min-width: 1024px) {
     h1 {
-      font-size: 2.5rem; /* Even larger on desktop */
+      font-size: 2.75rem; /* Even larger on desktop */
+      line-height: 1.15;
     }
     
     h2 {
-      font-size: 2rem;
+      font-size: 2.25rem;
+      line-height: 1.2;
     }
     
     h3 {
-      font-size: 1.75rem;
+      font-size: 1.875rem;
+      line-height: 1.25;
+    }
+    
+    h4 {
+      font-size: 1.5rem;
+      line-height: 1.3;
+    }
+    
+    p, span, div {
+      line-height: 1.55;
     }
   }
 }
@@ -187,64 +232,119 @@
     @apply p-6 space-y-6; /* More generous spacing */
   }
   
-  /* Better mobile button styling */
+  /* Enhanced mobile button styling with improved scaling */
   @media (max-width: 768px) {
     .btn-mobile {
-      @apply text-base px-4 py-3 min-h-[48px]; /* Proper touch targets */
-      font-size: 16px !important; /* Prevent zoom on iOS */
+      @apply text-lg px-6 py-4 min-h-[56px]; /* Enhanced touch targets */
+      font-size: 18px !important; /* Prevent zoom on iOS */
+      font-weight: 500;
+      border-radius: 12px;
+      transition: all 0.2s ease;
     }
     
-    /* Larger text on mobile for better readability */
+    .btn-mobile:active {
+      transform: scale(0.98);
+    }
+    
+    /* Enhanced mobile typography scaling */
     h1 {
-      @apply text-2xl;
+      @apply text-3xl;
+      font-weight: 700;
+      line-height: 1.2;
     }
     
     h2 {
-      @apply text-xl;
+      @apply text-2xl;
+      font-weight: 600;
+      line-height: 1.25;
     }
     
     h3 {
+      @apply text-xl;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    
+    h4 {
       @apply text-lg;
+      font-weight: 500;
+      line-height: 1.35;
     }
     
     p, span, div {
-      @apply text-base; /* Ensure base text is readable */
+      @apply text-lg; /* Larger base text for mobile readability */
+      line-height: 1.6;
     }
     
-    /* Cards should be larger on mobile */
+    /* Enhanced cards for mobile with better scaling */
     .card-mobile {
-      @apply min-h-[120px];
-      margin: 0 4px;
+      @apply min-h-[140px];
+      margin: 0 6px;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     
-    /* Text clamp for mobile */
+    /* Enhanced text utilities for mobile */
     .line-clamp-2 {
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      line-height: 1.5;
     }
     
-    /* Prevent text from extending beyond buttons */
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+    
+    /* Enhanced text overflow handling */
     .text-overflow-mobile {
       word-break: break-word;
       overflow-wrap: break-word;
       hyphens: auto;
+      line-height: 1.6;
     }
     
-    /* Better spacing for mobile forms */
+    /* Enhanced mobile form spacing */
     .mobile-form-spacing {
-      @apply space-y-4;
+      @apply space-y-6; /* Increased spacing */
     }
     
     .mobile-form-spacing > * + * {
-      @apply mt-4;
+      @apply mt-6;
+    }
+    
+    /* Enhanced mobile input styling */
+    .mobile-input {
+      @apply text-lg px-5 py-4 rounded-xl border-2;
+      font-size: 18px !important;
+      min-height: 56px;
+    }
+    
+    /* Enhanced mobile select styling */
+    .mobile-select {
+      @apply text-lg px-5 py-4 rounded-xl border-2;
+      font-size: 18px !important;
+      min-height: 56px;
+    }
+    
+    /* Enhanced mobile textarea styling */
+    .mobile-textarea {
+      @apply text-lg px-5 py-4 rounded-xl border-2;
+      font-size: 18px !important;
+      min-height: 120px;
+      resize: vertical;
     }
   }
   
-  /* Mobile carousel styles - Better mobile sizing */
+  /* Enhanced mobile carousel with improved scaling */
   .mobile-carousel {
-    @apply flex overflow-x-auto space-x-6 pb-6 px-2;
+    @apply flex overflow-x-auto space-x-8 pb-8 px-4;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -256,24 +356,51 @@
   }
   
   .mobile-carousel-item {
-    @apply flex-none w-72 min-h-[200px];
+    @apply flex-none w-80 min-h-[240px];
     scroll-snap-align: start;
+    border-radius: 12px;
+    transition: transform 0.2s ease;
+  }
+  
+  .mobile-carousel-item:active {
+    transform: scale(0.98);
   }
   
   @media (max-width: 480px) {
+    .mobile-carousel {
+      @apply space-x-6 pb-6 px-3;
+    }
+    
     .mobile-carousel-item {
-      @apply w-64;
+      @apply w-72 min-h-[220px];
     }
   }
   
   @media (min-width: 1024px) {
     .mobile-carousel {
-      @apply grid grid-cols-4 gap-6 overflow-visible space-x-0 px-0;
+      @apply grid grid-cols-4 gap-8 overflow-visible space-x-0 px-0;
     }
     
     .mobile-carousel-item {
       @apply w-auto;
       min-height: auto;
+    }
+  }
+  
+  /* Enhanced mobile section styling */
+  .mobile-section {
+    @apply px-4 py-6;
+  }
+  
+  @media (min-width: 640px) {
+    .mobile-section {
+      @apply px-6 py-8;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .mobile-section {
+      @apply px-8 py-10;
     }
   }
   

@@ -61,18 +61,18 @@ export function LiveExamMonitoring() {
   if (isLoading) {
     return (
       <Card className="card-mobile">
-        <CardHeader className="p-4 md:p-6">
+        <CardHeader className="p-6 md:p-6">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base md:text-lg">Live Exam Monitoring</CardTitle>
-            <Skeleton className="h-8 w-20 md:h-10 md:w-24" />
+            <CardTitle className="text-xl md:text-lg font-bold">Live Exam Monitoring</CardTitle>
+            <Skeleton className="h-10 w-24 md:h-10 md:w-24 rounded-lg" />
           </div>
         </CardHeader>
-        <CardContent className="p-4 md:p-6 pt-0">
-          <div className="grid grid-cols-1 gap-4">
+        <CardContent className="p-6 md:p-6 pt-0">
+          <div className="grid grid-cols-1 gap-6">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="border rounded-lg p-4">
-                <Skeleton className="h-6 w-32 mb-3" />
-                <div className="space-y-2 mb-3">
+              <div key={i} className="border rounded-xl p-6 mobile-section">
+                <Skeleton className="h-7 w-40 mb-4" />
+                <div className="space-y-3 mb-4">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-28" />
                 </div>
@@ -95,24 +95,17 @@ export function LiveExamMonitoring() {
 
   return (
     <Card className="card-mobile">
-      <CardHeader className="p-4 md:p-6">
+      <CardHeader className="p-6 md:p-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Maximize2 className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-            <CardTitle className="text-base md:text-lg">Live Exam Monitoring</CardTitle>
-            {isConnected && (
-              <Badge variant="outline" className="ml-2 text-green-600 border-green-600 text-xs">
-                Connected
-              </Badge>
-            )}
-          </div>
-          <Button 
-            className="bg-primary hover:bg-primary/90 btn-mobile text-xs md:text-sm px-2 md:px-4"
-            onClick={() => window.location.href = '/live-exams'}
-          >
-            <Maximize2 className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">Full View</span>
-            <span className="sm:hidden">View</span>
+          <CardTitle className="text-xl md:text-lg font-bold flex items-center gap-3">
+            <Camera className="h-6 w-6 md:h-5 md:w-5" />
+            Live Exam Monitoring
+            {isConnected && <div className="w-3 h-3 bg-secondary rounded-full animate-pulse" />}
+          </CardTitle>
+          <Button size="sm" variant="outline" className="text-base md:text-sm btn-mobile px-4 py-2">
+            <Maximize2 className="h-4 w-4 md:h-4 md:w-4 mr-2" />
+            <span className="hidden sm:inline">View All</span>
+            <span className="sm:hidden">All</span>
           </Button>
         </div>
       </CardHeader>
