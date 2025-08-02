@@ -58,6 +58,14 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
+// Import specialized question editors
+import { MatchingQuestionEditor } from "@/components/question-types/MatchingQuestionEditor";
+import { SortingQuestionEditor } from "@/components/question-types/SortingQuestionEditor";
+import { OrderingQuestionEditor } from "@/components/question-types/OrderingQuestionEditor";
+import { CategorizationQuestionEditor } from "@/components/question-types/CategorizationQuestionEditor";
+import { HotSpotQuestionEditor } from "@/components/question-types/HotSpotQuestionEditor";
+import { FormulaQuestionEditor } from "@/components/question-types/FormulaQuestionEditor";
+
 interface Question {
   id: string;
   questionText: string;
@@ -1529,6 +1537,141 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                             <Plus className="h-4 w-4 mr-2" />
                             Add Option
                           </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Matching Question Editor */}
+                    {questionForm.questionType === "matching" && (
+                      <div>
+                        <Label>Matching Options</Label>
+                        <div style={{ border: "2px solid green", padding: "10px", margin: "10px" }}>
+                          <div style={{ backgroundColor: "green", color: "white", padding: "5px", marginBottom: "10px" }}>
+                            🎯 MATCHING EDITOR LOADED! This green border confirms the specialized UI is working.
+                          </div>
+                          <MatchingQuestionEditor 
+                            leftItems={questionForm.matchingData?.leftItems || []}
+                            rightItems={questionForm.matchingData?.rightItems || []}
+                            onChange={(data) => setQuestionForm(prev => ({ 
+                              ...prev, 
+                              matchingData: data 
+                            }))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Ordering Question Editor */}
+                    {questionForm.questionType === "ordering" && (
+                      <div>
+                        <Label>Ordering Items</Label>
+                        <div style={{ border: "2px solid blue", padding: "10px", margin: "10px" }}>
+                          <div style={{ backgroundColor: "blue", color: "white", padding: "5px", marginBottom: "10px" }}>
+                            📝 ORDERING EDITOR LOADED! This blue border confirms the specialized UI is working.
+                          </div>
+                          <OrderingQuestionEditor 
+                            items={questionForm.orderingData?.items || []}
+                            onChange={(items) => setQuestionForm(prev => ({ 
+                              ...prev, 
+                              orderingData: { items } 
+                            }))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Categorization Question Editor */}
+                    {questionForm.questionType === "categorization" && (
+                      <div>
+                        <Label>Categorization Setup</Label>
+                        <div style={{ border: "2px solid purple", padding: "10px", margin: "10px" }}>
+                          <div style={{ backgroundColor: "purple", color: "white", padding: "5px", marginBottom: "10px" }}>
+                            🗂️ CATEGORIZATION EDITOR LOADED! This purple border confirms the specialized UI is working.
+                          </div>
+                          <CategorizationQuestionEditor 
+                            categories={questionForm.categorizationData?.categories || []}
+                            items={questionForm.categorizationData?.items || []}
+                            onChange={(data) => setQuestionForm(prev => ({ 
+                              ...prev, 
+                              categorizationData: data 
+                            }))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Hot Spot Question Editor */}
+                    {questionForm.questionType === "hot_spot" && (
+                      <div>
+                        <Label>Hot Spot Image Setup</Label>
+                        <div style={{ border: "2px solid orange", padding: "10px", margin: "10px" }}>
+                          <div style={{ backgroundColor: "orange", color: "white", padding: "5px", marginBottom: "10px" }}>
+                            🎯 HOT SPOT EDITOR LOADED! This orange border confirms the specialized UI is working.
+                          </div>
+                          <HotSpotQuestionEditor 
+                            imageUrl={questionForm.hotSpotData?.imageUrl || ""}
+                            hotSpots={questionForm.hotSpotData?.hotSpots || []}
+                            onChange={(data) => setQuestionForm(prev => ({ 
+                              ...prev, 
+                              hotSpotData: data 
+                            }))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Formula Question Editor */}
+                    {questionForm.questionType === "formula" && (
+                      <div>
+                        <Label>Formula Setup</Label>
+                        <div style={{ border: "2px solid red", padding: "10px", margin: "10px" }}>
+                          <div style={{ backgroundColor: "red", color: "white", padding: "5px", marginBottom: "10px" }}>
+                            📐 FORMULA EDITOR LOADED! This red border confirms the specialized UI is working.
+                          </div>
+                          <FormulaQuestionEditor 
+                            formula={questionForm.formulaData?.formula || ""}
+                            variables={questionForm.formulaData?.variables || []}
+                            tolerance={questionForm.formulaData?.tolerance || 0.01}
+                            onChange={(data) => setQuestionForm(prev => ({ 
+                              ...prev, 
+                              formulaData: data 
+                            }))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Numerical Answer Input */}
+                    {questionForm.questionType === "numerical" && (
+                      <div>
+                        <Label>Numerical Answer</Label>
+                        <div style={{ border: "2px solid teal", padding: "10px", margin: "10px" }}>
+                          <div style={{ backgroundColor: "teal", color: "white", padding: "5px", marginBottom: "10px" }}>
+                            🔢 NUMERICAL EDITOR LOADED! This teal border confirms the specialized UI is working.
+                          </div>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={questionForm.numericalAnswer || ""}
+                            onChange={(e) => setQuestionForm(prev => ({ 
+                              ...prev, 
+                              numericalAnswer: parseFloat(e.target.value) || 0 
+                            }))}
+                            placeholder="Enter the correct numerical answer"
+                          />
+                          <div className="mt-2">
+                            <Label>Tolerance</Label>
+                            <Input
+                              type="number"
+                              step="any"
+                              value={questionForm.numericalTolerance || 0.01}
+                              onChange={(e) => setQuestionForm(prev => ({ 
+                                ...prev, 
+                                numericalTolerance: parseFloat(e.target.value) || 0.01 
+                              }))}
+                              placeholder="Acceptable margin of error"
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
