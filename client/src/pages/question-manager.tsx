@@ -195,8 +195,8 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     },
     orderingData: {
       items: [
-        { id: "item-1", text: "", correctPosition: 1 },
-        { id: "item-2", text: "", correctPosition: 2 }
+        { id: "item-1", text: "", correctOrder: 1 },
+        { id: "item-2", text: "", correctOrder: 2 }
       ]
     },
     categorizationData: {
@@ -1673,9 +1673,9 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                           <HotSpotQuestionEditor 
                             imageUrl={questionForm.hotSpotData?.imageUrl || ""}
                             hotSpots={questionForm.hotSpotData?.hotSpots || []}
-                            onChange={(data) => setQuestionForm(prev => ({ 
+                            onChange={(imageUrl, hotSpots) => setQuestionForm(prev => ({ 
                               ...prev, 
-                              hotSpotData: data 
+                              hotSpotData: { imageUrl, hotSpots } 
                             }))}
                           />
                         </div>
@@ -1693,6 +1693,11 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                           <FormulaQuestionEditor 
                             formula={questionForm.formulaData?.formula || ""}
                             variables={questionForm.formulaData?.variables || []}
+                            possibleAnswers={5}
+                            decimalPlaces={2}
+                            marginType="percentage"
+                            marginValue={5}
+                            scientificNotation={false}
                             onChange={(data) => setQuestionForm(prev => ({ 
                               ...prev, 
                               formulaData: data 
