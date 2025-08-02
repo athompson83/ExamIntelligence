@@ -4,9 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TestbankList } from "@/components/testbank/TestbankList";
 import { TestbankEditor } from "@/components/testbank/TestbankEditor";
-import QuestionEditor from "@/components/QuestionEditor";
-// Import explicit path to avoid module confusion
-import { default as MainQuestionEditor } from "../components/QuestionEditor";
+// Import the correct QuestionEditor component  
+import MainQuestionEditor from "@/components/QuestionEditor";
 // TESTING: Add explicit console log to verify which component loads
 console.log("🔍 ItemBanks.tsx: QuestionEditor imported from @/components/QuestionEditor");
 import { Testbank, Question } from "@/types";
