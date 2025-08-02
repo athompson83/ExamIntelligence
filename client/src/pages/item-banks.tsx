@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import Sidebar from "@/components/Sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ interface Testbank {
 export default function ItemBanks() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -393,7 +395,7 @@ export default function ItemBanks() {
                       variant="default"
                       size="sm"
                       onClick={() => setLocation(`/testbanks/${testbank.id}/questions`)}
-                      className="flex-1 min-w-0"
+                      className="flex-1 min-w-0 btn-mobile"
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Manage
@@ -402,6 +404,7 @@ export default function ItemBanks() {
                       variant="outline"
                       size="sm"
                       onClick={() => { setEditingTestbank(testbank); setIsDialogOpen(true); }}
+                      className="btn-mobile"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -409,7 +412,7 @@ export default function ItemBanks() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteTestbank(testbank.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-600 hover:text-red-700 btn-mobile"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -510,7 +513,7 @@ export default function ItemBanks() {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => window.location.href = `/testbanks/${testbank.id}/questions`}
+                            onClick={() => setLocation(`/testbanks/${testbank.id}/questions`)}
                             className="text-xs"
                           >
                             <BookOpen className="h-3 w-3 sm:mr-1" />
