@@ -225,7 +225,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
   console.log("🔍 Should show ordering editor:", watchedQuestionType === "ordering");
   console.log("🔍 Should show numerical editor:", watchedQuestionType === "numerical");
   
-  // Add a visible debug indicator in development
+  // Add a visible debug indicator in development - FORCE ENABLED
   const isDebugging = true;
 
   // Initialize question type specific data when question type changes
@@ -639,8 +639,8 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                     />
                   </div>
 
-                  {/* Debug indicator for question type */}
-                  {isDebugging && (
+                  {/* Debug indicator for question type - ALWAYS SHOW */}
+                  {true && (
                     <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-md p-3 space-y-1">
                       <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                         🔍 Debug: Current Question Type = "{watchedQuestionType}"
@@ -1138,7 +1138,16 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                     </div>
                   )}
 
-                  {/* Matching Question Editor */}
+                  {/* Matching Question Editor - FORCED TEST */}
+                  {true ? (
+                    <div className="mb-4 p-4 bg-red-100 border border-red-300 rounded">
+                      <p className="text-red-800 font-bold">🔧 TESTING: This red box should ALWAYS show up!</p>
+                      <p className="text-red-600">Current question type: {watchedQuestionType}</p>
+                      <p className="text-red-600">Should show matching editor: {String(watchedQuestionType === "matching")}</p>
+                    </div>
+                  ) : null}
+                  
+                  {/* Actual Matching Question Editor */}
                   {watchedQuestionType === "matching" ? (
                     <div className="space-y-4">
                       <FormLabel>Matching Question Setup</FormLabel>
