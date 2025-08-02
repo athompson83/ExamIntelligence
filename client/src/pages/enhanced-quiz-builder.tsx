@@ -474,85 +474,102 @@ export default function EnhancedQuizBuilder() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
       {/* Breadcrumb Navigation */}
-      <Breadcrumb className="mb-6">
+      <Breadcrumb className="mb-4 sm:mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <Home className="h-4 w-4 cursor-pointer" onClick={() => navigate('/')} />
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <span className="cursor-pointer" onClick={() => navigate('/quiz-manager')}>Quiz Manager</span>
+            <span className="cursor-pointer text-sm" onClick={() => navigate('/quiz-manager')}>
+              <span className="hidden sm:inline">Quiz Manager</span>
+              <span className="sm:hidden">Quizzes</span>
+            </span>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>
-              {isEditing ? `Edit Quiz: ${quiz.title || 'Loading...'}` : 'Enhanced Quiz Builder'}
+            <BreadcrumbPage className="text-sm">
+              <span className="hidden sm:inline">
+                {isEditing ? `Edit Quiz: ${quiz.title || 'Loading...'}` : 'Enhanced Quiz Builder'}
+              </span>
+              <span className="sm:hidden">
+                {isEditing ? 'Edit' : 'New Quiz'}
+              </span>
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
           {isEditing ? 'Edit Quiz' : 'Enhanced Quiz Builder'}
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground">
           {isEditing ? 'Update your quiz with advanced features and settings' : 'Create comprehensive quizzes with advanced features and settings'}
         </p>
       </div>
 
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="questions">Questions</TabsTrigger>
-          <TabsTrigger value="timing">Timing & Attempts</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4">
+          <TabsTrigger value="basic" className="text-xs sm:text-sm">
+            <span className="hidden sm:inline">Basic Info</span>
+            <span className="sm:hidden">Basic</span>
+          </TabsTrigger>
+          <TabsTrigger value="questions" className="text-xs sm:text-sm">Questions</TabsTrigger>
+          <TabsTrigger value="timing" className="text-xs sm:text-sm">
+            <span className="hidden sm:inline">Timing & Attempts</span>
+            <span className="sm:hidden">Timing</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
         </TabsList>
 
         {/* Basic Info Tab */}
         <TabsContent value="basic">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
+          <Card className="card-mobile">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
                 Basic Information
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Set up the basic details for your quiz
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="p-4 sm:p-6 pt-0 space-y-4 sm:space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="quiz-title">Quiz Title</Label>
+                <Label htmlFor="quiz-title" className="text-sm font-medium">Quiz Title</Label>
                 <Input
                   id="quiz-title"
                   placeholder="Enter quiz title..."
                   value={quiz.title}
                   onChange={(e) => setQuiz(prev => ({ ...prev, title: e.target.value }))}
+                  className="text-base"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="quiz-description">Description</Label>
+                <Label htmlFor="quiz-description" className="text-sm font-medium">Description</Label>
                 <Textarea
                   id="quiz-description"
                   placeholder="Describe your quiz..."
                   value={quiz.description}
                   onChange={(e) => setQuiz(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
+                  className="text-base resize-none"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="quiz-instructions">Instructions</Label>
+                <Label htmlFor="quiz-instructions" className="text-sm font-medium">Instructions</Label>
                 <Textarea
                   id="quiz-instructions"
                   placeholder="Provide instructions for quiz takers..."
                   value={quiz.instructions}
                   onChange={(e) => setQuiz(prev => ({ ...prev, instructions: e.target.value }))}
                   rows={4}
+                  className="text-base resize-none"
                 />
               </div>
             </CardContent>
@@ -908,42 +925,44 @@ export default function EnhancedQuizBuilder() {
 
         {/* Timing & Attempts Tab */}
         <TabsContent value="timing">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
+          <div className="space-y-4 sm:space-y-6">
+            <Card className="card-mobile">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                   Availability
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="always-available"
                     checked={quiz.alwaysAvailable ?? true}
                     onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, alwaysAvailable: checked }))}
                   />
-                  <Label htmlFor="always-available">Always Available</Label>
+                  <Label htmlFor="always-available" className="text-sm font-medium">Always Available</Label>
                 </div>
 
                 {!quiz.alwaysAvailable && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="availability-start">Available From</Label>
+                      <Label htmlFor="availability-start" className="text-sm font-medium">Available From</Label>
                       <Input
                         id="availability-start"
                         type="datetime-local"
                         value={quiz.availabilityStart || ''}
                         onChange={(e) => setQuiz(prev => ({ ...prev, availabilityStart: e.target.value }))}
+                        className="text-base"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="availability-end">Available Until</Label>
+                      <Label htmlFor="availability-end" className="text-sm font-medium">Available Until</Label>
                       <Input
                         id="availability-end"
                         type="datetime-local"
                         value={quiz.availabilityEnd || ''}
                         onChange={(e) => setQuiz(prev => ({ ...prev, availabilityEnd: e.target.value }))}
+                        className="text-base"
                       />
                     </div>
                   </div>
@@ -951,53 +970,55 @@ export default function EnhancedQuizBuilder() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Timer className="h-5 w-5" />
+            <Card className="card-mobile">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <Timer className="h-4 w-4 sm:h-5 sm:w-5" />
                   Time Limit
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="time-limit">Time Limit (minutes)</Label>
+                  <Label htmlFor="time-limit" className="text-sm font-medium">Time Limit (minutes)</Label>
                   <Input
                     id="time-limit"
                     type="number"
                     min="1"
                     value={quiz.timeLimit}
                     onChange={(e) => setQuiz(prev => ({ ...prev, timeLimit: parseInt(e.target.value) }))}
+                    className="text-base"
                   />
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
+            <Card className="card-mobile">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                   Attempts
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="allow-multiple-attempts"
                     checked={quiz.allowMultipleAttempts || false}
                     onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, allowMultipleAttempts: checked }))}
                   />
-                  <Label htmlFor="allow-multiple-attempts">Allow Multiple Attempts</Label>
+                  <Label htmlFor="allow-multiple-attempts" className="text-sm font-medium">Allow Multiple Attempts</Label>
                 </div>
 
                 {quiz.allowMultipleAttempts && (
                   <div className="space-y-2">
-                    <Label htmlFor="max-attempts">Maximum Attempts</Label>
+                    <Label htmlFor="max-attempts" className="text-sm font-medium">Maximum Attempts</Label>
                     <Input
                       id="max-attempts"
                       type="number"
                       min="1"
                       value={quiz.maxAttempts}
                       onChange={(e) => setQuiz(prev => ({ ...prev, maxAttempts: parseInt(e.target.value) }))}
+                      className="text-base"
                     />
                   </div>
                 )}
@@ -1008,22 +1029,22 @@ export default function EnhancedQuizBuilder() {
 
         {/* Settings Tab */}
         <TabsContent value="settings">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
+          <div className="space-y-4 sm:space-y-6">
+            <Card className="card-mobile">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                   Question Settings
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="shuffle-questions"
                     checked={quiz.shuffleQuestions || false}
                     onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, shuffleQuestions: checked }))}
                   />
-                  <Label htmlFor="shuffle-questions">Shuffle Questions</Label>
+                  <Label htmlFor="shuffle-questions" className="text-sm font-medium">Shuffle Questions</Label>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -1032,15 +1053,15 @@ export default function EnhancedQuizBuilder() {
                     checked={quiz.shuffleAnswers || false}
                     onCheckedChange={(checked) => setQuiz(prev => ({ ...prev, shuffleAnswers: checked }))}
                   />
-                  <Label htmlFor="shuffle-answers">Shuffle Answer Options</Label>
+                  <Label htmlFor="shuffle-answers" className="text-sm font-medium">Shuffle Answer Options</Label>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
+            <Card className="card-mobile">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                   Results & Feedback
                 </CardTitle>
               </CardHeader>
@@ -1078,21 +1099,39 @@ export default function EnhancedQuizBuilder() {
       </Tabs>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-4 mt-8">
-        <Button variant="outline" onClick={() => navigate('/quiz-manager')}>
+      {/* Mobile-responsive action buttons */}
+      <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-8">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/quiz-manager')}
+          className="btn-mobile w-full sm:w-auto"
+        >
           Cancel
         </Button>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          className="btn-mobile w-full sm:w-auto"
+        >
           <Eye className="h-4 w-4 mr-2" />
-          Preview
+          <span className="hidden sm:inline">Preview</span>
+          <span className="sm:hidden">Preview</span>
         </Button>
-        <Button variant="outline" onClick={handleSaveQuiz}>
+        <Button 
+          variant="outline" 
+          onClick={handleSaveQuiz}
+          className="btn-mobile w-full sm:w-auto"
+        >
           <Save className="h-4 w-4 mr-2" />
-          Save as Draft
+          <span className="hidden sm:inline">Save as Draft</span>
+          <span className="sm:hidden">Save</span>
         </Button>
-        <Button onClick={handlePublishQuiz} className="bg-green-600 hover:bg-green-700">
+        <Button 
+          onClick={handlePublishQuiz} 
+          className="bg-green-600 hover:bg-green-700 btn-mobile w-full sm:w-auto"
+        >
           <Upload className="h-4 w-4 mr-2" />
-          Publish Quiz
+          <span className="hidden sm:inline">Publish Quiz</span>
+          <span className="sm:hidden">Publish</span>
         </Button>
       </div>
     </div>

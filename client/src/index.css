@@ -190,7 +190,8 @@
   /* Better mobile button styling */
   @media (max-width: 768px) {
     .btn-mobile {
-      @apply text-lg px-6 py-4 min-h-[52px]; /* Larger touch targets */
+      @apply text-base px-4 py-3 min-h-[48px]; /* Proper touch targets */
+      font-size: 16px !important; /* Prevent zoom on iOS */
     }
     
     /* Larger text on mobile for better readability */
@@ -212,7 +213,8 @@
     
     /* Cards should be larger on mobile */
     .card-mobile {
-      @apply p-6 min-h-[140px];
+      @apply min-h-[120px];
+      margin: 0 4px;
     }
     
     /* Text clamp for mobile */
@@ -221,6 +223,22 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+    }
+    
+    /* Prevent text from extending beyond buttons */
+    .text-overflow-mobile {
+      word-break: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+    
+    /* Better spacing for mobile forms */
+    .mobile-form-spacing {
+      @apply space-y-4;
+    }
+    
+    .mobile-form-spacing > * + * {
+      @apply mt-4;
     }
   }
   
