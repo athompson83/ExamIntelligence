@@ -60,10 +60,12 @@ export default function ItemBanks() {
 
   const handleCreateQuestion = () => {
     console.log("🔍 handleCreateQuestion called - switching to edit-question mode");
+    alert("handleCreateQuestion() executed! Switching to edit-question mode...");
     if (!selectedTestbank) return;
     setSelectedQuestion(null);
     setViewMode("edit-question");
     console.log("🔍 ViewMode should now be 'edit-question'");
+    alert("ViewMode set to edit-question! Component should now render QuestionEditor");
   };
 
   const handleEditQuestion = (question: Question) => {
@@ -182,7 +184,9 @@ function TestbankDetail({
         </div>
         <Button onClick={() => {
           console.log("🔍 Add Question button clicked!");
+          alert("BUTTON CLICKED! This should switch to edit-question mode");
           onCreateQuestion();
+          alert("onCreateQuestion() called! ViewMode should now change");
         }} className="bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4 mr-2" />
           Add Question
