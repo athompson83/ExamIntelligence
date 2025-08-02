@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AIValidationPanel from "./AIValidationPanel";
 import { OrderingQuestionEditor } from "./question-types/OrderingQuestionEditor";
-import { CategorizationQuestionEditor } from "./question-types/CategorizationQuestionEditor";
+import CategorizationQuestionEditor from "./question-types/CategorizationQuestionEditor";
 import { HotSpotQuestionEditor } from "./question-types/HotSpotQuestionEditor";
 import { FormulaQuestionEditor } from "./question-types/FormulaQuestionEditor";
 import { MatchingQuestionEditor } from "./question-types/MatchingQuestionEditor";
