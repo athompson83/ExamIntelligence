@@ -221,6 +221,9 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
   // Debug log to verify the question type is changing
   console.log("🔍 Current question type:", watchedQuestionType);
   console.log("🔍 Form values:", form.getValues());
+  console.log("🔍 Should show matching editor:", watchedQuestionType === "matching");
+  console.log("🔍 Should show ordering editor:", watchedQuestionType === "ordering");
+  console.log("🔍 Should show numerical editor:", watchedQuestionType === "numerical");
   
   // Add a visible debug indicator in development
   const isDebugging = true;
@@ -652,6 +655,9 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                           watchedQuestionType === "ordering" ? "Ordering items editor" :
                           "Default feedback sections"
                         }
+                      </p>
+                      <p className="text-xs text-yellow-600 dark:text-yellow-200 bg-yellow-50 dark:bg-yellow-800/20 p-2 rounded mt-2">
+                        👀 LOOK BELOW: The specialized editor should appear below this debug box if the question type is matching, ordering, sorting, numerical, etc.
                       </p>
                     </div>
                   )}
