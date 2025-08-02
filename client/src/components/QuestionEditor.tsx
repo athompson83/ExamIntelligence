@@ -217,6 +217,9 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
   }, [question, form]);
 
   const watchedQuestionType = form.watch("questionType");
+  
+  // Debug log to verify the question type is changing
+  console.log("Current question type:", watchedQuestionType);
 
   // Initialize question type specific data when question type changes
   useEffect(() => {
@@ -572,7 +575,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Question Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select question type" />
@@ -608,7 +611,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Bloom's Taxonomy Level</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select Bloom's level" />
