@@ -220,6 +220,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
   
   // Debug log to verify the question type is changing
   console.log("🔍 Current question type:", watchedQuestionType);
+  console.log("🔍 Form values:", form.getValues());
   
   // Add a visible debug indicator in development
   const isDebugging = true;
@@ -637,9 +638,20 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
 
                   {/* Debug indicator for question type */}
                   {isDebugging && (
-                    <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-md p-3">
+                    <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-md p-3 space-y-1">
                       <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                         🔍 Debug: Current Question Type = "{watchedQuestionType}"
+                      </p>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-100">
+                        Expected UI sections: {
+                          watchedQuestionType === "matching" ? "Matching pairs editor" :
+                          watchedQuestionType === "sorting" ? "Sorting items editor" :
+                          watchedQuestionType === "numerical" ? "Numerical input field" :
+                          watchedQuestionType === "categorization" ? "Category setup" :
+                          watchedQuestionType === "hot_spot" ? "Hot spot configuration" :
+                          watchedQuestionType === "ordering" ? "Ordering items editor" :
+                          "Default feedback sections"
+                        }
                       </p>
                     </div>
                   )}
@@ -1051,20 +1063,28 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                   )}
 
                   {/* Numerical Answer */}
-                  {watchedQuestionType === "numerical" && (
+                  {watchedQuestionType === "numerical" ? (
                     <div className="space-y-4">
-                      <FormLabel>Correct Answer</FormLabel>
-                      <Input
-                        placeholder="Enter numerical answer (e.g., 42 or 3.14)"
-                        value={answerOptions[0]?.text || ""}
-                        onChange={(e) => {
-                          setAnswerOptions([{ text: e.target.value, isCorrect: true }]);
-                        }}
-                        type="number"
-                        step="any"
-                      />
+                      <FormLabel>Numerical Answer Configuration</FormLabel>
+                      <div className="p-4 border rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+                        <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-4">
+                          Enter the correct numerical answer. Students will need to provide an exact match.
+                        </p>
+                        <div>
+                          <FormLabel>Correct Answer</FormLabel>
+                          <Input
+                            placeholder="Enter numerical answer (e.g., 42 or 3.14)"
+                            value={answerOptions[0]?.text || ""}
+                            onChange={(e) => {
+                              setAnswerOptions([{ text: e.target.value, isCorrect: true }]);
+                            }}
+                            type="number"
+                            step="any"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Multiple Fill in the Blank */}
                   {watchedQuestionType === "multiple_fill_blank" && (
@@ -1113,7 +1133,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                   )}
 
                   {/* Matching Question Editor */}
-                  {watchedQuestionType === "matching" && (
+                  {watchedQuestionType === "matching" ? (
                     <div className="space-y-4">
                       <FormLabel>Matching Question Setup</FormLabel>
                       <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
@@ -1128,10 +1148,10 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                         />
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Sorting Question Editor */}
-                  {watchedQuestionType === "sorting" && (
+                  {watchedQuestionType === "sorting" ? (
                     <div className="space-y-4">
                       <FormLabel>Sorting Question Setup</FormLabel>
                       <div className="p-4 border rounded-lg bg-purple-50 dark:bg-purple-900/20">
@@ -1148,7 +1168,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                         />
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
 
 

@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TestbankList } from "@/components/testbank/TestbankList";
 import { TestbankEditor } from "@/components/testbank/TestbankEditor";
-import { QuestionEditor } from "@/components/quiz/question-editor";
+import QuestionEditor from "@/components/QuestionEditor";
 import { Testbank, Question } from "@/types";
 
 type ViewMode = "list" | "edit-testbank" | "view-testbank" | "edit-question";
@@ -109,10 +109,9 @@ export default function ItemBanks() {
         if (!selectedTestbank) return null;
         return (
           <QuestionEditor
-            testbankId={selectedTestbank.id}
-            question={selectedQuestion || undefined}
-            onSave={handleSaveQuestion}
-            onCancel={handleCancel}
+            testbankId={selectedTestbank.id.toString()}
+            questionId={selectedQuestion?.id?.toString()}
+            onClose={handleCancel}
           />
         );
 
