@@ -48,6 +48,7 @@ export default function Sidebar() {
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Toggle group expansion
   const toggleGroup = (groupId: string) => {
@@ -215,16 +216,54 @@ export default function Sidebar() {
   }, [location]);
 
   return (
-    <nav className="sidebar w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-900 shadow-sm border-r border-gray-200 dark:border-gray-700 flex flex-col">
-      {/* Logo */}
-      <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
-        <div className="flex items-center">
-          <div className="bg-white rounded-lg p-2 mr-3">
-            <ClipboardCheck className="h-6 w-6 text-primary" />
+    <>
+      {/* Mobile Navigation Bar (shown on small screens) */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-primary z-50 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="bg-white rounded-lg p-1 mr-2">
+              <ClipboardCheck className="h-5 w-5 text-primary" />
+            </div>
+            <h1 className="text-white text-lg font-bold">ProficiencyAI</h1>
           </div>
-          <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-lg text-white hover:bg-white/10"
+          >
+            <div className="w-6 h-6 flex flex-col justify-center space-y-1">
+              <div className={`w-6 h-0.5 bg-current transition-all ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+              <div className={`w-6 h-0.5 bg-current transition-all ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
+              <div className={`w-6 h-0.5 bg-current transition-all ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
+            </div>
+          </button>
         </div>
       </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Desktop Sidebar & Mobile Drawer */}
+      <nav className={`
+        sidebar bg-white dark:bg-gray-900 shadow-sm border-r border-gray-200 dark:border-gray-700 flex flex-col
+        md:w-64 md:min-w-64 md:max-w-64 md:fixed md:inset-y-0 md:left-0 md:z-50
+        fixed top-0 left-0 h-full w-80 z-50 transform transition-transform duration-300
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0
+      `}>
+        {/* Logo */}
+        <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
+          <div className="flex items-center">
+            <div className="bg-white rounded-lg p-2 mr-3">
+              <ClipboardCheck className="h-6 w-6 text-primary" />
+            </div>
+            <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
+          </div>
+        </div>
       
       {/* Scroll up indicator */}
       {canScrollUp && (
@@ -296,6 +335,7 @@ export default function Sidebar() {
                         ref={active ? activeItemRef : undefined}
                         className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm" : ""}`}
                         data-tour={item.tourId}
+                        onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
                         <span className="truncate whitespace-nowrap flex-1 min-w-0">{item.label}</span>
@@ -324,5 +364,9 @@ export default function Sidebar() {
         </div>
       )}
     </nav>
+    
+    {/* Mobile Content Spacer */}
+    <div className="md:hidden h-16" />
+    </>
   );
 }

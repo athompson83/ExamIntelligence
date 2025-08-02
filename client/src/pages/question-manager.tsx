@@ -1577,18 +1577,13 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     {questionForm.questionType === "matching" && (
                       <div>
                         <Label>Matching Options</Label>
-                        <div style={{ border: "2px solid green", padding: "10px", margin: "10px" }}>
-                          <div style={{ backgroundColor: "green", color: "white", padding: "5px", marginBottom: "10px" }}>
-                            🎯 MATCHING EDITOR LOADED! This green border confirms the specialized UI is working.
-                          </div>
-                          <MatchingQuestionEditor 
-                            pairs={questionForm.matchingData?.pairs || []}
-                            onChange={(pairs) => setQuestionForm(prev => ({ 
-                              ...prev, 
-                              matchingData: { pairs } 
-                            }))}
-                          />
-                        </div>
+                        <MatchingQuestionEditor 
+                          pairs={questionForm.matchingData?.pairs || []}
+                          onChange={(pairs) => setQuestionForm(prev => ({ 
+                            ...prev, 
+                            matchingData: { pairs } 
+                          }))}
+                        />
                       </div>
                     )}
                     
@@ -1596,67 +1591,57 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     {questionForm.questionType === "ordering" && (
                       <div>
                         <Label>Ordering Items</Label>
-                        <div style={{ border: "2px solid blue", padding: "10px", margin: "10px" }}>
-                          <div style={{ backgroundColor: "blue", color: "white", padding: "5px", marginBottom: "10px" }}>
-                            📝 ORDERING EDITOR LOADED! This blue border confirms the specialized UI is working.
-                          </div>
-                          <OrderingQuestionEditor 
-                            items={questionForm.orderingData?.items || []}
-                            onChange={(items) => setQuestionForm(prev => ({ 
-                              ...prev, 
-                              orderingData: { items } 
-                            }))}
-                          />
-                        </div>
+                        <OrderingQuestionEditor 
+                          items={questionForm.orderingData?.items || []}
+                          onChange={(items) => setQuestionForm(prev => ({ 
+                            ...prev, 
+                            orderingData: { items } 
+                          }))}
+                        />
                       </div>
                     )}
                     
-                    {/* Categorization Question Editor - Temporarily disabled due to import issues */}
+                    {/* Categorization Question Editor */}
                     {questionForm.questionType === "categorization" && (
                       <div>
                         <Label>Categorization Setup</Label>
-                        <div style={{ border: "2px solid purple", padding: "10px", margin: "10px" }}>
-                          <div style={{ backgroundColor: "purple", color: "white", padding: "5px", marginBottom: "10px" }}>
-                            🗂️ CATEGORIZATION EDITOR (Simplified View) - Full drag-and-drop coming soon!
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Categories (comma-separated)</Label>
+                            <Input
+                              placeholder="Category 1, Category 2, Category 3"
+                              value={questionForm.categorizationData?.categories?.map(c => c.name).join(', ') || ''}
+                              onChange={(e) => {
+                                const categories = e.target.value.split(',').map((name, i) => ({
+                                  id: `cat-${i}`,
+                                  name: name.trim(),
+                                  description: '',
+                                  items: []
+                                }));
+                                setQuestionForm(prev => ({ 
+                                  ...prev, 
+                                  categorizationData: { categories, items: [] }
+                                }));
+                              }}
+                            />
                           </div>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Categories (comma-separated)</Label>
-                              <Input
-                                placeholder="Category 1, Category 2, Category 3"
-                                value={questionForm.categorizationData?.categories?.map(c => c.name).join(', ') || ''}
-                                onChange={(e) => {
-                                  const categories = e.target.value.split(',').map((name, i) => ({
-                                    id: `cat-${i}`,
-                                    name: name.trim(),
-                                    description: '',
-                                    items: []
-                                  }));
-                                  setQuestionForm(prev => ({ 
-                                    ...prev, 
-                                    categorizationData: { categories, items: [] }
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div>
-                              <Label>Items to Categorize (comma-separated)</Label>
-                              <Input
-                                placeholder="Item 1, Item 2, Item 3"
-                                value={questionForm.categorizationData?.items?.map(i => i.text).join(', ') || ''}
-                                onChange={(e) => {
-                                  const items = e.target.value.split(',').map((text, i) => ({
-                                    id: `item-${i}`,
-                                    text: text.trim(),
-                                    categoryId: ''
-                                  }));
-                                  setQuestionForm(prev => ({ 
-                                    ...prev, 
-                                    categorizationData: { ...prev.categorizationData, items }
-                                  }));
-                                }}
-                              />
-                            </div>
+                          <div>
+                            <Label>Items to Categorize (comma-separated)</Label>
+                            <Input
+                              placeholder="Item 1, Item 2, Item 3"
+                              value={questionForm.categorizationData?.items?.map(i => i.text).join(', ') || ''}
+                              onChange={(e) => {
+                                const items = e.target.value.split(',').map((text, i) => ({
+                                  id: `item-${i}`,
+                                  text: text.trim(),
+                                  categoryId: ''
+                                }));
+                                setQuestionForm(prev => ({ 
+                                  ...prev, 
+                                  categorizationData: { ...prev.categorizationData, items }
+                                }));
+                              }}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1666,19 +1651,14 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     {questionForm.questionType === "hot_spot" && (
                       <div>
                         <Label>Hot Spot Image Setup</Label>
-                        <div style={{ border: "2px solid orange", padding: "10px", margin: "10px" }}>
-                          <div style={{ backgroundColor: "orange", color: "white", padding: "5px", marginBottom: "10px" }}>
-                            🎯 HOT SPOT EDITOR LOADED! This orange border confirms the specialized UI is working.
-                          </div>
-                          <HotSpotQuestionEditor 
-                            imageUrl={questionForm.hotSpotData?.imageUrl || ""}
-                            hotSpots={questionForm.hotSpotData?.hotSpots || []}
-                            onChange={(imageUrl, hotSpots) => setQuestionForm(prev => ({ 
-                              ...prev, 
-                              hotSpotData: { imageUrl, hotSpots } 
-                            }))}
-                          />
-                        </div>
+                        <HotSpotQuestionEditor 
+                          imageUrl={questionForm.hotSpotData?.imageUrl || ""}
+                          hotSpots={questionForm.hotSpotData?.hotSpots || []}
+                          onChange={(imageUrl, hotSpots) => setQuestionForm(prev => ({ 
+                            ...prev, 
+                            hotSpotData: { imageUrl, hotSpots } 
+                          }))}
+                        />
                       </div>
                     )}
                     
@@ -1686,24 +1666,19 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     {questionForm.questionType === "formula" && (
                       <div>
                         <Label>Formula Setup</Label>
-                        <div style={{ border: "2px solid red", padding: "10px", margin: "10px" }}>
-                          <div style={{ backgroundColor: "red", color: "white", padding: "5px", marginBottom: "10px" }}>
-                            📐 FORMULA EDITOR LOADED! This red border confirms the specialized UI is working.
-                          </div>
-                          <FormulaQuestionEditor 
-                            formula={questionForm.formulaData?.formula || ""}
-                            variables={questionForm.formulaData?.variables || []}
-                            possibleAnswers={5}
-                            decimalPlaces={2}
-                            marginType="percentage"
-                            marginValue={5}
-                            scientificNotation={false}
-                            onChange={(data) => setQuestionForm(prev => ({ 
-                              ...prev, 
-                              formulaData: data 
-                            }))}
-                          />
-                        </div>
+                        <FormulaQuestionEditor 
+                          formula={questionForm.formulaData?.formula || ""}
+                          variables={questionForm.formulaData?.variables || []}
+                          possibleAnswers={5}
+                          decimalPlaces={2}
+                          marginType="percentage"
+                          marginValue={5}
+                          scientificNotation={false}
+                          onChange={(data) => setQuestionForm(prev => ({ 
+                            ...prev, 
+                            formulaData: data 
+                          }))}
+                        />
                       </div>
                     )}
                     
@@ -1711,33 +1686,28 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     {questionForm.questionType === "numerical" && (
                       <div>
                         <Label>Numerical Answer</Label>
-                        <div style={{ border: "2px solid teal", padding: "10px", margin: "10px" }}>
-                          <div style={{ backgroundColor: "teal", color: "white", padding: "5px", marginBottom: "10px" }}>
-                            🔢 NUMERICAL EDITOR LOADED! This teal border confirms the specialized UI is working.
-                          </div>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={questionForm.numericalAnswer || ""}
+                          onChange={(e) => setQuestionForm(prev => ({ 
+                            ...prev, 
+                            numericalAnswer: parseFloat(e.target.value) || 0 
+                          }))}
+                          placeholder="Enter the correct numerical answer"
+                        />
+                        <div className="mt-2">
+                          <Label>Tolerance</Label>
                           <Input
                             type="number"
                             step="any"
-                            value={questionForm.numericalAnswer || ""}
+                            value={questionForm.numericalTolerance || 0.01}
                             onChange={(e) => setQuestionForm(prev => ({ 
                               ...prev, 
-                              numericalAnswer: parseFloat(e.target.value) || 0 
+                              numericalTolerance: parseFloat(e.target.value) || 0.01 
                             }))}
-                            placeholder="Enter the correct numerical answer"
+                            placeholder="Acceptable margin of error"
                           />
-                          <div className="mt-2">
-                            <Label>Tolerance</Label>
-                            <Input
-                              type="number"
-                              step="any"
-                              value={questionForm.numericalTolerance || 0.01}
-                              onChange={(e) => setQuestionForm(prev => ({ 
-                                ...prev, 
-                                numericalTolerance: parseFloat(e.target.value) || 0.01 
-                              }))}
-                              placeholder="Acceptable margin of error"
-                            />
-                          </div>
                         </div>
                       </div>
                     )}
