@@ -8,12 +8,18 @@
   html {
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
-    font-size: 14px;
+    font-size: 16px; /* Larger base font for mobile */
   }
   
   @media (min-width: 640px) {
     html {
       font-size: 16px;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    html {
+      font-size: 18px; /* Even larger for desktop */
     }
   }
   
@@ -24,20 +30,53 @@
     overscroll-behavior: none;
   }
   
-  /* Mobile-friendly touch targets */
+  /* Mobile-friendly touch targets - larger for better usability */
   button, [role="button"], input, select, textarea {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px; /* Increased from 44px */
+    min-width: 48px;
   }
   
-  /* Prevent zoom on input focus on iOS */
+  /* Prevent zoom on input focus on iOS - larger text */
   input, select, textarea {
-    font-size: 16px;
+    font-size: 18px; /* Increased from 16px */
+    padding: 12px 16px; /* More generous padding */
   }
   
   @media (min-width: 640px) {
     input, select, textarea {
-      font-size: 14px;
+      font-size: 16px;
+      padding: 8px 12px;
+    }
+  }
+  
+  /* Larger text for better mobile readability */
+  h1 {
+    font-size: 2rem; /* Larger on mobile */
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+  }
+  
+  p, span, div {
+    font-size: 1rem; /* Base size, will scale with html font-size */
+  }
+  
+  @media (min-width: 1024px) {
+    h1 {
+      font-size: 2.5rem; /* Even larger on desktop */
+    }
+    
+    h2 {
+      font-size: 2rem;
+    }
+    
+    h3 {
+      font-size: 1.75rem;
     }
   }
 }
@@ -130,41 +169,85 @@
     }
   }
   
-  /* Collapsible mobile sections */
+  /* Collapsible mobile sections - Better mobile padding */
   .mobile-section {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700;
     @apply transition-all duration-200 ease-in-out;
+    min-height: 120px; /* Ensure good touch target size */
   }
   
   .mobile-section-header {
-    @apply p-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer;
+    @apply p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer;
     @apply flex items-center justify-between;
     @apply hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors;
+    min-height: 60px; /* Better touch target */
   }
   
   .mobile-section-content {
-    @apply p-4 space-y-4;
+    @apply p-6 space-y-6; /* More generous spacing */
   }
   
-  /* Mobile carousel styles */
+  /* Better mobile button styling */
+  @media (max-width: 768px) {
+    .btn-mobile {
+      @apply text-lg px-6 py-4 min-h-[52px]; /* Larger touch targets */
+    }
+    
+    /* Larger text on mobile for better readability */
+    h1 {
+      @apply text-2xl;
+    }
+    
+    h2 {
+      @apply text-xl;
+    }
+    
+    h3 {
+      @apply text-lg;
+    }
+    
+    p, span, div {
+      @apply text-base; /* Ensure base text is readable */
+    }
+    
+    /* Cards should be larger on mobile */
+    .card-mobile {
+      @apply p-6 min-h-[140px];
+    }
+  }
+  
+  /* Mobile carousel styles - Better mobile sizing */
   .mobile-carousel {
-    @apply flex overflow-x-auto space-x-4 pb-4;
+    @apply flex overflow-x-auto space-x-6 pb-6 px-2;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .mobile-carousel::-webkit-scrollbar {
+    display: none;
   }
   
   .mobile-carousel-item {
-    @apply flex-none w-80 sm:w-96;
+    @apply flex-none w-72 min-h-[200px];
     scroll-snap-align: start;
+  }
+  
+  @media (max-width: 480px) {
+    .mobile-carousel-item {
+      @apply w-64;
+    }
   }
   
   @media (min-width: 1024px) {
     .mobile-carousel {
-      @apply grid grid-cols-3 gap-6 overflow-visible;
+      @apply grid grid-cols-4 gap-6 overflow-visible space-x-0 px-0;
     }
     
     .mobile-carousel-item {
       @apply w-auto;
+      min-height: auto;
     }
   }
   
