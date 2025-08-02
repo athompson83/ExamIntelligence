@@ -21,8 +21,10 @@ import {
 } from "@dnd-kit/sortable";
 import {
   useSortable,
-  useDroppable,
 } from "@dnd-kit/sortable";
+import {
+  useDroppable,
+} from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 interface CategorizationItem {

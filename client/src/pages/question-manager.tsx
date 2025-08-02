@@ -58,11 +58,11 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-// Import specialized question editors
+// Import specialized question editors - temporarily disabled problematic ones
 import { MatchingQuestionEditor } from "@/components/question-types/MatchingQuestionEditor";
-import { SortingQuestionEditor } from "@/components/question-types/SortingQuestionEditor";
+// import { SortingQuestionEditor } from "@/components/question-types/SortingQuestionEditor";
 import { OrderingQuestionEditor } from "@/components/question-types/OrderingQuestionEditor";
-import { CategorizationQuestionEditor } from "@/components/question-types/CategorizationQuestionEditor";
+// import { CategorizationQuestionEditor } from "@/components/question-types/CategorizationQuestionEditor";
 import { HotSpotQuestionEditor } from "@/components/question-types/HotSpotQuestionEditor";
 import { FormulaQuestionEditor } from "@/components/question-types/FormulaQuestionEditor";
 
@@ -1580,22 +1580,53 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                       </div>
                     )}
                     
-                    {/* Categorization Question Editor */}
+                    {/* Categorization Question Editor - Temporarily disabled due to import issues */}
                     {questionForm.questionType === "categorization" && (
                       <div>
                         <Label>Categorization Setup</Label>
                         <div style={{ border: "2px solid purple", padding: "10px", margin: "10px" }}>
                           <div style={{ backgroundColor: "purple", color: "white", padding: "5px", marginBottom: "10px" }}>
-                            🗂️ CATEGORIZATION EDITOR LOADED! This purple border confirms the specialized UI is working.
+                            🗂️ CATEGORIZATION EDITOR (Simplified View) - Full drag-and-drop coming soon!
                           </div>
-                          <CategorizationQuestionEditor 
-                            categories={questionForm.categorizationData?.categories || []}
-                            items={questionForm.categorizationData?.items || []}
-                            onChange={(data) => setQuestionForm(prev => ({ 
-                              ...prev, 
-                              categorizationData: data 
-                            }))}
-                          />
+                          <div className="space-y-4">
+                            <div>
+                              <Label>Categories (comma-separated)</Label>
+                              <Input
+                                placeholder="Category 1, Category 2, Category 3"
+                                value={questionForm.categorizationData?.categories?.map(c => c.name).join(', ') || ''}
+                                onChange={(e) => {
+                                  const categories = e.target.value.split(',').map((name, i) => ({
+                                    id: `cat-${i}`,
+                                    name: name.trim(),
+                                    description: '',
+                                    items: []
+                                  }));
+                                  setQuestionForm(prev => ({ 
+                                    ...prev, 
+                                    categorizationData: { categories, items: [] }
+                                  }));
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <Label>Items to Categorize (comma-separated)</Label>
+                              <Input
+                                placeholder="Item 1, Item 2, Item 3"
+                                value={questionForm.categorizationData?.items?.map(i => i.text).join(', ') || ''}
+                                onChange={(e) => {
+                                  const items = e.target.value.split(',').map((text, i) => ({
+                                    id: `item-${i}`,
+                                    text: text.trim(),
+                                    categoryId: ''
+                                  }));
+                                  setQuestionForm(prev => ({ 
+                                    ...prev, 
+                                    categorizationData: { ...prev.categorizationData, items }
+                                  }));
+                                }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
