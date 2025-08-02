@@ -17,6 +17,8 @@ import { OrderingQuestionEditor } from "./question-types/OrderingQuestionEditor"
 import { CategorizationQuestionEditor } from "./question-types/CategorizationQuestionEditor";
 import { HotSpotQuestionEditor } from "./question-types/HotSpotQuestionEditor";
 import { FormulaQuestionEditor } from "./question-types/FormulaQuestionEditor";
+import { MatchingQuestionEditor } from "./question-types/MatchingQuestionEditor";
+import { SortingQuestionEditor } from "./question-types/SortingQuestionEditor";
 import { 
   Plus, 
   Trash2, 
@@ -32,8 +34,35 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertQuestionSchema } from "@shared/schema";
 import { z } from "zod";
 
-const questionFormSchema = insertQuestionSchema.extend({
+// Enhanced question form schema with proper types for the UI
+const questionFormSchema = z.object({
+  testbankId: z.string(),
+  questionText: z.string().min(1, "Question text is required"),
+  questionType: z.enum([
+    "multiple_choice", "multiple_response", "true_false", "fill_blank", 
+    "multiple_fill_blank", "matching", "ordering", "categorization", 
+    "hot_spot", "essay", "file_upload", "numerical", "formula", 
+    "stimulus", "constructed_response", "text_no_question", "sorting"
+  ]),
+  points: z.coerce.number().min(0).default(1),
+  difficultyScore: z.coerce.number().min(1).max(10).default(5),
   tags: z.string().optional(),
+  bloomsLevel: z.enum(["remember", "understand", "apply", "analyze", "evaluate", "create"]).optional(),
+  
+  // Feedback fields
+  correctFeedback: z.string().optional(),
+  incorrectFeedback: z.string().optional(),
+  generalFeedback: z.string().optional(),
+  neutralFeedback: z.string().optional(),
+  
+  // Media fields
+  imageUrl: z.string().optional(),
+  audioUrl: z.string().optional(),
+  videoUrl: z.string().optional(),
+  
+  // Additional options
+  shuffleAnswers: z.boolean().default(false),
+  requireResponse: z.boolean().default(true),
 });
 
 type QuestionFormData = z.infer<typeof questionFormSchema>;
@@ -64,6 +93,12 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
     { id: '1', leftItem: '', rightItem: '' },
     { id: '2', leftItem: '', rightItem: '' }
   ]);
+  const [matchingDistractors, setMatchingDistractors] = useState<string[]>([]);
+  
+  // State for sorting questions
+  const [sortingItems, setSortingItems] = useState<Array<{ id: string; text: string; correctPosition: number }>>([]);
+  const [sortingCriteria, setSortingCriteria] = useState<string>("");
+  const [sortingType, setSortingType] = useState<'alphabetical' | 'numerical' | 'chronological' | 'custom'>('custom');
   
   // State for hot spot questions
   const [hotSpotImageUrl, setHotSpotImageUrl] = useState<string>("");
@@ -105,8 +140,19 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
       testbankId,
       questionText: "",
       questionType: "multiple_choice",
+      points: 1,
+      difficultyScore: 5,
       tags: "",
       bloomsLevel: "remember",
+      correctFeedback: "",
+      incorrectFeedback: "",
+      generalFeedback: "",
+      neutralFeedback: "",
+      imageUrl: "",
+      audioUrl: "",
+      videoUrl: "",
+      shuffleAnswers: false,
+      requireResponse: true,
     },
   });
 
@@ -116,8 +162,19 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
         testbankId: question.testbankId,
         questionText: question.questionText,
         questionType: question.questionType,
+        points: parseFloat(question.points?.toString() || "1"),
+        difficultyScore: parseFloat(question.difficultyScore?.toString() || "5"),
         tags: question.tags?.join(", ") || "",
         bloomsLevel: question.bloomsLevel || "remember",
+        correctFeedback: question.correctFeedback || "",
+        incorrectFeedback: question.incorrectFeedback || "",
+        generalFeedback: question.generalFeedback || "",
+        neutralFeedback: question.neutralFeedback || "",
+        imageUrl: question.imageUrl || "",
+        audioUrl: question.audioUrl || "",
+        videoUrl: question.videoUrl || "",
+        shuffleAnswers: false,
+        requireResponse: true,
       });
 
       if (question.answerOptions) {
@@ -215,6 +272,16 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
           setMatchingPairs([
             { id: '1', leftItem: '', rightItem: '' },
             { id: '2', leftItem: '', rightItem: '' }
+          ]);
+        }
+        break;
+      
+      case "sorting":
+        if (sortingItems.length === 0) {
+          setSortingItems([
+            { id: 'item-1', text: '', correctPosition: 1 },
+            { id: 'item-2', text: '', correctPosition: 2 },
+            { id: 'item-3', text: '', correctPosition: 3 }
           ]);
         }
         break;
@@ -330,10 +397,20 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
               id: `right${pair.id}`,
               text: pair.rightItem
             })),
+            distractors: matchingDistractors,
             correctMatches: matchingPairs.reduce((acc, pair) => {
               acc[`left${pair.id}`] = `right${pair.id}`;
               return acc;
             }, {} as Record<string, string>)
+          };
+          break;
+        
+        case "sorting":
+          questionConfig = {
+            items: sortingItems,
+            correctOrder: sortingItems.map(item => item.id),
+            sortingCriteria: sortingCriteria,
+            sortingType: sortingType
           };
           break;
         
@@ -512,6 +589,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                               <SelectItem value="numerical">Numeric</SelectItem>
                               <SelectItem value="matching">Matching</SelectItem>
                               <SelectItem value="ordering">Ordering</SelectItem>
+                              <SelectItem value="sorting">Sorting</SelectItem>
                               <SelectItem value="categorization">Categorization</SelectItem>
                               <SelectItem value="hot_spot">Hot Spot</SelectItem>
                               <SelectItem value="stimulus">Stimulus</SelectItem>
@@ -1018,75 +1096,26 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                     </div>
                   )}
 
-                  {/* Matching Question */}
+                  {/* Matching Question Editor */}
                   {watchedQuestionType === "matching" && (
-                    <div className="space-y-4">
-                      <FormLabel>Matching Pairs</FormLabel>
-                      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
-                          <strong>Instructions:</strong> Create pairs of items that students will match.
-                          Each pair should have a left item and corresponding right item.
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        {matchingPairs.map((pair, index) => (
-                          <div key={pair.id} className="grid grid-cols-2 gap-4 p-3 border rounded-lg">
-                            <div>
-                              <Label className="text-sm text-gray-600">Left Item</Label>
-                              <Input
-                                placeholder={`Left item ${index + 1}`}
-                                value={pair.leftItem}
-                                onChange={(e) => {
-                                  const updated = matchingPairs.map(p => 
-                                    p.id === pair.id ? { ...p, leftItem: e.target.value } : p
-                                  );
-                                  setMatchingPairs(updated);
-                                }}
-                              />
-                            </div>
-                            <div className="flex items-end space-x-2">
-                              <div className="flex-1">
-                                <Label className="text-sm text-gray-600">Right Item</Label>
-                                <Input
-                                  placeholder={`Right item ${index + 1}`}
-                                  value={pair.rightItem}
-                                  onChange={(e) => {
-                                    const updated = matchingPairs.map(p => 
-                                      p.id === pair.id ? { ...p, rightItem: e.target.value } : p
-                                    );
-                                    setMatchingPairs(updated);
-                                  }}
-                                />
-                              </div>
-                              {matchingPairs.length > 2 && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setMatchingPairs(matchingPairs.filter(p => p.id !== pair.id));
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const newId = (matchingPairs.length + 1).toString();
-                            setMatchingPairs([...matchingPairs, { id: newId, leftItem: '', rightItem: '' }]);
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add Pair
-                        </Button>
-                      </div>
-                    </div>
+                    <MatchingQuestionEditor
+                      pairs={matchingPairs}
+                      onChange={setMatchingPairs}
+                      distractors={matchingDistractors}
+                      onDistractorsChange={setMatchingDistractors}
+                    />
+                  )}
+
+                  {/* Sorting Question Editor */}
+                  {watchedQuestionType === "sorting" && (
+                    <SortingQuestionEditor
+                      items={sortingItems}
+                      onChange={setSortingItems}
+                      sortingCriteria={sortingCriteria}
+                      onCriteriaChange={setSortingCriteria}
+                      sortingType={sortingType}
+                      onSortingTypeChange={setSortingType}
+                    />
                   )}
 
 
