@@ -83,11 +83,11 @@ export function RecentActivity() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+      <Card className="card-mobile">
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Recent Activity</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6 pt-0">
           <div className="space-y-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex items-start space-x-3">
@@ -106,21 +106,21 @@ export function RecentActivity() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+    <Card className="card-mobile">
+      <CardHeader className="p-4 md:p-6">
+        <CardTitle className="text-base md:text-lg">Recent Activity</CardTitle>
       </CardHeader>
       
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-4 md:p-6 pt-0">
+        <div className="space-y-3 md:space-y-4">
           {activityList.map((activity: Activity) => (
             <div key={activity.id} className="flex items-start space-x-3">
               <div className={`${getActivityBg(activity.type)} p-2 rounded-full flex-shrink-0`}>
                 {getActivityIcon(activity.type)}
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">{activity.title}</p>
-                <p className="text-xs text-muted-foreground">{activity.description}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{activity.title}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">{activity.description}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                 </p>
@@ -130,9 +130,9 @@ export function RecentActivity() {
         </div>
 
         {activityList.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            <CheckCircle className="h-8 w-8 mx-auto mb-2" />
-            <p>No recent activity</p>
+          <div className="text-center py-6 md:py-8 text-muted-foreground">
+            <CheckCircle className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2" />
+            <p className="text-sm">No recent activity</p>
           </div>
         )}
       </CardContent>

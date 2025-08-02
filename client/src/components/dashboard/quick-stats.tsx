@@ -45,16 +45,16 @@ export function QuickStats() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {[...Array(4)].map((_, i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
+          <Card key={i} className="card-mobile">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-8 w-16" />
                 </div>
-                <Skeleton className="h-12 w-12 rounded-full" />
+                <Skeleton className="h-10 w-10 md:h-12 md:w-12 rounded-full" />
               </div>
               <Skeleton className="h-3 w-20 mt-2" />
             </CardContent>
@@ -65,12 +65,12 @@ export function QuickStats() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       {statCards.map((stat) => {
         const Icon = stat.icon;
         return (
-          <Card key={stat.title} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
+          <Card key={stat.title} className="hover:shadow-lg transition-shadow card-mobile">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>

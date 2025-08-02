@@ -60,15 +60,15 @@ export function LiveExamMonitoring() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
+      <Card className="card-mobile">
+        <CardHeader className="p-4 md:p-6">
           <div className="flex items-center justify-between">
-            <CardTitle>Live Exam Monitoring</CardTitle>
-            <Skeleton className="h-10 w-24" />
+            <CardTitle className="text-base md:text-lg">Live Exam Monitoring</CardTitle>
+            <Skeleton className="h-8 w-20 md:h-10 md:w-24" />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="p-4 md:p-6 pt-0">
+          <div className="grid grid-cols-1 gap-4">
             {[...Array(2)].map((_, i) => (
               <div key={i} className="border rounded-lg p-4">
                 <Skeleton className="h-6 w-32 mb-3" />
@@ -94,30 +94,31 @@ export function LiveExamMonitoring() {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="card-mobile">
+      <CardHeader className="p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Maximize2 className="mr-2 h-5 w-5" />
-            <CardTitle>Live Exam Monitoring</CardTitle>
+            <Maximize2 className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+            <CardTitle className="text-base md:text-lg">Live Exam Monitoring</CardTitle>
             {isConnected && (
-              <Badge variant="outline" className="ml-2 text-green-600 border-green-600">
+              <Badge variant="outline" className="ml-2 text-green-600 border-green-600 text-xs">
                 Connected
               </Badge>
             )}
           </div>
           <Button 
-            className="bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 btn-mobile text-xs md:text-sm px-2 md:px-4"
             onClick={() => window.location.href = '/live-exams'}
           >
-            <Maximize2 className="mr-2 h-4 w-4" />
-            Full View
+            <Maximize2 className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">Full View</span>
+            <span className="sm:hidden">View</span>
           </Button>
         </div>
       </CardHeader>
       
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardContent className="p-4 md:p-6 pt-0">
+        <div className="grid grid-cols-1 gap-4">
           {exams.map((exam: ExamSession) => (
             <div 
               key={exam.id} 
