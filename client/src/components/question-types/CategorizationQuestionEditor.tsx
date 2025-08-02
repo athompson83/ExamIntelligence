@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus, GripVertical } from "lucide-react";
+import { Trash2, Plus, GripVertical, RotateCcw } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -157,6 +157,26 @@ export function CategorizationQuestionEditor({ categories, items, onChange }: Ca
     })
   );
 
+  // Initialize with 2 default categories if none exist
+  if (categories.length === 0) {
+    const defaultCategories: Category[] = [
+      {
+        id: "category-1",
+        name: "Category 1",
+        description: "",
+        items: [],
+      },
+      {
+        id: "category-2", 
+        name: "Category 2",
+        description: "",
+        items: [],
+      }
+    ];
+    onChange(defaultCategories, items);
+    return null; // Component will re-render with default categories
+  }
+
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
   };
@@ -228,6 +248,15 @@ export function CategorizationQuestionEditor({ categories, items, onChange }: Ca
     onChange(categories, [...items, newItem]);
   };
 
+  const addItemToCategory = (categoryId: string) => {
+    const newItem: CategorizationItem = {
+      id: `item-${Date.now()}`,
+      text: "",
+      categoryId: categoryId,
+    };
+    onChange(categories, [...items, newItem]);
+  };
+
   const removeItem = (itemId: string) => {
     const filteredItems = items.filter(item => item.id !== itemId);
     // Update categories to remove the item reference
@@ -259,136 +288,144 @@ export function CategorizationQuestionEditor({ categories, items, onChange }: Ca
   const unassignedItems = items.filter(item => item.categoryId === "unassigned");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Categorization Question Setup</CardTitle>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Students will drag and drop items into the correct categories. 
-          Set up categories and assign items to them.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Categories Management */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>Categories</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addCategory}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Category
-            </Button>
-          </div>
+    <div className="space-y-6">
+      {/* Category Columns Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Category Setup</h3>
+          <Button type="button" onClick={addCategory} variant="outline" size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Category
+          </Button>
+        </div>
 
-          <div className="space-y-4">
-            {categories.map((category) => (
-              <div key={category.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Input
-                    value={category.name}
-                    onChange={(e) => updateCategoryName(category.id, e.target.value)}
-                    placeholder="Category name..."
-                    className="flex-1"
-                  />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {categories.map((category) => (
+            <div key={category.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              {/* Category Header */}
+              <div className="flex items-center justify-between mb-4">
+                <Input
+                  placeholder="Category name"
+                  value={category.name}
+                  onChange={(e) => updateCategoryName(category.id, e.target.value)}
+                  className="font-medium text-lg border-0 px-0 focus:ring-0 shadow-none bg-transparent"
+                />
+                <div className="flex items-center space-x-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => removeCategory(category.id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-gray-400 hover:text-red-600 h-8 w-8 p-0"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <Textarea
-                  value={category.description}
-                  onChange={(e) => updateCategoryDescription(category.id, e.target.value)}
-                  placeholder="Category description (optional)..."
-                  rows={2}
-                  className="w-full"
+              </div>
+
+              {/* Category Items */}
+              <div className="space-y-2">
+                {items
+                  .filter(item => item.categoryId === category.id)
+                  .map((item) => (
+                    <div key={item.id} className="flex items-center space-x-2">
+                      <Input
+                        placeholder="Add item"
+                        value={item.text}
+                        onChange={(e) => updateItemText(item.id, e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeItem(item.id)}
+                        className="text-gray-400 hover:text-red-600 h-8 w-8 p-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                
+                {/* Add Answer Button */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => addItemToCategory(category.id)}
+                  className="text-blue-600 hover:text-blue-700 justify-start px-0 h-8"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Answer
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Additional Distractors Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Additional Distractors</h3>
+        <div className="space-y-2">
+          {items
+            .filter(item => item.categoryId === "unassigned")
+            .map((item) => (
+              <div key={item.id} className="flex items-center space-x-2">
+                <Input
+                  placeholder="Add distractor"
+                  value={item.text}
+                  onChange={(e) => updateItemText(item.id, e.target.value)}
+                  className="flex-1"
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeItem(item.id)}
+                  className="text-gray-400 hover:text-red-600 h-8 w-8 p-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Items Management */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>Items to Categorize</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addItem}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Item
-            </Button>
-          </div>
-
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
+          
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={addItem}
+            className="text-blue-600 hover:text-blue-700 justify-start px-0 h-8"
           >
-            {/* Unassigned Items */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Unassigned Items</Label>
-              <SortableContext items={unassignedItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-1">
-                  {unassignedItems.map((item) => (
-                    <SortableItem
-                      key={item.id}
-                      id={item.id}
-                      text={item.text}
-                      onTextChange={(text) => updateItemText(item.id, text)}
-                      onRemove={() => removeItem(item.id)}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </div>
-
-            {/* Categories with Items */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {categories.map((category) => (
-                <DroppableCategory
-                  key={category.id}
-                  category={category}
-                  items={items}
-                  onRemoveItem={removeItemFromCategory}
-                />
-              ))}
-            </div>
-
-            <DragOverlay>
-              {activeId ? (
-                <div className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
-                  {items.find(item => item.id === activeId)?.text || ""}
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+            <Plus className="h-4 w-4 mr-1" />
+            Distractor
+          </Button>
         </div>
-
-        {items.length === 0 && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            No items added yet. Click "Add Item" to start building your categorization question.
-          </div>
-        )}
-
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            <strong>Instructions:</strong> Drag items from the unassigned area into the correct categories. 
-            Students will see all items mixed together and need to sort them into the right categories.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
