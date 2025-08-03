@@ -10745,8 +10745,8 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
 
   // Role & Tier Management Routes (Super Admin only)
   app.get("/api/admin/role-permissions", async (req, res) => {
-    if (!req.user || (req.user as any).role !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!req.user || !req.isAuthenticated() || (req.user as any).role !== 'super_admin') {
+      return res.status(403).json({ message: 'Super admin access required' });
     }
     try {
       const mockRolePermissions = [
@@ -10856,8 +10856,8 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
   });
 
   app.put("/api/admin/role-permissions", async (req, res) => {
-    if (!req.user || (req.user as any).role !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!req.user || !req.isAuthenticated() || (req.user as any).role !== 'super_admin') {
+      return res.status(403).json({ message: 'Super admin access required' });
     }
     try {
       const { role, permissions } = req.body;
@@ -10877,8 +10877,8 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
   });
 
   app.get("/api/admin/tier-settings", async (req, res) => {
-    if (!req.user || (req.user as any).role !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!req.user || !req.isAuthenticated() || (req.user as any).role !== 'super_admin') {
+      return res.status(403).json({ message: 'Super admin access required' });
     }
     try {
       const mockTierSettings = [
@@ -11022,8 +11022,8 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
   });
 
   app.put("/api/admin/tier-settings", async (req, res) => {
-    if (!req.user || (req.user as any).role !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!req.user || !req.isAuthenticated() || (req.user as any).role !== 'super_admin') {
+      return res.status(403).json({ message: 'Super admin access required' });
     }
     try {
       const { tier, settings } = req.body;
@@ -11044,8 +11044,8 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
 
   // Account Settings Routes (Admin level)
   app.get("/api/admin/account-settings", async (req, res) => {
-    if (!req.user || !['admin', 'super_admin'].includes((req.user as any).role)) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!req.user || !req.isAuthenticated() || !['admin', 'super_admin'].includes((req.user as any).role)) {
+      return res.status(403).json({ message: 'Admin access required' });
     }
     try {
       const user = req.user as any;
@@ -11138,8 +11138,8 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
   });
 
   app.put("/api/admin/account-settings", async (req, res) => {
-    if (!req.user || !['admin', 'super_admin'].includes((req.user as any).role)) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!req.user || !req.isAuthenticated() || !['admin', 'super_admin'].includes((req.user as any).role)) {
+      return res.status(403).json({ message: 'Admin access required' });
     }
     try {
       const user = req.user as any;

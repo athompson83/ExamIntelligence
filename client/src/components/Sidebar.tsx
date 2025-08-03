@@ -37,7 +37,9 @@ import {
   Monitor,
   LifeBuoy,
   LinkIcon,
-  Building
+  Building,
+  Crown,
+  Activity
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -118,7 +120,6 @@ export default function Sidebar() {
       icon: Settings,
       items: [
         ...(['admin', 'teacher', 'super_admin'].includes((user as any)?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
-        ...((user as any)?.role === 'super_admin' ? [{ href: "/admin/role-settings", label: "Role Settings", icon: Shield, tourId: "role-settings" }] : []),
         ...(['admin', 'super_admin'].includes((user as any)?.role || '') ? [{ href: "/admin/account-settings", label: "Account Settings", icon: Building, tourId: "account-settings" }] : []),
         { href: "/mobile", label: "Mobile App", icon: Smartphone, tourId: "mobile" },
         { href: "/core-functionality-test", label: "Core Tests", icon: Shield, tourId: "core-tests" },
@@ -129,7 +130,17 @@ export default function Sidebar() {
         { href: "/archive-management", label: "Archive Management", icon: Archive, tourId: "archive-management" },
         { href: "/settings", label: "Settings", icon: Settings, tourId: "settings" },
       ]
-    }
+    },
+    ...((user as any)?.role === 'super_admin' ? [{
+      id: "super_admin",
+      label: "Super Admin",
+      icon: Crown,
+      items: [
+        { href: "/admin/role-settings", label: "Role & Tier Management", icon: Shield, tourId: "role-settings" },
+        { href: "/admin/system-settings", label: "System Settings", icon: Settings, tourId: "system-settings" },
+        { href: "/admin/user-activity", label: "User Activity", icon: Activity, tourId: "user-activity" },
+      ]
+    }] : [])
   ], [user]);
 
   const isActive = (href: string) => {
