@@ -271,6 +271,10 @@ export interface IStorage {
   getExamReferencesByTopic(accountId: string, prompt: string, title: string): Promise<any[]>;
   updateExamReference(id: string, reference: any): Promise<any>;
   deleteExamReference(id: string): Promise<boolean>;
+
+  // Landing Page Content Management
+  getLandingPageContent(): Promise<any>;
+  updateLandingPageContent(content: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4981,6 +4985,22 @@ Return JSON with the new question data:
       return true;
     }
     return false;
+  }
+
+  // Landing Page Content Management
+  private landingPageContent: any = null;
+
+  async getLandingPageContent(): Promise<any> {
+    // Return stored content or null if not set
+    return this.landingPageContent;
+  }
+
+  async updateLandingPageContent(content: any): Promise<any> {
+    this.landingPageContent = {
+      ...content,
+      updatedAt: new Date().toISOString()
+    };
+    return this.landingPageContent;
   }
 }
 

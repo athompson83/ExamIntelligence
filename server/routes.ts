@@ -10764,6 +10764,112 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     }
   });
 
+  // Landing Page Content Management API
+  app.get('/api/landing-content', async (req, res) => {
+    try {
+      const content = await storage.getLandingPageContent();
+      if (!content) {
+        // Return default content if none exists
+        const defaultContent = {
+          hero: {
+            title: "ProficiencyAI",
+            subtitle: "The Future of Educational Assessment",
+            description: "Comprehensive educational assessment platform with AI-powered question validation, Computer Adaptive Testing, live proctoring, advanced analytics, and seamless LMS integration.",
+            primaryButtonText: "Start Free Trial",
+            secondaryButtonText: "Explore Features",
+            primaryButtonLink: "/api/login",
+            secondaryButtonLink: "#features"
+          },
+          features: [
+            {
+              id: "1",
+              icon: "BookOpen",
+              title: "Computer Adaptive Testing (CAT)",
+              description: "Revolutionary testing system that adapts question difficulty in real-time based on student performance, providing personalized assessment experiences.",
+              features: ["Dynamic difficulty adjustment", "Personalized question selection", "Reduced test anxiety", "Precise ability measurement"]
+            },
+            {
+              id: "2",
+              icon: "Shield",
+              title: "Live Proctoring & Security",
+              description: "Advanced proctoring technology with AI-powered monitoring, ensuring test integrity and preventing academic dishonesty.",
+              features: ["Real-time monitoring", "AI behavior analysis", "Screen recording", "Identity verification"]
+            },
+            {
+              id: "3",
+              icon: "BarChart",
+              title: "Advanced Analytics",
+              description: "Comprehensive performance analytics with detailed insights into student progress, question effectiveness, and learning outcomes.",
+              features: ["Real-time dashboards", "Performance predictions", "Question analysis", "Learning path optimization"]
+            },
+            {
+              id: "4",
+              icon: "Zap",
+              title: "AI-Powered Question Generation",
+              description: "Intelligent question creation using advanced AI models, supporting multiple question types and educational standards.",
+              features: ["Multi-provider AI integration", "Research-based validation", "Question difficulty estimation", "Automatic tagging"]
+            }
+          ],
+          faq: [
+            {
+              id: "1",
+              question: "What is Computer Adaptive Testing (CAT)?",
+              answer: "CAT is an advanced testing method that adjusts question difficulty in real-time based on the test-taker's responses, providing more accurate assessment with fewer questions."
+            },
+            {
+              id: "2",
+              question: "How does the AI-powered question generation work?",
+              answer: "Our system uses multiple AI providers including OpenAI, Anthropic, and Google Gemini to generate high-quality questions with built-in validation and difficulty estimation."
+            },
+            {
+              id: "3",
+              question: "What LMS platforms do you integrate with?",
+              answer: "ProficiencyAI supports LTI 1.3 integration with Canvas, Moodle, Blackboard, and other LTI-compliant learning management systems."
+            }
+          ],
+          stats: [
+            { id: "1", value: "99.9%", label: "Uptime Guarantee" },
+            { id: "2", value: "7", label: "AI Provider Integration" },
+            { id: "3", value: "50M+", label: "Assessments Delivered" },
+            { id: "4", value: "24/7", label: "Expert Support" }
+          ],
+          contact: {
+            email: "contact@proficiencyai.com",
+            phone: "+1 (555) 123-4567",
+            address: "123 Education Blvd, Learning City, LC 12345"
+          },
+          footer: {
+            companyName: "ProficiencyAI",
+            description: "Empowering education through intelligent assessment technology",
+            copyright: "© 2025 ProficiencyAI. All rights reserved."
+          }
+        };
+        return res.json(defaultContent);
+      }
+      res.json(content);
+    } catch (error) {
+      console.error('Error getting landing page content:', error);
+      res.status(500).json({ message: 'Failed to get landing page content' });
+    }
+  });
+
+  app.put('/api/landing-content', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUserById(userId);
+      
+      if (user?.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      const content = await storage.updateLandingPageContent(req.body);
+      res.json(content);
+    } catch (error) {
+      console.error('Error updating landing page content:', error);
+      res.status(500).json({ message: 'Failed to update landing page content' });
+    }
+  });
+
   // Setup WebSocket
   setupWebSocket(httpServer);
 

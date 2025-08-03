@@ -52,6 +52,7 @@ import {
 import { useForm } from "react-hook-form";
 import QRCode from 'qrcode';
 import LLMProviderManagement from "@/components/LLMProviderManagement";
+import LandingPageEditor from "@/components/LandingPageEditor";
 
 interface Account {
   id: string;
@@ -568,7 +569,7 @@ export default function SuperAdminSettings() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="accounts">
               <Building2 className="h-4 w-4 mr-2" />
               Accounts
@@ -584,6 +585,10 @@ export default function SuperAdminSettings() {
             <TabsTrigger value="providers">
               <Key className="h-4 w-4 mr-2" />
               LLM Providers
+            </TabsTrigger>
+            <TabsTrigger value="landing">
+              <Globe className="h-4 w-4 mr-2" />
+              Landing Page
             </TabsTrigger>
             <TabsTrigger value="system">
               <Cog className="h-4 w-4 mr-2" />
@@ -1807,6 +1812,11 @@ Happy coding! 🎉
               </Card>
             </div>
           </TabsContent>
+
+          {/* Landing Page Tab */}
+          <TabsContent value="landing">
+            <LandingPageEditor />
+          </TabsContent>
         </Tabs>
 
         {/* Account Dialog */}
@@ -2191,6 +2201,8 @@ Happy coding! 🎉
             </Form>
           </DialogContent>
         </Dialog>
+
+
       </div>
     </Layout>
   );
