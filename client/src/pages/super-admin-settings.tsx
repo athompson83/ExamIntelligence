@@ -503,28 +503,28 @@ export default function SuperAdminSettings() {
     });
     
     // Create a simple download for mobile app files
-    const mobileAppData = `
-# ProficiencyAI Mobile App
-
-## Quick Setup Guide
-
-1. Create GitHub repository at https://github.com/new
-2. Upload these files to your repository
-3. Create GitHub Codespace for testing
-4. Install Expo Go app on your mobile device
-5. Run: npx expo start --tunnel
-6. Scan QR code with Expo Go app
-
-## Files Included:
-- Complete React Native application
-- Expo configuration
-- TypeScript setup
-- Authentication system
-- Quiz interface
-- GitHub deployment guide
-
-Login credentials: test@example.com / password
-    `;
+    const mobileAppData = [
+      "# ProficiencyAI Mobile App",
+      "",
+      "## Quick Setup Guide",
+      "",
+      "1. Create GitHub repository at https://github.com/new",
+      "2. Upload these files to your repository", 
+      "3. Create GitHub Codespace for testing",
+      "4. Install Expo Go app on your mobile device",
+      "5. Run: npx expo start --tunnel",
+      "6. Scan QR code with Expo Go app",
+      "",
+      "## Files Included:",
+      "- Complete React Native application",
+      "- Expo configuration", 
+      "- TypeScript setup",
+      "- Authentication system",
+      "- Quiz interface",
+      "- GitHub deployment guide",
+      "",
+      "Login credentials: test@example.com / password"
+    ].join('\n');
     
     const blob = new Blob([mobileAppData], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
