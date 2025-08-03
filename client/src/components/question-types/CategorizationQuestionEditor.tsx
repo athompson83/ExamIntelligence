@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Trash2, Plus, RotateCcw } from "lucide-react";
 
 interface CategorizationItem {
   id: string;
@@ -27,87 +28,230 @@ export default function CategorizationQuestionEditor({
   onChange,
 }: CategorizationQuestionEditorProps) {
   
-  const [categoriesText, setCategoriesText] = useState("");
-  const [itemsText, setItemsText] = useState("");
-
-  // Initialize with default values if empty
+  // Initialize with two default categories if none exist
   useEffect(() => {
-    if (categories.length === 0 && categoriesText === "") {
-      setCategoriesText("Category 1, Category 2, Category 3");
+    if (categories.length === 0) {
+      const defaultCategories = [
+        {
+          id: 'category-1',
+          name: 'Category 1',
+          description: '',
+          items: []
+        },
+        {
+          id: 'category-2', 
+          name: 'Category 2',
+          description: '',
+          items: []
+        }
+      ];
+      onChange(defaultCategories, items);
     }
-    if (items.length === 0 && itemsText === "") {
-      setItemsText("Item 1, Item 2, Item 3");
-    }
-  }, [categories.length, items.length, categoriesText, itemsText]);
+  }, [categories.length, items, onChange]);
 
-  // Update categories when text changes
-  const handleCategoriesChange = (value: string) => {
-    setCategoriesText(value);
-    
-    const categoryNames = value.split(',').map(cat => cat.trim()).filter(cat => cat.length > 0);
-    const newCategories = categoryNames.map((name, index) => ({
-      id: `category-${index + 1}`,
-      name,
+  const addCategory = () => {
+    const newCategory: Category = {
+      id: `category-${Date.now()}`,
+      name: `Category ${categories.length + 1}`,
       description: "",
-      items: []
-    }));
-    
-    onChange(newCategories, items);
+      items: [],
+    };
+    onChange([...categories, newCategory], items);
   };
 
-  // Update items when text changes
-  const handleItemsChange = (value: string) => {
-    setItemsText(value);
-    
-    const itemNames = value.split(',').map(item => item.trim()).filter(item => item.length > 0);
-    const newItems = itemNames.map((text, index) => ({
-      id: `item-${index + 1}`,
-      text,
-      categoryId: "unassigned" // Items start unassigned
-    }));
-    
-    onChange(categories, newItems);
+  const removeCategory = (categoryId: string) => {
+    const filteredCategories = categories.filter(cat => cat.id !== categoryId);
+    // Move items from deleted category to unassigned
+    const updatedItems = items.map(item =>
+      item.categoryId === categoryId ? { ...item, categoryId: "unassigned" } : item
+    );
+    onChange(filteredCategories, updatedItems);
   };
+
+  const updateCategoryName = (categoryId: string, name: string) => {
+    const updatedCategories = categories.map(cat =>
+      cat.id === categoryId ? { ...cat, name } : cat
+    );
+    onChange(updatedCategories, items);
+  };
+
+  const addItemToCategory = (categoryId: string) => {
+    const newItem: CategorizationItem = {
+      id: `item-${Date.now()}`,
+      text: "",
+      categoryId: categoryId,
+    };
+    onChange(categories, [...items, newItem]);
+  };
+
+  const addDistractor = () => {
+    const newItem: CategorizationItem = {
+      id: `item-${Date.now()}`,
+      text: "",
+      categoryId: "unassigned",
+    };
+    onChange(categories, [...items, newItem]);
+  };
+
+  const removeItem = (itemId: string) => {
+    const filteredItems = items.filter(item => item.id !== itemId);
+    onChange(categories, filteredItems);
+  };
+
+  const updateItemText = (itemId: string, text: string) => {
+    const updatedItems = items.map(item =>
+      item.id === itemId ? { ...item, text } : item
+    );
+    onChange(categories, updatedItems);
+  };
+
+  const unassignedItems = items.filter(item => item.categoryId === "unassigned");
 
   return (
     <div className="space-y-6">
+      {/* Category Columns Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Categorization Setup</h3>
-        
-        {/* Categories Section */}
-        <div className="space-y-2">
-          <Label htmlFor="categories" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Categories (comma-separated)
-          </Label>
-          <Textarea
-            id="categories"
-            placeholder="Category 1, Category 2, Category 3"
-            value={categoriesText}
-            onChange={(e) => handleCategoriesChange(e.target.value)}
-            className="min-h-[60px] text-gray-900 dark:text-gray-100"
-          />
+        <div className="flex items-center justify-between">
+          <Button type="button" onClick={addCategory} variant="outline" size="sm" className="text-blue-600 hover:text-blue-700">
+            <Plus className="h-4 w-4 mr-1" />
+            Category
+          </Button>
         </div>
 
-        {/* Items Section */}
-        <div className="space-y-2">
-          <Label htmlFor="items" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Items to Categorize (comma-separated)
-          </Label>
-          <Textarea
-            id="items"
-            placeholder="Item 1, Item 2, Item 3"
-            value={itemsText}
-            onChange={(e) => handleItemsChange(e.target.value)}
-            className="min-h-[60px] text-gray-900 dark:text-gray-100"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {categories.map((category) => (
+            <div key={category.id} className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              {/* Category Header */}
+              <div className="flex items-center justify-between mb-4">
+                <Input
+                  placeholder="Category name"
+                  value={category.name}
+                  onChange={(e) => updateCategoryName(category.id, e.target.value)}
+                  className="font-medium border-0 px-0 focus:ring-0 shadow-none bg-transparent text-gray-900 dark:text-gray-100"
+                />
+                <div className="flex items-center space-x-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-gray-600 h-6 w-6 p-0"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeCategory(category.id)}
+                    className="text-gray-400 hover:text-red-600 h-6 w-6 p-0"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Category Items */}
+              <div className="space-y-2">
+                {items
+                  .filter(item => item.categoryId === category.id)
+                  .map((item) => (
+                    <div key={item.id} className="flex items-center space-x-2">
+                      <Input
+                        placeholder="Add item"
+                        value={item.text}
+                        onChange={(e) => updateItemText(item.id, e.target.value)}
+                        className="flex-1 h-8 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-400 hover:text-gray-600 h-6 w-6 p-0"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeItem(item.id)}
+                        className="text-gray-400 hover:text-red-600 h-6 w-6 p-0"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                
+                {/* Add Answer Button */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => addItemToCategory(category.id)}
+                  className="text-blue-600 hover:text-blue-700 justify-start px-0 h-6 text-sm"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Answer
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Additional Distractors Section */}
+      <div className="space-y-4">
+        <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">Additional Distractors</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="space-y-2">
+            {unassignedItems.map((item) => (
+              <div key={item.id} className="flex items-center space-x-2">
+                <Input
+                  placeholder="Add distractor"
+                  value={item.text}
+                  onChange={(e) => updateItemText(item.id, e.target.value)}
+                  className="flex-1 h-8 text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-gray-600 h-6 w-6 p-0"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeItem(item.id)}
+                  className="text-gray-400 hover:text-red-600 h-6 w-6 p-0"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+            
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={addDistractor}
+              className="text-blue-600 hover:text-blue-700 justify-start px-0 h-6 text-sm"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Distractor
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Instructions */}
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
         <p className="text-sm text-blue-700 dark:text-blue-300">
-          <strong>Instructions:</strong> Enter categories separated by commas, then enter the items that students will categorize. 
-          Students will need to drag items into the correct categories during the exam.
+          <strong>Instructions:</strong> Create categories and add items that belong to each category. 
+          Students will need to drag items into the correct categories during the exam. 
+          Items will be shuffled during the actual test attempt. Use distractors to add items that don't belong to any category.
         </p>
       </div>
     </div>

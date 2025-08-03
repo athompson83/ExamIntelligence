@@ -849,7 +849,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                           <Checkbox
                             id="show-calculator"
                             checked={hotSpotShowCalculator}
-                            onCheckedChange={setHotSpotShowCalculator}
+                            onCheckedChange={(checked) => setHotSpotShowCalculator(checked as boolean)}
                           />
                           <label htmlFor="show-calculator" className="text-sm font-medium">
                             Show on-screen calculator
@@ -1303,7 +1303,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                         <Checkbox
                           id="shuffle-answers"
                           checked={shuffleAnswers}
-                          onCheckedChange={setShuffleAnswers}
+                          onCheckedChange={(checked) => setShuffleAnswers(checked as boolean)}
                         />
                         <label htmlFor="shuffle-answers" className="text-sm font-medium">
                           Shuffle answer choices
@@ -1314,7 +1314,7 @@ export default function QuestionEditor({ questionId, testbankId, onClose }: Ques
                         <Checkbox
                           id="require-response"
                           checked={requireResponse}
-                          onCheckedChange={setRequireResponse}
+                          onCheckedChange={(checked) => setRequireResponse(checked as boolean)}
                         />
                         <label htmlFor="require-response" className="text-sm font-medium">
                           Require response
