@@ -114,20 +114,20 @@ export default function SuperAdminSettings() {
   // Data queries
   const { data: accounts = [] } = useQuery({
     queryKey: ["/api/super-admin/accounts"],
-    enabled: isAuthenticated && user?.role === 'super_admin'
+    enabled: isAuthenticated && (user as any)?.role === 'super_admin'
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ["/api/super-admin/users"],
-    enabled: isAuthenticated && user?.role === 'super_admin'
+    enabled: isAuthenticated && (user as any)?.role === 'super_admin'
   });
 
   const { data: prompts = [] } = useQuery({
     queryKey: ["/api/super-admin/prompts"],
-    enabled: isAuthenticated && user?.role === 'super_admin'
+    enabled: isAuthenticated && (user as any)?.role === 'super_admin'
   });
 
-  if (authLoading || !isAuthenticated || user?.role !== 'super_admin') {
+  if (authLoading || !isAuthenticated || (user as any)?.role !== 'super_admin') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
