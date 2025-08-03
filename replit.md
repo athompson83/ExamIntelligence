@@ -7,6 +7,7 @@ ProficiencyAI is a comprehensive educational assessment platform designed to com
 Preferred communication style: Simple, everyday language.
 Research-based approach: Follow educational assessment standards and evidence-based practices for question generation.
 UI/UX Design: Modern, beautiful interface following current design trends with smooth animations and professional styling.
+Landing Page: Comprehensive marketing page with complete feature list, FAQ section, and technical specifications.
 
 ## System Architecture
 
@@ -61,6 +62,11 @@ UI/UX Design: Modern, beautiful interface following current design trends with s
 - **zod**: Schema validation
 - **react-joyride**: Interactive onboarding tours
 - **react-i18next**: Internationalization framework
+
+## Recent Changes (August 2025)
+- **Landing Page Enhancement**: Created comprehensive marketing landing page with complete feature list, FAQ section, technical specifications, and professional design
+- **CAT Exam Interface**: Fixed redirection issues for Computer Adaptive Testing practice sessions
+- **Mobile Optimization**: Implemented 24px button padding and mobile-first responsive design across all components
 
 ### Development Dependencies
 - **typescript**: Static type checking
