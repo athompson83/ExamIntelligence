@@ -55,12 +55,12 @@ export default function TopBar() {
   };
 
   return (
-    <header className="bg-surface border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 md:py-4 flex items-center justify-between">
+    <header className="bg-surface border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between max-[767px]:px-4">
       <div className="flex items-center flex-1">
         {/* Section titles are in a different area */}
       </div>
       
-      <div className="flex items-center space-x-2 md:space-x-4">
+      <div className="flex items-center space-x-4 max-[767px]:space-x-2">
         {/* Enhanced Search - Mobile Responsive */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 md:h-4 md:w-4 text-gray-400" />

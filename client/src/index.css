@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Enhanced Mobile-First Responsive Design with Improved Scaling */
+/* Desktop-First Responsive Design */
 @layer base {
   /* Responsive viewport and scaling */
   html {
@@ -37,7 +37,21 @@
     text-rendering: optimizeLegibility;
   }
   
-  /* Mobile-friendly touch targets */
+  /* Default desktop styling */
+  button, [role="button"], input, select, textarea {
+    min-height: 36px; /* Standard desktop size */
+    min-width: auto;
+    border-radius: 4px;
+  }
+  
+  input, select, textarea {
+    font-size: 14px;
+    padding: 8px 12px;
+    line-height: 1.4;
+    border-radius: 4px;
+  }
+  
+  /* Mobile overrides */
   @media (max-width: 767px) {
     button, [role="button"], input, select, textarea {
       min-height: 44px; /* Touch-friendly on mobile */
@@ -53,35 +67,18 @@
     }
   }
   
-  /* Desktop styling */
-  @media (min-width: 768px) {
-    button, [role="button"], input, select, textarea {
-      min-height: 36px; /* Standard desktop size */
-      min-width: auto;
-      border-radius: 4px;
-    }
-    
-    input, select, textarea {
-      font-size: 14px;
-      padding: 8px 12px;
-      line-height: 1.4;
-      border-radius: 4px;
-    }
+  /* Default desktop typography */
+  h1 {
+    font-size: 2.5rem; /* Standard desktop size */
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
   
-  /* Typography hierarchy */
+  /* Mobile typography overrides */
   @media (max-width: 767px) {
     h1 {
-      font-size: 2rem; /* Larger on mobile for impact */
-      line-height: 1.2;
-      font-weight: 700;
-      letter-spacing: -0.025em;
-    }
-  }
-  
-  @media (min-width: 768px) {
-    h1 {
-      font-size: 2.5rem; /* Standard desktop size */
+      font-size: 2rem; /* Smaller on mobile */
       line-height: 1.2;
       font-weight: 700;
       letter-spacing: -0.025em;
@@ -246,7 +243,17 @@
     @apply p-6 space-y-6; /* More generous spacing */
   }
   
-  /* Enhanced mobile button styling with improved scaling */
+  /* Default desktop button styling */
+  .btn-mobile {
+    font-size: 14px !important; /* Standard desktop font size */
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    padding: 8px 16px !important; /* Standard desktop padding */
+    min-height: 36px !important; /* Standard desktop height */
+  }
+  
+  /* Mobile button overrides */
   @media (max-width: 767px) {
     .btn-mobile {
       @apply text-lg min-h-[56px]; /* Enhanced touch targets */
@@ -261,25 +268,33 @@
       transform: scale(0.98);
     }
   }
+    
+  /* Default desktop typography */
+  h2 {
+    @apply text-3xl;
+    font-weight: 600;
+    line-height: 1.25;
+  }
   
-  /* Desktop button styling */
-  @media (min-width: 768px) {
-    .btn-mobile {
-      font-size: 14px !important; /* Standard desktop font size */
-      font-weight: 500;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-      padding: 8px 16px !important; /* Standard desktop padding */
-      min-height: 36px !important; /* Standard desktop height */
-    }
-    
-    /* Enhanced mobile typography scaling */
-    h1 {
-      @apply text-3xl;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-    
+  h3 {
+    @apply text-2xl;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  
+  h4 {
+    @apply text-xl;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  
+  p, span, div {
+    @apply text-base; /* Standard desktop text size */
+    line-height: 1.5;
+  }
+  
+  /* Mobile typography overrides */
+  @media (max-width: 767px) {
     h2 {
       @apply text-2xl;
       font-weight: 600;
@@ -303,37 +318,6 @@
       line-height: 1.6;
     }
   }
-  
-  /* Desktop typography */
-  @media (min-width: 768px) {
-    h1 {
-      @apply text-4xl;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-    
-    h2 {
-      @apply text-3xl;
-      font-weight: 600;
-      line-height: 1.25;
-    }
-    
-    h3 {
-      @apply text-2xl;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-    
-    h4 {
-      @apply text-xl;
-      font-weight: 500;
-      line-height: 1.35;
-    }
-    
-    p, span, div {
-      @apply text-base; /* Standard desktop text size */
-      line-height: 1.5;
-    }
     
     /* Enhanced cards for mobile with better scaling */
     .card-mobile {
@@ -578,7 +562,6 @@
       transition-duration: 0.01ms !important;
     }
   }
-}
 
 :root {
   --background: hsl(0, 0%, 100%);

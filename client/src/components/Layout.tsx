@@ -21,9 +21,9 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex bg-background transition-all duration-200">
       <Sidebar />
-      <div className="flex-1 md:ml-64 transition-all duration-200">
+      <div className="flex-1 ml-64 transition-all duration-200 max-[767px]:ml-0">
         <TopBar />
-        <main className={`p-4 md:p-6 pt-20 md:pt-6 content-container transition-all duration-300 ${
+        <main className={`p-6 pt-6 content-container transition-all duration-300 max-[767px]:p-4 max-[767px]:pt-20 ${
           isLoaded ? 'opacity-100 transform-none' : 'opacity-0 translate-y-2'
         }`}>
           {children}

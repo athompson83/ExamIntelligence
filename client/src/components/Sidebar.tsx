@@ -234,7 +234,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Enhanced Mobile Navigation Bar (shown on small screens) */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-primary z-50 px-6 py-4 shadow-lg">
+      <div className="max-[767px]:block hidden fixed top-0 left-0 right-0 bg-primary z-50 px-6 py-4 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="bg-white rounded-xl p-2 mr-3">
@@ -258,7 +258,7 @@ export default function Sidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="max-[767px]:block hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -266,10 +266,9 @@ export default function Sidebar() {
       {/* Enhanced Desktop Sidebar & Mobile Drawer */}
       <nav className={`
         sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
-        md:w-64 md:min-w-64 md:max-w-64 md:fixed md:inset-y-0 md:left-0 md:z-50
-        fixed top-0 left-0 h-full w-84 z-50 transform transition-all duration-300
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:translate-x-0
+        w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 z-50
+        max-[767px]:w-84 max-[767px]:h-full max-[767px]:top-0 max-[767px]:transform max-[767px]:transition-all max-[767px]:duration-300
+        ${isMobileMenuOpen ? 'max-[767px]:translate-x-0' : 'max-[767px]:-translate-x-full'}
       `}>
         {/* Enhanced Logo */}
         <div className="flex items-center justify-center h-20 md:h-16 bg-primary px-6 md:px-4 flex-shrink-0">
