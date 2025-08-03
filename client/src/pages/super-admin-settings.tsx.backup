@@ -1394,6 +1394,241 @@ export default function SuperAdminSettings() {
           )}
 
         </div>
+{
+  "name": "React Native Expo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:0-18-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "postCreateCommand": "npm install --legacy-peer-deps && npm install -g @expo/cli",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [8081, 19000, 19001, 19002],
+  "portsAttributes": {
+    "8081": {
+      "label": "Metro",
+      "visibility": "public"
+    },
+    "19000": {
+      "label": "Expo Dev Server",
+      "visibility": "public"
+    }
+  }
+}
+\`\`\`
+
+## Getting Help
+
+### Common Issues:
+1. **Node.js detection stuck**: Run manual commands above
+2. **Permission denied**: Make repository public
+3. **Dependency conflicts**: Use \`--legacy-peer-deps\`
+4. **Network issues**: Always use \`--tunnel\` flag
+5. **Build errors**: Check Node.js version (18+)
+
+### Support Resources:
+- GitHub Issues in your repository
+- Expo Discord: https://expo.dev/discord
+- Stack Overflow: Tag \`expo\` and \`react-native\`
+- GitHub Codespaces docs: https://docs.github.com/codespaces
+
+## Features Included:
+✓ Complete React Native app
+✓ Material Design UI
+✓ Authentication system
+✓ Quiz functionality
+✓ Real backend connectivity
+✓ TypeScript support
+✓ GitHub Actions CI/CD
+✓ Expo Go compatibility
+✓ Codespace optimization
+
+## Next Steps After Deployment:
+1. Customize app branding
+2. Add more features
+3. Deploy to app stores
+4. Set up analytics
+5. Add push notifications
+
+## Support
+- Create issues in your GitHub repository
+- Check Expo documentation
+- Join React Native community discussions
+`
+                              };
+
+                              // Create and download each file
+                              Object.entries(files).forEach(([filename, content]) => {
+                                const blob = new Blob([content], { type: 'text/plain' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = filename;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                              });
+
+                              // Also create a complete dev container configuration
+                              const devContainerContent = `{
+  "name": "React Native Expo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:0-18-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "postCreateCommand": "npm install --legacy-peer-deps && npm install -g @expo/cli",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [8081, 19000, 19001, 19002],
+  "portsAttributes": {
+    "8081": {
+      "label": "Metro",
+      "visibility": "public"
+    },
+    "19000": {
+      "label": "Expo Dev Server", 
+      "visibility": "public"
+    }
+  }
+}`;
+
+                              // Add dev container to files
+                              files['.devcontainer/devcontainer.json'] = devContainerContent;
+
+                              // Also create a summary file
+                              const summaryContent = `
+📱 ProficiencyAI Mobile App - GitHub Package Downloaded!
+
+✅ Files Downloaded:
+• README.md - Main documentation
+• package.json - Dependencies
+• App.js - Main application
+• app.json - Expo configuration
+• DEPLOYMENT_GUIDE.md - Complete setup guide
+• .devcontainer/devcontainer.json - Codespace configuration
+
+🚀 Next Steps:
+1. Create GitHub repository at https://github.com/new
+2. Upload all downloaded files
+3. Create GitHub Codespace  
+4. If Node.js detection is stuck, run:
+   cd /workspaces/proficiencyai-mobile-app
+   nvm install 18 && nvm use 18
+   npm install -g @expo/cli
+   npm install --legacy-peer-deps
+   npx expo start --tunnel
+5. Scan QR code with Expo Go app
+
+📚 Documentation:
+• Setup guide in DEPLOYMENT_GUIDE.md
+• Expo docs: https://docs.expo.dev/
+• React Native: https://reactnative.dev/
+
+💡 Pro Tips:
+• Make repository public for free Codespaces
+• Use --legacy-peer-deps for dependencies
+• Always use --tunnel flag for mobile testing
+• Login with test@example.com / password
+
+🔧 Troubleshooting:
+• If Node.js detection is stuck: Run manual commands above
+• Permission denied: Make repository public
+• Build errors: Check Node.js version (18+)
+• Network issues: Always use --tunnel flag
+
+🔗 Useful Links:
+• GitHub: https://github.com/new
+• Expo Go App: https://expo.dev/client
+• Codespaces: https://github.com/features/codespaces
+
+Happy coding! 🎉
+`;
+
+                              const summaryBlob = new Blob([summaryContent], { type: 'text/plain' });
+                              const summaryUrl = URL.createObjectURL(summaryBlob);
+                              const summaryA = document.createElement('a');
+                              summaryA.href = summaryUrl;
+                              summaryA.download = 'DOWNLOAD_SUMMARY.txt';
+                              summaryA.click();
+                              URL.revokeObjectURL(summaryUrl);
+                            };
+
+                            createZipFile();
+                          }}
+                          className="w-full justify-start"
+                          size="sm"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download Mobile App Package
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open('https://github.com/features/codespaces', '_blank')}
+                          className="w-full justify-start"
+                          size="sm"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Learn About GitHub Codespaces
+                        </Button>
+                      </div>
+                      <div className="mt-3 text-xs text-indigo-600 space-y-1">
+                        <p><strong>Quick Steps:</strong></p>
+                        <p>1. Download the mobile app package</p>
+                        <p>2. Create new GitHub repository</p>
+                        <p>3. Upload files and create Codespace</p>
+                        <p>4. If Node.js detection is stuck:</p>
+                        <p className="ml-3">nvm install 18 && nvm use 18</p>
+                        <p className="ml-3">npm install -g @expo/cli</p>
+                        <p className="ml-3">npm install --legacy-peer-deps</p>
+                        <p className="ml-3">npx expo start --tunnel</p>
+                        <p>5. Scan QR code with Expo Go app</p>
+                      </div>
+                    </div>
+
+                    {/* Option 5: Local Development */}
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Option 5: Local Development Setup
+                      </h4>
+                      <p className="text-sm text-gray-700 mb-3">
+                        Download and run the React Native app locally for full native testing.
+                      </p>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <p><strong>Requirements:</strong></p>
+                        <p>• Node.js 18+ installed locally</p>
+                        <p>• Run: npm install -g @expo/cli</p>
+                        <p>• Expo Go app on mobile device</p>
+                        <p>• Download mobile-app-final source code</p>
+                        <p><strong>Setup:</strong></p>
+                        <p>1. Extract downloaded files</p>
+                        <p>2. Run: npm install --legacy-peer-deps</p>
+                        <p>3. Run: npx expo start --tunnel</p>
+                        <p>4. Scan QR code with Expo Go app</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+      </div>
+
         {/* Account Dialog */}
         <Dialog open={isAccountDialogOpen} onOpenChange={setIsAccountDialogOpen}>
           <DialogContent className="sm:max-w-[600px]">
