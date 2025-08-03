@@ -216,6 +216,8 @@ export interface IStorage {
   // User management methods
   seedDummyUsers(): Promise<void>;
   getDummyUsers(): Promise<User[]>;
+  archiveUser(userId: string): Promise<boolean>;
+  updateUserStatus(userId: string, isActive: boolean): Promise<User | undefined>;
   
   // Proctoring Methods
   getUnresolvedProctoringLogs(): Promise<any[]>;
@@ -399,6 +401,44 @@ export class DatabaseStorage implements IStorage {
       .orderBy(users.role, users.firstName);
 
     return dummyUsers;
+  }
+
+  async archiveUser(userId: string): Promise<boolean> {
+    try {
+      // Mark user as archived instead of deleting
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          isActive: false,
+          archivedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      return !!updatedUser;
+    } catch (error) {
+      console.error('Error archiving user:', error);
+      return false;
+    }
+  }
+
+  async updateUserStatus(userId: string, isActive: boolean): Promise<User | undefined> {
+    try {
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          isActive,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      return undefined;
+    }
   }
 
   // Testbank operations

@@ -11713,5 +11713,134 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     }
   });
 
+  // Super Admin User Management Endpoints
+  app.get('/api/super-admin/users', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      // Get all users from all accounts
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
+  app.post('/api/super-admin/users', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const { email, firstName, lastName, role, accountId, isActive, sendWelcomeEmail } = req.body;
+      
+      // Create new user
+      const newUser = await storage.upsertUser({
+        id: `user-${Date.now()}`,
+        email,
+        firstName,
+        lastName,
+        role,
+        accountId,
+        isActive: isActive !== false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      // TODO: Send welcome email if sendWelcomeEmail is true
+      if (sendWelcomeEmail) {
+        console.log(`Welcome email would be sent to ${email}`);
+      }
+      
+      res.json(newUser);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ message: 'Failed to create user' });
+    }
+  });
+
+  app.put('/api/super-admin/users/:id', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const targetUserId = req.params.id;
+      const { email, firstName, lastName, role, accountId, isActive } = req.body;
+      
+      // Update user
+      const updatedUser = await storage.upsertUser({
+        id: targetUserId,
+        email,
+        firstName,
+        lastName,
+        role,
+        accountId,
+        isActive,
+        updatedAt: new Date()
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ message: 'Failed to update user' });
+    }
+  });
+
+  app.delete('/api/super-admin/users/:id', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const targetUserId = req.params.id;
+      
+      // For safety, we archive instead of delete
+      await storage.archiveUser(targetUserId);
+      
+      res.json({ message: 'User archived successfully' });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: 'Failed to delete user' });
+    }
+  });
+
+  app.put('/api/super-admin/users/:id/status', mockAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || "test-user";
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const targetUserId = req.params.id;
+      const { isActive } = req.body;
+      
+      // Update user status
+      const updatedUser = await storage.updateUserStatus(targetUserId, isActive);
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      res.status(500).json({ message: 'Failed to update user status' });
+    }
+  });
+
   return httpServer;
 }

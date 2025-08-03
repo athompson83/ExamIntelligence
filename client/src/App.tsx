@@ -99,6 +99,7 @@ const RoleSettings = lazy(() => import("@/pages/admin/role-settings"));
 const AccountSettings = lazy(() => import("@/pages/admin/account-settings"));
 const DatabaseManagement = lazy(() => import("@/pages/admin/database-management"));
 const UserActivityDashboard = lazy(() => import("@/pages/admin/UserActivityDashboard"));
+const AdminUserManagement = lazy(() => import("@/pages/admin/user-management"));
 const ErrorLogsManagement = lazy(() => import("@/pages/ErrorLogsManagement"));
 const BugReportingDemo = lazy(() => import("@/pages/BugReportingDemo"));
 const CATExamGenerationTest = lazy(() => import("@/pages/CATExamGenerationTest"));
@@ -213,7 +214,7 @@ function Router() {
             {(params) => <Suspense fallback={<LoadingSpinner />}><SpeedGrader /></Suspense>}
           </Route>
           <Route path="/user-management">
-            {() => <Suspense fallback={<SmoothLoadingFallback />}><UserManagement /></Suspense>}
+            {() => <Suspense fallback={<SmoothLoadingFallback />}><AdminUserManagement /></Suspense>}
           </Route>
           <Route path="/admin-settings">
             {() => <Suspense fallback={<LoadingSpinner />}><AdminSettings /></Suspense>}
