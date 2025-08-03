@@ -255,5 +255,61 @@
       "description": "ProficiencyAI supports multiple languages for global educational institutions",
       "currentLanguage": "Current Language"
     }
+  },
+  "accessibility": {
+    "textToSpeech": {
+      "enable": "Enable Text-to-Speech",
+      "disable": "Disable Text-to-Speech",
+      "play": "Play Audio",
+      "pause": "Pause Audio",
+      "stop": "Stop Audio",
+      "voiceSettings": "Voice Settings",
+      "selectVoice": "Select Voice",
+      "speechRate": "Speech Rate",
+      "speechPitch": "Speech Pitch",
+      "speechVolume": "Volume",
+      "readQuestion": "Read Question Aloud",
+      "readAnswers": "Read Answer Options",
+      "readFeedback": "Read Feedback",
+      "autoRead": "Auto-read Questions",
+      "voicePreview": "Test Voice"
+    },
+    "languageTranslation": {
+      "translateQuestions": "Translate Questions",
+      "translateAnswers": "Translate Answers",
+      "originalLanguage": "Original Language",
+      "targetLanguage": "Target Language",
+      "translating": "Translating...",
+      "translationComplete": "Translation Complete",
+      "translationError": "Translation Error",
+      "showOriginal": "Show Original",
+      "showTranslation": "Show Translation",
+      "autoTranslate": "Auto-translate Content"
+    }
+  },
+  "exam": {
+    "taking": {
+      "questionNumber": "Question {{current}} of {{total}}",
+      "timeRemaining": "Time Remaining",
+      "submitAnswer": "Submit Answer",
+      "nextQuestion": "Next Question",
+      "previousQuestion": "Previous Question",
+      "reviewAnswers": "Review Answers",
+      "submitExam": "Submit Exam",
+      "confirmSubmit": "Are you sure you want to submit your exam?",
+      "examComplete": "Exam Complete",
+      "score": "Your Score",
+      "passed": "Passed",
+      "failed": "Failed",
+      "feedback": "Feedback"
+    },
+    "accessibility": {
+      "readQuestionAloud": "Read this question aloud",
+      "readAnswersAloud": "Read answer options aloud",
+      "translateQuestion": "Translate this question",
+      "increaseTextSize": "Increase text size",
+      "decreaseTextSize": "Decrease text size",
+      "highContrast": "High contrast mode"
+    }
   }
 }

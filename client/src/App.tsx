@@ -100,6 +100,7 @@ const BugReportingDemo = lazy(() => import("@/pages/BugReportingDemo"));
 const CATExamGenerationTest = lazy(() => import("@/pages/CATExamGenerationTest"));
 const CATGenerationSuccess = lazy(() => import("@/pages/CATGenerationSuccess"));
 const LTIIntegration = lazy(() => import("@/pages/lti-integration"));
+const AccessibilityDemo = lazy(() => import("@/pages/AccessibilityDemo"));
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -389,6 +390,9 @@ function Router() {
           </Route>
           <Route path="/admin/user-activity">
             {() => <Suspense fallback={<LoadingSpinner />}><UserActivityDashboard /></Suspense>}
+          </Route>
+          <Route path="/accessibility-demo">
+            {() => <Suspense fallback={<LoadingSpinner />}><AccessibilityDemo /></Suspense>}
           </Route>
         </>
       )}

@@ -2869,6 +2869,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Translation Endpoint for Questions and Answers
+  app.post('/api/ai/translate', mockAuth, async (req: any, res) => {
+    try {
+      const { text, fromLanguage, toLanguage, context } = req.body;
+
+      if (!text || !fromLanguage || !toLanguage) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: text, fromLanguage, toLanguage' 
+        });
+      }
+
+      // Skip translation if languages are the same
+      if (fromLanguage === toLanguage) {
+        return res.json({
+          translatedText: text,
+          originalText: text,
+          fromLanguage,
+          toLanguage,
+          confidence: 1.0
+        });
+      }
+
+      // Build translation prompt based on context
+      let prompt = '';
+      if (context === 'educational_assessment') {
+        prompt = `You are a professional educational translator specializing in assessment content. 
+        
+Translate the following educational assessment text from ${fromLanguage} to ${toLanguage}.
+Maintain:
+- Academic accuracy and precision
+- Technical terminology appropriate for the educational level
+- Question clarity and unambiguous meaning
+- Cultural appropriateness for the target language
+- Proper educational assessment format
+
+Text to translate: "${text}"
+
+Provide only the translation without explanations or additional text.`;
+      } else {
+        prompt = `Translate the following text from ${fromLanguage} to ${toLanguage}. Maintain meaning, tone, and context:
+
+"${text}"
+
+Provide only the translation.`;
+      }
+
+      // Use multi-provider AI for translation
+      const aiResponse = await multiProviderAI.generateWithAI(prompt, {
+        temperature: 0.3, // Lower temperature for more consistent translations
+        maxTokens: Math.max(500, text.length * 2), // Ensure enough tokens for translation
+        systemPrompt: "You are an expert translator focused on accuracy and cultural appropriateness."
+      });
+
+      if (!aiResponse.success || !aiResponse.data?.content) {
+        throw new Error(aiResponse.error || 'Translation failed');
+      }
+
+      const translatedText = aiResponse.data.content.trim();
+
+      // Calculate confidence score based on translation quality heuristics
+      let confidence = 0.9; // Base confidence
+      
+      // Adjust confidence based on text length similarity
+      const lengthRatio = translatedText.length / text.length;
+      if (lengthRatio < 0.5 || lengthRatio > 2.0) {
+        confidence -= 0.2; // Reduce confidence for very different lengths
+      }
+      
+      // Adjust confidence based on language pair complexity
+      const complexLanguagePairs = [
+        ['en', 'ja'], ['en', 'zh'], ['en', 'ar'],
+        ['ja', 'en'], ['zh', 'en'], ['ar', 'en']
+      ];
+      
+      if (complexLanguagePairs.some(pair => 
+        (pair[0] === fromLanguage && pair[1] === toLanguage) ||
+        (pair[1] === fromLanguage && pair[0] === toLanguage)
+      )) {
+        confidence -= 0.1; // Slightly reduce confidence for complex language pairs
+      }
+
+      res.json({
+        translatedText,
+        originalText: text,
+        fromLanguage,
+        toLanguage,
+        confidence: Math.max(0.5, Math.min(1.0, confidence)), // Clamp between 0.5 and 1.0
+        provider: aiResponse.data.provider,
+        model: aiResponse.data.model
+      });
+
+    } catch (error: any) {
+      console.error('AI translation error:', error);
+      res.status(500).json({ 
+        error: 'Translation failed',
+        details: error.message 
+      });
+    }
+  });
+
   // Notification routes
   app.get('/api/notifications', mockAuth, async (req: any, res) => {
     try {
