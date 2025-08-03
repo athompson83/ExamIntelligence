@@ -132,12 +132,12 @@ export default function CATExamTest() {
       getNextQuestion(session.id);
       setIsPreviewOpen(false); // Close the preview dialog
       
-      // Navigate to the CAT test interface  
-      setLocation(`/cat-exam-test?examId=${previewExam?.id}&sessionId=${session.id}`);
+      // Navigate to exam interface page for active session
+      setLocation(`/exam-interface?sessionId=${session.id}&examId=${previewExam?.id}`);
       
       toast({
-        title: "Session Started",
-        description: "Redirecting to CAT test interface..."
+        title: "Practice Session Started",
+        description: "Starting your CAT exam practice session..."
       });
     },
     onError: (error) => {

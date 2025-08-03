@@ -174,6 +174,9 @@ function Router() {
           <Route path="/cat-exam-test">
             {() => <Suspense fallback={<LoadingSpinner />}><CATExamTest /></Suspense>}
           </Route>
+          <Route path="/exam-interface">
+            {() => <Suspense fallback={<LoadingSpinner />}><ExamInterface /></Suspense>}
+          </Route>
           <Route path="/cat-exams">
             {() => <Suspense fallback={<LoadingSpinner />}><CATExamManager /></Suspense>}
           </Route>
