@@ -42,24 +42,29 @@ interface LandingPageContent {
     title: string;
     subtitle: string;
     description: string;
-    primaryButtonText: string;
-    secondaryButtonText: string;
-    primaryButtonLink: string;
-    secondaryButtonLink: string;
+    buttonText?: string;
+    buttonLink?: string;
+    primaryButtonText?: string;
+    secondaryButtonText?: string;
+    primaryButtonLink?: string;
+    secondaryButtonLink?: string;
   };
   features: Array<{
     id: string;
     icon: string;
     title: string;
     description: string;
-    features: string[];
+    bullets?: string[];
+    features?: string[];
   }>;
   faq: Array<{
     id: string;
     question: string;
     answer: string;
   }>;
-  stats: Array<{
+  stats: {
+    [key: string]: string;
+  } | Array<{
     id: string;
     value: string;
     label: string;
@@ -70,8 +75,8 @@ interface LandingPageContent {
     address: string;
   };
   footer: {
-    companyName: string;
-    description: string;
+    companyName?: string;
+    description?: string;
     copyright: string;
   };
 }
@@ -158,7 +163,7 @@ export default function LandingPageEditor() {
       icon: "BookOpen",
       title: "New Feature",
       description: "Feature description",
-      features: ["Feature item 1", "Feature item 2"]
+      bullets: ["Feature item 1", "Feature item 2"]
     };
     setContent(prev => ({
       ...prev,
@@ -186,7 +191,7 @@ export default function LandingPageEditor() {
     };
     setContent(prev => ({
       ...prev,
-      stats: [...prev.stats, newStat]
+      stats: Array.isArray(prev.stats) ? [...prev.stats, newStat] : [newStat]
     }));
   };
 
@@ -507,22 +512,26 @@ export default function LandingPageEditor() {
                 <div>
                   <Label>Feature List</Label>
                   <div className="space-y-2">
-                    {feature.features.map((item, itemIndex) => (
+                    {(feature.bullets || feature.features || []).map((item, itemIndex) => (
                       <div key={itemIndex} className="flex items-center gap-2">
                         <Input
                           value={item}
                           onChange={(e) => {
-                            const newFeatures = [...feature.features];
-                            newFeatures[itemIndex] = e.target.value;
-                            updateItem('features', feature.id, { features: newFeatures });
+                            const currentItems = feature.bullets || feature.features || [];
+                            const newItems = [...currentItems];
+                            newItems[itemIndex] = e.target.value;
+                            const updateKey = feature.bullets ? 'bullets' : 'features';
+                            updateItem('features', feature.id, { [updateKey]: newItems });
                           }}
                         />
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const newFeatures = feature.features.filter((_, i) => i !== itemIndex);
-                            updateItem('features', feature.id, { features: newFeatures });
+                            const currentItems = feature.bullets || feature.features || [];
+                            const newItems = currentItems.filter((_, i) => i !== itemIndex);
+                            const updateKey = feature.bullets ? 'bullets' : 'features';
+                            updateItem('features', feature.id, { [updateKey]: newItems });
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -533,9 +542,10 @@ export default function LandingPageEditor() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        updateItem('features', feature.id, { 
-                          features: [...feature.features, 'New feature item'] 
-                        });
+                        const currentItems = feature.bullets || feature.features || [];
+                        const newItems = [...currentItems, 'New feature item'];
+                        const updateKey = feature.bullets ? 'bullets' : 'features';
+                        updateItem('features', feature.id, { [updateKey]: newItems });
                       }}
                     >
                       <Plus className="mr-2 h-4 w-4" />
@@ -619,7 +629,7 @@ export default function LandingPageEditor() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {content.stats.map((stat, index) => (
+            {Array.isArray(content.stats) ? content.stats.map((stat, index) => (
               <Card key={stat.id}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-4">
@@ -647,6 +657,37 @@ export default function LandingPageEditor() {
                         value={stat.label}
                         onChange={(e) => updateItem('stats', stat.id, { label: e.target.value })}
                         placeholder="e.g. Uptime Guarantee"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )) : Object.entries(content.stats).map(([key, value], index) => (
+              <Card key={key}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <Badge variant="outline">Stat {index + 1}</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Key</Label>
+                      <Input
+                        value={key}
+                        readOnly
+                        className="bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <Label>Value</Label>
+                      <Input
+                        value={value}
+                        onChange={(e) => {
+                          setContent(prev => ({
+                            ...prev,
+                            stats: { ...prev.stats as Record<string, string>, [key]: e.target.value }
+                          }));
+                        }}
+                        placeholder="e.g. 99.9%, 7, 50M+"
                       />
                     </div>
                   </div>
@@ -789,13 +830,18 @@ export default function LandingPageEditor() {
             )}
 
             {/* Stats Preview */}
-            {content.stats.length > 0 && (
+            {(Array.isArray(content.stats) ? content.stats.length > 0 : Object.keys(content.stats).length > 0) && (
               <div className="bg-blue-600 text-white p-8 rounded-lg">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                  {content.stats.map(stat => (
+                  {Array.isArray(content.stats) ? content.stats.map(stat => (
                     <div key={stat.id}>
                       <div className="text-2xl font-bold">{stat.value}</div>
                       <div className="text-blue-100">{stat.label}</div>
+                    </div>
+                  )) : Object.entries(content.stats).map(([key, value]) => (
+                    <div key={key}>
+                      <div className="text-2xl font-bold">{value}</div>
+                      <div className="text-blue-100">{key}</div>
                     </div>
                   ))}
                 </div>
