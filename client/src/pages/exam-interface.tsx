@@ -101,26 +101,50 @@ export default function ExamInterface({ examId }: ExamInterfaceProps) {
   const [examPassword, setExamPassword] = useState("");
   const [showPasswordDialog, setShowPasswordDialog] = useState(true);
   
+  // Get URL parameters for CAT session
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionId = urlParams.get('sessionId');
+  const catExamId = urlParams.get('examId');
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Handle both regular quiz exams and CAT exams
   const { data: examAttempt, isLoading: examLoading } = useQuery({
     queryKey: ['/api/exam-attempts', examId],
-    enabled: isAuthenticated && !!examId,
+    enabled: isAuthenticated && !!examId && !sessionId, // Only for regular quizzes
+  });
+
+  // For CAT exams, get session data
+  const { data: catSession, isLoading: catLoading } = useQuery({
+    queryKey: ['/api/cat-sessions', sessionId],
+    enabled: isAuthenticated && !!sessionId,
   });
 
   const startExamMutation = useMutation({
-    mutationFn: async (data: { quizId: string; password?: string }) => {
-      return await apiRequest("POST", "/api/exam-attempts", data);
+    mutationFn: async (data: { quizId?: string; sessionId?: string; password?: string }) => {
+      if (data.sessionId) {
+        // For CAT exams, just continue with existing session
+        return { sessionId: data.sessionId, isStarted: true };
+      } else {
+        // For regular quizzes
+        return await apiRequest("POST", "/api/exam-attempts", data);
+      }
     },
     onSuccess: (data) => {
       setIsExamStarted(true);
       setShowPasswordDialog(false);
-      setTimeRemaining(data.timeRemaining);
-      setResponses(data.responses || {});
-      setCurrentQuestionIndex(data.currentQuestionIndex || 0);
-      queryClient.invalidateQueries({ queryKey: ['/api/exam-attempts', examId] });
+      if (sessionId) {
+        // CAT exam - minimal setup
+        setTimeRemaining(catSession?.timeRemaining || 7200); // 2 hours default
+      } else {
+        // Regular quiz
+        setTimeRemaining(data.timeRemaining);
+        setResponses(data.responses || {});
+        setCurrentQuestionIndex(data.currentQuestionIndex || 0);
+        queryClient.invalidateQueries({ queryKey: ['/api/exam-attempts', examId] });
+      }
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -377,7 +401,13 @@ export default function ExamInterface({ examId }: ExamInterfaceProps) {
   };
 
   const handleStartExam = () => {
-    if (examId) {
+    if (sessionId) {
+      // CAT exam - just start with existing session
+      startExamMutation.mutate({
+        sessionId: sessionId,
+      });
+    } else if (examId) {
+      // Regular quiz exam
       startExamMutation.mutate({ 
         quizId: examId, 
         password: examPassword || undefined 
@@ -556,7 +586,18 @@ export default function ExamInterface({ examId }: ExamInterfaceProps) {
     );
   }
 
-  if (examLoading || !examAttempt) {
+  // Handle loading states for both regular quizzes and CAT exams
+  if ((examLoading && !sessionId) || (catLoading && sessionId)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  // For regular quizzes, wait for examAttempt
+  // For CAT exams, we don't need examAttempt, just the session
+  if (!sessionId && !examAttempt) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
