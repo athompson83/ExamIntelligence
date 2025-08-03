@@ -10743,6 +10743,422 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
     }
   });
 
+  // Role & Tier Management Routes (Super Admin only)
+  app.get("/api/admin/role-permissions", async (req, res) => {
+    if (!req.user || (req.user as any).role !== 'super_admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    try {
+      const mockRolePermissions = [
+        {
+          id: "role-1",
+          role: "super_admin",
+          permissions: {
+            canCreateQuizzes: true,
+            canEditQuizzes: true,
+            canDeleteQuizzes: true,
+            canManageUsers: true,
+            canViewAnalytics: true,
+            canExportData: true,
+            canManageIntegrations: true,
+            canAccessProctoringTools: true,
+            canManageTestbanks: true,
+            canUseAIGeneration: true,
+            maxQuizzesPerMonth: -1,
+            maxUsersManaged: -1,
+            maxAIGenerationsPerMonth: -1,
+            maxProctoringHours: -1,
+          },
+          description: "Full system administration access with unlimited permissions",
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: "role-2",
+          role: "admin",
+          permissions: {
+            canCreateQuizzes: true,
+            canEditQuizzes: true,
+            canDeleteQuizzes: true,
+            canManageUsers: true,
+            canViewAnalytics: true,
+            canExportData: true,
+            canManageIntegrations: false,
+            canAccessProctoringTools: true,
+            canManageTestbanks: true,
+            canUseAIGeneration: true,
+            maxQuizzesPerMonth: 1000,
+            maxUsersManaged: 500,
+            maxAIGenerationsPerMonth: 500,
+            maxProctoringHours: 100,
+          },
+          description: "Account administration with user and content management capabilities",
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: "role-3",
+          role: "teacher",
+          permissions: {
+            canCreateQuizzes: true,
+            canEditQuizzes: true,
+            canDeleteQuizzes: false,
+            canManageUsers: false,
+            canViewAnalytics: true,
+            canExportData: true,
+            canManageIntegrations: false,
+            canAccessProctoringTools: true,
+            canManageTestbanks: true,
+            canUseAIGeneration: true,
+            maxQuizzesPerMonth: 100,
+            maxUsersManaged: 0,
+            maxAIGenerationsPerMonth: 50,
+            maxProctoringHours: 20,
+          },
+          description: "Educator role with quiz creation and student assessment capabilities",
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: "role-4",
+          role: "student",
+          permissions: {
+            canCreateQuizzes: false,
+            canEditQuizzes: false,
+            canDeleteQuizzes: false,
+            canManageUsers: false,
+            canViewAnalytics: false,
+            canExportData: false,
+            canManageIntegrations: false,
+            canAccessProctoringTools: false,
+            canManageTestbanks: false,
+            canUseAIGeneration: false,
+            maxQuizzesPerMonth: 0,
+            maxUsersManaged: 0,
+            maxAIGenerationsPerMonth: 0,
+            maxProctoringHours: 0,
+          },
+          description: "Student role with assessment participation capabilities only",
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      ];
+
+      res.json(mockRolePermissions);
+    } catch (error) {
+      console.error('Error fetching role permissions:', error);
+      res.status(500).json({ message: "Failed to fetch role permissions" });
+    }
+  });
+
+  app.put("/api/admin/role-permissions", async (req, res) => {
+    if (!req.user || (req.user as any).role !== 'super_admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    try {
+      const { role, permissions } = req.body;
+      
+      // In a real implementation, this would update the database
+      console.log(`Updating permissions for role: ${role}`, permissions);
+      
+      res.json({ 
+        success: true, 
+        message: `Permissions updated for ${role} role`,
+        data: { role, permissions }
+      });
+    } catch (error) {
+      console.error('Error updating role permissions:', error);
+      res.status(500).json({ message: "Failed to update role permissions" });
+    }
+  });
+
+  app.get("/api/admin/tier-settings", async (req, res) => {
+    if (!req.user || (req.user as any).role !== 'super_admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    try {
+      const mockTierSettings = [
+        {
+          id: "tier-1",
+          tier: "starter",
+          displayName: "Starter",
+          features: {
+            maxUsers: 10,
+            maxQuizzes: 50,
+            aiGenerationsPerMonth: 10,
+            proctoringHours: 5,
+            advancedAnalytics: false,
+            customBranding: false,
+            prioritySupport: false,
+            apiAccess: false,
+            ssoIntegration: false,
+            whiteLabeling: false,
+            customIntegrations: false,
+            dedicatedSupport: false,
+          },
+          pricing: {
+            monthlyPrice: 0,
+            annualPrice: 0,
+            setupFee: 0,
+          },
+          isActive: true,
+          sortOrder: 1,
+        },
+        {
+          id: "tier-2",
+          tier: "basic",
+          displayName: "Basic",
+          features: {
+            maxUsers: 50,
+            maxQuizzes: 200,
+            aiGenerationsPerMonth: 100,
+            proctoringHours: 20,
+            advancedAnalytics: true,
+            customBranding: false,
+            prioritySupport: false,
+            apiAccess: false,
+            ssoIntegration: false,
+            whiteLabeling: false,
+            customIntegrations: false,
+            dedicatedSupport: false,
+          },
+          pricing: {
+            monthlyPrice: 29,
+            annualPrice: 290,
+            setupFee: 0,
+          },
+          isActive: true,
+          sortOrder: 2,
+        },
+        {
+          id: "tier-3",
+          tier: "professional",
+          displayName: "Professional",
+          features: {
+            maxUsers: 200,
+            maxQuizzes: 1000,
+            aiGenerationsPerMonth: 500,
+            proctoringHours: 100,
+            advancedAnalytics: true,
+            customBranding: true,
+            prioritySupport: true,
+            apiAccess: true,
+            ssoIntegration: false,
+            whiteLabeling: false,
+            customIntegrations: false,
+            dedicatedSupport: false,
+          },
+          pricing: {
+            monthlyPrice: 99,
+            annualPrice: 990,
+            setupFee: 0,
+          },
+          isActive: true,
+          sortOrder: 3,
+        },
+        {
+          id: "tier-4",
+          tier: "institutional",
+          displayName: "Institutional",
+          features: {
+            maxUsers: 1000,
+            maxQuizzes: 5000,
+            aiGenerationsPerMonth: 2500,
+            proctoringHours: 500,
+            advancedAnalytics: true,
+            customBranding: true,
+            prioritySupport: true,
+            apiAccess: true,
+            ssoIntegration: true,
+            whiteLabeling: true,
+            customIntegrations: false,
+            dedicatedSupport: false,
+          },
+          pricing: {
+            monthlyPrice: 299,
+            annualPrice: 2990,
+            setupFee: 500,
+          },
+          isActive: true,
+          sortOrder: 4,
+        },
+        {
+          id: "tier-5",
+          tier: "enterprise",
+          displayName: "Enterprise",
+          features: {
+            maxUsers: -1,
+            maxQuizzes: -1,
+            aiGenerationsPerMonth: -1,
+            proctoringHours: -1,
+            advancedAnalytics: true,
+            customBranding: true,
+            prioritySupport: true,
+            apiAccess: true,
+            ssoIntegration: true,
+            whiteLabeling: true,
+            customIntegrations: true,
+            dedicatedSupport: true,
+          },
+          pricing: {
+            monthlyPrice: 999,
+            annualPrice: 9990,
+            setupFee: 2000,
+          },
+          isActive: true,
+          sortOrder: 5,
+        }
+      ];
+
+      res.json(mockTierSettings);
+    } catch (error) {
+      console.error('Error fetching tier settings:', error);
+      res.status(500).json({ message: "Failed to fetch tier settings" });
+    }
+  });
+
+  app.put("/api/admin/tier-settings", async (req, res) => {
+    if (!req.user || (req.user as any).role !== 'super_admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    try {
+      const { tier, settings } = req.body;
+      
+      // In a real implementation, this would update the database
+      console.log(`Updating settings for tier: ${tier}`, settings);
+      
+      res.json({ 
+        success: true, 
+        message: `Settings updated for ${tier} tier`,
+        data: { tier, settings }
+      });
+    } catch (error) {
+      console.error('Error updating tier settings:', error);
+      res.status(500).json({ message: "Failed to update tier settings" });
+    }
+  });
+
+  // Account Settings Routes (Admin level)
+  app.get("/api/admin/account-settings", async (req, res) => {
+    if (!req.user || !['admin', 'super_admin'].includes((req.user as any).role)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    try {
+      const user = req.user as any;
+      const account = await storage.getAccount(user.accountId);
+      
+      if (!account) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+
+      const mockAccountSettings = {
+        id: account.id,
+        name: account.name,
+        description: account.description,
+        subscriptionTier: account.subscriptionTier,
+        billingCycle: account.billingCycle,
+        maxUsers: account.maxUsers,
+        currentSeatCount: account.currentSeatCount,
+        monthlyQuizzes: account.monthlyQuizzes,
+        monthlyAiGenerated: account.monthlyAiGenerated,
+        monthlyAiValidations: account.monthlyAiValidations,
+        monthlyProctoringHours: account.monthlyProctoringHours,
+        stripeCustomerId: account.stripeCustomerId,
+        stripeSubscriptionId: account.stripeSubscriptionId,
+        stripeStatus: account.stripeStatus,
+        billingEmail: account.billingEmail,
+        billingAddress: account.billingAddress,
+        isActive: account.isActive,
+        settings: {
+          branding: {
+            customLogo: "",
+            primaryColor: "#3b82f6",
+            secondaryColor: "#64748b",
+            companyName: account.name,
+            showPoweredBy: true,
+          },
+          features: {
+            aiGenerationEnabled: true,
+            proctoringEnabled: true,
+            advancedAnalytics: account.subscriptionTier !== 'starter',
+            exportEnabled: true,
+            apiAccess: ['professional', 'institutional', 'enterprise'].includes(account.subscriptionTier),
+            ssoEnabled: ['institutional', 'enterprise'].includes(account.subscriptionTier),
+            customIntegrations: account.subscriptionTier === 'enterprise',
+          },
+          security: {
+            enforcePasswordPolicy: true,
+            requireMfa: false,
+            sessionTimeout: 120,
+            ipWhitelist: [],
+            allowedDomains: [],
+          },
+          notifications: {
+            emailNotifications: true,
+            smsNotifications: false,
+            webhookUrl: "",
+            notificationTypes: ["quiz_completed", "user_registered", "billing_updated"],
+          },
+        },
+        usage: {
+          currentPeriodQuizzes: account.monthlyQuizzes || 0,
+          currentPeriodAiGenerations: account.monthlyAiGenerated || 0,
+          currentPeriodProctoringHours: account.monthlyProctoringHours || 0,
+          storageUsedMB: 1250,
+        },
+        limits: {
+          maxQuizzes: account.subscriptionTier === 'starter' ? 50 : 
+                     account.subscriptionTier === 'basic' ? 200 :
+                     account.subscriptionTier === 'professional' ? 1000 :
+                     account.subscriptionTier === 'institutional' ? 5000 : -1,
+          maxAiGenerations: account.subscriptionTier === 'starter' ? 10 : 
+                           account.subscriptionTier === 'basic' ? 100 :
+                           account.subscriptionTier === 'professional' ? 500 :
+                           account.subscriptionTier === 'institutional' ? 2500 : -1,
+          maxProctoringHours: account.subscriptionTier === 'starter' ? 5 : 
+                             account.subscriptionTier === 'basic' ? 20 :
+                             account.subscriptionTier === 'professional' ? 100 :
+                             account.subscriptionTier === 'institutional' ? 500 : -1,
+          maxStorageMB: account.subscriptionTier === 'starter' ? 1024 : 
+                       account.subscriptionTier === 'basic' ? 5120 :
+                       account.subscriptionTier === 'professional' ? 25600 :
+                       account.subscriptionTier === 'institutional' ? 102400 : -1,
+        },
+      };
+
+      res.json(mockAccountSettings);
+    } catch (error) {
+      console.error('Error fetching account settings:', error);
+      res.status(500).json({ message: "Failed to fetch account settings" });
+    }
+  });
+
+  app.put("/api/admin/account-settings", async (req, res) => {
+    if (!req.user || !['admin', 'super_admin'].includes((req.user as any).role)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    try {
+      const user = req.user as any;
+      const updates = req.body;
+      
+      // In a real implementation, this would update the account in the database
+      console.log(`Updating account settings for account: ${user.accountId}`, updates);
+      
+      res.json({ 
+        success: true, 
+        message: "Account settings updated successfully",
+        data: updates
+      });
+    } catch (error) {
+      console.error('Error updating account settings:', error);
+      res.status(500).json({ message: "Failed to update account settings" });
+    }
+  });
+
   // AI Provider Status endpoint
   app.get('/api/ai-providers/status', isAuthenticated, (req, res) => {
     try {

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { 
   ClipboardCheck, 
   BookOpen, 
@@ -36,7 +36,8 @@ import {
   FileText,
   Monitor,
   LifeBuoy,
-  LinkIcon
+  LinkIcon,
+  Building
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -66,7 +67,7 @@ export default function Sidebar() {
     return items.some(item => isActive(item.href));
   };
 
-  const menuGroups = [
+  const menuGroups = useMemo(() => [
     {
       id: "main",
       label: "Main",
@@ -117,6 +118,8 @@ export default function Sidebar() {
       icon: Settings,
       items: [
         ...(['admin', 'teacher', 'super_admin'].includes((user as any)?.role || '') ? [{ href: "/user-management", label: "User Management", icon: Users, tourId: "user-management" }] : []),
+        ...((user as any)?.role === 'super_admin' ? [{ href: "/admin/role-settings", label: "Role Settings", icon: Shield, tourId: "role-settings" }] : []),
+        ...(['admin', 'super_admin'].includes((user as any)?.role || '') ? [{ href: "/admin/account-settings", label: "Account Settings", icon: Building, tourId: "account-settings" }] : []),
         { href: "/mobile", label: "Mobile App", icon: Smartphone, tourId: "mobile" },
         { href: "/core-functionality-test", label: "Core Tests", icon: Shield, tourId: "core-tests" },
         { href: "/pricing", label: "Pricing", icon: DollarSign, tourId: "pricing" },
@@ -127,7 +130,7 @@ export default function Sidebar() {
         { href: "/settings", label: "Settings", icon: Settings, tourId: "settings" },
       ]
     }
-  ];
+  ], [user]);
 
   const isActive = (href: string) => {
     if (href === "/") return location === "/";
