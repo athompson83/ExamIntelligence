@@ -235,11 +235,12 @@
   /* Enhanced mobile button styling with improved scaling */
   @media (max-width: 768px) {
     .btn-mobile {
-      @apply text-lg px-6 py-4 min-h-[56px]; /* Enhanced touch targets */
+      @apply text-lg min-h-[56px]; /* Enhanced touch targets */
       font-size: 18px !important; /* Prevent zoom on iOS */
       font-weight: 500;
       border-radius: 12px;
       transition: all 0.2s ease;
+      padding: 16px 24px !important; /* Explicit padding for left and right sides */
     }
     
     .btn-mobile:active {
@@ -321,24 +322,27 @@
     
     /* Enhanced mobile input styling */
     .mobile-input {
-      @apply text-lg px-5 py-4 rounded-xl border-2;
+      @apply text-lg rounded-xl border-2;
       font-size: 18px !important;
       min-height: 56px;
+      padding: 16px 20px !important; /* Explicit padding for left and right sides */
     }
     
     /* Enhanced mobile select styling */
     .mobile-select {
-      @apply text-lg px-5 py-4 rounded-xl border-2;
+      @apply text-lg rounded-xl border-2;
       font-size: 18px !important;
       min-height: 56px;
+      padding: 16px 20px !important; /* Explicit padding for left and right sides */
     }
     
     /* Enhanced mobile textarea styling */
     .mobile-textarea {
-      @apply text-lg px-5 py-4 rounded-xl border-2;
+      @apply text-lg rounded-xl border-2;
       font-size: 18px !important;
       min-height: 120px;
       resize: vertical;
+      padding: 16px 20px !important; /* Explicit padding for left and right sides */
     }
   }
   

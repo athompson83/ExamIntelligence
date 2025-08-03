@@ -659,7 +659,7 @@ export default function EnhancedQuizBuilder() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setIsAddToGroupDialogOpen(true)}
-                                className="btn-mobile text-base sm:text-sm font-medium justify-center sm:justify-start"
+                                className="btn-mobile text-base sm:text-sm font-medium justify-center sm:justify-start px-6 sm:px-4"
                               >
                                 <FolderPlus className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
                                 <span className="hidden sm:inline">Add to Group</span>
@@ -669,7 +669,7 @@ export default function EnhancedQuizBuilder() {
                                 variant="outline"
                                 size="sm"
                                 onClick={handleDeleteSelectedQuestions}
-                                className="btn-mobile text-base sm:text-sm font-medium text-red-500 hover:text-red-700 justify-center sm:justify-start"
+                                className="btn-mobile text-base sm:text-sm font-medium text-red-500 hover:text-red-700 justify-center sm:justify-start px-6 sm:px-4"
                               >
                                 <Trash2 className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
                                 <span className="hidden sm:inline">Delete Selected</span>
@@ -928,7 +928,7 @@ export default function EnhancedQuizBuilder() {
                         <div className="flex flex-col sm:flex-row justify-center sm:justify-end pt-6 sm:pt-4">
                           <Button
                             onClick={() => setIsAddToGroupDialogOpen(true)}
-                            className="btn-mobile w-full sm:w-auto flex items-center justify-center gap-2 text-base sm:text-sm font-medium"
+                            className="btn-mobile w-full sm:w-auto flex items-center justify-center gap-2 text-base sm:text-sm font-medium px-6 sm:px-4"
                           >
                             <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
                             <span className="hidden sm:inline">
@@ -1128,13 +1128,13 @@ export default function EnhancedQuizBuilder() {
         <Button 
           variant="outline" 
           onClick={() => navigate('/quiz-manager')}
-          className="btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium"
+          className="btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium px-6 sm:px-4"
         >
           Cancel
         </Button>
         <Button 
           variant="outline"
-          className="btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium"
+          className="btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium px-6 sm:px-4"
         >
           <Eye className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
           Preview
@@ -1142,7 +1142,7 @@ export default function EnhancedQuizBuilder() {
         <Button 
           variant="outline" 
           onClick={handleSaveQuiz}
-          className="btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium"
+          className="btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium px-6 sm:px-4"
         >
           <Save className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
           <span className="hidden sm:inline">Save as Draft</span>
@@ -1150,7 +1150,7 @@ export default function EnhancedQuizBuilder() {
         </Button>
         <Button 
           onClick={handlePublishQuiz} 
-          className="bg-green-600 hover:bg-green-700 btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium"
+          className="bg-green-600 hover:bg-green-700 btn-mobile w-full sm:w-auto text-base sm:text-sm font-medium px-6 sm:px-4"
         >
           <Upload className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
           <span className="hidden sm:inline">Publish Quiz</span>

@@ -67,7 +67,7 @@ export default function Dashboard() {
               <h3 className="text-2xl md:text-xl font-bold text-gray-800 dark:text-gray-200">Quick Actions</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Button 
-                  className="w-full bg-primary text-white p-8 md:p-8 h-auto hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl"
+                  className="w-full bg-primary text-white p-8 md:p-8 h-auto hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl px-6"
                   onClick={() => setLocation('/item-banks')}
                 >
                   <div className="flex flex-col items-center space-y-3 md:space-y-3">
@@ -78,7 +78,7 @@ export default function Dashboard() {
                 </Button>
                 
                 <Button 
-                  className="w-full bg-blue-600 text-white p-8 md:p-8 h-auto hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl"
+                  className="w-full bg-blue-600 text-white p-8 md:p-8 h-auto hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl px-6"
                   onClick={() => setLocation('/quiz-builder')}
                 >
                   <div className="flex flex-col items-center space-y-3 md:space-y-3">
@@ -89,7 +89,7 @@ export default function Dashboard() {
                 </Button>
                 
                 <Button 
-                  className="w-full bg-orange-500 text-white p-8 md:p-8 h-auto hover:bg-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl"
+                  className="w-full bg-orange-500 text-white p-8 md:p-8 h-auto hover:bg-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl px-6"
                   onClick={() => setLocation('/ai-resources')}
                 >
                   <div className="flex flex-col items-center space-y-3 md:space-y-3">
@@ -100,7 +100,7 @@ export default function Dashboard() {
                 </Button>
                 
                 <Button 
-                  className="w-full bg-purple-600 text-white p-8 md:p-8 h-auto hover:bg-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl"
+                  className="w-full bg-purple-600 text-white p-8 md:p-8 h-auto hover:bg-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 btn-mobile min-h-[160px] md:min-h-[160px] rounded-xl px-6"
                   onClick={() => setLocation('/live-exams')}
                 >
                   <div className="flex flex-col items-center space-y-3 md:space-y-3">
