@@ -129,19 +129,35 @@ export default function DatabaseManagement() {
   const quickQueries = [
     {
       name: "Show all users",
-      query: "SELECT id, email, role, created_at FROM users ORDER BY created_at DESC LIMIT 50;"
+      query: "SELECT id, email, first_name, last_name, role, account_id, is_active, created_at FROM users ORDER BY created_at DESC LIMIT 50;"
     },
     {
-      name: "Active quiz sessions",
-      query: "SELECT q.title, qa.user_id, qa.started_at, qa.status FROM quiz_attempts qa JOIN quizzes q ON qa.quiz_id = q.id WHERE qa.status = 'in_progress';"
+      name: "Item banks overview",
+      query: "SELECT id, name, description, question_count, category, owner_id FROM item_banks ORDER BY question_count DESC LIMIT 20;"
     },
     {
-      name: "Recent AI generations",
-      query: "SELECT provider, prompt_tokens, completion_tokens, created_at FROM ai_generations ORDER BY created_at DESC LIMIT 20;"
+      name: "Recent assignments",
+      query: "SELECT id, title, quiz_id, assigned_to, due_date, status, created_by FROM assignments ORDER BY due_date DESC LIMIT 25;"
     },
     {
-      name: "Account statistics",
-      query: "SELECT a.name, COUNT(u.id) as user_count, a.created_at FROM accounts a LEFT JOIN users u ON a.id = u.account_id GROUP BY a.id, a.name, a.created_at;"
+      name: "CAT exam sessions",
+      query: "SELECT id, name, difficulty_range, question_pool_size, sessions_completed, average_questions FROM cat_exams ORDER BY sessions_completed DESC;"
+    },
+    {
+      name: "System settings",
+      query: "SELECT id, key, value, description, category FROM system_settings ORDER BY category, key;"
+    },
+    {
+      name: "AI provider status",
+      query: "SELECT id, name, is_enabled, requests_today, cost_today, response_time_avg FROM llm_providers WHERE is_enabled = true;"
+    },
+    {
+      name: "Quiz performance",
+      query: "SELECT quiz_id, COUNT(*) as attempts, AVG(score) as avg_score, MAX(score) as max_score FROM quiz_attempts WHERE status = 'completed' GROUP BY quiz_id;"
+    },
+    {
+      name: "Role distribution",
+      query: "SELECT name, display_name, user_count, is_default FROM roles ORDER BY user_count DESC;"
     }
   ];
 
@@ -230,6 +246,7 @@ export default function DatabaseManagement() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Table Name</TableHead>
+                          <TableHead>Description</TableHead>
                           <TableHead>Schema</TableHead>
                           <TableHead>Row Count</TableHead>
                           <TableHead>Size</TableHead>
@@ -245,6 +262,9 @@ export default function DatabaseManagement() {
                                 <TableIcon className="h-4 w-4" />
                                 {table.name}
                               </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-xs">
+                              {(table as any).description || 'Database table'}
                             </TableCell>
                             <TableCell>{table.schema}</TableCell>
                             <TableCell>{table.rowCount.toLocaleString()}</TableCell>

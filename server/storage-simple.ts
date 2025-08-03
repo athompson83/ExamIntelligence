@@ -5672,56 +5672,162 @@ Return JSON with the new question data:
     
     if (lowerQuery.includes('users')) {
       return [
-        { id: '37065900', email: 'paramedic@example.com', role: 'student', created_at: '2025-01-01T00:00:00Z' },
-        { id: 'test-user', email: 'test@example.com', role: 'super_admin', created_at: '2025-01-02T00:00:00Z' },
-        { id: 'teacher-001', email: 'teacher@school.edu', role: 'teacher', created_at: '2025-01-03T00:00:00Z' }
+        { id: '37065900', email: 'paramedic@example.com', first_name: 'John', last_name: 'Doe', role: 'student', account_id: 'account-1', is_active: true, created_at: '2025-01-01T00:00:00Z' },
+        { id: 'test-user', email: 'test@example.com', first_name: 'Test', last_name: 'Admin', role: 'super_admin', account_id: 'account-1', is_active: true, created_at: '2025-01-02T00:00:00Z' },
+        { id: 'teacher-001', email: 'teacher@school.edu', first_name: 'Sarah', last_name: 'Johnson', role: 'teacher', account_id: 'account-2', is_active: true, created_at: '2025-01-03T00:00:00Z' }
+      ];
+    }
+    
+    if (lowerQuery.includes('item_banks')) {
+      return [
+        { id: 'bank-1', name: 'Biology Question Bank', description: 'Comprehensive biology questions', question_count: 450, category: 'Science', created_at: '2025-01-01T00:00:00Z' },
+        { id: 'bank-2', name: 'Math Fundamentals', description: 'Basic mathematics concepts', question_count: 320, category: 'Mathematics', created_at: '2025-01-02T00:00:00Z' },
+        { id: 'bank-3', name: 'NREMT Practice Bank', description: 'Emergency medical technician questions', question_count: 780, category: 'Medical', created_at: '2025-01-03T00:00:00Z' }
+      ];
+    }
+    
+    if (lowerQuery.includes('questions')) {
+      return [
+        { id: 'q-1', question_text: 'What is the primary function of mitochondria?', question_type: 'multiple_choice', difficulty: 'medium', item_bank_id: 'bank-1', correct_answer: 'A', points: 2 },
+        { id: 'q-2', question_text: 'Calculate the derivative of x²+3x+1', question_type: 'multiple_choice', difficulty: 'hard', item_bank_id: 'bank-2', correct_answer: 'B', points: 3 },
+        { id: 'q-3', question_text: 'What is the normal respiratory rate for adults?', question_type: 'multiple_choice', difficulty: 'easy', item_bank_id: 'bank-3', correct_answer: 'C', points: 1 }
+      ];
+    }
+    
+    if (lowerQuery.includes('assignments')) {
+      return [
+        { id: 'assign-1', title: 'Biology Chapter 1 Quiz', quiz_id: 'quiz-1', assigned_to: 'class-bio-101', due_date: '2025-02-15T23:59:59Z', status: 'active', created_by: 'teacher-001' },
+        { id: 'assign-2', title: 'Math Practice Test', quiz_id: 'quiz-2', assigned_to: 'class-math-201', due_date: '2025-02-20T23:59:59Z', status: 'draft', created_by: 'teacher-001' },
+        { id: 'assign-3', title: 'NREMT Practice Exam', quiz_id: 'quiz-3', assigned_to: 'student-37065900', due_date: '2025-02-10T23:59:59Z', status: 'completed', created_by: 'teacher-001' }
       ];
     }
     
     if (lowerQuery.includes('quiz_attempts')) {
       return [
-        { id: '1', quiz_id: 'quiz-1', user_id: '37065900', status: 'completed', score: 85, started_at: '2025-01-01T10:00:00Z' },
-        { id: '2', quiz_id: 'quiz-2', user_id: 'teacher-001', status: 'in_progress', score: null, started_at: '2025-01-01T11:00:00Z' }
+        { id: '1', quiz_id: 'quiz-1', user_id: '37065900', status: 'completed', score: 85, max_score: 100, time_spent: 1800, started_at: '2025-01-01T10:00:00Z', completed_at: '2025-01-01T10:30:00Z' },
+        { id: '2', quiz_id: 'quiz-2', user_id: 'teacher-001', status: 'in_progress', score: null, max_score: 150, time_spent: 900, started_at: '2025-01-01T11:00:00Z', completed_at: null },
+        { id: '3', quiz_id: 'quiz-3', user_id: '37065900', status: 'completed', score: 92, max_score: 100, time_spent: 2100, started_at: '2025-01-02T14:00:00Z', completed_at: '2025-01-02T14:35:00Z' }
       ];
     }
     
     if (lowerQuery.includes('accounts')) {
       return [
-        { id: 'account-1', name: 'Test Organization', type: 'educational', created_at: '2025-01-01T00:00:00Z' },
-        { id: 'account-2', name: 'Springfield High School', type: 'educational', created_at: '2025-01-02T00:00:00Z' }
+        { id: 'account-1', name: 'Test Organization', type: 'educational', user_count: 150, subscription_tier: 'premium', status: 'active', created_at: '2025-01-01T00:00:00Z' },
+        { id: 'account-2', name: 'Springfield High School', type: 'educational', user_count: 89, subscription_tier: 'standard', status: 'active', created_at: '2025-01-02T00:00:00Z' },
+        { id: 'account-3', name: 'State University', type: 'higher_education', user_count: 2340, subscription_tier: 'enterprise', status: 'active', created_at: '2025-01-03T00:00:00Z' }
+      ];
+    }
+    
+    if (lowerQuery.includes('roles')) {
+      return [
+        { id: 'role-1', name: 'super_admin', permissions: '{"canAccessDatabase":true,"canManageSystem":true}', description: 'Full system access', is_active: true },
+        { id: 'role-2', name: 'admin', permissions: '{"canManageUsers":true,"canViewAnalytics":true}', description: 'Account administration', is_active: true },
+        { id: 'role-3', name: 'teacher', permissions: '{"canCreateQuizzes":true,"canManageTestbanks":true}', description: 'Content creation', is_active: true },
+        { id: 'role-4', name: 'student', permissions: '{"canTakeQuizzes":true}', description: 'Assessment taking', is_active: true }
+      ];
+    }
+    
+    if (lowerQuery.includes('cat_exams')) {
+      return [
+        { id: 'cat-1', name: 'Adaptive Biology Test', difficulty_range: '0.2-0.8', question_pool_size: 500, target_theta: 0.0, status: 'active', created_by: 'teacher-001' },
+        { id: 'cat-2', name: 'NREMT CAT Practice', difficulty_range: '0.3-0.9', question_pool_size: 1200, target_theta: 0.5, status: 'active', created_by: 'teacher-001' },
+        { id: 'cat-3', name: 'Math Placement CAT', difficulty_range: '0.1-0.7', question_pool_size: 800, target_theta: 0.2, status: 'draft', created_by: 'teacher-001' }
+      ];
+    }
+    
+    if (lowerQuery.includes('system_settings')) {
+      return [
+        { id: 'setting-1', key: 'max_quiz_duration', value: '7200', description: 'Maximum quiz duration in seconds', category: 'quiz_settings' },
+        { id: 'setting-2', key: 'ai_generation_limit', value: '1000', description: 'Monthly AI generation limit per account', category: 'ai_settings' },
+        { id: 'setting-3', key: 'proctoring_enabled', value: 'true', description: 'Enable live proctoring features', category: 'proctoring_settings' },
+        { id: 'setting-4', key: 'analytics_retention_days', value: '365', description: 'Analytics data retention period', category: 'data_settings' }
       ];
     }
     
     if (lowerQuery.includes('ai_generations')) {
       return [
-        { id: '1', provider: 'openai', prompt_tokens: 150, completion_tokens: 300, created_at: '2025-01-01T12:00:00Z' },
-        { id: '2', provider: 'anthropic', prompt_tokens: 200, completion_tokens: 250, created_at: '2025-01-01T13:00:00Z' }
+        { id: '1', provider: 'openai', model: 'gpt-4', prompt_tokens: 150, completion_tokens: 300, cost: 0.045, status: 'completed', generated_type: 'question', created_at: '2025-01-01T12:00:00Z' },
+        { id: '2', provider: 'anthropic', model: 'claude-3-sonnet', prompt_tokens: 200, completion_tokens: 250, cost: 0.032, status: 'completed', generated_type: 'quiz', created_at: '2025-01-01T13:00:00Z' },
+        { id: '3', provider: 'google', model: 'gemini-pro', prompt_tokens: 180, completion_tokens: 320, cost: 0.028, status: 'completed', generated_type: 'explanation', created_at: '2025-01-01T14:00:00Z' }
       ];
     }
     
-    return [{ message: 'Query executed successfully', timestamp: new Date().toISOString() }];
+    if (lowerQuery.includes('llm_providers')) {
+      return [
+        { id: 'openai', name: 'OpenAI', is_enabled: true, api_key_length: 22, last_used: '2025-01-03T10:00:00Z', usage_count: 1250, cost_this_month: 145.67 },
+        { id: 'anthropic', name: 'Anthropic Claude', is_enabled: true, api_key_length: 28, last_used: '2025-01-03T09:30:00Z', usage_count: 890, cost_this_month: 98.43 },
+        { id: 'google', name: 'Google Gemini', is_enabled: true, api_key_length: 16, last_used: '2025-01-03T11:15:00Z', usage_count: 654, cost_this_month: 67.89 }
+      ];
+    }
+    
+    return [{ message: 'Query executed successfully', rows_affected: 0, timestamp: new Date().toISOString() }];
   }
 
   getMockTableData(tableName: string): any[] {
     switch (tableName.toLowerCase()) {
       case 'users':
         return [
-          { id: '37065900', email: 'paramedic@example.com', first_name: 'John', last_name: 'Doe', role: 'student', is_active: true },
-          { id: 'test-user', email: 'test@example.com', first_name: 'Test', last_name: 'Admin', role: 'super_admin', is_active: true },
-          { id: 'teacher-001', email: 'teacher@school.edu', first_name: 'Sarah', last_name: 'Johnson', role: 'teacher', is_active: true }
+          { id: '37065900', email: 'paramedic@example.com', first_name: 'John', last_name: 'Doe', role: 'student', account_id: 'account-1', is_active: true, last_login: '2025-01-03T10:30:00Z' },
+          { id: 'test-user', email: 'test@example.com', first_name: 'Test', last_name: 'Admin', role: 'super_admin', account_id: 'account-1', is_active: true, last_login: '2025-01-03T11:45:00Z' },
+          { id: 'teacher-001', email: 'teacher@school.edu', first_name: 'Sarah', last_name: 'Johnson', role: 'teacher', account_id: 'account-2', is_active: true, last_login: '2025-01-03T09:15:00Z' }
         ];
       case 'accounts':
         return [
-          { id: 'account-1', name: 'Test Organization', type: 'educational', user_count: 150 },
-          { id: 'account-2', name: 'Springfield High School', type: 'educational', user_count: 89 }
+          { id: 'account-1', name: 'Test Organization', type: 'educational', user_count: 150, subscription_tier: 'premium', monthly_cost: 299.99, status: 'active' },
+          { id: 'account-2', name: 'Springfield High School', type: 'educational', user_count: 89, subscription_tier: 'standard', monthly_cost: 149.99, status: 'active' },
+          { id: 'account-3', name: 'State University', type: 'higher_education', user_count: 2340, subscription_tier: 'enterprise', monthly_cost: 999.99, status: 'active' }
+        ];
+      case 'item_banks':
+        return [
+          { id: 'bank-1', name: 'Biology Question Bank', description: 'Comprehensive biology questions', question_count: 450, category: 'Science', owner_id: 'teacher-001', is_public: true },
+          { id: 'bank-2', name: 'Math Fundamentals', description: 'Basic mathematics concepts', question_count: 320, category: 'Mathematics', owner_id: 'teacher-001', is_public: false },
+          { id: 'bank-3', name: 'NREMT Practice Bank', description: 'Emergency medical technician questions', question_count: 780, category: 'Medical', owner_id: 'teacher-001', is_public: true }
+        ];
+      case 'questions':
+        return [
+          { id: 'q-1', question_text: 'What is the primary function of mitochondria?', question_type: 'multiple_choice', difficulty: 0.65, item_bank_id: 'bank-1', correct_answer: 'A', points: 2, usage_count: 156 },
+          { id: 'q-2', question_text: 'Calculate the derivative of x²+3x+1', question_type: 'multiple_choice', difficulty: 0.82, item_bank_id: 'bank-2', correct_answer: 'B', points: 3, usage_count: 89 },
+          { id: 'q-3', question_text: 'What is the normal respiratory rate for adults?', question_type: 'multiple_choice', difficulty: 0.34, item_bank_id: 'bank-3', correct_answer: 'C', points: 1, usage_count: 234 }
         ];
       case 'quizzes':
         return [
-          { id: 'quiz-1', title: 'Biology Fundamentals', description: 'Basic biology concepts', question_count: 25, is_published: true },
-          { id: 'quiz-2', title: 'Math Assessment', description: 'Mathematical reasoning', question_count: 30, is_published: false }
+          { id: 'quiz-1', title: 'Biology Fundamentals', description: 'Basic biology concepts', question_count: 25, time_limit: 1800, max_attempts: 3, is_published: true, created_by: 'teacher-001' },
+          { id: 'quiz-2', title: 'Math Assessment', description: 'Mathematical reasoning', question_count: 30, time_limit: 2400, max_attempts: 2, is_published: false, created_by: 'teacher-001' },
+          { id: 'quiz-3', title: 'NREMT Practice Test', description: 'Emergency medical practice', question_count: 120, time_limit: 7200, max_attempts: 1, is_published: true, created_by: 'teacher-001' }
+        ];
+      case 'assignments':
+        return [
+          { id: 'assign-1', title: 'Biology Chapter 1 Quiz', quiz_id: 'quiz-1', assigned_to: 'class-bio-101', due_date: '2025-02-15T23:59:59Z', completion_rate: 0.78, average_score: 82.5 },
+          { id: 'assign-2', title: 'Math Practice Test', quiz_id: 'quiz-2', assigned_to: 'class-math-201', due_date: '2025-02-20T23:59:59Z', completion_rate: 0.45, average_score: 76.2 },
+          { id: 'assign-3', title: 'NREMT Practice Exam', quiz_id: 'quiz-3', assigned_to: 'student-37065900', due_date: '2025-02-10T23:59:59Z', completion_rate: 1.0, average_score: 92.0 }
+        ];
+      case 'roles':
+        return [
+          { id: 'role-1', name: 'super_admin', display_name: 'Super Administrator', user_count: 2, permissions: '{"canAccessDatabase":true,"canManageSystem":true}', is_default: true },
+          { id: 'role-2', name: 'admin', display_name: 'Administrator', user_count: 12, permissions: '{"canManageUsers":true,"canViewAnalytics":true}', is_default: true },
+          { id: 'role-3', name: 'teacher', display_name: 'Teacher', user_count: 45, permissions: '{"canCreateQuizzes":true,"canManageTestbanks":true}', is_default: true },
+          { id: 'role-4', name: 'student', display_name: 'Student', user_count: 1180, permissions: '{"canTakeQuizzes":true}', is_default: true }
+        ];
+      case 'cat_exams':
+        return [
+          { id: 'cat-1', name: 'Adaptive Biology Test', difficulty_range: '0.2-0.8', question_pool_size: 500, sessions_completed: 67, average_questions: 18.5, average_theta: 0.12 },
+          { id: 'cat-2', name: 'NREMT CAT Practice', difficulty_range: '0.3-0.9', question_pool_size: 1200, sessions_completed: 234, average_questions: 22.3, average_theta: 0.34 },
+          { id: 'cat-3', name: 'Math Placement CAT', difficulty_range: '0.1-0.7', question_pool_size: 800, sessions_completed: 156, average_questions: 20.1, average_theta: 0.18 }
+        ];
+      case 'system_settings':
+        return [
+          { id: 'setting-1', key: 'max_quiz_duration', value: '7200', data_type: 'integer', description: 'Maximum quiz duration in seconds', last_modified: '2025-01-01T00:00:00Z' },
+          { id: 'setting-2', key: 'ai_generation_limit', value: '1000', data_type: 'integer', description: 'Monthly AI generation limit per account', last_modified: '2025-01-02T00:00:00Z' },
+          { id: 'setting-3', key: 'proctoring_enabled', value: 'true', data_type: 'boolean', description: 'Enable live proctoring features', last_modified: '2025-01-03T00:00:00Z' }
+        ];
+      case 'llm_providers':
+        return [
+          { id: 'openai', name: 'OpenAI', model: 'gpt-4', is_enabled: true, requests_today: 145, cost_today: 12.45, response_time_avg: 850 },
+          { id: 'anthropic', name: 'Anthropic Claude', model: 'claude-3-sonnet', is_enabled: true, requests_today: 89, cost_today: 8.76, response_time_avg: 720 },
+          { id: 'google', name: 'Google Gemini', model: 'gemini-pro', is_enabled: true, requests_today: 67, cost_today: 5.23, response_time_avg: 950 }
         ];
       default:
-        return [{ id: '1', name: 'Sample Data', created_at: new Date().toISOString() }];
+        return [{ id: '1', name: 'Sample Data', table_name: tableName, created_at: new Date().toISOString() }];
     }
   }
 
