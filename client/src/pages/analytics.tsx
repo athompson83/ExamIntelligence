@@ -410,6 +410,7 @@ export default function Analytics() {
               </Card>
             </TabsContent>
           </Tabs>
+          </div>
         </main>
       </div>
     </div>

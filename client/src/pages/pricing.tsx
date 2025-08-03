@@ -1,293 +1,466 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { Separator } from '@/components/ui/separator';
 import { 
   Check, 
-  X, 
-  Zap, 
+  Star, 
+  ArrowRight, 
   Users, 
-  BarChart3, 
+  Bot, 
   Shield, 
-  Smartphone, 
+  BarChart3, 
+  Download,
   Crown,
-  Star,
-  ArrowRight,
-  Home,
-  ChevronRight
+  Building2,
+  Zap
 } from 'lucide-react';
-import { Link, useLocation } from 'wouter';
+import { PRICING_PLANS, calculateAnnualSavings } from '@shared/pricing';
+import { useAuth } from '@/hooks/useAuth';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { Helmet } from 'react-helmet-async';
 
-interface PricingPlan {
-  id: string;
-  name: string;
-  description: string;
-  priceMonthly: number;
-  priceYearly: number;
-  stripePriceIdMonthly: string;
-  stripePriceIdYearly: string;
-  maxUsers: number;
-  maxQuizzes: number;
-  maxQuestions: number;
-  maxStorage: number;
-  features: {
-    aiQuestionGeneration: boolean;
-    liveProctoring: boolean;
-    advancedAnalytics: boolean;
-    customBranding: boolean;
-    apiAccess: boolean;
-    ssoIntegration: boolean;
-    prioritySupport: boolean;
-    mobileApp: boolean;
-    bulkImport: boolean;
-    whiteLabel: boolean;
-  };
-  isActive: boolean;
-  sortOrder: number;
-}
-
-export default function PricingPage() {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const [, navigate] = useLocation();
+export default function Pricing() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [isAnnual, setIsAnnual] = useState(false);
 
-  const { data: plans, isLoading } = useQuery<PricingPlan[]>({
-    queryKey: ['/api/subscription-plans'],
-    queryFn: () => apiRequest('/api/subscription-plans'),
-  });
-
-  const { data: currentUser } = useQuery({
-    queryKey: ['/api/auth/user'],
-    queryFn: () => apiRequest('/api/auth/user'),
-  });
-
-  const handleSelectPlan = async (plan: PricingPlan) => {
-    try {
-      const response = await apiRequest('/api/create-subscription', {
-        method: 'POST',
-        body: JSON.stringify({
-          planId: plan.id,
-          billingCycle: billingCycle,
-          priceId: billingCycle === 'monthly' ? plan.stripePriceIdMonthly : plan.stripePriceIdYearly,
-        }),
+  const createCheckoutSessionMutation = useMutation({
+    mutationFn: async ({ priceId, isUpgrade }: { priceId: string; isUpgrade?: boolean }) => {
+      const response = await apiRequest('POST', '/api/stripe/create-checkout-session', {
+        priceId,
+        isUpgrade
       });
-
-      if (response.clientSecret) {
-        navigate(`/subscribe?client_secret=${response.clientSecret}&plan=${plan.name}`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.url) {
+        window.location.href = data.url;
       }
-    } catch (error) {
+    },
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to create subscription. Please try again.",
+        description: error.message || "Failed to create checkout session",
         variant: "destructive",
       });
+    },
+  });
+
+  const handleSubscribe = async (planId: string, stripePriceId?: string) => {
+    if (!stripePriceId) {
+      if (planId === 'enterprise') {
+        toast({
+          title: "Contact Sales",
+          description: "Please contact our sales team for Enterprise pricing.",
+        });
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Stripe price ID not configured for this plan.",
+        variant: "destructive",
+      });
+      return;
     }
+
+    createCheckoutSessionMutation.mutate({ 
+      priceId: stripePriceId,
+      isUpgrade: !!user?.accountId
+    });
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(price / 100);
+  const formatPrice = (price: number, isEnterprise = false) => {
+    if (isEnterprise || price === 0) {
+      return price === 0 ? 'Free' : 'Custom';
+    }
+    return `$${price.toLocaleString()}`;
   };
 
-  const getFeatureIcon = (feature: string) => {
-    switch (feature) {
-      case 'aiQuestionGeneration': return <Zap className="h-4 w-4" />;
-      case 'liveProctoring': return <Shield className="h-4 w-4" />;
-      case 'advancedAnalytics': return <BarChart3 className="h-4 w-4" />;
-      case 'mobileApp': return <Smartphone className="h-4 w-4" />;
-      case 'prioritySupport': return <Crown className="h-4 w-4" />;
+  const getFeatureIcon = (featureType: string) => {
+    switch (featureType) {
+      case 'ai': return <Bot className="h-4 w-4" />;
+      case 'users': return <Users className="h-4 w-4" />;
+      case 'security': return <Shield className="h-4 w-4" />;
+      case 'analytics': return <BarChart3 className="h-4 w-4" />;
+      case 'export': return <Download className="h-4 w-4" />;
       default: return <Check className="h-4 w-4" />;
     }
   };
 
-  const getFeatureLabel = (feature: string) => {
-    switch (feature) {
-      case 'aiQuestionGeneration': return 'AI Question Generation';
-      case 'liveProctoring': return 'Live Proctoring';
-      case 'advancedAnalytics': return 'Advanced Analytics';
-      case 'customBranding': return 'Custom Branding';
-      case 'apiAccess': return 'API Access';
-      case 'ssoIntegration': return 'SSO Integration';
-      case 'prioritySupport': return 'Priority Support';
-      case 'mobileApp': return 'Mobile App';
-      case 'bulkImport': return 'Bulk Import';
-      case 'whiteLabel': return 'White Label';
-      default: return feature;
+  const getFeatureList = (plan: typeof PRICING_PLANS[0]) => {
+    const features = [];
+    
+    // Quiz Creation
+    if (plan.features.canCreateQuiz) {
+      features.push({
+        text: plan.features.maxActiveQuizzes === "unlimited" 
+          ? "Unlimited active quizzes" 
+          : `Up to ${plan.features.maxActiveQuizzes} active quizzes`,
+        icon: 'default'
+      });
     }
-  };
 
-  const isPlanRecommended = (plan: PricingPlan) => {
-    return plan.name.toLowerCase() === 'premium';
-  };
+    // Test Bank
+    if (plan.features.testBankQuestionLimit !== 0) {
+      features.push({
+        text: plan.features.testBankQuestionLimit === "unlimited"
+          ? "Unlimited test bank questions"
+          : `Up to ${plan.features.testBankQuestionLimit} test bank questions`,
+        icon: 'default'
+      });
+    }
 
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+    // AI Features
+    if (plan.features.aiGenerateQuotaPerMonth > 0) {
+      features.push({
+        text: plan.features.aiGenerateQuotaPerMonth === "unlimited"
+          ? "Unlimited AI question generation"
+          : `${plan.features.aiGenerateQuotaPerMonth} AI-generated questions/month`,
+        icon: 'ai'
+      });
+    }
+
+    if (plan.features.aiValidationQuotaPerMonth > 0) {
+      features.push({
+        text: plan.features.aiValidationQuotaPerMonth === "unlimited"
+          ? "Unlimited AI validation"
+          : `${plan.features.aiValidationQuotaPerMonth} AI validations/month`,
+        icon: 'ai'
+      });
+    }
+
+    // Advanced Features
+    if (plan.features.canUseCAT) {
+      features.push({ text: "Computer-Adaptive Testing (CAT)", icon: 'default' });
+    }
+
+    if (plan.features.canUseLTI) {
+      features.push({ text: "LTI Integration (Canvas, Blackboard, Moodle)", icon: 'default' });
+    }
+
+    if (plan.features.canUseProctoring) {
+      features.push({
+        text: plan.features.proctoringSessionsPerMonth === "unlimited"
+          ? "Unlimited proctoring sessions"
+          : `${plan.features.proctoringSessionsPerMonth} proctoring sessions/month`,
+        icon: 'security'
+      });
+    }
+
+    // Analytics
+    if (plan.features.advancedAnalytics) {
+      features.push({ text: "Advanced analytics & item analysis", icon: 'analytics' });
+    } else if (plan.features.basicReporting) {
+      features.push({ text: "Basic reporting", icon: 'analytics' });
+    }
+
+    // Import/Export
+    if (plan.features.canImportCSV && plan.features.canExportCSV) {
+      features.push({ text: "CSV/Excel import & export", icon: 'export' });
+    }
+
+    // Enterprise Features
+    if (plan.features.cohortManagement) {
+      features.push({ text: "Cohort & group management", icon: 'users' });
+    }
+
+    if (plan.features.ssoIntegration) {
+      features.push({ text: "SSO & SCIM provisioning", icon: 'security' });
+    }
+
+    if (plan.features.whiteLabel) {
+      features.push({ text: "White-label & custom theming", icon: 'default' });
+    }
+
+    if (plan.features.dedicatedSupport) {
+      features.push({ text: "Dedicated account manager", icon: 'default' });
+    }
+
+    if (plan.features.onPremDeployment) {
+      features.push({ text: "On-premise deployment", icon: 'security' });
+    }
+
+    return features.slice(0, 8); // Limit to 8 features for display
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
-        <Link href="/" className="hover:text-foreground">
-          <Home className="h-4 w-4" />
-        </Link>
-        <ChevronRight className="h-4 w-4" />
-        <span className="text-foreground">Pricing</span>
-      </nav>
+    <>
+      <Helmet>
+        <title>Pricing Plans - ProficiencyAI</title>
+        <meta name="description" content="Choose the perfect ProficiencyAI plan for your educational assessment needs. From free starter plans to enterprise solutions with advanced AI-powered features." />
+      </Helmet>
 
-      {/* Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Select the perfect plan for your educational needs. All plans include core features with varying limits and capabilities.
-        </p>
-      </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        {/* Header */}
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center space-y-6 mb-12">
+            <div className="space-y-2">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Choose Your Plan
+              </h1>
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                Scale your educational assessment capabilities with our flexible pricing options. 
+                Start free and upgrade as your needs grow.
+              </p>
+            </div>
 
-      {/* Billing Toggle */}
-      <div className="flex items-center justify-center space-x-4 mb-8">
-        <Label htmlFor="billing-toggle" className={billingCycle === 'monthly' ? 'text-primary' : 'text-muted-foreground'}>
-          Monthly
-        </Label>
-        <Switch
-          id="billing-toggle"
-          checked={billingCycle === 'yearly'}
-          onCheckedChange={(checked) => setBillingCycle(checked ? 'yearly' : 'monthly')}
-        />
-        <Label htmlFor="billing-toggle" className={billingCycle === 'yearly' ? 'text-primary' : 'text-muted-foreground'}>
-          Yearly
-          <Badge variant="secondary" className="ml-2">Save 20%</Badge>
-        </Label>
-      </div>
-
-      {/* Pricing Cards */}
-      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {(Array.isArray(plans) ? plans : []).map((plan) => (
-          <Card key={plan.id} className={`relative ${isPlanRecommended(plan) ? 'border-primary shadow-lg' : ''}`}>
-            {isPlanRecommended(plan) && (
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground">
-                  <Star className="h-3 w-3 mr-1" />
-                  Recommended
+            {/* Billing Toggle */}
+            <div className="flex items-center justify-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-full shadow-sm border w-fit mx-auto">
+              <span className={`text-sm font-medium transition-colors ${!isAnnual ? 'text-blue-600' : 'text-gray-500'}`}>
+                Monthly
+              </span>
+              <Switch
+                checked={isAnnual}
+                onCheckedChange={setIsAnnual}
+                className="data-[state=checked]:bg-blue-600"
+              />
+              <span className={`text-sm font-medium transition-colors ${isAnnual ? 'text-blue-600' : 'text-gray-500'}`}>
+                Annual
+              </span>
+              {isAnnual && (
+                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 border-green-200">
+                  Save 15%
                 </Badge>
-              </div>
-            )}
-            
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">{plan.name}</CardTitle>
-              <p className="text-muted-foreground">{plan.description}</p>
-              <div className="mt-4">
-                <div className="text-4xl font-bold">
-                  {formatPrice(billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  per {billingCycle === 'monthly' ? 'month' : 'year'}
-                </div>
-                {billingCycle === 'yearly' && (
-                  <div className="text-sm text-green-600 mt-1">
-                    Save {formatPrice(plan.priceMonthly * 12 - plan.priceYearly)} annually
-                  </div>
-                )}
-              </div>
-            </CardHeader>
+              )}
+            </div>
+          </div>
 
-            <CardContent className="space-y-6">
-              {/* Limits */}
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Users</span>
-                  <span className="font-medium">{plan.maxUsers === -1 ? 'Unlimited' : plan.maxUsers}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Quizzes</span>
-                  <span className="font-medium">{plan.maxQuizzes === -1 ? 'Unlimited' : plan.maxQuizzes}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Questions</span>
-                  <span className="font-medium">{plan.maxQuestions === -1 ? 'Unlimited' : plan.maxQuestions}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Storage</span>
-                  <span className="font-medium">{plan.maxStorage === -1 ? 'Unlimited' : `${plan.maxStorage} GB`}</span>
-                </div>
-              </div>
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
+            {PRICING_PLANS.map((plan) => {
+              const features = getFeatureList(plan);
+              const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
+              const savings = isAnnual ? calculateAnnualSavings(plan.monthlyPrice) : 0;
+              
+              return (
+                <Card 
+                  key={plan.id} 
+                  className={`relative transition-all duration-300 hover:shadow-lg ${
+                    plan.popular 
+                      ? 'border-blue-500 shadow-blue-100 scale-105 lg:scale-110' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  } ${plan.enterprise ? 'border-purple-500 shadow-purple-100' : ''}`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-blue-600 text-white px-3 py-1">
+                        <Star className="h-3 w-3 mr-1" />
+                        Most Popular
+                      </Badge>
+                    </div>
+                  )}
 
-              {/* Features */}
-              <div className="space-y-3">
-                <h4 className="font-semibold">Features</h4>
-                {Object.entries(plan.features).map(([feature, enabled]) => (
-                  <div key={feature} className="flex items-center space-x-2">
-                    {enabled ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <X className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <span className={`text-sm ${enabled ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {getFeatureLabel(feature)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  {plan.enterprise && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-purple-600 text-white px-3 py-1">
+                        <Crown className="h-3 w-3 mr-1" />
+                        Enterprise
+                      </Badge>
+                    </div>
+                  )}
 
-              {/* Action Button */}
-              <Button 
-                className="w-full"
-                variant={isPlanRecommended(plan) ? "default" : "outline"}
-                onClick={() => handleSelectPlan(plan)}
-                disabled={!plan.isActive}
-              >
-                {plan.name === 'Free' ? 'Get Started' : 'Subscribe Now'}
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  <CardHeader className="text-center pb-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-center gap-2">
+                        {plan.id === 'institutional' && <Building2 className="h-5 w-5 text-orange-600" />}
+                        {plan.id === 'professional' && <Zap className="h-5 w-5 text-blue-600" />}
+                        <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{plan.description}</p>
+                    </div>
 
-      {/* FAQ Section */}
-      <div className="mt-20 max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="font-semibold mb-2">Can I change my plan later?</h3>
-              <p className="text-muted-foreground">
-                Yes, you can upgrade or downgrade your plan at any time. Changes will be prorated and reflected in your next billing cycle.
+                    <div className="space-y-1">
+                      <div className="text-3xl font-bold">
+                        {formatPrice(price, plan.enterprise)}
+                        {!plan.enterprise && price > 0 && (
+                          <span className="text-base font-normal text-gray-500">
+                            /{isAnnual ? 'year' : 'month'}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {!plan.enterprise && isAnnual && plan.monthlyPrice > 0 && savings > 0 && (
+                        <p className="text-sm text-green-600">
+                          Save ${savings.toFixed(0)}/year
+                        </p>
+                      )}
+
+                      {plan.id === 'institutional' && (
+                        <p className="text-xs text-gray-500">Up to 100 seats included</p>
+                      )}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <ul className="space-y-2">
+                      {features.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <div className="text-green-600 mt-0.5">
+                            {getFeatureIcon(feature.icon)}
+                          </div>
+                          <span>{feature.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Separator />
+
+                    <Button
+                      onClick={() => handleSubscribe(
+                        plan.id, 
+                        isAnnual ? plan.stripePriceIdAnnual : plan.stripePriceIdMonthly
+                      )}
+                      disabled={createCheckoutSessionMutation.isPending}
+                      className={`w-full ${
+                        plan.popular 
+                          ? 'bg-blue-600 hover:bg-blue-700' 
+                          : plan.enterprise
+                          ? 'bg-purple-600 hover:bg-purple-700'
+                          : 'bg-gray-900 hover:bg-gray-800'
+                      }`}
+                      variant={plan.id === 'starter' ? 'outline' : 'default'}
+                    >
+                      {plan.id === 'starter' ? 'Get Started Free' : 
+                       plan.enterprise ? 'Contact Sales' : 
+                       'Choose Plan'}
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Feature Comparison Table */}
+          <div className="mt-16">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4">Feature Comparison</h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                Compare all features across our pricing tiers
               </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="font-semibold mb-2">What happens to my data if I cancel?</h3>
-              <p className="text-muted-foreground">
-                Your data will be preserved for 30 days after cancellation. You can reactivate your account within this period to restore full access.
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="font-semibold mb-2">Do you offer refunds?</h3>
-              <p className="text-muted-foreground">
-                Yes, we offer a 30-day money-back guarantee for all paid plans. Contact our support team for assistance.
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="text-left p-4 font-semibold">Features</th>
+                      {PRICING_PLANS.map(plan => (
+                        <th key={plan.id} className="text-center p-4 font-semibold min-w-[120px]">
+                          {plan.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                    <tr>
+                      <td className="p-4 font-medium">Active Quizzes</td>
+                      {PRICING_PLANS.map(plan => (
+                        <td key={plan.id} className="text-center p-4">
+                          {plan.features.maxActiveQuizzes === "unlimited" ? "Unlimited" : plan.features.maxActiveQuizzes}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="bg-gray-25 dark:bg-gray-750">
+                      <td className="p-4 font-medium">AI Question Generation</td>
+                      {PRICING_PLANS.map(plan => (
+                        <td key={plan.id} className="text-center p-4">
+                          {plan.features.aiGenerateQuotaPerMonth === "unlimited" 
+                            ? "Unlimited" 
+                            : `${plan.features.aiGenerateQuotaPerMonth}/month`}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-medium">Computer-Adaptive Testing</td>
+                      {PRICING_PLANS.map(plan => (
+                        <td key={plan.id} className="text-center p-4">
+                          {plan.features.canUseCAT ? (
+                            <Check className="h-5 w-5 text-green-600 mx-auto" />
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="bg-gray-25 dark:bg-gray-750">
+                      <td className="p-4 font-medium">Live Proctoring</td>
+                      {PRICING_PLANS.map(plan => (
+                        <td key={plan.id} className="text-center p-4">
+                          {plan.features.canUseProctoring ? (
+                            <Check className="h-5 w-5 text-green-600 mx-auto" />
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-medium">LTI Integration</td>
+                      {PRICING_PLANS.map(plan => (
+                        <td key={plan.id} className="text-center p-4">
+                          {plan.features.canUseLTI ? (
+                            <Check className="h-5 w-5 text-green-600 mx-auto" />
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* FAQ Section */}
+          <div className="mt-16 max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
+            </div>
+
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-2">Can I change my plan at any time?</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately 
+                    for upgrades, and at the end of your billing cycle for downgrades.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    We accept all major credit cards, debit cards, and ACH transfers through Stripe. 
+                    Enterprise customers can also arrange for wire transfers and custom billing terms.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-2">Is there a free trial available?</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Our Starter plan is completely free forever. For paid plans, we offer a 14-day 
+                    free trial so you can test all premium features before committing.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

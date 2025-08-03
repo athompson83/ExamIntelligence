@@ -22,6 +22,10 @@ import {
   proctoringParticipants,
   examReferences,
   llmProviders,
+  systemSettings,
+  subscriptions,
+  invoices,
+  activityLogs,
   type User,
   type UpsertUser,
   type Testbank,
@@ -47,7 +51,11 @@ import {
   type InsertCatExamSession,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, like, or, gte, lte } from "drizzle-orm";
+import { nanoid } from "nanoid";
+
+// Generate unique IDs for new records
+const generateId = () => nanoid();
 
 // Storage interface for basic functionality
 export interface IStorage {
@@ -2631,6 +2639,486 @@ Return JSON with the new question data:
       return [];
     } catch (error) {
       console.error('Error fetching unresolved proctoring logs:', error);
+      return [];
+    }
+  }
+
+  // System Settings Methods
+  async getSystemSetting(key: string): Promise<string | null> {
+    try {
+      const result = await db.select()
+        .from(systemSettings)
+        .where(eq(systemSettings.key, key))
+        .limit(1);
+      
+      return result[0]?.value || null;
+    } catch (error) {
+      console.error('Error getting system setting:', error);
+      return null;
+    }
+  }
+
+  async getAllSystemSettings(): Promise<Array<{
+    id: string;
+    key: string;
+    value: string;
+    isSecret: boolean;
+    description: string;
+    updatedBy: string;
+    updatedAt: string;
+  }>> {
+    try {
+      const result = await db.select({
+        id: systemSettings.id,
+        key: systemSettings.key,
+        value: systemSettings.value,
+        isSecret: systemSettings.isSecret,
+        description: systemSettings.description,
+        updatedBy: systemSettings.updatedBy,
+        updatedAt: systemSettings.updatedAt,
+      }).from(systemSettings);
+      
+      return result.map(setting => ({
+        ...setting,
+        updatedAt: setting.updatedAt.toISOString(),
+      }));
+    } catch (error) {
+      console.error('Error getting all system settings:', error);
+      return [];
+    }
+  }
+
+  async updateSystemSetting(data: {
+    key: string;
+    value: string;
+    isSecret: boolean;
+    description: string;
+    updatedBy: string;
+  }): Promise<any> {
+    try {
+      const result = await db.insert(systemSettings)
+        .values({
+          id: generateId(),
+          ...data,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: systemSettings.key,
+          set: {
+            value: data.value,
+            isSecret: data.isSecret,
+            description: data.description,
+            updatedBy: data.updatedBy,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating system setting:', error);
+      throw error;
+    }
+  }
+
+  // Subscription Management Methods
+  async getSubscriptionByAccountId(accountId: string): Promise<any> {
+    try {
+      const result = await db.select()
+        .from(subscriptions)
+        .where(eq(subscriptions.accountId, accountId))
+        .limit(1);
+      
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error getting subscription:', error);
+      return null;
+    }
+  }
+
+  async upsertSubscription(data: {
+    accountId: string;
+    stripeSubscriptionId: string;
+    stripePriceId: string;
+    stripeCustomerId: string;
+    status: string;
+    currentPeriodStart: Date;
+    currentPeriodEnd: Date;
+    cancelAtPeriodEnd: boolean;
+    canceledAt: Date | null;
+    tier: string;
+    billingCycle: string;
+  }): Promise<any> {
+    try {
+      const result = await db.insert(subscriptions)
+        .values({
+          id: generateId(),
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: subscriptions.accountId,
+          set: {
+            stripeSubscriptionId: data.stripeSubscriptionId,
+            stripePriceId: data.stripePriceId,
+            status: data.status,
+            currentPeriodStart: data.currentPeriodStart,
+            currentPeriodEnd: data.currentPeriodEnd,
+            cancelAtPeriodEnd: data.cancelAtPeriodEnd,
+            canceledAt: data.canceledAt,
+            tier: data.tier,
+            billingCycle: data.billingCycle,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error upserting subscription:', error);
+      throw error;
+    }
+  }
+
+  async getAllSubscriptions(): Promise<any[]> {
+    try {
+      const result = await db.select()
+        .from(subscriptions)
+        .leftJoin(accounts, eq(subscriptions.accountId, accounts.id));
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting all subscriptions:', error);
+      return [];
+    }
+  }
+
+  // Invoice Management Methods
+  async saveInvoice(data: {
+    accountId: string;
+    stripeInvoiceId: string;
+    stripeSubscriptionId: string;
+    amount: number;
+    currency: string;
+    status: string;
+    invoiceNumber: string;
+    invoiceUrl: string;
+    hostedInvoiceUrl: string;
+    invoicePdf: string;
+    dueDate: Date | null;
+    paidAt: Date | null;
+    periodStart: Date | null;
+    periodEnd: Date | null;
+    description: string;
+  }): Promise<any> {
+    try {
+      const result = await db.insert(invoices)
+        .values({
+          id: generateId(),
+          ...data,
+          createdAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: invoices.stripeInvoiceId,
+          set: {
+            status: data.status,
+            paidAt: data.paidAt,
+            invoiceUrl: data.invoiceUrl,
+            hostedInvoiceUrl: data.hostedInvoiceUrl,
+            invoicePdf: data.invoicePdf,
+          },
+        })
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error saving invoice:', error);
+      throw error;
+    }
+  }
+
+  async getInvoicesByAccountId(accountId: string): Promise<any[]> {
+    try {
+      const result = await db.select()
+        .from(invoices)
+        .where(eq(invoices.accountId, accountId))
+        .orderBy(desc(invoices.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting invoices:', error);
+      return [];
+    }
+  }
+
+  // Account Management Methods for Stripe
+  async getAccountByStripeCustomerId(customerId: string): Promise<any> {
+    try {
+      const result = await db.select()
+        .from(accounts)
+        .where(eq(accounts.stripeCustomerId, customerId))
+        .limit(1);
+      
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error getting account by Stripe customer ID:', error);
+      return null;
+    }
+  }
+
+  async incrementAccountUsage(accountId: string, usageType: 'aiGenerated' | 'aiValidations' | 'proctoringHours'): Promise<void> {
+    try {
+      const fieldMap = {
+        'aiGenerated': 'monthlyAiGenerated',
+        'aiValidations': 'monthlyAiValidations', 
+        'proctoringHours': 'monthlyProctoringHours',
+      };
+      
+      const field = fieldMap[usageType];
+      if (!field) return;
+      
+      await db.update(accounts)
+        .set({
+          [field]: sql`COALESCE(${field}, 0) + 1`,
+        })
+        .where(eq(accounts.id, accountId));
+    } catch (error) {
+      console.error('Error incrementing account usage:', error);
+    }
+  }
+
+  async getActiveQuizCount(accountId: string): Promise<number> {
+    try {
+      const result = await db.select({ count: sql<number>`count(*)` })
+        .from(quizzes)
+        .where(and(
+          eq(quizzes.accountId, accountId),
+          eq(quizzes.isActive, true)
+        ));
+      
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error('Error getting active quiz count:', error);
+      return 0;
+    }
+  }
+
+  async getTotalQuestionCount(accountId: string): Promise<number> {
+    try {
+      const result = await db.select({ count: sql<number>`count(*)` })
+        .from(questions)
+        .leftJoin(testbanks, eq(questions.testbankId, testbanks.id))
+        .where(eq(testbanks.accountId, accountId));
+      
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error('Error getting total question count:', error);
+      return 0;
+    }
+  }
+
+  async getAccountCount(): Promise<number> {
+    try {
+      const result = await db.select({ count: sql<number>`count(*)` })
+        .from(accounts);
+      
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error('Error getting account count:', error);
+      return 0;
+    }
+  }
+
+  // Billing Analytics
+  async getBillingAnalytics(): Promise<any> {
+    try {
+      const totalRevenue = await db.select({
+        total: sql<number>`COALESCE(sum(amount), 0)`
+      }).from(invoices).where(eq(invoices.status, 'paid'));
+      
+      const activeSubscriptions = await db.select({
+        count: sql<number>`count(*)`
+      }).from(subscriptions).where(eq(subscriptions.status, 'active'));
+      
+      const tierDistribution = await db.select({
+        tier: subscriptions.tier,
+        count: sql<number>`count(*)`
+      }).from(subscriptions).groupBy(subscriptions.tier);
+      
+      return {
+        totalRevenue: totalRevenue[0]?.total || 0,
+        activeSubscriptions: activeSubscriptions[0]?.count || 0,
+        tierDistribution,
+      };
+    } catch (error) {
+      console.error('Error getting billing analytics:', error);
+      return { totalRevenue: 0, activeSubscriptions: 0, tierDistribution: [] };
+    }
+  }
+
+  // Platform Statistics
+  async getPlatformStatistics(): Promise<any> {
+    try {
+      const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
+      const totalAccounts = await db.select({ count: sql<number>`count(*)` }).from(accounts);
+      const totalQuizzes = await db.select({ count: sql<number>`count(*)` }).from(quizzes);
+      const totalQuestions = await db.select({ count: sql<number>`count(*)` }).from(questions);
+      
+      return {
+        totalUsers: totalUsers[0]?.count || 0,
+        totalAccounts: totalAccounts[0]?.count || 0,
+        totalQuizzes: totalQuizzes[0]?.count || 0,
+        totalQuestions: totalQuestions[0]?.count || 0,
+      };
+    } catch (error) {
+      console.error('Error getting platform statistics:', error);
+      return { totalUsers: 0, totalAccounts: 0, totalQuizzes: 0, totalQuestions: 0 };
+    }
+  }
+
+  // User Management
+  async getUsers(filters: {
+    page: number;
+    limit: number;
+    search?: string;
+    role?: string;
+    accountId?: string;
+  }): Promise<any> {
+    try {
+      const offset = (filters.page - 1) * filters.limit;
+      let query = db.select().from(users).limit(filters.limit).offset(offset);
+      
+      const conditions = [];
+      
+      if (filters.search) {
+        conditions.push(
+          or(
+            like(users.email, `%${filters.search}%`),
+            like(users.firstName, `%${filters.search}%`),
+            like(users.lastName, `%${filters.search}%`)
+          )
+        );
+      }
+      
+      if (filters.role) {
+        conditions.push(eq(users.role, filters.role));
+      }
+      
+      if (filters.accountId) {
+        conditions.push(eq(users.accountId, filters.accountId));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      const result = await query;
+      return result;
+    } catch (error) {
+      console.error('Error getting users:', error);
+      return [];
+    }
+  }
+
+  async getUsersByAccountId(accountId: string): Promise<User[]> {
+    try {
+      return await db.select().from(users).where(eq(users.accountId, accountId));
+    } catch (error) {
+      console.error('Error getting users by account ID:', error);
+      return [];
+    }
+  }
+
+  // Account Management
+  async getAccounts(filters: {
+    page: number;
+    limit: number;
+    search?: string;
+    tier?: string;
+  }): Promise<any> {
+    try {
+      const offset = (filters.page - 1) * filters.limit;
+      let query = db.select().from(accounts).limit(filters.limit).offset(offset);
+      
+      const conditions = [];
+      
+      if (filters.search) {
+        conditions.push(like(accounts.name, `%${filters.search}%`));
+      }
+      
+      if (filters.tier) {
+        conditions.push(eq(accounts.subscriptionTier, filters.tier));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      const result = await query;
+      return result;
+    } catch (error) {
+      console.error('Error getting accounts:', error);
+      return [];
+    }
+  }
+
+  async updateAccountSubscription(accountId: string, data: {
+    subscriptionTier: string;
+    billingCycle: string;
+  }): Promise<any> {
+    try {
+      const result = await db.update(accounts)
+        .set(data)
+        .where(eq(accounts.id, accountId))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating account subscription:', error);
+      throw error;
+    }
+  }
+
+  // Audit Logs
+  async getAuditLogs(filters: {
+    page: number;
+    limit: number;
+    action?: string;
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<any> {
+    try {
+      const offset = (filters.page - 1) * filters.limit;
+      let query = db.select().from(activityLogs).limit(filters.limit).offset(offset);
+      
+      const conditions = [];
+      
+      if (filters.action) {
+        conditions.push(eq(activityLogs.action, filters.action));
+      }
+      
+      if (filters.userId) {
+        conditions.push(eq(activityLogs.userId, filters.userId));
+      }
+      
+      if (filters.startDate) {
+        conditions.push(gte(activityLogs.timestamp, filters.startDate));
+      }
+      
+      if (filters.endDate) {
+        conditions.push(lte(activityLogs.timestamp, filters.endDate));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      const result = await query.orderBy(desc(activityLogs.timestamp));
+      return result;
+    } catch (error) {
+      console.error('Error getting audit logs:', error);
       return [];
     }
   }

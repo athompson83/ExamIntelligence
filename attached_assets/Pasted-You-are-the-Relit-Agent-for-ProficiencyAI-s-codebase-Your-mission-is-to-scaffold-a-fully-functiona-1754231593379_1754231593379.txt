@@ -1,0 +1,88 @@
+You are the Relit Agent for ProficiencyAI’s codebase.  Your mission is to scaffold a fully-functional tiered permissions system **and** a Stripe-powered pricing UI, with every price point and feature clearly defined.  Follow these steps:
+
+0. **Pricing & Feature-Permission Matrix**  
+   Embed the following exact details into your code comments, docs, and UI copy so it’s impossible to mix up tiers:
+
+   1. **Starter** (Free)  
+      - Price: $0/month  
+      - Features enabled:  
+        • Manual quiz & test-bank creation  
+        • Up to 5 active quizzes  
+        • Test-bank cap: 100 questions total  
+        • AI-generate up to 10 questions/month  
+        • Basic reporting only  
+      - Features disabled: Computer-Adaptive Testing, Proctoring, LTI, AI-validation beyond 10 Qs, Advanced Analytics
+
+   2. **Basic** ($20/month or $204/year)  
+      - Price: $20/user/month (15% off → $204/user when billed annually)  
+      - Features enabled:  
+        • Unlimited manual quizzes & test-banks  
+        • AI-generate up to 200 questions/month  
+        • CSV/Excel import & export  
+        • AI-validation up to 50 questions/month  
+        • Basic analytics dashboard  
+      - Features disabled: Computer-Adaptive Testing, Proctoring, LTI integration, Advanced Analytics
+
+   3. **Professional** ($50/month or $510/year)  
+      - Price: $50/user/month (15% off → $510/user when billed annually)  
+      - Everything in **Basic**, plus:  
+        • **Computer-Adaptive Testing** (CAT)  
+        • **LTI** integration (Canvas, Blackboard, Moodle, etc.)  
+        • **Unlimited** AI-validation  
+        • **Advanced analytics**: item-analysis (difficulty, discrimination), cohort dashboards  
+        • **Proctoring** (up to 20 sessions/month; extra at $5/session)
+
+   4. **Institutional** ($1,200/month flat)  
+      - Price: $1,200/month for up to 100 seats  
+      - Everything in **Professional**, plus:  
+        • Cohort & group management (bulk-enroll, custom roles)  
+        • Seat overages: $10/user/month  
+        • Proctoring sessions at $4/session  
+      - Ideal for departments and small schools
+
+   5. **Enterprise** (Custom)  
+      - Price: negotiated, volume discounts available  
+      - Everything in **Institutional**, plus:  
+        • SSO & SCIM provisioning  
+        • White-label & custom theming  
+        • Dedicated account manager & SLA  
+        • On-prem or private-cloud deployment  
+        • Unlimited proctoring, premium support & training
+
+1. **Data Model & Permissions**  
+   - Extend your User model: add `role` enum = [“Starter”, “Basic”, “Professional”, “Institutional”, “Enterprise”].  
+   - Create a `features` table or JSON mapping that lists per-role booleans for:  
+     `canCreateQuiz`, `maxQuizzes`, `testBankLimit`, `aiGenQuota`, `aiValidationQuota`, `canUseCAT`, `canUseProctoring`, `canUseLTI`, `advancedAnalytics`.  
+   - Seed this mapping exactly to match the matrix above.  
+   - Implement a server-side guard/middleware that, on every request for a protected endpoint or feature flag check, verifies the user’s role against this mapping.  
+   - Mirror those guards client-side: disable or hide UI elements when `featureFlag === false`.
+
+2. **Landing Page Pricing UI**  
+   - Under your hero section, add a “Pricing” block with a toggle (Monthly / Annually).  
+   - Build a responsive grid of 5 cards—one per tier—displaying: tier name, monthly & annual price, bullet list of included features pulled dynamically from your mapping, and a “Subscribe” button.  
+   - Ensure the toggle recalculates annual pricing with the 15% discount inline.
+
+3. **Stripe Integration**  
+   - In Stripe Dashboard, create one Product per tier with two Prices (Monthly & Annual).  
+   - Load `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and front-end `STRIPE_PUBLISHABLE_KEY` from env.  
+   - Build a `POST /api/create-checkout-session` endpoint:  
+     • Accepts `{ priceId }`  
+     • Calls `stripe.checkout.sessions.create({ mode: 'subscription', line_items: [{ price: priceId, quantity: 1 }], success_url, cancel_url })`  
+   - On front end, call that endpoint on click, then `stripe.redirectToCheckout({ sessionId })`.  
+   - Create `/api/webhook` to handle `checkout.session.completed`, `invoice.payment_succeeded`, `customer.subscription.updated`, `customer.subscription.deleted`; update user `role` and `subscriptionStatus` accordingly.
+
+4. **Tests & Documentation**  
+   - Write unit tests for:  
+     • Permission middleware rejects/accepts correctly per role  
+     • Feature-flag mapping matches the matrix  
+   - Write e2e tests covering:  
+     • Pricing toggle updates prices correctly  
+     • Full checkout flow for at least one tier  
+     • Subscription cancellation downgrades role  
+   - Update `README.md` (or your docs) with:  
+     • Exact tier details & pricing matrix  
+     • Env var setup (Stripe keys, webhook secret)  
+     • Migration/seeding instructions for the feature mapping  
+     • How to run tests
+
+**Branch:** `feature/stripe-pricing-permissions`  

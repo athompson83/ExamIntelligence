@@ -32,7 +32,8 @@ export const accounts = pgTable("accounts", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name").notNull(),
   description: text("description"),
-  subscriptionPlan: varchar("subscription_plan", { enum: ["free", "basic", "premium", "enterprise"] }).notNull().default("free"),
+  subscriptionTier: varchar("subscription_tier", { enum: ["starter", "basic", "professional", "institutional", "enterprise"] }).notNull().default("starter"),
+  billingCycle: varchar("billing_cycle", { enum: ["monthly", "annual"] }).default("monthly"),
   maxUsers: integer("max_users").default(10),
   
   // Stripe integration
@@ -41,18 +42,75 @@ export const accounts = pgTable("accounts", {
   stripeCurrentPeriodStart: timestamp("stripe_current_period_start"),
   stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
   stripeStatus: varchar("stripe_status", { enum: ["active", "canceled", "incomplete", "incomplete_expired", "past_due", "trialing", "unpaid"] }),
+  stripePriceId: varchar("stripe_price_id"),
   
-  // Usage tracking
+  // Usage tracking for quotas
   monthlyQuizzes: integer("monthly_quizzes").default(0),
-  monthlyUsers: integer("monthly_users").default(0),
-  monthlyQuestions: integer("monthly_questions").default(0),
-  monthlyStorage: integer("monthly_storage").default(0), // in MB
+  monthlyAiGenerated: integer("monthly_ai_generated").default(0),
+  monthlyAiValidations: integer("monthly_ai_validations").default(0),
+  monthlyProctoringHours: integer("monthly_proctoring_hours").default(0),
+  currentSeatCount: integer("current_seat_count").default(1),
   
   // Billing
   billingEmail: varchar("billing_email"),
   billingAddress: jsonb("billing_address"),
   
   isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Subscription Management
+export const subscriptions = pgTable("subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  stripeSubscriptionId: varchar("stripe_subscription_id").unique().notNull(),
+  stripePriceId: varchar("stripe_price_id").notNull(),
+  stripeCustomerId: varchar("stripe_customer_id").notNull(),
+  status: varchar("status", { 
+    enum: ["active", "canceled", "incomplete", "incomplete_expired", "past_due", "trialing", "unpaid", "paused"] 
+  }).notNull(),
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  canceledAt: timestamp("canceled_at"),
+  tier: varchar("tier", { enum: ["starter", "basic", "professional", "institutional", "enterprise"] }).notNull(),
+  billingCycle: varchar("billing_cycle", { enum: ["monthly", "annual"] }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Invoice History
+export const invoices = pgTable("invoices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  stripeInvoiceId: varchar("stripe_invoice_id").unique().notNull(),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  amount: integer("amount").notNull(), // in cents
+  currency: varchar("currency").default("usd"),
+  status: varchar("status", { 
+    enum: ["draft", "open", "paid", "uncollectible", "void"] 
+  }).notNull(),
+  invoiceNumber: varchar("invoice_number"),
+  invoiceUrl: varchar("invoice_url"),
+  hostedInvoiceUrl: varchar("hosted_invoice_url"),
+  invoicePdf: varchar("invoice_pdf"),
+  dueDate: timestamp("due_date"),
+  paidAt: timestamp("paid_at"),
+  periodStart: timestamp("period_start"),
+  periodEnd: timestamp("period_end"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// System Settings (for Stripe keys and configuration)
+export const systemSettings = pgTable("system_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  key: varchar("key").unique().notNull(),
+  value: text("value"),
+  isSecret: boolean("is_secret").default(false),
+  description: text("description"),
+  updatedBy: varchar("updated_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

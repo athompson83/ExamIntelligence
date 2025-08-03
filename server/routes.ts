@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage-simple";
+import billingRoutes from "./routes/billing";
+import adminRoutes from "./routes/admin";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { initializeLTI, getLTIConfig, requireLTIAuth, getLTIUser, sendGradePassback, createDeepLink } from "./ltiService";
 import { setupWebSocket } from "./websocket";
@@ -64,6 +66,10 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register billing and admin routes
+  app.use('/api/billing', billingRoutes);
+  app.use('/api/admin', adminRoutes);
+  app.use('/api/stripe', billingRoutes);
   // Initialize LTI functionality for seamless LMS integration
   try {
     await initializeLTI(app);
