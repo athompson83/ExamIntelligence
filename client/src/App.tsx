@@ -97,6 +97,7 @@ const Billing = lazy(() => import("@/pages/billing"));
 const SystemSettings = lazy(() => import("@/pages/admin/system-settings"));
 const RoleSettings = lazy(() => import("@/pages/admin/role-settings"));
 const AccountSettings = lazy(() => import("@/pages/admin/account-settings"));
+const DatabaseManagement = lazy(() => import("@/pages/admin/database-management"));
 const UserActivityDashboard = lazy(() => import("@/pages/admin/UserActivityDashboard"));
 const ErrorLogsManagement = lazy(() => import("@/pages/ErrorLogsManagement"));
 const BugReportingDemo = lazy(() => import("@/pages/BugReportingDemo"));
@@ -402,6 +403,9 @@ function Router() {
           </Route>
           <Route path="/admin/account-settings">
             {() => <Suspense fallback={<LoadingSpinner />}><AccountSettings /></Suspense>}
+          </Route>
+          <Route path="/admin/database-management">
+            {() => <Suspense fallback={<LoadingSpinner />}><DatabaseManagement /></Suspense>}
           </Route>
           <Route path="/accessibility-demo">
             {() => <Suspense fallback={<LoadingSpinner />}><AccessibilityDemo /></Suspense>}

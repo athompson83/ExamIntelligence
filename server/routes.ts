@@ -10749,7 +10749,7 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
       return res.status(403).json({ message: 'Super admin access required' });
     }
     try {
-      const mockRolePermissions = [
+      const defaultRolePermissions = [
         {
           id: "role-1",
           role: "super_admin",
@@ -10764,13 +10764,18 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
             canAccessProctoringTools: true,
             canManageTestbanks: true,
             canUseAIGeneration: true,
+            canAccessDatabase: true,
+            canManageSystem: true,
+            canViewAllAccounts: true,
+            canManageRolesAndTiers: true,
             maxQuizzesPerMonth: -1,
             maxUsersManaged: -1,
             maxAIGenerationsPerMonth: -1,
             maxProctoringHours: -1,
           },
-          description: "Full system administration access with unlimited permissions",
+          description: "Full system administration access with unlimited permissions including database access",
           isActive: true,
+          isDefault: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
@@ -10782,6 +10787,35 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
             canEditQuizzes: true,
             canDeleteQuizzes: true,
             canManageUsers: true,
+            canViewAnalytics: true,
+            canExportData: true,
+            canManageIntegrations: true,
+            canAccessProctoringTools: true,
+            canManageTestbanks: true,
+            canUseAIGeneration: true,
+            canAccessDatabase: false,
+            canManageSystem: false,
+            canViewAllAccounts: false,
+            canManageRolesAndTiers: false,
+            maxQuizzesPerMonth: 500,
+            maxUsersManaged: 1000,
+            maxAIGenerationsPerMonth: 1000,
+            maxProctoringHours: 100,
+          },
+          description: "Account-level administration with comprehensive permissions but no system-wide access",
+          isActive: true,
+          isDefault: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: "role-3",
+          role: "teacher",
+          permissions: {
+            canCreateQuizzes: true,
+            canEditQuizzes: true,
+            canDeleteQuizzes: false,
+            canManageUsers: false,
             canViewAnalytics: true,
             canExportData: true,
             canManageIntegrations: false,
@@ -11394,6 +11428,178 @@ IMPORTANT: Your response must be valid JSON format with exactly ${questionsInBat
 
   // Setup WebSocket
   setupWebSocket(httpServer);
+
+  // ============= DATABASE MANAGEMENT API ROUTES (Super Admin Only) =============
+  
+  // Get all database tables
+  app.get('/api/super-admin/database/tables', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      // Mock database tables data
+      const tables = [
+        {
+          name: 'users',
+          rowCount: 1247,
+          size: '2.3 MB',
+          lastModified: new Date(Date.now() - 86400000).toISOString(),
+          schema: 'public'
+        },
+        {
+          name: 'accounts',
+          rowCount: 45,
+          size: '180 KB',
+          lastModified: new Date(Date.now() - 172800000).toISOString(),
+          schema: 'public'
+        },
+        {
+          name: 'quizzes',
+          rowCount: 892,
+          size: '5.7 MB',
+          lastModified: new Date(Date.now() - 3600000).toISOString(),
+          schema: 'public'
+        },
+        {
+          name: 'questions',
+          rowCount: 15420,
+          size: '45.2 MB',
+          lastModified: new Date(Date.now() - 7200000).toISOString(),
+          schema: 'public'
+        },
+        {
+          name: 'quiz_attempts',
+          rowCount: 5673,
+          size: '12.1 MB',
+          lastModified: new Date(Date.now() - 1800000).toISOString(),
+          schema: 'public'
+        },
+        {
+          name: 'testbanks',
+          rowCount: 156,
+          size: '890 KB',
+          lastModified: new Date(Date.now() - 259200000).toISOString(),
+          schema: 'public'
+        },
+        {
+          name: 'ai_generations',
+          rowCount: 2847,
+          size: '8.9 MB',
+          lastModified: new Date(Date.now() - 3600000).toISOString(),
+          schema: 'public'
+        },
+        {
+          name: 'cat_exams',
+          rowCount: 67,
+          size: '345 KB',
+          lastModified: new Date(Date.now() - 432000000).toISOString(),
+          schema: 'public'
+        }
+      ];
+      
+      res.json(tables);
+    } catch (error) {
+      console.error('Error fetching database tables:', error);
+      res.status(500).json({ message: 'Failed to fetch database tables' });
+    }
+  });
+
+  // Execute SQL query
+  app.post('/api/super-admin/database/execute', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const { query } = req.body;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: 'SQL query is required' });
+      }
+      
+      // Log the query execution for audit trail
+      console.log(`[DATABASE] Super admin ${user.email} executing query: ${query.substring(0, 100)}...`);
+      
+      try {
+        // For safety, we'll provide mock results for common queries
+        const mockResults = storage.getMockQueryResults(query);
+        
+        res.json({
+          results: mockResults,
+          rowsAffected: mockResults.length,
+          executionTime: Math.random() * 100 + 10,
+          status: 'success'
+        });
+      } catch (dbError: any) {
+        res.status(400).json({
+          message: 'Query execution failed',
+          error: dbError.message,
+          status: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Error executing database query:', error);
+      res.status(500).json({ message: 'Failed to execute query' });
+    }
+  });
+
+  // Get query history
+  app.get('/api/super-admin/database/query-history', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const history = storage.getDatabaseQueryHistory();
+      res.json(history);
+    } catch (error) {
+      console.error('Error fetching query history:', error);
+      res.status(500).json({ message: 'Failed to fetch query history' });
+    }
+  });
+
+  // Export table data
+  app.post('/api/super-admin/database/export', async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const { tableName } = req.body;
+      
+      if (!tableName) {
+        return res.status(400).json({ message: 'Table name is required' });
+      }
+      
+      console.log(`[DATABASE] Super admin ${user.email} exporting table: ${tableName}`);
+      
+      // Generate mock CSV export data
+      const mockData = storage.getMockTableData(tableName);
+      let csv = '';
+      if (mockData.length > 0) {
+        csv += Object.keys(mockData[0]).join(',') + '\n';
+        mockData.forEach(row => {
+          csv += Object.values(row).map(val => 
+            typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val
+          ).join(',') + '\n';
+        });
+      }
+      
+      res.json({
+        csv,
+        rowCount: mockData.length,
+        tableName
+      });
+    } catch (error) {
+      console.error('Error exporting table data:', error);
+      res.status(500).json({ message: 'Failed to export table data' });
+    }
+  });
 
   return httpServer;
 }

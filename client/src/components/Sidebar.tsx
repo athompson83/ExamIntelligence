@@ -39,7 +39,8 @@ import {
   LinkIcon,
   Building,
   Crown,
-  Activity
+  Activity,
+  Database
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -137,6 +138,7 @@ export default function Sidebar() {
       icon: Crown,
       items: [
         { href: "/admin/role-settings", label: "Role & Tier Management", icon: Shield, tourId: "role-settings" },
+        { href: "/admin/database-management", label: "Database Management", icon: Database, tourId: "database-management" },
         { href: "/admin/system-settings", label: "System Settings", icon: Settings, tourId: "system-settings" },
         { href: "/admin/user-activity", label: "User Activity", icon: Activity, tourId: "user-activity" },
       ]

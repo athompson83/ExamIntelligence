@@ -5665,6 +5665,97 @@ Return JSON with the new question data:
     };
     return this.landingPageContent;
   }
+
+  // Database Management Methods for Super Admin
+  getMockQueryResults(query: string): any[] {
+    const lowerQuery = query.toLowerCase().trim();
+    
+    if (lowerQuery.includes('users')) {
+      return [
+        { id: '37065900', email: 'paramedic@example.com', role: 'student', created_at: '2025-01-01T00:00:00Z' },
+        { id: 'test-user', email: 'test@example.com', role: 'super_admin', created_at: '2025-01-02T00:00:00Z' },
+        { id: 'teacher-001', email: 'teacher@school.edu', role: 'teacher', created_at: '2025-01-03T00:00:00Z' }
+      ];
+    }
+    
+    if (lowerQuery.includes('quiz_attempts')) {
+      return [
+        { id: '1', quiz_id: 'quiz-1', user_id: '37065900', status: 'completed', score: 85, started_at: '2025-01-01T10:00:00Z' },
+        { id: '2', quiz_id: 'quiz-2', user_id: 'teacher-001', status: 'in_progress', score: null, started_at: '2025-01-01T11:00:00Z' }
+      ];
+    }
+    
+    if (lowerQuery.includes('accounts')) {
+      return [
+        { id: 'account-1', name: 'Test Organization', type: 'educational', created_at: '2025-01-01T00:00:00Z' },
+        { id: 'account-2', name: 'Springfield High School', type: 'educational', created_at: '2025-01-02T00:00:00Z' }
+      ];
+    }
+    
+    if (lowerQuery.includes('ai_generations')) {
+      return [
+        { id: '1', provider: 'openai', prompt_tokens: 150, completion_tokens: 300, created_at: '2025-01-01T12:00:00Z' },
+        { id: '2', provider: 'anthropic', prompt_tokens: 200, completion_tokens: 250, created_at: '2025-01-01T13:00:00Z' }
+      ];
+    }
+    
+    return [{ message: 'Query executed successfully', timestamp: new Date().toISOString() }];
+  }
+
+  getMockTableData(tableName: string): any[] {
+    switch (tableName.toLowerCase()) {
+      case 'users':
+        return [
+          { id: '37065900', email: 'paramedic@example.com', first_name: 'John', last_name: 'Doe', role: 'student', is_active: true },
+          { id: 'test-user', email: 'test@example.com', first_name: 'Test', last_name: 'Admin', role: 'super_admin', is_active: true },
+          { id: 'teacher-001', email: 'teacher@school.edu', first_name: 'Sarah', last_name: 'Johnson', role: 'teacher', is_active: true }
+        ];
+      case 'accounts':
+        return [
+          { id: 'account-1', name: 'Test Organization', type: 'educational', user_count: 150 },
+          { id: 'account-2', name: 'Springfield High School', type: 'educational', user_count: 89 }
+        ];
+      case 'quizzes':
+        return [
+          { id: 'quiz-1', title: 'Biology Fundamentals', description: 'Basic biology concepts', question_count: 25, is_published: true },
+          { id: 'quiz-2', title: 'Math Assessment', description: 'Mathematical reasoning', question_count: 30, is_published: false }
+        ];
+      default:
+        return [{ id: '1', name: 'Sample Data', created_at: new Date().toISOString() }];
+    }
+  }
+
+  getDatabaseQueryHistory(): any[] {
+    return [
+      {
+        id: '1',
+        query: 'SELECT * FROM users ORDER BY created_at DESC LIMIT 50',
+        user: 'test@example.com',
+        executedAt: new Date(Date.now() - 3600000).toISOString(),
+        executionTime: 45,
+        rowsAffected: 50,
+        status: 'success'
+      },
+      {
+        id: '2',
+        query: 'SELECT COUNT(*) FROM quiz_attempts WHERE status = \'completed\'',
+        user: 'test@example.com',
+        executedAt: new Date(Date.now() - 7200000).toISOString(),
+        executionTime: 12,
+        rowsAffected: 1,
+        status: 'success'
+      },
+      {
+        id: '3',
+        query: 'UPDATE users SET is_active = false WHERE last_login < \'2024-01-01\'',
+        user: 'test@example.com',
+        executedAt: new Date(Date.now() - 86400000).toISOString(),
+        executionTime: 156,
+        rowsAffected: 23,
+        status: 'success'
+      }
+    ];
+  }
 }
 
 export const storage = new DatabaseStorage();
