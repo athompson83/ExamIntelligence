@@ -48,9 +48,9 @@ export default function UserManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch users
+  // Fetch users - use super admin endpoint for comprehensive user management
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
-    queryKey: ['/api/users'],
+    queryKey: ['/api/super-admin/users'],
     retry: false,
   });
 

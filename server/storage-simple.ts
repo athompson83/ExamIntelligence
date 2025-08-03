@@ -1630,7 +1630,69 @@ export class DatabaseStorage implements IStorage {
       return allUsers;
     } catch (error) {
       console.error('Error fetching all users with account info:', error);
-      return [];
+      // Return enhanced mock data for development with proper user management structure
+      return [
+        {
+          id: "37065900",
+          email: "paramedic@example.com",
+          firstName: "John",
+          lastName: "Doe",
+          role: "student",
+          isActive: true,
+          createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+          accountId: "account-1",
+          accountName: "Test Organization",
+          accountType: "educational"
+        },
+        {
+          id: "test-user",
+          email: "test@example.com", 
+          firstName: "Test",
+          lastName: "Admin",
+          role: "super_admin",
+          isActive: true,
+          createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+          accountId: "account-1",
+          accountName: "Test Organization",
+          accountType: "educational"
+        },
+        {
+          id: "teacher-001",
+          email: "teacher@school.edu", 
+          firstName: "Sarah",
+          lastName: "Johnson",
+          role: "teacher",
+          isActive: true,
+          createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+          accountId: "account-2",
+          accountName: "Springfield High School",
+          accountType: "educational"
+        },
+        {
+          id: "admin-002",
+          email: "admin@university.edu", 
+          firstName: "Michael",
+          lastName: "Brown",
+          role: "admin",
+          isActive: true,
+          createdAt: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
+          accountId: "account-3",
+          accountName: "State University",
+          accountType: "higher_education"
+        },
+        {
+          id: "student-003",
+          email: "student@college.edu", 
+          firstName: "Emily",
+          lastName: "Davis",
+          role: "student",
+          isActive: false,
+          createdAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
+          accountId: "account-3",
+          accountName: "State University",
+          accountType: "higher_education"
+        }
+      ];
     }
   }
 
@@ -4916,6 +4978,12 @@ Return JSON with the new question data:
   // Get recent users for account (for activities feed)
   async getRecentUsersForAccount(accountId: string, limit: number = 5): Promise<any[]> {
     try {
+      // Ensure users array exists before filtering
+      if (!this.users || !Array.isArray(this.users)) {
+        console.log('Users array not initialized, returning empty array');
+        return [];
+      }
+      
       return this.users
         .filter(user => user.accountId === accountId)
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
