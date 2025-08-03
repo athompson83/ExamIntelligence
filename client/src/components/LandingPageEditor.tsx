@@ -83,9 +83,8 @@ export default function LandingPageEditor() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  const { data: landingContent, isLoading } = useQuery({
-    queryKey: ['/api/landing-content'],
-    queryFn: () => apiRequest('/api/landing-content')
+  const { data: landingContent, isLoading } = useQuery<LandingPageContent>({
+    queryKey: ['/api/landing-content']
   });
 
   const updateContentMutation = useMutation({
@@ -131,8 +130,8 @@ export default function LandingPageEditor() {
   });
 
   useEffect(() => {
-    if (landingContent) {
-      setContent(landingContent);
+    if (landingContent && typeof landingContent === 'object') {
+      setContent(landingContent as LandingPageContent);
     }
   }, [landingContent]);
 
@@ -188,19 +187,31 @@ export default function LandingPageEditor() {
   };
 
   const removeItem = (type: string, id: string) => {
-    setContent(prev => ({
-      ...prev,
-      [type]: prev[type as keyof LandingPageContent].filter((item: any) => item.id !== id)
-    }));
+    setContent(prev => {
+      const currentItems = prev[type as keyof LandingPageContent];
+      if (Array.isArray(currentItems)) {
+        return {
+          ...prev,
+          [type]: currentItems.filter((item: any) => item.id !== id)
+        };
+      }
+      return prev;
+    });
   };
 
   const updateItem = (type: string, id: string, updates: any) => {
-    setContent(prev => ({
-      ...prev,
-      [type]: prev[type as keyof LandingPageContent].map((item: any) => 
-        item.id === id ? { ...item, ...updates } : item
-      )
-    }));
+    setContent(prev => {
+      const currentItems = prev[type as keyof LandingPageContent];
+      if (Array.isArray(currentItems)) {
+        return {
+          ...prev,
+          [type]: currentItems.map((item: any) => 
+            item.id === id ? { ...item, ...updates } : item
+          )
+        };
+      }
+      return prev;
+    });
   };
 
   const moveItem = (type: string, index: number, direction: 'up' | 'down') => {
