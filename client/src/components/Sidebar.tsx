@@ -271,12 +271,12 @@ export default function Sidebar() {
         ${isMobileMenuOpen ? 'max-[767px]:translate-x-0' : 'max-[767px]:-translate-x-full'}
       `}>
         {/* Enhanced Logo */}
-        <div className="flex items-center justify-center h-20 md:h-16 bg-primary px-6 md:px-4 flex-shrink-0">
+        <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0 max-[767px]:h-20 max-[767px]:px-6">
           <div className="flex items-center">
-            <div className="bg-white rounded-xl p-3 md:p-2 mr-4 md:mr-3">
-              <ClipboardCheck className="h-7 w-7 md:h-6 md:w-6 text-primary" />
+            <div className="bg-white rounded-xl p-2 mr-3 max-[767px]:p-3 max-[767px]:mr-4">
+              <ClipboardCheck className="h-6 w-6 text-primary max-[767px]:h-7 max-[767px]:w-7" />
             </div>
-            <h1 className="text-white text-2xl md:text-xl font-bold">ProficiencyAI</h1>
+            <h1 className="text-white text-xl font-bold max-[767px]:text-2xl">ProficiencyAI</h1>
           </div>
         </div>
       
@@ -318,7 +318,7 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleGroup(group.id)}
                   className={`
-                    w-full group flex items-center justify-between px-6 md:px-4 py-4 md:py-2.5 text-lg md:text-sm font-semibold rounded-xl transition-all duration-300 ease-out whitespace-nowrap mx-2 min-h-[56px] md:min-h-[44px]
+                    w-full group flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ease-out whitespace-nowrap mx-2 min-h-[44px] max-[767px]:px-6 max-[767px]:py-4 max-[767px]:text-lg max-[767px]:min-h-[56px]
                     ${groupHasActiveItem 
                       ? 'bg-gradient-to-r from-primary/15 to-primary/10 text-primary border-l-2 border-primary shadow-sm' 
                       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 hover:text-gray-800 dark:hover:text-gray-200'
@@ -326,20 +326,20 @@ export default function Sidebar() {
                   `}
                 >
                   <div className="flex items-center">
-                    <GroupIcon className="mr-4 md:mr-3 h-6 w-6 md:h-5 md:w-5 flex-shrink-0" />
-                    <span className="font-bold md:font-semibold">{group.label}</span>
+                    <GroupIcon className="mr-3 h-5 w-5 flex-shrink-0 max-[767px]:mr-4 max-[767px]:h-6 max-[767px]:w-6" />
+                    <span className="font-semibold max-[767px]:font-bold">{group.label}</span>
                   </div>
                   {shouldBeExpanded ? (
-                    <ChevronUp className="h-5 w-5 md:h-4 md:w-4" />
+                    <ChevronUp className="h-4 w-4 max-[767px]:h-5 max-[767px]:w-5" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 md:h-4 md:w-4" />
+                    <ChevronDown className="h-4 w-4 max-[767px]:h-5 max-[767px]:w-5" />
                   )}
                 </button>
               )}
               
               {/* Group Items */}
               {shouldBeExpanded && (
-                <div className={group.id === "main" ? "space-y-2 md:space-y-1" : "ml-6 md:ml-4 mt-2 md:mt-1 space-y-2 md:space-y-1"}>
+                <div className={group.id === "main" ? "space-y-1 max-[767px]:space-y-2" : "ml-4 mt-1 space-y-1 max-[767px]:ml-6 max-[767px]:mt-2 max-[767px]:space-y-2"}>
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
@@ -348,11 +348,11 @@ export default function Sidebar() {
                         key={item.href}
                         href={item.href}
                         ref={active ? activeItemRef : undefined}
-                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-base md:text-sm" : "text-lg md:text-base"} btn-mobile min-h-[52px] md:min-h-[44px]`}
+                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm max-[767px]:text-base" : "text-base max-[767px]:text-lg"} btn-mobile min-h-[44px] max-[767px]:min-h-[52px]`}
                         data-tour={item.tourId}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Icon className="h-6 w-6 md:h-4 md:w-4 mr-4 md:mr-3 flex-shrink-0" />
+                        <Icon className="h-4 w-4 mr-3 flex-shrink-0 max-[767px]:h-6 max-[767px]:w-6 max-[767px]:mr-4" />
                         <span className="truncate whitespace-nowrap flex-1 min-w-0 font-medium">{item.label}</span>
                       </Link>
                     );
@@ -381,7 +381,7 @@ export default function Sidebar() {
     </nav>
     
     {/* Mobile Content Spacer */}
-    <div className="md:hidden h-16" />
+    <div className="max-[767px]:block hidden h-16" />
     </>
   );
 }
