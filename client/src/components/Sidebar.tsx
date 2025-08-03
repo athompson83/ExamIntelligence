@@ -353,7 +353,7 @@ export default function Sidebar() {
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Icon className="h-4 w-4 mr-3 flex-shrink-0 max-[767px]:h-6 max-[767px]:w-6 max-[767px]:mr-4" />
-                        <span className="truncate whitespace-nowrap flex-1 min-w-0 font-medium">{item.label}</span>
+                        <span className="font-medium flex-1">{item.label}</span>
                       </Link>
                     );
                   })}
