@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle, Users, Shield, Settings, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Sidebar } from "@/components/Sidebar";
-import { TopBar } from "@/components/TopBar";
+import Sidebar from "@/components/Sidebar";
+import TopBar from "@/components/TopBar";
 import { apiRequest } from "@/lib/queryClient";
 
 interface RolePermissions {
@@ -77,13 +77,11 @@ export default function RoleSettings() {
   // Fetch role permissions
   const { data: rolePermissions, isLoading: rolesLoading } = useQuery({
     queryKey: ["/api/admin/role-permissions"],
-    queryFn: () => apiRequest("GET", "/api/admin/role-permissions"),
   });
 
   // Fetch tier settings
   const { data: tierSettings, isLoading: tiersLoading } = useQuery({
     queryKey: ["/api/admin/tier-settings"],
-    queryFn: () => apiRequest("GET", "/api/admin/tier-settings"),
   });
 
   // Update role permissions mutation
@@ -187,7 +185,7 @@ export default function RoleSettings() {
             {/* Role Permissions Tab */}
             <TabsContent value="roles" className="space-y-6">
               <div className="grid gap-6">
-                {rolePermissions?.map((role: RolePermissions) => {
+                {rolePermissions && Array.isArray(rolePermissions) ? rolePermissions.map((role: RolePermissions) => {
                   const IconComponent = roleIcons[role.role as keyof typeof roleIcons] || Users;
                   
                   return (
@@ -368,14 +366,14 @@ export default function RoleSettings() {
                       </CardContent>
                     </Card>
                   );
-                })}
+                }) : <div className="text-center py-8 text-gray-500">No role permissions configured</div>}
               </div>
             </TabsContent>
 
             {/* Subscription Tiers Tab */}
             <TabsContent value="tiers" className="space-y-6">
               <div className="grid gap-6">
-                {tierSettings?.map((tier: TierSettings) => (
+                {tierSettings && Array.isArray(tierSettings) ? tierSettings.map((tier: TierSettings) => (
                   <Card key={tier.id} className="border-l-4 border-l-blue-500">
                     <CardHeader>
                       <div className="flex items-center justify-between">
@@ -549,7 +547,7 @@ export default function RoleSettings() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                )) : <div className="text-center py-8 text-gray-500">No tier settings configured</div>}
               </div>
             </TabsContent>
           </Tabs>

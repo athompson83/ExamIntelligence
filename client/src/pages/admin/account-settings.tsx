@@ -11,8 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Building, Users, Settings, CreditCard, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Sidebar } from "@/components/Sidebar";
-import { TopBar } from "@/components/TopBar";
+import Sidebar from "@/components/Sidebar";
+import TopBar from "@/components/TopBar";
 import { apiRequest } from "@/lib/queryClient";
 
 interface AccountSettings {
@@ -87,7 +87,6 @@ export default function AccountSettings() {
   // Fetch account settings
   const { data: accountData, isLoading } = useQuery({
     queryKey: ["/api/admin/account-settings"],
-    queryFn: () => apiRequest("GET", "/api/admin/account-settings"),
   });
 
   // Update account settings mutation
