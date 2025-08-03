@@ -816,7 +816,7 @@ export default function LandingPageEditor() {
                       <h4 className="font-semibold mb-2">{feature.title}</h4>
                       <p className="text-sm text-gray-600 mb-3" dangerouslySetInnerHTML={{ __html: feature.description }} />
                       <ul className="text-sm space-y-1">
-                        {feature.features.slice(0, 3).map((item, idx) => (
+                        {(feature.bullets || feature.features || []).slice(0, 3).map((item, idx) => (
                           <li key={idx} className="flex items-center">
                             <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                             {item}
