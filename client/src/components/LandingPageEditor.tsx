@@ -131,12 +131,16 @@ export default function LandingPageEditor() {
 
   useEffect(() => {
     if (landingContent && typeof landingContent === 'object') {
-      setContent(landingContent as LandingPageContent);
+      // Merge the fetched content with defaults to ensure all required fields exist
+      setContent(prevContent => ({
+        ...prevContent,
+        ...(landingContent as Partial<LandingPageContent>)
+      }));
     }
   }, [landingContent]);
 
-  // Early return with loading state if content is not loaded
-  if (isLoading || !content.hero) {
+  // Early return with loading state if query is loading
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
