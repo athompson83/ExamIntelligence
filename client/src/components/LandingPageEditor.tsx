@@ -136,6 +136,15 @@ export default function LandingPageEditor() {
     }
   }, [landingContent]);
 
+  // Early return with loading state if content is not loaded
+  if (isLoading || !content.hero) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   const handleSave = () => {
     updateContentMutation.mutate(content);
   };
@@ -270,13 +279,7 @@ export default function LandingPageEditor() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-6">

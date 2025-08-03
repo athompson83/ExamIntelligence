@@ -4988,10 +4988,117 @@ Return JSON with the new question data:
   }
 
   // Landing Page Content Management
-  private landingPageContent: any = null;
+  private landingPageContent: any = {
+    hero: {
+      title: "ProficiencyAI",
+      subtitle: "Advanced AI-Powered Assessment Platform",
+      description: "Transform your educational assessments with intelligent Computer Adaptive Testing (CAT), live proctoring, and comprehensive analytics.",
+      buttonText: "Get Started",
+      buttonLink: "/register"
+    },
+    features: [
+      {
+        id: "feature-1",
+        title: "AI-Powered Question Generation",
+        description: "Generate high-quality assessment questions using advanced AI models with multiple provider redundancy.",
+        icon: "Brain",
+        bullets: [
+          "Multi-LLM provider support (OpenAI, Claude, Gemini, etc.)",
+          "Research-based question validation",
+          "Automated difficulty analysis"
+        ]
+      },
+      {
+        id: "feature-2", 
+        title: "Computer Adaptive Testing (CAT)",
+        description: "Personalized assessments that adapt to each student's ability level in real-time.",
+        icon: "Target",
+        bullets: [
+          "Dynamic difficulty adjustment",
+          "Shorter, more accurate assessments",
+          "Improved student engagement"
+        ]
+      },
+      {
+        id: "feature-3",
+        title: "Live Proctoring System",
+        description: "Comprehensive proctoring solution with real-time monitoring and verification.",
+        icon: "Eye",
+        bullets: [
+          "Real-time student monitoring",
+          "Automated anomaly detection",
+          "Comprehensive reporting"
+        ]
+      },
+      {
+        id: "feature-4",
+        title: "Advanced Analytics",
+        description: "Deep insights into student performance and assessment effectiveness.",
+        icon: "BarChart3",
+        bullets: [
+          "Performance analytics",
+          "Question difficulty analysis",
+          "Learning outcome tracking"
+        ]
+      },
+      {
+        id: "feature-5",
+        title: "LTI Integration",
+        description: "Seamless integration with popular Learning Management Systems.",
+        icon: "Link",
+        bullets: [
+          "Canvas, Moodle, Blackboard support",
+          "Automatic grade passback",
+          "Single sign-on (SSO)"
+        ]
+      },
+      {
+        id: "feature-6",
+        title: "Mobile Responsive",
+        description: "Fully responsive design that works perfectly on all devices.",
+        icon: "Smartphone",
+        bullets: [
+          "Mobile-first design",
+          "Touch-optimized interface",
+          "Offline capabilities"
+        ]
+      }
+    ],
+    stats: {
+      users: "10,000+",
+      assessments: "500,000+",
+      institutions: "200+",
+      accuracy: "99.9%"
+    },
+    faq: [
+      {
+        id: "faq-1",
+        question: "What is Computer Adaptive Testing (CAT)?",
+        answer: "Computer Adaptive Testing is an assessment method that adjusts the difficulty of questions in real-time based on the test-taker's ability level, providing more accurate results with fewer questions."
+      },
+      {
+        id: "faq-2", 
+        question: "How does the AI question generation work?",
+        answer: "Our system uses multiple AI providers including OpenAI, Claude, and Gemini to generate high-quality assessment questions that are validated against educational standards and research-based criteria."
+      },
+      {
+        id: "faq-3",
+        question: "Is the platform compatible with our LMS?",
+        answer: "Yes, ProficiencyAI supports LTI integration with major Learning Management Systems including Canvas, Moodle, Blackboard, and others through standard LTI 1.3 protocols."
+      }
+    ],
+    contact: {
+      email: "support@proficiencyai.com",
+      phone: "+1 (555) 123-4567",
+      address: "123 Education Ave, Learning City, LC 12345"
+    },
+    footer: {
+      copyright: "© 2025 ProficiencyAI. All rights reserved."
+    }
+  };
 
   async getLandingPageContent(): Promise<any> {
-    // Return stored content or null if not set
+    // Return stored content or default content
     return this.landingPageContent;
   }
 

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
@@ -567,45 +567,90 @@ export default function SuperAdminSettings() {
           </Card>
         </div>
 
-        {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="accounts">
-              <Building2 className="h-4 w-4 mr-2" />
-              Accounts
-            </TabsTrigger>
-            <TabsTrigger value="users">
-              <Users className="h-4 w-4 mr-2" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="prompts">
-              <Brain className="h-4 w-4 mr-2" />
-              AI Prompts
-            </TabsTrigger>
-            <TabsTrigger value="providers">
-              <Key className="h-4 w-4 mr-2" />
-              LLM Providers
-            </TabsTrigger>
-            <TabsTrigger value="landing">
-              <Globe className="h-4 w-4 mr-2" />
-              Landing Page
-            </TabsTrigger>
-            <TabsTrigger value="system">
-              <Cog className="h-4 w-4 mr-2" />
-              System
-            </TabsTrigger>
-            <TabsTrigger value="accessibility">
-              <Eye className="h-4 w-4 mr-2" />
-              Accessibility
-            </TabsTrigger>
-            <TabsTrigger value="mobile">
-              <Smartphone className="h-4 w-4 mr-2" />
-              Mobile App
-            </TabsTrigger>
-          </TabsList>
+        {/* Main Content */}
+        <div className="space-y-6">
+          <div className="space-y-6">
+            {/* Primary Management Section */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Core Management</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button
+                  variant={activeTab === "accounts" ? "default" : "outline"}
+                  onClick={() => setActiveTab("accounts")}
+                  className="h-20 flex-col gap-2"
+                >
+                  <Building2 className="h-6 w-6" />
+                  <span>Accounts</span>
+                </Button>
+                <Button
+                  variant={activeTab === "users" ? "default" : "outline"}
+                  onClick={() => setActiveTab("users")}
+                  className="h-20 flex-col gap-2"
+                >
+                  <Users className="h-6 w-6" />
+                  <span>Users</span>
+                </Button>
+                <Button
+                  variant={activeTab === "prompts" ? "default" : "outline"}
+                  onClick={() => setActiveTab("prompts")}
+                  className="h-20 flex-col gap-2"
+                >
+                  <Brain className="h-6 w-6" />
+                  <span>AI Prompts</span>
+                </Button>
+                <Button
+                  variant={activeTab === "providers" ? "default" : "outline"}
+                  onClick={() => setActiveTab("providers")}
+                  className="h-20 flex-col gap-2"
+                >
+                  <Key className="h-6 w-6" />
+                  <span>LLM Providers</span>
+                </Button>
+              </div>
+            </div>
 
-          {/* Accounts Tab */}
-          <TabsContent value="accounts">
+            {/* Platform Customization Section */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Platform Customization</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button
+                  variant={activeTab === "landing" ? "default" : "outline"}
+                  onClick={() => setActiveTab("landing")}
+                  className="h-20 flex-col gap-2"
+                >
+                  <Globe className="h-6 w-6" />
+                  <span>Landing Page</span>
+                </Button>
+                <Button
+                  variant={activeTab === "system" ? "default" : "outline"}
+                  onClick={() => setActiveTab("system")}
+                  className="h-20 flex-col gap-2"
+                >
+                  <Cog className="h-6 w-6" />
+                  <span>System</span>
+                </Button>
+                <Button
+                  variant={activeTab === "accessibility" ? "default" : "outline"}
+                  onClick={() => setActiveTab("accessibility")}
+                  className="h-20 flex-col gap-2"
+                >
+                  <Eye className="h-6 w-6" />
+                  <span>Accessibility</span>
+                </Button>
+                <Button
+                  variant={activeTab === "mobile" ? "default" : "outline"}
+                  onClick={() => setActiveTab("mobile")}
+                  className="h-20 flex-col gap-2"
+                >
+                  <Smartphone className="h-6 w-6" />
+                  <span>Mobile App</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Accounts Section */}
+          {activeTab === "accounts" && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -696,10 +741,10 @@ export default function SuperAdminSettings() {
                 </Table>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          {/* Users Tab */}
-          <TabsContent value="users">
+          {/* Users Section */}
+          {activeTab === "users" && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -763,10 +808,10 @@ export default function SuperAdminSettings() {
                 </Table>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          {/* AI Prompts Tab */}
-          <TabsContent value="prompts">
+          {/* AI Prompts Section */}
+          {activeTab === "prompts" && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -831,15 +876,20 @@ export default function SuperAdminSettings() {
                 </Table>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          {/* LLM Providers Tab */}
-          <TabsContent value="providers">
+          {/* LLM Providers Section */}
+          {activeTab === "providers" && (
             <LLMProviderManagement />
-          </TabsContent>
+          )}
 
-          {/* System Tab */}
-          <TabsContent value="system">
+          {/* Landing Page Section */}
+          {activeTab === "landing" && (
+            <LandingPageEditor />
+          )}
+
+          {/* System Section */}
+          {activeTab === "system" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -898,10 +948,10 @@ export default function SuperAdminSettings() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          )}
 
-          {/* Accessibility Tab */}
-          <TabsContent value="accessibility">
+          {/* Accessibility Section */}
+          {activeTab === "accessibility" && (
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -971,10 +1021,10 @@ export default function SuperAdminSettings() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          )}
 
-          {/* Mobile App Tab */}
-          <TabsContent value="mobile">
+          {/* Mobile App Section */}
+          {activeTab === "mobile" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* QR Code Display */}
               <Card>
@@ -1811,13 +1861,8 @@ Happy coding! 🎉
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-
-          {/* Landing Page Tab */}
-          <TabsContent value="landing">
-            <LandingPageEditor />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
 
         {/* Account Dialog */}
         <Dialog open={isAccountDialogOpen} onOpenChange={setIsAccountDialogOpen}>
