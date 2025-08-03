@@ -569,7 +569,6 @@ export default function SuperAdminSettings() {
 
         {/* Main Content */}
         <div className="space-y-6">
-          <div className="space-y-6">
             {/* Primary Management Section */}
             <div>
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Core Management</h3>
@@ -649,6 +648,7 @@ export default function SuperAdminSettings() {
             </div>
           </div>
 
+          {/* Content Sections */}
           {/* Accounts Section */}
           {activeTab === "accounts" && (
             <Card>
@@ -1862,7 +1862,7 @@ Happy coding! 🎉
               </Card>
             </div>
           )}
-        </div>
+      </div>
 
         {/* Account Dialog */}
         <Dialog open={isAccountDialogOpen} onOpenChange={setIsAccountDialogOpen}>
@@ -2246,7 +2246,6 @@ Happy coding! 🎉
             </Form>
           </DialogContent>
         </Dialog>
-
 
       </div>
     </Layout>
