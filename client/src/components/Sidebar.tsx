@@ -254,7 +254,6 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
-
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div 
@@ -262,7 +261,6 @@ export default function Sidebar() {
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
-
       {/* Enhanced Desktop Sidebar & Mobile Drawer */}
       <nav className={`
         sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
@@ -336,7 +334,6 @@ export default function Sidebar() {
                   )}
                 </button>
               )}
-              
               {/* Group Items */}
               {shouldBeExpanded && (
                 <div className={group.id === "main" ? "space-y-1 max-[767px]:space-y-2" : "ml-4 mt-1 space-y-1 max-[767px]:ml-6 max-[767px]:mt-2 max-[767px]:space-y-2"}>
@@ -353,7 +350,7 @@ export default function Sidebar() {
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Icon className="h-4 w-4 mr-3 flex-shrink-0 max-[767px]:h-6 max-[767px]:w-6 max-[767px]:mr-4" />
-                        <span className="font-medium flex-1">{item.label}</span>
+                        <span className="font-medium flex-1 text-[#6b7280]">{item.label}</span>
                       </Link>
                     );
                   })}
@@ -379,9 +376,8 @@ export default function Sidebar() {
         </div>
       )}
     </nav>
-    
-    {/* Mobile Content Spacer */}
-    <div className="max-[767px]:block hidden h-16" />
+      {/* Mobile Content Spacer */}
+      <div className="max-[767px]:block hidden h-16" />
     </>
   );
 }
