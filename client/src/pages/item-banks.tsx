@@ -3,8 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import Sidebar from "@/components/Sidebar";
-import { TopBar } from "@/components/layout/top-bar";
+import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,6 +34,7 @@ interface Testbank {
   createdAt: string;
   updatedAt: string;
   lastRevalidatedAt: string | null;
+  questionCount?: number;
 }
 
 export default function ItemBanks() {
@@ -188,7 +188,7 @@ export default function ItemBanks() {
       return { response, format };
     },
     onSuccess: async ({ response, format }, { id }) => {
-      const testbank = testbanks?.find((t: Testbank) => t.id === id);
+      const testbank = (testbanks as Testbank[])?.find((t: Testbank) => t.id === id);
       const filename = `${testbank?.title || 'testbank'}_${format}.${format === 'qti' ? 'zip' : format}`;
       
       const blob = await response.blob();
@@ -236,7 +236,7 @@ export default function ItemBanks() {
     }
   };
 
-  const filteredTestbanks = testbanks?.filter((testbank: Testbank) =>
+  const filteredTestbanks = (testbanks as Testbank[])?.filter((testbank: Testbank) =>
     testbank.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     testbank.description.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
@@ -250,13 +250,7 @@ export default function ItemBanks() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <Sidebar />
-      
-      <div className="flex-1 md:ml-64">
-        <TopBar />
-        
-        <main className="p-4 md:p-6 pt-20 md:pt-6">
+    <Layout>
           {/* Mobile-First Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div className="min-w-0 flex-1">
@@ -411,7 +405,7 @@ export default function ItemBanks() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDeleteTestbank(testbank.id)}
+                      onClick={() => deleteTestbankMutation.mutate(testbank.id)}
                       className="text-red-600 hover:text-red-700 btn-mobile"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -641,8 +635,6 @@ export default function ItemBanks() {
               )}
             </div>
           )}
-        </main>
-      </div>
-    </div>
+    </Layout>
   );
 }
