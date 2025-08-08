@@ -19,6 +19,7 @@ import {
   Shield,
   Eye
 } from "lucide-react";
+import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
@@ -136,24 +137,26 @@ export default function Dashboard() {
             whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <Card className="stats-card hover:shadow-lg transition-shadow">
-              <CardContent className="flex items-center justify-between p-4 lg:p-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Exams</p>
-                  <p className="text-2xl lg:text-3xl font-bold text-primary">
-                    {dashboardStats?.activeExams || 0}
-                  </p>
-                </div>
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.5, duration: 0.3 }}
-                  className="stats-icon bg-primary/10"
-                >
-                  <PlayCircle className="h-6 w-6 text-primary" />
-                </motion.div>
-              </CardContent>
-            </Card>
+            <Link href="/quizzes">
+              <Card className="stats-card hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="flex items-center justify-between p-4 lg:p-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Exams</p>
+                    <p className="text-2xl lg:text-3xl font-bold text-primary">
+                      {dashboardStats?.activeExams || 0}
+                    </p>
+                  </div>
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.5, duration: 0.3 }}
+                    className="stats-icon bg-primary/10"
+                  >
+                    <PlayCircle className="h-6 w-6 text-primary" />
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
 
           <motion.div
@@ -163,24 +166,26 @@ export default function Dashboard() {
             whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <Card className="stats-card hover:shadow-lg transition-shadow">
-              <CardContent className="flex items-center justify-between p-4 lg:p-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Students</p>
-                  <p className="text-2xl lg:text-3xl font-bold text-secondary">
-                    {dashboardStats?.totalStudents || 0}
-                  </p>
-                </div>
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.6, duration: 0.3 }}
-                  className="stats-icon bg-secondary/10"
-                >
-                  <Users className="h-6 w-6 text-secondary" />
-                </motion.div>
-              </CardContent>
-            </Card>
+            <Link href="/users">
+              <Card className="stats-card hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="flex items-center justify-between p-4 lg:p-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Students</p>
+                    <p className="text-2xl lg:text-3xl font-bold text-secondary">
+                      {dashboardStats?.totalStudents || 0}
+                    </p>
+                  </div>
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.6, duration: 0.3 }}
+                    className="stats-icon bg-secondary/10"
+                  >
+                    <Users className="h-6 w-6 text-secondary" />
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
 
           <motion.div
@@ -190,24 +195,26 @@ export default function Dashboard() {
             whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <Card className="stats-card hover:shadow-lg transition-shadow">
-              <CardContent className="flex items-center justify-between p-4 lg:p-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Item Banks</p>
-                  <p className="text-2xl lg:text-3xl font-bold text-accent">
-                    {dashboardStats?.itemBanks || 0}
-                  </p>
-                </div>
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.7, duration: 0.3 }}
-                  className="stats-icon bg-accent/10"
-                >
-                  <BookOpen className="h-6 w-6 text-accent" />
-                </motion.div>
-              </CardContent>
-            </Card>
+            <Link href="/item-banks">
+              <Card className="stats-card hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="flex items-center justify-between p-4 lg:p-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Item Banks</p>
+                    <p className="text-2xl lg:text-3xl font-bold text-accent">
+                      {dashboardStats?.itemBanks || 0}
+                    </p>
+                  </div>
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.7, duration: 0.3 }}
+                    className="stats-icon bg-accent/10"
+                  >
+                    <BookOpen className="h-6 w-6 text-accent" />
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
 
           <motion.div
@@ -217,24 +224,26 @@ export default function Dashboard() {
             whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <Card className="stats-card hover:shadow-lg transition-shadow">
-              <CardContent className="flex items-center justify-between p-4 lg:p-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">AI Validations</p>
-                  <p className="text-2xl lg:text-3xl font-bold text-purple-600">
-                    {dashboardStats?.aiValidations || 0}
-                  </p>
-                </div>
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.8, duration: 0.3 }}
-                  className="stats-icon bg-purple-100"
-                >
-                  <Brain className="h-6 w-6 text-purple-600" />
-                </motion.div>
-              </CardContent>
-            </Card>
+            <Link href="/ai-validation">
+              <Card className="stats-card hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="flex items-center justify-between p-4 lg:p-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">AI Validations</p>
+                    <p className="text-2xl lg:text-3xl font-bold text-purple-600">
+                      {dashboardStats?.aiValidations || 0}
+                    </p>
+                  </div>
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.8, duration: 0.3 }}
+                    className="stats-icon bg-purple-100"
+                  >
+                    <Brain className="h-6 w-6 text-purple-600" />
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
         </motion.div>
 

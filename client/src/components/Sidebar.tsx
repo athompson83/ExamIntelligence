@@ -234,22 +234,22 @@ export default function Sidebar() {
   return (
     <>
       {/* Enhanced Mobile Navigation Bar (shown on small screens) */}
-      <div className="max-[767px]:block hidden fixed top-0 left-0 right-0 bg-primary z-50 px-6 py-4 shadow-lg">
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-primary z-50 px-4 py-3 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="bg-white rounded-xl p-2 mr-3">
-              <ClipboardCheck className="h-6 w-6 text-primary" />
+              <ClipboardCheck className="h-5 w-5 text-primary" />
             </div>
-            <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
+            <h1 className="text-white text-lg font-bold">ProficiencyAI</h1>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-3 rounded-xl text-white hover:bg-white/20 transition-colors btn-mobile min-h-[48px] min-w-[48px]"
+            className="p-2 rounded-xl text-white hover:bg-white/20 transition-colors btn-mobile min-h-[44px] min-w-[44px]"
           >
-            <div className="w-7 h-7 flex flex-col justify-center space-y-1.5">
-              <div className={`w-7 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></div>
-              <div className={`w-7 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
-              <div className={`w-7 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></div>
+            <div className="w-6 h-6 flex flex-col justify-center space-y-1">
+              <div className={`w-6 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+              <div className={`w-6 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
+              <div className={`w-6 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
             </div>
           </button>
         </div>
@@ -257,7 +257,7 @@ export default function Sidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="max-[767px]:block hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -266,16 +266,17 @@ export default function Sidebar() {
         sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
         w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 z-50
         lg:translate-x-0
-        max-[767px]:w-80 max-[767px]:h-full max-[767px]:top-0 max-[767px]:transform max-[767px]:transition-all max-[767px]:duration-300
-        ${isMobileMenuOpen ? 'max-[767px]:translate-x-0' : 'max-[767px]:-translate-x-full'}
+        lg:block
+        max-w-[85vw] transform transition-all duration-300
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Enhanced Logo */}
-        <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0 max-[767px]:h-20 max-[767px]:px-6">
+        <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0 lg:h-16 lg:px-4">
           <div className="flex items-center">
-            <div className="bg-white rounded-xl p-2 mr-3 max-[767px]:p-3 max-[767px]:mr-4">
-              <ClipboardCheck className="h-6 w-6 text-primary max-[767px]:h-7 max-[767px]:w-7" />
+            <div className="bg-white rounded-xl p-2 mr-3 lg:p-2 lg:mr-3">
+              <ClipboardCheck className="h-6 w-6 text-primary lg:h-6 lg:w-6" />
             </div>
-            <h1 className="text-white text-xl font-bold max-[767px]:text-2xl">ProficiencyAI</h1>
+            <h1 className="text-white text-xl font-bold lg:text-xl">ProficiencyAI</h1>
           </div>
         </div>
       
@@ -317,7 +318,7 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleGroup(group.id)}
                   className={`
-                    w-full group flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ease-out whitespace-nowrap mx-2 min-h-[44px] max-[767px]:px-6 max-[767px]:py-4 max-[767px]:text-lg max-[767px]:min-h-[56px]
+                    w-full group flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ease-out whitespace-nowrap mx-2 min-h-[44px] lg:px-4 lg:py-2.5 lg:text-sm lg:min-h-[44px]
                     ${groupHasActiveItem 
                       ? 'bg-gradient-to-r from-primary/15 to-primary/10 text-primary border-l-2 border-primary shadow-sm' 
                       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 hover:text-gray-800 dark:hover:text-gray-200'
@@ -325,19 +326,19 @@ export default function Sidebar() {
                   `}
                 >
                   <div className="flex items-center">
-                    <GroupIcon className="mr-3 h-5 w-5 flex-shrink-0 max-[767px]:mr-4 max-[767px]:h-6 max-[767px]:w-6" />
-                    <span className="font-semibold max-[767px]:font-bold">{group.label}</span>
+                    <GroupIcon className="mr-3 h-5 w-5 flex-shrink-0 lg:mr-3 lg:h-5 lg:w-5" />
+                    <span className="font-semibold lg:font-semibold">{group.label}</span>
                   </div>
                   {shouldBeExpanded ? (
-                    <ChevronUp className="h-4 w-4 max-[767px]:h-5 max-[767px]:w-5" />
+                    <ChevronUp className="h-4 w-4 lg:h-4 lg:w-4" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 max-[767px]:h-5 max-[767px]:w-5" />
+                    <ChevronDown className="h-4 w-4 lg:h-4 lg:w-4" />
                   )}
                 </button>
               )}
               {/* Group Items */}
               {shouldBeExpanded && (
-                <div className={group.id === "main" ? "space-y-1 max-[767px]:space-y-2" : "ml-4 mt-1 space-y-1 max-[767px]:ml-6 max-[767px]:mt-2 max-[767px]:space-y-2"}>
+                <div className={group.id === "main" ? "space-y-1 lg:space-y-1" : "ml-4 mt-1 space-y-1 lg:ml-4 lg:mt-1 lg:space-y-1"}>
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
@@ -346,11 +347,11 @@ export default function Sidebar() {
                         key={item.href}
                         href={item.href}
                         ref={active ? activeItemRef : undefined}
-                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm max-[767px]:text-base" : "text-base max-[767px]:text-lg"} btn-mobile min-h-[44px] max-[767px]:min-h-[52px]`}
+                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm lg:text-sm" : "text-base lg:text-base"} btn-mobile min-h-[44px] lg:min-h-[44px]`}
                         data-tour={item.tourId}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Icon className="h-4 w-4 mr-3 flex-shrink-0 max-[767px]:h-6 max-[767px]:w-6 max-[767px]:mr-4" />
+                        <Icon className="h-4 w-4 mr-3 flex-shrink-0 lg:h-4 lg:w-4 lg:mr-3" />
                         <span className="font-medium flex-1 text-[#6b7280]">{item.label}</span>
                       </Link>
                     );
@@ -378,7 +379,7 @@ export default function Sidebar() {
       )}
     </nav>
       {/* Mobile Content Spacer */}
-      <div className="max-[767px]:block hidden h-16" />
+      <div className="lg:hidden block h-16" />
     </>
   );
 }
