@@ -19,14 +19,16 @@ export default function Layout({ children }: LayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen flex bg-background transition-all duration-200">
+    <div className="min-h-screen flex bg-background transition-all duration-200 overflow-x-hidden">
       <Sidebar />
-      <div className="flex-1 ml-64 transition-all duration-200 max-[767px]:ml-0">
+      <div className="flex-1 lg:ml-64 transition-all duration-200 w-full min-w-0">
         <TopBar />
-        <main className={`p-6 pt-6 content-container transition-all duration-300 max-[767px]:p-4 max-[767px]:pt-20 ${
+        <main className={`p-4 pt-6 content-container transition-all duration-300 lg:p-6 lg:pt-6 ${
           isLoaded ? 'opacity-100 transform-none' : 'opacity-0 translate-y-2'
         }`}>
-          {children}
+          <div className="lg:pt-0 pt-16">
+            {children}
+          </div>
         </main>
       </div>
     </div>

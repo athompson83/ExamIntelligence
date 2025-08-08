@@ -100,13 +100,13 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5 }}
-          className="flex items-center justify-between"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
         >
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white break-words">
               Welcome back, {user?.firstName || 'User'}!
             </h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
+            <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm sm:text-base">
               Here's what's happening with your assessments today
             </p>
           </div>
@@ -114,9 +114,9 @@ export default function Dashboard() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.3, duration: 0.3 }}
-            className="flex items-center space-x-3"
+            className="flex items-center space-x-3 flex-shrink-0"
           >
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
+            <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs sm:text-sm">
               {user?.role === 'admin' ? 'Administrator' : user?.role === 'teacher' ? 'Teacher' : 'Student'}
             </Badge>
           </motion.div>
@@ -127,7 +127,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
         >
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -137,10 +137,10 @@ export default function Dashboard() {
             whileTap={{ scale: 0.98 }}
           >
             <Card className="stats-card hover:shadow-lg transition-shadow">
-              <CardContent className="flex items-center justify-between p-6">
+              <CardContent className="flex items-center justify-between p-4 lg:p-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Exams</p>
-                  <p className="text-3xl font-bold text-primary">
+                  <p className="text-2xl lg:text-3xl font-bold text-primary">
                     {dashboardStats?.activeExams || 0}
                   </p>
                 </div>
@@ -164,10 +164,10 @@ export default function Dashboard() {
             whileTap={{ scale: 0.98 }}
           >
             <Card className="stats-card hover:shadow-lg transition-shadow">
-              <CardContent className="flex items-center justify-between p-6">
+              <CardContent className="flex items-center justify-between p-4 lg:p-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Students</p>
-                  <p className="text-3xl font-bold text-secondary">
+                  <p className="text-2xl lg:text-3xl font-bold text-secondary">
                     {dashboardStats?.totalStudents || 0}
                   </p>
                 </div>
@@ -191,10 +191,10 @@ export default function Dashboard() {
             whileTap={{ scale: 0.98 }}
           >
             <Card className="stats-card hover:shadow-lg transition-shadow">
-              <CardContent className="flex items-center justify-between p-6">
+              <CardContent className="flex items-center justify-between p-4 lg:p-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Item Banks</p>
-                  <p className="text-3xl font-bold text-accent">
+                  <p className="text-2xl lg:text-3xl font-bold text-accent">
                     {dashboardStats?.itemBanks || 0}
                   </p>
                 </div>
@@ -218,10 +218,10 @@ export default function Dashboard() {
             whileTap={{ scale: 0.98 }}
           >
             <Card className="stats-card hover:shadow-lg transition-shadow">
-              <CardContent className="flex items-center justify-between p-6">
+              <CardContent className="flex items-center justify-between p-4 lg:p-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">AI Validations</p>
-                  <p className="text-3xl font-bold text-purple-600">
+                  <p className="text-2xl lg:text-3xl font-bold text-purple-600">
                     {dashboardStats?.aiValidations || 0}
                   </p>
                 </div>
@@ -243,7 +243,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.5 }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6"
         >
           {/* Live Exam Monitoring */}
           <motion.div
@@ -267,7 +267,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               {activeExamSessions && activeExamSessions.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   {activeExamSessions.map((session: any) => (
                     <div key={session.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-3">

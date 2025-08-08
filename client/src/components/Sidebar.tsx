@@ -265,7 +265,8 @@ export default function Sidebar() {
       <nav className={`
         sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
         w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 z-50
-        max-[767px]:w-84 max-[767px]:h-full max-[767px]:top-0 max-[767px]:transform max-[767px]:transition-all max-[767px]:duration-300
+        lg:translate-x-0
+        max-[767px]:w-80 max-[767px]:h-full max-[767px]:top-0 max-[767px]:transform max-[767px]:transition-all max-[767px]:duration-300
         ${isMobileMenuOpen ? 'max-[767px]:translate-x-0' : 'max-[767px]:-translate-x-full'}
       `}>
         {/* Enhanced Logo */}
