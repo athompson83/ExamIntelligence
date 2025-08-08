@@ -695,7 +695,16 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       await apiRequest("PUT", `/api/questions/${questionId}`, {
         aiValidationStatus: "rejected"
       });
+      
+      // Optimistically update the UI to immediately remove the rejected question
+      queryClient.setQueryData([`/api/testbanks/${effectiveTestbankId}/questions`], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.filter((question: any) => question.id !== questionId);
+      });
+      
+      // Also invalidate to ensure data consistency
       queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
+      
       toast({
         title: "Success",
         description: "Question rejected successfully",

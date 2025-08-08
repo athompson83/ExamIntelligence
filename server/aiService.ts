@@ -889,7 +889,14 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       8. ${includeImages ? 'Suggest relevant images or diagrams that enhance understanding' : ''}
       9. ${includeMultimedia ? 'Include multimedia suggestions that support learning objectives' : ''}
       
-      CRITICAL: Return exactly ${questionCount} questions. Your response must contain all ${questionCount} questions in this exact JSON structure:
+      **DIVERSITY REQUIREMENTS**: Ensure question variety:
+      - Use different question types from: ${questionTypes.join(', ')}
+      - Vary difficulty levels within the range ${difficultyRange[0]}-${difficultyRange[1]}
+      - Include different Bloom's levels: ${bloomsLevels.join(', ')}
+      - Create unique scenarios and contexts for each question
+      - Avoid repetitive question patterns or similar wording
+      
+      **ABSOLUTELY CRITICAL**: You MUST generate exactly ${questionCount} questions. This is a strict requirement. Do not generate fewer questions. Your response must contain ALL ${questionCount} questions in this exact JSON structure:
       {
         "questions": [
           {
@@ -1068,7 +1075,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
           },
         ],
         responseFormat: { type: "json_object" },
-        temperature: 0.7,
+        temperature: 0.8,
         taskType: 'question_generation'
       });
     } catch (multiProviderError) {
@@ -1076,7 +1083,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       // Fallback to direct OpenAI call
       response = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        max_tokens: 16000, // Increase token limit for larger question sets
+        max_tokens: 16384, // Maximum tokens for comprehensive question generation
         messages: [
           {
             role: "system",
@@ -1122,7 +1129,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
           },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.7,
+        temperature: 0.8, // Higher temperature for diverse questions
       });
     }
 
@@ -1391,7 +1398,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
             },
           ],
           response_format: { type: "json_object" },
-          temperature: 0.7,
+          temperature: 0.8,
         });
 
         const additionalData = JSON.parse(additionalResponse.choices[0].message.content || '{"questions": []}');
@@ -1430,7 +1437,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     
     // Create meaningful fallback questions with realistic content based on topic and reference materials
     const fallbackQuestions = [];
-    const questionCount = Math.min(params.questionCount || 5, 10);
+    const questionCount = params.questionCount || 10; // Use the actual requested count, don't limit to 10
     
     // Use reference materials if provided to create contextually relevant fallbacks
     const referenceContent = params.referenceFiles?.map(ref => ref.content).join(' ') || '';
