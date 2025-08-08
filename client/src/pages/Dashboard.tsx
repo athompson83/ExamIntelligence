@@ -137,7 +137,7 @@ export default function Dashboard() {
             whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <Link href="/quizzes">
+            <Link href="/quiz-manager">
               <Card className="stats-card hover:shadow-lg transition-shadow cursor-pointer">
                 <CardContent className="flex items-center justify-between p-4 lg:p-6">
                   <div>
@@ -166,7 +166,7 @@ export default function Dashboard() {
             whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <Link href="/users">
+            <Link href="/user-management">
               <Card className="stats-card hover:shadow-lg transition-shadow cursor-pointer">
                 <CardContent className="flex items-center justify-between p-4 lg:p-6">
                   <div>
@@ -224,7 +224,7 @@ export default function Dashboard() {
             whileHover={{ scale: 1.02, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <Link href="/ai-validation">
+            <Link href="/backend-prompt-management">
               <Card className="stats-card hover:shadow-lg transition-shadow cursor-pointer">
                 <CardContent className="flex items-center justify-between p-4 lg:p-6">
                   <div>
