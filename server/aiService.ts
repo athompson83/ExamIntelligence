@@ -1079,58 +1079,16 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         taskType: 'question_generation'
       });
     } catch (multiProviderError) {
-      console.error('Multi-provider AI failed, falling back to OpenAI:', multiProviderError);
-      // Fallback to direct OpenAI call
-      response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        max_tokens: 16384, // Maximum tokens for comprehensive question generation
-        messages: [
-          {
-            role: "system",
-            content: `You are a PhD-level educational assessment specialist with expertise in:
-            
-            - Psychometric principles and item response theory
-            - Bloom's taxonomy and cognitive complexity theory
-            - Educational measurement standards (AERA, APA, NCME)
-            - Question writing research from CRESST, ETS, and NCATE
-            - Bias prevention and accessibility in assessments
-            - Canvas LMS assessment best practices
-            
-            RESEARCH FOUNDATIONS:
-            - Follow CRESST criteria: cognitive complexity, content quality, meaningfulness, language appropriateness, transfer/generalizability, fairness, and reliability
-            - Apply Kansas Curriculum Center guidelines for effective test construction
-            - Implement UC Riverside School of Medicine best practices for question writing
-            - Use Assessment Systems' evidence-based item authoring standards
-            
-            COGNITIVE LOAD THEORY:
-            - Structure questions to match working memory limitations
-            - Provide clear, unambiguous language
-            - Reduce extraneous cognitive load
-            - Focus on essential information processing
-            
-            CANVAS LMS COMPATIBILITY:
-            - Generate questions that work seamlessly with Canvas quiz tools
-            - Follow Canvas-specific formatting and functionality standards
-            - Ensure compatibility with Canvas gradebook and analytics
-            - Support Canvas question types and multimedia integration
-            - Support intrinsic cognitive load appropriate to difficulty level
-            
-            EDUCATIONAL MEASUREMENT PRINCIPLES:
-            - Ensure content validity through curriculum alignment
-            - Maintain construct validity by testing intended knowledge/skills
-            - Apply reliability standards through consistent question quality
-            - Prevent measurement bias across diverse student populations
-            
-            Generate questions that promote meaningful learning outcomes and accurate assessment of student knowledge. Always return valid JSON with the exact structure requested.`,
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.8, // Higher temperature for diverse questions
+      console.error('Multi-provider AI completely failed:', multiProviderError);
+      // Log detailed error for debugging
+      console.error('Full error details:', {
+        message: multiProviderError.message,
+        stack: multiProviderError.stack,
+        name: multiProviderError.name
       });
+      
+      // Don't fall back to OpenAI - throw the error to trigger synthetic fallback
+      throw new Error(`All AI providers failed: ${multiProviderError.message}`);
     }
 
     // Send progress update after AI response

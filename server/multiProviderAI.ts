@@ -499,9 +499,10 @@ class MultiProviderAI {
             };
 
           case 'gemini':
+          case 'google':
             // Handle Google Gemini differently
             const model = provider.getGenerativeModel({ 
-              model: params.model || 'gemini-pro',
+              model: params.model || 'gemini-1.5-flash',
               generationConfig: {
                 maxOutputTokens: params.maxTokens || 4000,
                 temperature: params.temperature || 0.7,
@@ -520,7 +521,7 @@ class MultiProviderAI {
             console.log(`✅ Google Gemini API successful`);
             return {
               content: responseText,
-              provider: 'gemini',
+              provider: providerConfig.name,
               tokensUsed: geminiResponse.response.usageMetadata?.totalTokenCount,
               cost: (geminiResponse.response.usageMetadata?.totalTokenCount || 0) * providerConfig.costPerToken
             };

@@ -5427,22 +5427,36 @@ Return JSON with the new question data:
           isActive: p.isActive 
         })));
         
-        return providers.map(p => ({
-          id: p.name,
-          name: p.name,
-          displayName: p.name,
-          apiKey: p.apiKey || "",
-          baseUrl: p.apiEndpoint || "",
-          isEnabled: p.isActive,
-          priority: p.priority,
-          costPerToken: 0.000015,
-          maxTokens: 4096,
-          description: `${p.provider} provider`,
-          status: p.isActive ? "active" : "inactive",
-          lastTested: p.updatedAt,
-          createdAt: p.createdAt,
-          updatedAt: p.updatedAt
-        }));
+        return providers.map(p => {
+          // Set proper priority for DeepSeek as the most cost-effective provider
+          let adjustedPriority = p.priority;
+          if (p.name === 'deepseek') {
+            adjustedPriority = 1; // Highest priority (lowest number)
+          } else if (p.name === 'gemini' || p.name === 'google') {
+            adjustedPriority = 2; // Second priority
+          } else if (p.name === 'openai') {
+            adjustedPriority = 3; // Third priority
+          } else {
+            adjustedPriority = p.priority || 4; // Default lower priority
+          }
+
+          return {
+            id: p.name,
+            name: p.name,
+            displayName: p.name,
+            apiKey: p.apiKey || "",
+            baseUrl: p.apiEndpoint || "",
+            isEnabled: p.isActive,
+            priority: adjustedPriority,
+            costPerToken: p.name === 'deepseek' ? 0.00000014 : 0.000015, // Accurate cost per token
+            maxTokens: 4096,
+            description: `${p.provider} provider`,
+            status: p.isActive ? "active" : "inactive",
+            lastTested: p.updatedAt,
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt
+          };
+        });
       }
       
       // Return defaults if no database entries
