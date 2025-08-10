@@ -194,24 +194,6 @@ export default function ItemBanks() {
       // Always refetch after mutation to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to delete item bank",
-        variant: "destructive",
-      });
-    },
   });
 
   const exportTestbankMutation = useMutation({
@@ -376,7 +358,7 @@ export default function ItemBanks() {
               placeholder="Search item banks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 h-14 text-lg btn-mobile"
+              className="pl-14 h-14 text-lg btn-mobile"
             />
           </div>
 

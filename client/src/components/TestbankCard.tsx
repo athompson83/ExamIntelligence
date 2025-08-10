@@ -85,13 +85,6 @@ export default function TestbankCard({ testbank, onGenerateQuestions, isGenerati
       // Always refetch after error or success to ensure server state
       queryClient.invalidateQueries({ queryKey: ["/api/testbanks"] });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete item bank",
-        variant: "destructive",
-      });
-    },
   });
 
   const handleGenerateQuestions = (data: any) => {
