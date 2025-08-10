@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +22,10 @@ import {
   Database,
   Mail,
   Lock,
-  CheckCircle
+  CheckCircle,
+  ArrowLeft,
+  ChevronRight,
+  Home
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -47,8 +51,13 @@ interface StripeConfig {
 export default function SystemSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState('stripe');
+
+  const handleBackClick = () => {
+    setLocation('/admin');
+  };
 
   // Fetch system settings
   const { data: settings, isLoading } = useQuery<SystemSetting[]>({
@@ -283,6 +292,39 @@ export default function SystemSettings() {
 
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
         <div className="max-w-6xl mx-auto space-y-6">
+          {/* Mobile Back Button & Breadcrumbs */}
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackClick}
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white lg:hidden"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            
+            {/* Breadcrumbs - hidden on mobile, visible on larger screens */}
+            <nav className="hidden lg:flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+              <button
+                onClick={() => setLocation('/dashboard')}
+                className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                <Home className="h-4 w-4" />
+                Dashboard
+              </button>
+              <ChevronRight className="h-4 w-4" />
+              <button
+                onClick={() => setLocation('/admin')}
+                className="hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                Admin
+              </button>
+              <ChevronRight className="h-4 w-4" />
+              <span className="text-gray-900 dark:text-white font-medium">System Settings</span>
+            </nav>
+          </div>
+
           {/* Header */}
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
