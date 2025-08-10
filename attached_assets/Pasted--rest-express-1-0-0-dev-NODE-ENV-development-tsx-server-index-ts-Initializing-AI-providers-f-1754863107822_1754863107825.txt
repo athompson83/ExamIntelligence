@@ -1,0 +1,182 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+🔍 Initializing AI providers from super admin settings...
+LTI Provider initialization skipped - service running in configuration mode
+✅ LTI service initialized successfully - Ready for LMS integration
+9:57:22 PM [express] serving on port 5000
+📊 Database query result: 6 providers found
+🔍 Raw database providers: [
+  { name: 'google', hasApiKey: true, keyLength: 15, isActive: true },
+  { name: 'meta', hasApiKey: true, keyLength: 17, isActive: true },
+  { name: 'openai', hasApiKey: true, keyLength: 22, isActive: true },
+  { name: 'xai', hasApiKey: true, keyLength: 56, isActive: true },
+  { name: 'deepseek', hasApiKey: true, keyLength: 35, isActive: true },
+  { name: 'gemini', hasApiKey: true, keyLength: 16, isActive: true }
+]
+🔍 Available providers from super admin settings: [
+  {
+    id: 'google',
+    priority: 2,
+    hasApiKey: true,
+    keyLength: 15,
+    isEnabled: true
+  },
+  {
+    id: 'meta',
+    priority: 1,
+    hasApiKey: true,
+    keyLength: 17,
+    isEnabled: true
+  },
+  {
+    id: 'openai',
+    priority: 3,
+    hasApiKey: true,
+    keyLength: 22,
+    isEnabled: true
+  },
+  {
+    id: 'xai',
+    priority: 3,
+    hasApiKey: true,
+    keyLength: 56,
+    isEnabled: true
+  },
+  {
+    id: 'deepseek',
+    priority: 1,
+    hasApiKey: true,
+    keyLength: 35,
+    isEnabled: true
+  },
+  {
+    id: 'gemini',
+    priority: 2,
+    hasApiKey: true,
+    keyLength: 16,
+    isEnabled: true
+  }
+]
+⚠️ Skipping meta: API key too short (likely invalid)
+🌍 Using environment API key for deepseek (length: 32)
+✅ Initializing deepseek provider (priority: 1)
+🌍 Using environment API key for google (length: 39)
+✅ Initializing google provider (priority: 2)
+🌍 Using environment API key for gemini (length: 39)
+✅ Initializing gemini provider (priority: 2)
+🌍 Using environment API key for openai (length: 164)
+✅ Initializing openai provider (priority: 3)
+💾 Using database API key for xai (length: 56)
+✅ Initializing xai provider (priority: 3)
+🎯 Total providers initialized from super admin settings: 5
+Error getting system setting: error: relation "system_settings" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getSystemSetting (/home/runner/workspace/server/storage-simple.ts:2751:22)
+    at async initializeStripe (/home/runner/workspace/server/stripe.ts:10:26) {
+  length: 115,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '104',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+Stripe secret key not configured. Stripe functionality disabled.
+9:57:30 PM [express] GET /api/auth/user 304 in 2ms :: {"id":"test-user","email":"test@example.com","…
+9:57:30 PM [express] GET /api/notifications 200 in 2ms :: [{"id":"notif1","userId":"test-user","titl…
+9:57:30 PM [express] GET /api/study-aids 200 in 1ms :: [{"id":"study-1","title":"Biology Fundamental…
+9:57:30 PM [express] GET /api/notifications 200 in 1ms :: [{"id":"notif1","userId":"test-user","titl…
+9:57:31 PM [express] GET /api/dashboard/active-sessions 304 in 347ms :: []
+9:57:31 PM [express] GET /api/dashboard/stats 304 in 790ms :: {"assignedQuizzes":3,"completedQuizzes…
+9:57:32 PM [express] GET /api/dashboard/stats 304 in 415ms :: {"assignedQuizzes":3,"completedQuizzes…
+9:57:43 PM [express] GET /api/testbanks 200 in 1044ms :: [{"id":"585987ca-c663-45b3-8c05-7c73089e0ea…
+9:57:56 PM [express] DELETE /api/testbanks/00000000-0000-0000-0000-000000000002 200 in 512ms :: {"me…
+9:57:57 PM [express] GET /api/testbanks 200 in 766ms :: [{"id":"585987ca-c663-45b3-8c05-7c73089e0ea1…
+9:57:58 PM [express] DELETE /api/testbanks/a839cdc1-154d-4f84-8cad-08e2adc83e15 200 in 263ms :: {"me…
+9:57:59 PM [express] GET /api/testbanks 200 in 554ms :: [{"id":"585987ca-c663-45b3-8c05-7c73089e0ea1…
+9:58:03 PM [vite] Internal server error: /home/runner/workspace/client/src/pages/question-manager.tsx: Identifier 'deleteQuestionMutation' has already been declared. (670:8)
+
+  668 |
+  669 |   // Delete question mutation
+> 670 |   const deleteQuestionMutation = useMutation({
+      |         ^
+  671 |     mutationFn: async (id: string) => {
+  672 |       await apiRequest("DELETE", `/api/questions/${id}`);
+  673 |     },
+  Plugin: vite:react-babel
+  File: /home/runner/workspace/client/src/pages/question-manager.tsx:670:8
+  668|  
+  669|    // Delete question mutation
+  670|    const deleteQuestionMutation = useMutation({
+     |          ^
+  671|      mutationFn: async (id: string) => {
+  672|        await apiRequest("DELETE", `/api/questions/${id}`);
+      at toParseError (/home/runner/workspace/node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at raise (/home/runner/workspace/node_modules/@babel/parser/src/tokenizer/index.ts:1503:19)
+      at checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/src/util/scope.ts:164:19)
+      at declareName (/home/runner/workspace/node_modules/@babel/parser/src/util/scope.ts:118:12)
+      at declareName (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/scope.ts:89:11)
+      at declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/src/parser/lval.ts:818:16)
+      at checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/src/parser/lval.ts:813:12)
+      at checkLVal (/home/runner/workspace/node_modules/@babel/parser/src/parser/lval.ts:713:12)
+      at parseVarId (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1628:10)
+      at parseVarId (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3661:13)
+      at parseVar (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1577:12)
+      at parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1246:10)
+      at parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3124:33)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:607:21)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3183:20)
+      at parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:477:17)
+      at parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:426:17)
+      at parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1439:16)
+      at parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1412:10)
+      at parseBlock (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1380:10)
+      at parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:2616:24)
+      at parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:2585:10)
+      at parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:2645:20)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1690:12)
+      at withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3166:14)
+      at parseFunction (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1688:10)
+      at parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:2565:19)
+      at parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3115:20)
+      at parseExport (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:2447:25)
+      at parseExport (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3085:22)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:644:25)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3183:20)
+      at parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:477:17)
+      at parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:414:17)
+      at parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1438:16)
+      at parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1412:10)
+      at parseProgram (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:229:10)
+      at parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:203:25)
+      at parse (/home/runner/workspace/node_modules/@babel/parser/src/parser/index.ts:93:10)
+      at parse (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:4307:20)
+      at parse (/home/runner/workspace/node_modules/@babel/parser/src/index.ts:92:38)
+      at parser (/home/runner/workspace/node_modules/@babel/core/src/parser/index.ts:28:19)
+      at parser.next (<anonymous>)
+      at normalizeFile (/home/runner/workspace/node_modules/@babel/core/src/transformation/normalize-file.ts:50:24)
+      at normalizeFile.next (<anonymous>)
+      at run (/home/runner/workspace/node_modules/@babel/core/src/transformation/index.ts:40:36)
+      at run.next (<anonymous>)
+      at transform (/home/runner/workspace/node_modules/@babel/core/src/transform.ts:29:20)
+      at transform.next (<anonymous>)
+      at step (/home/runner/workspace/node_modules/gensync/index.js:261:32)
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.5.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2
+npm notice To update run: npm install -g npm@11.5.2
+npm notice

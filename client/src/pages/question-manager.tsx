@@ -105,6 +105,10 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   // State management
   const [selectedTestbankId, setSelectedTestbankId] = useState<string>(testbankId || "");
   
+  // Bulk selection state
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
+  
   // If no testbankId provided, show testbank selection first
   const effectiveTestbankId = testbankId || selectedTestbankId;
 
@@ -138,9 +142,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const [filterBloomsLevel, setFilterBloomsLevel] = useState("all");
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   
-  // Bulk operations state
-  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
-  const [isSelectMode, setIsSelectMode] = useState(false);
+
   
   // AI Generation Form State
   const [aiForm, setAiForm] = useState({
@@ -666,34 +668,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     },
   });
 
-  // Delete question mutation
-  const deleteQuestionMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/questions/${id}`);
-    },
-    onSuccess: (data, deletedQuestionId) => {
-      // Immediately remove the question from cache using optimistic updates
-      queryClient.setQueryData([`/api/testbanks/${effectiveTestbankId}/questions`], (oldData: any[]) => {
-        if (!oldData) return [];
-        return oldData.filter(question => question.id !== deletedQuestionId);
-      });
-      
-      // Also invalidate queries to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
-      
-      toast({
-        title: "Success",
-        description: "Question deleted successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to delete question",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   const resetQuestionForm = () => {
     setQuestionForm({
