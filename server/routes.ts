@@ -2069,6 +2069,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk delete questions
+  app.post("/api/testbanks/:id/questions/bulk-delete", async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { questionIds } = req.body;
+      
+      if (!questionIds || !Array.isArray(questionIds) || questionIds.length === 0) {
+        return res.status(400).json({ error: "Question IDs are required" });
+      }
+
+      const results = [];
+      for (const questionId of questionIds) {
+        try {
+          await storage.deleteQuestion(questionId);
+          results.push({ id: questionId, success: true });
+        } catch (error) {
+          console.error(`Failed to delete question ${questionId}:`, error);
+          results.push({ id: questionId, success: false, error: error.message });
+        }
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      
+      res.json({ 
+        message: `${successCount} of ${questionIds.length} questions deleted successfully`,
+        results 
+      });
+    } catch (error: any) {
+      console.error("Error in bulk delete:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // AI Validation routes
   app.post('/api/questions/:id/validate',  async (req: any, res) => {
     try {

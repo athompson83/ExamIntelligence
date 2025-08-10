@@ -138,6 +138,10 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const [filterBloomsLevel, setFilterBloomsLevel] = useState("all");
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   
+  // Bulk operations state
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  
   // AI Generation Form State
   const [aiForm, setAiForm] = useState({
     topic: "",
@@ -322,6 +326,120 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
     total: 0,
     percentage: 0
   });
+
+  // Delete questions mutation
+  const deleteQuestionMutation = useMutation({
+    mutationFn: async (questionId: string) => {
+      const response = await apiRequest("DELETE", `/api/testbanks/${effectiveTestbankId}/questions/${questionId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
+      toast({
+        title: "Success",
+        description: "Question deleted successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete question",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Bulk delete questions mutation
+  const bulkDeleteQuestionsMutation = useMutation({
+    mutationFn: async (questionIds: string[]) => {
+      const response = await apiRequest("POST", `/api/testbanks/${effectiveTestbankId}/questions/bulk-delete`, { 
+        questionIds 
+      });
+      return response.json();
+    },
+    onSuccess: (_, questionIds) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
+      setSelectedQuestions(new Set());
+      setIsSelectMode(false);
+      toast({
+        title: "Success",
+        description: `${questionIds.length} questions deleted successfully`,
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete selected questions",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Bulk operations helper functions
+  const toggleSelectMode = () => {
+    setIsSelectMode(!isSelectMode);
+    setSelectedQuestions(new Set());
+  };
+
+  const toggleSelectQuestion = (questionId: string) => {
+    const newSelected = new Set(selectedQuestions);
+    if (newSelected.has(questionId)) {
+      newSelected.delete(questionId);
+    } else {
+      newSelected.add(questionId);
+    }
+    setSelectedQuestions(newSelected);
+  };
+
+  const selectAllQuestions = () => {
+    const allIds = filteredQuestions.map(q => q.id);
+    setSelectedQuestions(new Set(allIds));
+  };
+
+  const deselectAllQuestions = () => {
+    setSelectedQuestions(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedQuestions.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select questions to delete",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const confirmed = confirm(
+      `Are you sure you want to delete ${selectedQuestions.size} selected question(s)? This action cannot be undone.`
+    );
+
+    if (confirmed) {
+      bulkDeleteQuestionsMutation.mutate(Array.from(selectedQuestions));
+    }
+  };
 
   // Custom instruction helper functions
   const handleSaveCustomInstruction = () => {
@@ -966,6 +1084,58 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
             </div>
             
             <div className="flex items-center space-x-3">
+              {/* Bulk Actions Toolbar */}
+              {isSelectMode ? (
+                <div className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                    {selectedQuestions.size} selected
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllQuestions}
+                    className="text-xs"
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={deselectAllQuestions}
+                    className="text-xs"
+                  >
+                    Deselect All
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    disabled={selectedQuestions.size === 0}
+                    className="text-xs"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Delete ({selectedQuestions.size})
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleSelectMode}
+                    className="text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={toggleSelectMode}
+                  className="text-sm"
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Select Multiple
+                </Button>
+              )}
+
               {/* AI Generation Dialog */}
               <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
                 <DialogTrigger asChild>
@@ -1898,6 +2068,15 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                 <Card key={question.id} className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
+                      {/* Selection checkbox */}
+                      {isSelectMode && (
+                        <div className="flex items-center mr-4 pt-1">
+                          <Checkbox
+                            checked={selectedQuestions.has(question.id)}
+                            onCheckedChange={() => toggleSelectQuestion(question.id)}
+                          />
+                        </div>
+                      )}
                       <div className="flex-1">
                         <CardTitle className="text-base mb-2">{question.questionText || 'No question text'}</CardTitle>
                         <div className="flex flex-wrap items-center gap-2">

@@ -72,10 +72,13 @@ class MultiProviderAI {
           continue;
         }
         
-        if (envKey) {
+        if (envKey && envKey.length > 20) {
           console.log(`🌍 Using environment API key for ${provider.id} (length: ${envKey.length})`);
-        } else {
+        } else if (provider.apiKey && provider.apiKey.length > 20) {
           console.log(`💾 Using database API key for ${provider.id} (length: ${provider.apiKey.length})`);
+        } else {
+          console.log(`⚠️ Skipping ${provider.id}: API key too short (likely invalid)`);
+          continue;
         }
         
         console.log(`✅ Initializing ${provider.id} provider (priority: ${provider.priority || 999})`);
