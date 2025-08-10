@@ -5371,6 +5371,48 @@ Return JSON with the new question data:
     }
   ];
 
+  async upsertLLMProvider(providerData: any): Promise<any> {
+    // Create or update LLM provider with environment API key
+    try {
+      console.log(`🔄 Upserting LLM provider: ${providerData.id}`);
+      
+      // For the in-memory storage, we'll update the mock data structure
+      // In a real database, this would be an INSERT ON CONFLICT UPDATE or UPSERT
+      const providers = await this.getAllLLMProviders();
+      const existingIndex = providers.findIndex(p => p.id === providerData.id);
+      
+      const updatedProvider = {
+        id: providerData.id,
+        name: providerData.name,
+        apiKey: providerData.apiKey,
+        priority: providerData.priority,
+        isEnabled: providerData.isEnabled,
+        baseUrl: providerData.baseUrl,
+        accountId: 'default-account',
+        lastUsed: new Date().toISOString(),
+        requestCount: 0,
+        errorCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      if (existingIndex >= 0) {
+        // Update existing provider
+        providers[existingIndex] = { ...providers[existingIndex], ...updatedProvider };
+        console.log(`✅ Updated existing provider: ${providerData.id}`);
+      } else {
+        // Add new provider
+        providers.push(updatedProvider);
+        console.log(`✅ Created new provider: ${providerData.id}`);
+      }
+      
+      return updatedProvider;
+    } catch (error) {
+      console.error(`❌ Error upserting LLM provider ${providerData.id}:`, error);
+      throw error;
+    }
+  }
+
   async getAllLLMProviders(): Promise<any[]> {
     try {
       // First try to get from database

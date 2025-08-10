@@ -64,6 +64,9 @@ Landing Page: Comprehensive marketing page with complete feature list, FAQ secti
 - **react-i18next**: Internationalization framework
 
 ## Recent Changes (August 2025)
+- **AI Provider Integration**: Integrated environment API keys with super admin LLM settings, prioritizing DeepSeek as first choice provider
+- **Multi-Provider AI Enhancement**: Added support for DeepSeek, Groq, Meta/Llama, and xAI Grok providers with proper priority ordering
+- **Environment Variable Integration**: Updated multi-provider system to use environment variables as fallback for database-stored API keys
 - **Landing Page Enhancement**: Created comprehensive marketing landing page with complete feature list, FAQ section, technical specifications, and professional design
 - **CAT Exam Interface**: Fixed redirection issues for Computer Adaptive Testing practice sessions
 - **Mobile Optimization**: Implemented 24px button padding and mobile-first responsive design across all components

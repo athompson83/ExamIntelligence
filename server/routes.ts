@@ -6826,6 +6826,102 @@ Initialize all interactions with these principles as your foundation.`,
     }
   });
 
+  // Sync environment API keys to database providers
+  app.post('/api/super-admin/llm-providers/sync-env', mockAuth, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+
+      console.log('🔄 Syncing environment API keys to database...');
+      
+      const envProviders = [
+        { 
+          id: 'deepseek', 
+          name: 'DeepSeek', 
+          priority: 1, 
+          apiKey: process.env.DEEPSEEK_API_KEY || '',
+          isEnabled: true,
+          baseUrl: 'https://api.deepseek.com/v1'
+        },
+        { 
+          id: 'groq', 
+          name: 'Groq', 
+          priority: 2, 
+          apiKey: process.env.GROQ_API_KEY || '',
+          isEnabled: true,
+          baseUrl: 'https://api.groq.com/openai/v1'
+        },
+        { 
+          id: 'meta', 
+          name: 'Meta/Llama', 
+          priority: 3, 
+          apiKey: process.env.META_API_KEY || '',
+          isEnabled: true,
+          baseUrl: 'https://api.meta.ai/v1'
+        },
+        { 
+          id: 'gemini', 
+          name: 'Google Gemini', 
+          priority: 4, 
+          apiKey: process.env.GOOGLE_API_KEY || '',
+          isEnabled: !!process.env.GOOGLE_API_KEY,
+          baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
+        },
+        { 
+          id: 'xai', 
+          name: 'xAI Grok', 
+          priority: 5, 
+          apiKey: process.env.XAI_API_KEY || '',
+          isEnabled: true,
+          baseUrl: 'https://api.x.ai/v1'
+        },
+        { 
+          id: 'openai', 
+          name: 'OpenAI GPT', 
+          priority: 6, 
+          apiKey: process.env.OPENAI_API_KEY || '',
+          isEnabled: !!process.env.OPENAI_API_KEY,
+          baseUrl: 'https://api.openai.com/v1'
+        },
+        { 
+          id: 'anthropic', 
+          name: 'Anthropic Claude', 
+          priority: 7, 
+          apiKey: process.env.ANTHROPIC_API_KEY || '',
+          isEnabled: !!process.env.ANTHROPIC_API_KEY,
+          baseUrl: 'https://api.anthropic.com'
+        }
+      ];
+
+      const results = [];
+      
+      for (const provider of envProviders) {
+        try {
+          // Only sync if environment key exists
+          if (provider.apiKey) {
+            await storage.upsertLLMProvider(provider);
+            results.push({ id: provider.id, status: 'synced', hasKey: !!provider.apiKey });
+            console.log(`✅ Synced ${provider.name} provider`);
+          } else {
+            results.push({ id: provider.id, status: 'skipped', hasKey: false });
+            console.log(`⏭️ Skipped ${provider.name} - no environment key`);
+          }
+        } catch (error) {
+          results.push({ id: provider.id, status: 'error', error: error.message });
+          console.error(`❌ Failed to sync ${provider.name}:`, error.message);
+        }
+      }
+
+      console.log('🎯 Environment sync completed');
+      res.json({ message: 'Environment sync completed', results });
+    } catch (error) {
+      console.error('Error syncing environment keys:', error);
+      res.status(500).json({ message: 'Failed to sync environment keys', error: error.message });
+    }
+  });
+
   app.post('/api/super-admin/llm-providers/:id/test', mockAuth, async (req: any, res) => {
     try {
       const user = req.user;

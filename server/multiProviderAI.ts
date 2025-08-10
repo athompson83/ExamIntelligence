@@ -19,11 +19,13 @@ export interface AIResponse {
 class MultiProviderAI {
   private providers: Map<string, any> = new Map();
   private providerConfigs: AIProvider[] = [
-    { name: 'deepseek', priority: 1, available: true, costPerToken: 0.00000014 }, // Cheapest
-    { name: 'gemini', priority: 2, available: true, costPerToken: 0.00000075 }, // Mid-range
-    { name: 'xai', priority: 3, available: true, costPerToken: 0.000002 }, // xAI Grok
-    { name: 'openai', priority: 4, available: true, costPerToken: 0.000015 }, // Most expensive
-    { name: 'anthropic', priority: 5, available: true, costPerToken: 0.000015 }
+    { name: 'deepseek', priority: 1, available: true, costPerToken: 0.00000014 }, // Highest priority - cheapest
+    { name: 'groq', priority: 2, available: true, costPerToken: 0.00000027 }, // Fast inference
+    { name: 'meta', priority: 3, available: true, costPerToken: 0.00000040 }, // Llama models
+    { name: 'gemini', priority: 4, available: true, costPerToken: 0.00000075 }, // Mid-range
+    { name: 'xai', priority: 5, available: true, costPerToken: 0.000002 }, // xAI Grok
+    { name: 'openai', priority: 6, available: true, costPerToken: 0.000015 }, // Most expensive
+    { name: 'anthropic', priority: 7, available: true, costPerToken: 0.000015 }
   ];
 
   constructor() {
@@ -37,48 +39,196 @@ class MultiProviderAI {
   }
 
   private async initializeProviders() {
-    // Use environment variables instead of database for better reliability
-    console.log('🔍 Initializing AI providers from environment variables...');
+    console.log('🔍 Initializing AI providers from super admin settings...');
     
     try {
-      // Initialize OpenAI
-      if (process.env.OPENAI_API_KEY) {
-        console.log(`✅ Initializing OpenAI provider`);
-        this.providers.set('openai', new OpenAI({ apiKey: process.env.OPENAI_API_KEY }));
-      } else {
-        console.log(`⏭️ Skipping OpenAI: no API key`);
+      // First try to get configuration from database (super admin settings)
+      const { DatabaseStorage } = await import('./storage-simple');
+      const storage = new DatabaseStorage();
+      
+      const dbProviders = await storage.getAllLLMProviders();
+      console.log('🔍 Available providers from super admin settings:', dbProviders.map(p => ({ 
+        id: p.id, 
+        priority: p.priority || 999,
+        hasApiKey: !!p.apiKey, 
+        keyLength: p.apiKey ? p.apiKey.length : 0,
+        isEnabled: p.isEnabled 
+      })));
+
+      // Sort providers by priority (lower number = higher priority)
+      const sortedProviders = dbProviders
+        .filter(p => p.isEnabled !== false)
+        .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+
+      let providersFromDB = 0;
+      
+      for (const provider of sortedProviders) {
+        const apiKey = provider.apiKey || this.getEnvironmentKey(provider.id);
+        
+        if (!apiKey) {
+          console.log(`⏭️ Skipping ${provider.id}: no API key in DB or environment`);
+          continue;
+        }
+        
+        console.log(`✅ Initializing ${provider.id} provider (priority: ${provider.priority || 999})`);
+        
+        try {
+          switch (provider.id) {
+            case 'openai':
+              this.providers.set('openai', new OpenAI({ apiKey }));
+              break;
+              
+            case 'google':
+            case 'gemini':
+              this.providers.set('gemini', new GoogleGenAI(apiKey));
+              break;
+              
+            case 'anthropic':
+              this.providers.set('anthropic', new Anthropic({ apiKey }));
+              break;
+              
+            case 'deepseek':
+              // DeepSeek uses OpenAI-compatible API
+              this.providers.set('deepseek', new OpenAI({ 
+                apiKey, 
+                baseURL: 'https://api.deepseek.com/v1' 
+              }));
+              break;
+              
+            case 'groq':
+              // Groq uses OpenAI-compatible API  
+              this.providers.set('groq', new OpenAI({ 
+                apiKey, 
+                baseURL: 'https://api.groq.com/openai/v1' 
+              }));
+              break;
+              
+            case 'meta':
+              // Meta/Llama via compatible API
+              this.providers.set('meta', new OpenAI({ 
+                apiKey, 
+                baseURL: 'https://api.meta.ai/v1' 
+              }));
+              break;
+              
+            case 'xai':
+              // xAI Grok uses OpenAI-compatible API
+              this.providers.set('xai', new OpenAI({ 
+                apiKey, 
+                baseURL: 'https://api.x.ai/v1' 
+              }));
+              break;
+              
+            default:
+              console.log(`⚠️ Unknown provider: ${provider.id}`);
+          }
+          
+          providersFromDB++;
+        } catch (providerError) {
+          console.error(`Failed to initialize ${provider.id}:`, providerError.message);
+        }
       }
       
-      // Initialize Google Gemini  
-      if (process.env.GOOGLE_API_KEY) {
-        console.log(`✅ Initializing Google Gemini provider`);
-        this.providers.set('gemini', new GoogleGenAI(process.env.GOOGLE_API_KEY));
-      } else {
-        console.log(`⏭️ Skipping Google Gemini: no API key`);
-      }
+      // Update provider configs with database priorities
+      this.updateProviderConfigsFromDB(dbProviders);
       
-      // Initialize Anthropic Claude
-      if (process.env.ANTHROPIC_API_KEY) {
-        console.log(`✅ Initializing Anthropic provider`);
-        this.providers.set('anthropic', new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }));
-      } else {
-        console.log(`⏭️ Skipping Anthropic: no API key`);
-      }
+      console.log(`🎯 Total providers initialized from super admin settings: ${providersFromDB}`);
       
-      const providerCount = this.providers.size;
-      console.log(`🎯 Total providers initialized: ${providerCount}`);
-      
-      // Fallback to old database method if no environment providers found
-      if (providerCount === 0) {
-        console.log('🔄 No environment providers found, falling back to database...');
-        await this.initializeDatabaseProviders();
+      // Fallback to environment variables if no database providers
+      if (providersFromDB === 0) {
+        console.log('🔄 No database providers found, falling back to environment variables...');
+        await this.initializeFromEnvironment();
       }
       
     } catch (error) {
-      console.error('Error initializing providers from environment:', error);
-      // Fallback to database providers
-      await this.initializeDatabaseProviders();
+      console.error('Error initializing providers from database:', error);
+      await this.initializeFromEnvironment();
     }
+  }
+
+  private getEnvironmentKey(providerId: string): string | undefined {
+    switch (providerId) {
+      case 'openai': return process.env.OPENAI_API_KEY;
+      case 'google':
+      case 'gemini': return process.env.GOOGLE_API_KEY;
+      case 'anthropic': return process.env.ANTHROPIC_API_KEY;
+      case 'deepseek': return process.env.DEEPSEEK_API_KEY;
+      case 'groq': return process.env.GROQ_API_KEY;
+      case 'meta': return process.env.META_API_KEY;
+      case 'xai': return process.env.XAI_API_KEY;
+      default: return undefined;
+    }
+  }
+
+  private updateProviderConfigsFromDB(dbProviders: any[]) {
+    // Update the priority order based on database configuration
+    this.providerConfigs = dbProviders
+      .filter(p => p.isEnabled !== false)
+      .map(p => ({
+        name: p.id,
+        priority: p.priority || 999,
+        available: true,
+        costPerToken: this.getCostPerToken(p.id)
+      }))
+      .sort((a, b) => a.priority - b.priority);
+  }
+
+  private getCostPerToken(providerId: string): number {
+    const costs: Record<string, number> = {
+      'deepseek': 0.00000014,
+      'groq': 0.00000027,
+      'meta': 0.00000040,
+      'gemini': 0.00000075,
+      'xai': 0.000002,
+      'openai': 0.000015,
+      'anthropic': 0.000015
+    };
+    return costs[providerId] || 0.000015;
+  }
+
+  private async initializeFromEnvironment() {
+    console.log('🔄 Initializing from environment variables...');
+    
+    // Initialize providers based on available environment variables
+    const envProviders = [
+      { id: 'deepseek', key: process.env.DEEPSEEK_API_KEY, baseURL: 'https://api.deepseek.com/v1' },
+      { id: 'groq', key: process.env.GROQ_API_KEY, baseURL: 'https://api.groq.com/openai/v1' },
+      { id: 'meta', key: process.env.META_API_KEY, baseURL: 'https://api.meta.ai/v1' },
+      { id: 'openai', key: process.env.OPENAI_API_KEY },
+      { id: 'gemini', key: process.env.GOOGLE_API_KEY },
+      { id: 'anthropic', key: process.env.ANTHROPIC_API_KEY }
+    ];
+
+    for (const provider of envProviders) {
+      if (!provider.key) {
+        console.log(`⏭️ Skipping ${provider.id}: no environment key`);
+        continue;
+      }
+
+      console.log(`✅ Initializing ${provider.id} provider from environment`);
+      
+      switch (provider.id) {
+        case 'openai':
+        case 'deepseek':
+        case 'groq':
+        case 'meta':
+          this.providers.set(provider.id, new OpenAI({ 
+            apiKey: provider.key, 
+            ...(provider.baseURL && { baseURL: provider.baseURL })
+          }));
+          break;
+          
+        case 'gemini':
+          this.providers.set('gemini', new GoogleGenAI(provider.key));
+          break;
+          
+        case 'anthropic':
+          this.providers.set('anthropic', new Anthropic({ apiKey: provider.key }));
+          break;
+      }
+    }
+    
+    console.log(`🎯 Total providers initialized from environment: ${this.providers.size}`);
   }
 
   private async initializeDatabaseProviders() {
@@ -217,12 +367,183 @@ class MultiProviderAI {
     }
   }
 
-  async generateContent(options: any): Promise<AIResponse> {
-    // Reinitialize providers to get latest API keys from database
-    console.log('🔄 Reinitializing providers for content generation...');
-    await this.initializeProviders();
-    console.log(`🎯 Providers available after reinit: ${this.providers.size}`);
-    return this.generateCATExam('', options);
+  async generateContent(params: {
+    messages: Array<{ role: string; content: string }>;
+    model?: string;
+    maxTokens?: number;
+    temperature?: number;
+    responseFormat?: { type: string };
+    taskType?: string;
+  }): Promise<AIResponse> {
+    
+    // Get available providers sorted by priority (cost efficiency)
+    const availableProviders = this.providerConfigs
+      .filter(config => this.providers.has(config.name))
+      .sort((a, b) => a.priority - b.priority);
+
+    console.log(`🎯 Trying AI providers in priority order: ${availableProviders.map(p => p.name).join(' → ')}`);
+
+    if (availableProviders.length === 0) {
+      throw new Error('No AI providers available');
+    }
+
+    // Try each provider in order of priority
+    for (const providerConfig of availableProviders) {
+      try {
+        console.log(`🔄 Attempting ${providerConfig.name} (priority: ${providerConfig.priority})`);
+        const provider = this.providers.get(providerConfig.name);
+        
+        switch (providerConfig.name) {
+          case 'deepseek':
+            const deepseekResponse = await provider.chat.completions.create({
+              model: params.model || 'deepseek-chat',
+              messages: params.messages,
+              max_tokens: params.maxTokens || 4000,
+              temperature: params.temperature || 0.7,
+              ...(params.responseFormat && { response_format: params.responseFormat })
+            });
+            
+            console.log(`✅ DeepSeek API successful`);
+            return {
+              content: deepseekResponse.choices[0]?.message?.content || '',
+              provider: 'deepseek',
+              tokensUsed: deepseekResponse.usage?.total_tokens,
+              cost: (deepseekResponse.usage?.total_tokens || 0) * providerConfig.costPerToken
+            };
+
+          case 'groq':
+            const groqResponse = await provider.chat.completions.create({
+              model: params.model || 'llama3-8b-8192',
+              messages: params.messages,
+              max_tokens: params.maxTokens || 4000,
+              temperature: params.temperature || 0.7,
+              ...(params.responseFormat && { response_format: params.responseFormat })
+            });
+            
+            console.log(`✅ Groq API successful`);
+            return {
+              content: groqResponse.choices[0]?.message?.content || '',
+              provider: 'groq',
+              tokensUsed: groqResponse.usage?.total_tokens,
+              cost: (groqResponse.usage?.total_tokens || 0) * providerConfig.costPerToken
+            };
+
+          case 'meta':
+            const metaResponse = await provider.chat.completions.create({
+              model: params.model || 'llama-3.1-8b-instant',
+              messages: params.messages,
+              max_tokens: params.maxTokens || 4000,
+              temperature: params.temperature || 0.7,
+              ...(params.responseFormat && { response_format: params.responseFormat })
+            });
+            
+            console.log(`✅ Meta/Llama API successful`);
+            return {
+              content: metaResponse.choices[0]?.message?.content || '',
+              provider: 'meta',
+              tokensUsed: metaResponse.usage?.total_tokens,
+              cost: (metaResponse.usage?.total_tokens || 0) * providerConfig.costPerToken
+            };
+
+          case 'xai':
+            const xaiResponse = await provider.chat.completions.create({
+              model: params.model || 'grok-beta',
+              messages: params.messages,
+              max_tokens: params.maxTokens || 4000,
+              temperature: params.temperature || 0.7,
+              ...(params.responseFormat && { response_format: params.responseFormat })
+            });
+            
+            console.log(`✅ xAI Grok API successful`);
+            return {
+              content: xaiResponse.choices[0]?.message?.content || '',
+              provider: 'xai',
+              tokensUsed: xaiResponse.usage?.total_tokens,
+              cost: (xaiResponse.usage?.total_tokens || 0) * providerConfig.costPerToken
+            };
+
+          case 'openai':
+            const openaiResponse = await provider.chat.completions.create({
+              model: params.model || 'gpt-4o',
+              messages: params.messages,
+              max_tokens: params.maxTokens || 4000,
+              temperature: params.temperature || 0.7,
+              ...(params.responseFormat && { response_format: params.responseFormat })
+            });
+            
+            console.log(`✅ OpenAI API successful`);
+            return {
+              content: openaiResponse.choices[0]?.message?.content || '',
+              provider: 'openai',
+              tokensUsed: openaiResponse.usage?.total_tokens,
+              cost: (openaiResponse.usage?.total_tokens || 0) * providerConfig.costPerToken
+            };
+
+          case 'anthropic':
+            const claudeResponse = await provider.messages.create({
+              model: params.model || 'claude-3-5-sonnet-20241022',
+              max_tokens: params.maxTokens || 4000,
+              temperature: params.temperature || 0.7,
+              messages: params.messages.map((msg: any) => ({
+                role: msg.role === 'system' ? 'user' : msg.role,
+                content: msg.role === 'system' ? `System: ${msg.content}` : msg.content
+              }))
+            });
+            
+            console.log(`✅ Anthropic Claude API successful`);
+            return {
+              content: claudeResponse.content[0]?.text || '',
+              provider: 'anthropic',
+              tokensUsed: claudeResponse.usage?.input_tokens + claudeResponse.usage?.output_tokens,
+              cost: ((claudeResponse.usage?.input_tokens || 0) + (claudeResponse.usage?.output_tokens || 0)) * providerConfig.costPerToken
+            };
+
+          case 'gemini':
+            // Handle Google Gemini differently
+            const model = provider.getGenerativeModel({ 
+              model: params.model || 'gemini-pro',
+              generationConfig: {
+                maxOutputTokens: params.maxTokens || 4000,
+                temperature: params.temperature || 0.7,
+                ...(params.responseFormat && { responseMimeType: "application/json" })
+              }
+            });
+            
+            // Combine system and user messages for Gemini
+            const combinedContent = params.messages.map(msg => 
+              msg.role === 'system' ? `System: ${msg.content}` : msg.content
+            ).join('\n\n');
+            
+            const geminiResponse = await model.generateContent(combinedContent);
+            const responseText = geminiResponse.response.text();
+            
+            console.log(`✅ Google Gemini API successful`);
+            return {
+              content: responseText,
+              provider: 'gemini',
+              tokensUsed: geminiResponse.response.usageMetadata?.totalTokenCount,
+              cost: (geminiResponse.response.usageMetadata?.totalTokenCount || 0) * providerConfig.costPerToken
+            };
+
+          default:
+            throw new Error(`Unsupported provider: ${providerConfig.name}`);
+        }
+        
+      } catch (error) {
+        console.error(`❌ Provider ${providerConfig.name} failed:`, error.message);
+        
+        // If this is the last provider, re-throw the error
+        if (providerConfig === availableProviders[availableProviders.length - 1]) {
+          throw error;
+        }
+        
+        // Otherwise, continue to the next provider
+        console.log(`🔄 Trying next provider...`);
+        continue;
+      }
+    }
+    
+    throw new Error('All AI providers failed');
   }
 
   private async callOpenAI(client: OpenAI, messages: any[], options: any): Promise<AIResponse> {
