@@ -1534,27 +1534,101 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       // Vary question types if multiple are requested
       const questionType = params.questionTypes?.[i % (params.questionTypes?.length || 1)] || 'multiple_choice';
       
+      // Create different question structures based on type
+      let finalQuestionData = questionData;
+      let answerOptions = [];
+      
+      if (questionType === 'true_false') {
+        finalQuestionData = {
+          text: questionData.text.replace('What is', 'True or False:').replace('Which', 'Statement:').replace('?', ''),
+          options: [
+            { text: "True", correct: Math.random() > 0.5 },
+            { text: "False", correct: Math.random() > 0.5 }
+          ]
+        };
+        finalQuestionData.options[1].correct = !finalQuestionData.options[0].correct;
+      } else if (questionType === 'fill_blank') {
+        const sentence = questionData.text.replace(/\?.*$/, '');
+        const words = questionData.options[0].text.split(' ');
+        const keyWord = words[Math.floor(Math.random() * words.length)];
+        finalQuestionData = {
+          text: `${sentence}. Fill in the blank: _______ is the key approach.`,
+          options: [{ text: keyWord, correct: true }]
+        };
+      } else if (questionType === 'multiple_fill_blank') {
+        finalQuestionData = {
+          text: `Complete the statement: The _____ approach requires _____ protocols and _____ evaluation.`,
+          options: [
+            { text: "systematic", correct: true },
+            { text: "evidence-based", correct: true },
+            { text: "thorough", correct: true }
+          ]
+        };
+      } else if (questionType === 'matching') {
+        finalQuestionData = {
+          text: `Match the cardiovascular condition with its primary treatment:`,
+          options: [
+            { text: "STEMI → Immediate reperfusion", correct: true },
+            { text: "Cardiogenic shock → Supportive care and pressors", correct: true },
+            { text: "VF/VT → Defibrillation", correct: true },
+            { text: "Bradycardia → Atropine or pacing", correct: true }
+          ]
+        };
+      } else if (questionType === 'ordering') {
+        finalQuestionData = {
+          text: `Place the following cardiac arrest interventions in the correct order:`,
+          options: [
+            { text: "1. Check responsiveness", correct: true },
+            { text: "2. Call for help/AED", correct: true },
+            { text: "3. Begin chest compressions", correct: true },
+            { text: "4. Attach AED/defibrillate if indicated", correct: true }
+          ]
+        };
+      } else if (questionType === 'categorization') {
+        finalQuestionData = {
+          text: `Categorize the following medications by their primary use in cardiac emergencies:`,
+          options: [
+            { text: "Antiarrhythmics: Amiodarone, Lidocaine", correct: true },
+            { text: "Vasopressors: Epinephrine, Norepinephrine", correct: true },
+            { text: "Anticoagulants: Heparin, Aspirin", correct: true }
+          ]
+        };
+      } else if (questionType === 'multiple_response') {
+        finalQuestionData = {
+          text: `Which of the following are signs of acute coronary syndrome? (Select all that apply)`,
+          options: [
+            { text: "Chest pain or pressure", correct: true },
+            { text: "Shortness of breath", correct: true },
+            { text: "Nausea and vomiting", correct: true },
+            { text: "Perfect blood pressure", correct: false }
+          ]
+        };
+      }
+      
+      // Map final options to the required format
+      answerOptions = finalQuestionData.options.map((opt, idx) => ({
+        answerText: opt.text,
+        isCorrect: opt.correct,
+        displayOrder: idx
+      }));
+      
       fallbackQuestions.push({
-        questionText: questionData.text,
+        questionText: finalQuestionData.text,
         questionType: questionType,
         points: "1",
         difficultyScore: (params.difficultyRange?.[0] + params.difficultyRange?.[1]) / 2 || "5",
         bloomsLevel: params.bloomsLevels?.[i % (params.bloomsLevels?.length || 1)] || 'understand',
-        tags: [topic, `Question ${i + 1}`],
+        tags: [topic, `Question ${i + 1}`, questionType],
         correctFeedback: `Correct! This demonstrates understanding of ${topic} principles.`,
         incorrectFeedback: `Review the material to better understand this ${topic} concept.`,
         generalFeedback: `This question tests understanding of ${topic} fundamentals.`,
-        partialCredit: false,
+        partialCredit: questionType === 'multiple_response' || questionType === 'multiple_fill_blank',
         imageUrl: '',
         audioUrl: '',
         videoUrl: '',
         aiValidationStatus: 'needs_review',
         aiConfidenceScore: "0.6",
-        answerOptions: questionData.options.map((opt, idx) => ({
-          answerText: opt.text,
-          isCorrect: opt.correct,
-          displayOrder: idx
-        }))
+        answerOptions: answerOptions
       });
     }
     
