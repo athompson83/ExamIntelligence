@@ -1404,114 +1404,190 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     
     console.warn(`AI generation failed completely. Creating ${questionCount} realistic fallback questions for topic: ${topic}`);
     
-    for (let i = 0; i < questionCount; i++) {
-      let questionData;
+    // Generate unique questions by creating a larger pool and shuffling
+    const allQuestionTemplates = [];
+    
+    // Create topic-specific realistic content
+    if (topic.toLowerCase().includes('environmental') && topic.toLowerCase().includes('emergencies')) {
+      // Environmental emergencies fallback questions - expanded set
+      allQuestionTemplates.push(
+        {
+          text: "A 45-year-old patient presents with core body temperature of 32°C, altered mental status, and violent shivering. What is the primary treatment priority?",
+          options: [
+            { text: "Passive external rewarming and airway management", correct: true },
+            { text: "Immediate active internal rewarming", correct: false },
+            { text: "Administration of warm IV fluids only", correct: false },
+            { text: "Rapid transport without warming interventions", correct: false }
+          ]
+        },
+        {
+          text: "For a heat stroke patient with core temperature 41°C and no sweating, what is the immediate management priority?",
+          options: [
+            { text: "Aggressive cooling and continuous monitoring", correct: true },
+            { text: "IV fluid warming and glucose administration", correct: false },
+            { text: "Immediate transport without cooling", correct: false },
+            { text: "Administration of antipyretic medications", correct: false }
+          ]
+        },
+        {
+          text: "A drowning victim is unconscious, apneic, and has a weak pulse. After securing the airway, what is the next priority?",
+          options: [
+            { text: "Positive pressure ventilation with high-flow oxygen", correct: true },
+            { text: "Immediate chest compressions", correct: false },
+            { text: "Warming interventions and IV access", correct: false },
+            { text: "Spinal immobilization only", correct: false }
+          ]
+        },
+        {
+          text: "What is the most dangerous complication of severe hypothermia during rewarming?",
+          options: [
+            { text: "Ventricular fibrillation due to cardiac irritability", correct: true },
+            { text: "Hyperkalemia from cellular damage", correct: false },
+            { text: "Pulmonary edema from fluid shifts", correct: false },
+            { text: "Metabolic acidosis", correct: false }
+          ]
+        }
+      );
+    }
+    else if (topic.toLowerCase().includes('cardiac') || topic.toLowerCase().includes('heart')) {
+      // Cardiac emergencies fallback - expanded set
+      allQuestionTemplates.push(
+        {
+          text: "A patient presents with chest pain and ST elevation in leads II, III, and aVF. What does this indicate?",
+          options: [
+            { text: "Inferior wall myocardial infarction", correct: true },
+            { text: "Anterior wall myocardial infarction", correct: false },
+            { text: "Lateral wall myocardial infarction", correct: false },
+            { text: "Posterior wall myocardial infarction", correct: false }
+          ]
+        },
+        {
+          text: "During cardiac arrest, what is the correct compression-to-ventilation ratio for two-person CPR?",
+          options: [
+            { text: "30:2 compressions to ventilations", correct: true },
+            { text: "15:2 compressions to ventilations", correct: false },
+            { text: "5:1 compressions to ventilations", correct: false },
+            { text: "Continuous compressions without ventilations", correct: false }
+          ]
+        },
+        {
+          text: "What is the most appropriate initial drug for ventricular fibrillation?",
+          options: [
+            { text: "No medication - immediate defibrillation", correct: true },
+            { text: "Epinephrine 1mg IV", correct: false },
+            { text: "Amiodarone 300mg IV", correct: false },
+            { text: "Atropine 0.5mg IV", correct: false }
+          ]
+        },
+        {
+          text: "Which lead placement best identifies an anterior STEMI?",
+          options: [
+            { text: "V1-V6 precordial leads", correct: true },
+            { text: "Leads II, III, aVF", correct: false },
+            { text: "Leads I, aVL, V5-V6", correct: false },
+            { text: "V7-V9 posterior leads", correct: false }
+          ]
+        }
+      );
+    }
+    else if (topic.toLowerCase().includes('trauma')) {
+      // Trauma fallback questions - expanded set
+      allQuestionTemplates.push(
+        {
+          text: "In a multi-trauma patient with suspected internal bleeding, what is the priority assessment?",
+          options: [
+            { text: "Circulation and hemorrhage control", correct: true },
+            { text: "Detailed neurological examination", correct: false },
+            { text: "Fracture stabilization", correct: false },
+            { text: "Pain management", correct: false }
+          ]
+        },
+        {
+          text: "What is the most reliable sign of pneumothorax in a trauma patient?",
+          options: [
+            { text: "Decreased breath sounds and hyperresonance", correct: true },
+            { text: "Chest pain and dyspnea", correct: false },
+            { text: "Tachycardia and hypotension", correct: false },
+            { text: "Cyanosis and altered mental status", correct: false }
+          ]
+        }
+      );
+    }
+    else {
+      // Generic educational fallback with more variety
+      const genericVariations = [
+        "What is a fundamental principle when studying",
+        "Which approach is most effective for understanding", 
+        "What is the key to mastering concepts in",
+        "Which strategy best supports learning in",
+        "What foundational knowledge is essential for"
+      ];
       
-      // Create topic-specific realistic content
-      if (topic.toLowerCase().includes('environmental') && topic.toLowerCase().includes('emergencies')) {
-        // Environmental emergencies fallback questions
-        const envEmergencyQuestions = [
-          {
-            text: "A 45-year-old patient presents with core body temperature of 32°C, altered mental status, and violent shivering. What is the primary treatment priority?",
-            options: [
-              { text: "Passive external rewarming and airway management", correct: true },
-              { text: "Immediate active internal rewarming", correct: false },
-              { text: "Administration of warm IV fluids only", correct: false },
-              { text: "Rapid transport without warming interventions", correct: false }
-            ]
-          },
-          {
-            text: "For a heat stroke patient with core temperature 41°C and no sweating, what is the immediate management priority?",
-            options: [
-              { text: "Aggressive cooling and continuous monitoring", correct: true },
-              { text: "IV fluid warming and glucose administration", correct: false },
-              { text: "Immediate transport without cooling", correct: false },
-              { text: "Administration of antipyretic medications", correct: false }
-            ]
-          },
-          {
-            text: "A drowning victim is unconscious, apneic, and has a weak pulse. After securing the airway, what is the next priority?",
-            options: [
-              { text: "Positive pressure ventilation with high-flow oxygen", correct: true },
-              { text: "Immediate chest compressions", correct: false },
-              { text: "Warming interventions and IV access", correct: false },
-              { text: "Spinal immobilization only", correct: false }
-            ]
-          }
-        ];
-        
-        questionData = envEmergencyQuestions[i % envEmergencyQuestions.length];
-      }
-      else if (topic.toLowerCase().includes('cardiac') || topic.toLowerCase().includes('heart')) {
-        // Cardiac emergencies fallback
-        const cardiacQuestions = [
-          {
-            text: "A patient presents with chest pain and ST elevation in leads II, III, and aVF. What does this indicate?",
-            options: [
-              { text: "Inferior wall myocardial infarction", correct: true },
-              { text: "Anterior wall myocardial infarction", correct: false },
-              { text: "Lateral wall myocardial infarction", correct: false },
-              { text: "Posterior wall myocardial infarction", correct: false }
-            ]
-          },
-          {
-            text: "During cardiac arrest, what is the correct compression-to-ventilation ratio for two-person CPR?",
-            options: [
-              { text: "30:2 compressions to ventilations", correct: true },
-              { text: "15:2 compressions to ventilations", correct: false },
-              { text: "5:1 compressions to ventilations", correct: false },
-              { text: "Continuous compressions without ventilations", correct: false }
-            ]
-          }
-        ];
-        
-        questionData = cardiacQuestions[i % cardiacQuestions.length];
-      }
-      else if (topic.toLowerCase().includes('trauma')) {
-        // Trauma fallback questions
-        const traumaQuestions = [
-          {
-            text: "In a multi-trauma patient with suspected internal bleeding, what is the priority assessment?",
-            options: [
-              { text: "Circulation and hemorrhage control", correct: true },
-              { text: "Detailed neurological examination", correct: false },
-              { text: "Fracture stabilization", correct: false },
-              { text: "Pain management", correct: false }
-            ]
-          }
-        ];
-        
-        questionData = traumaQuestions[i % traumaQuestions.length];
-      }
-      else {
-        // Generic educational fallback with meaningful content
-        questionData = {
-          text: `What is a fundamental principle when studying ${topic}?`,
+      genericVariations.forEach(stem => {
+        allQuestionTemplates.push({
+          text: `${stem} ${topic}?`,
           options: [
             { text: "Understanding core concepts and their practical applications", correct: true },
             { text: "Memorizing isolated facts without context", correct: false },
             { text: "Ignoring the relationship between theory and practice", correct: false },
             { text: "Focusing solely on advanced topics without basics", correct: false }
           ]
+        });
+      });
+    }
+    
+    // Shuffle the question templates to ensure variety
+    const shuffledTemplates = [...allQuestionTemplates].sort(() => Math.random() - 0.5);
+    
+    // Generate questions by cycling through shuffled templates and adding variations
+    for (let i = 0; i < questionCount; i++) {
+      let questionData;
+      
+      if (shuffledTemplates.length > 0) {
+        // Use shuffled templates, with additional variation for repeats
+        const templateIndex = i % shuffledTemplates.length;
+        questionData = shuffledTemplates[templateIndex];
+        
+        // Add variation for repeated questions
+        if (i >= shuffledTemplates.length) {
+          const variationNumber = Math.floor(i / shuffledTemplates.length) + 1;
+          questionData = {
+            ...questionData,
+            text: `${questionData.text} (Scenario ${variationNumber})`
+          };
+        }
+      } else {
+        // Ultimate fallback
+        questionData = {
+          text: `What is a key consideration when working with ${topic}? (Question ${i + 1})`,
+          options: [
+            { text: "Following established protocols and best practices", correct: true },
+            { text: "Improvising without reference to standards", correct: false },
+            { text: "Ignoring safety considerations", correct: false },
+            { text: "Working without proper preparation", correct: false }
+          ]
         };
       }
       
+      // Vary question types if multiple are requested
+      const questionType = params.questionTypes?.[i % (params.questionTypes?.length || 1)] || 'multiple_choice';
+      
       fallbackQuestions.push({
         questionText: questionData.text,
-        questionType: params.questionTypes?.[0] || 'multiple_choice',
+        questionType: questionType,
         points: "1",
         difficultyScore: (params.difficultyRange?.[0] + params.difficultyRange?.[1]) / 2 || "5",
-        bloomsLevel: params.bloomsLevels?.[0] || 'understand',
-        tags: [topic],
-        correctFeedback: 'Correct! This demonstrates understanding of key principles.',
-        incorrectFeedback: 'Review the material to better understand this concept.',
+        bloomsLevel: params.bloomsLevels?.[i % (params.bloomsLevels?.length || 1)] || 'understand',
+        tags: [topic, `Question ${i + 1}`],
+        correctFeedback: `Correct! This demonstrates understanding of ${topic} principles.`,
+        incorrectFeedback: `Review the material to better understand this ${topic} concept.`,
         generalFeedback: `This question tests understanding of ${topic} fundamentals.`,
         partialCredit: false,
         imageUrl: '',
         audioUrl: '',
         videoUrl: '',
         aiValidationStatus: 'needs_review',
-        aiConfidenceScore: "0.6", // Higher confidence for realistic content
+        aiConfidenceScore: "0.6",
         answerOptions: questionData.options.map((opt, idx) => ({
           answerText: opt.text,
           isCorrect: opt.correct,
