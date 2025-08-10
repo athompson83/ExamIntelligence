@@ -144,12 +144,55 @@ export default function ItemBanks() {
       });
       return response.json();
     },
+    onMutate: async (id) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/testbanks'] });
+      
+      // Snapshot the previous value
+      const previousTestbanks = queryClient.getQueryData(['/api/testbanks']);
+      
+      // Optimistically remove the deleted testbank
+      queryClient.setQueryData(['/api/testbanks'], (old: any) => {
+        if (Array.isArray(old)) {
+          return old.filter((testbank: any) => testbank.id !== id);
+        }
+        return old;
+      });
+      
+      return { previousTestbanks };
+    },
+    onError: (error, id, context) => {
+      // Rollback on error
+      if (context?.previousTestbanks) {
+        queryClient.setQueryData(['/api/testbanks'], context.previousTestbanks);
+      }
+      
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete item bank",
+        variant: "destructive",
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
       toast({
         title: "Success",
         description: "Item bank deleted successfully",
       });
+    },
+    onSettled: () => {
+      // Always refetch after mutation to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {

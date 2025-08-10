@@ -43,13 +43,46 @@ export default function TestbankCard({ testbank, onGenerateQuestions, isGenerati
 
   const deleteTestbankMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest(`/api/testbanks/${id}`, { method: "DELETE" });
+      const response = await apiRequest(`/api/testbanks/${id}`, { method: "DELETE" });
+      return response.json();
+    },
+    onMutate: async (id) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["/api/testbanks"] });
+      
+      // Snapshot the previous value
+      const previousTestbanks = queryClient.getQueryData(["/api/testbanks"]);
+      
+      // Optimistically update to remove the deleted testbank
+      queryClient.setQueryData(["/api/testbanks"], (old: any) => {
+        if (Array.isArray(old)) {
+          return old.filter((testbank: any) => testbank.id !== id);
+        }
+        return old;
+      });
+      
+      // Return a context object with the snapshotted value
+      return { previousTestbanks };
+    },
+    onError: (err, id, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousTestbanks) {
+        queryClient.setQueryData(["/api/testbanks"], context.previousTestbanks);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete item bank",
+        variant: "destructive",
+      });
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Item bank deleted successfully",
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure server state
       queryClient.invalidateQueries({ queryKey: ["/api/testbanks"] });
     },
     onError: () => {
