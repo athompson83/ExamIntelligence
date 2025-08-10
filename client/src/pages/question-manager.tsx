@@ -54,7 +54,8 @@ import {
   ChevronRight,
   RefreshCw,
   Copy,
-  Shuffle
+  Shuffle,
+  ArrowLeft
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -925,27 +926,38 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <Sidebar />
+    <div className="min-h-screen bg-background">
+      <TopBar />
       
-      <div className="flex-1 md:ml-64">
-        <TopBar />
-        
-        <main className="p-6">
-          {/* Breadcrumb Navigation */}
-          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-            <Link href="/" className="flex items-center hover:text-gray-900">
-              <Home className="h-4 w-4" />
-            </Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-gray-900 font-medium">Question Manager</span>
-            {effectiveTestbankId && testbank && (
-              <>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-gray-500">{testbank.title}</span>
-              </>
-            )}
-          </nav>
+      <main className="p-4 md:p-6">
+          {/* Mobile Back Button & Breadcrumb Navigation */}
+          <div className="flex items-center gap-4 mb-4">
+            {/* Mobile back button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 md:hidden"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+
+            {/* Breadcrumb Navigation */}
+            <nav className="flex items-center space-x-2 text-sm text-gray-600">
+              <Link href="/" className="flex items-center hover:text-gray-900">
+                <Home className="h-4 w-4" />
+              </Link>
+              <ChevronRight className="h-4 w-4" />
+              <span className="text-gray-900 font-medium">Question Manager</span>
+              {effectiveTestbankId && testbank && (
+                <>
+                  <ChevronRight className="h-4 w-4" />
+                  <span className="text-gray-500">{testbank.title}</span>
+                </>
+              )}
+            </nav>
+          </div>
           
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -2029,7 +2041,6 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
             )}
           </div>
         </main>
-      </div>
 
       {/* Save Custom Instruction Dialog */}
       <Dialog open={showSaveInstructionDialog} onOpenChange={setShowSaveInstructionDialog}>
