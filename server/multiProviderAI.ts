@@ -37,7 +37,52 @@ class MultiProviderAI {
   }
 
   private async initializeProviders() {
-    // Get API keys from database storage
+    // Use environment variables instead of database for better reliability
+    console.log('🔍 Initializing AI providers from environment variables...');
+    
+    try {
+      // Initialize OpenAI
+      if (process.env.OPENAI_API_KEY) {
+        console.log(`✅ Initializing OpenAI provider`);
+        this.providers.set('openai', new OpenAI({ apiKey: process.env.OPENAI_API_KEY }));
+      } else {
+        console.log(`⏭️ Skipping OpenAI: no API key`);
+      }
+      
+      // Initialize Google Gemini  
+      if (process.env.GOOGLE_API_KEY) {
+        console.log(`✅ Initializing Google Gemini provider`);
+        this.providers.set('gemini', new GoogleGenAI(process.env.GOOGLE_API_KEY));
+      } else {
+        console.log(`⏭️ Skipping Google Gemini: no API key`);
+      }
+      
+      // Initialize Anthropic Claude
+      if (process.env.ANTHROPIC_API_KEY) {
+        console.log(`✅ Initializing Anthropic provider`);
+        this.providers.set('anthropic', new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }));
+      } else {
+        console.log(`⏭️ Skipping Anthropic: no API key`);
+      }
+      
+      const providerCount = this.providers.size;
+      console.log(`🎯 Total providers initialized: ${providerCount}`);
+      
+      // Fallback to old database method if no environment providers found
+      if (providerCount === 0) {
+        console.log('🔄 No environment providers found, falling back to database...');
+        await this.initializeDatabaseProviders();
+      }
+      
+    } catch (error) {
+      console.error('Error initializing providers from environment:', error);
+      // Fallback to database providers
+      await this.initializeDatabaseProviders();
+    }
+  }
+
+  private async initializeDatabaseProviders() {
+    // Get API keys from database storage (fallback method)
     const { DatabaseStorage } = await import('./storage-simple');
     const storage = new DatabaseStorage();
     
@@ -68,7 +113,7 @@ class MultiProviderAI {
             
           case 'google':
             if (provider.apiKey) {
-              this.providers.set('gemini', new GoogleGenAI({ apiKey: provider.apiKey }));
+              this.providers.set('gemini', new GoogleGenAI(provider.apiKey));
             }
             break;
             
