@@ -63,11 +63,19 @@ class MultiProviderAI {
       let providersFromDB = 0;
       
       for (const provider of sortedProviders) {
-        const apiKey = provider.apiKey || this.getEnvironmentKey(provider.id);
+        // Prioritize environment variables over database keys
+        const envKey = this.getEnvironmentKey(provider.id);
+        const apiKey = envKey || provider.apiKey;
         
         if (!apiKey) {
-          console.log(`⏭️ Skipping ${provider.id}: no API key in DB or environment`);
+          console.log(`⏭️ Skipping ${provider.id}: no API key in environment or DB`);
           continue;
+        }
+        
+        if (envKey) {
+          console.log(`🌍 Using environment API key for ${provider.id} (length: ${envKey.length})`);
+        } else {
+          console.log(`💾 Using database API key for ${provider.id} (length: ${provider.apiKey.length})`);
         }
         
         console.log(`✅ Initializing ${provider.id} provider (priority: ${provider.priority || 999})`);
