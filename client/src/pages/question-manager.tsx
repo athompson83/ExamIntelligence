@@ -55,7 +55,8 @@ import {
   RefreshCw,
   Copy,
   Shuffle,
-  ArrowLeft
+  ArrowLeft,
+  Eye
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -141,6 +142,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const [filterDifficulty, setFilterDifficulty] = useState("all");
   const [filterBloomsLevel, setFilterBloomsLevel] = useState("all");
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
   
 
   
@@ -669,6 +671,11 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   });
 
 
+
+  // Preview question handler
+  const handlePreviewQuestion = (question: Question) => {
+    setPreviewQuestion(question);
+  };
 
   const resetQuestionForm = () => {
     setQuestionForm({
@@ -2122,6 +2129,14 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handlePreviewQuestion(question)}
+                          title="Preview question"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleEditQuestion(question)}
                         >
                           <Edit className="h-4 w-4" />
@@ -2309,6 +2324,180 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Question Preview Dialog */}
+      <Dialog open={previewQuestion !== null} onOpenChange={() => setPreviewQuestion(null)}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Eye className="mr-2 h-5 w-5" />
+              Question Preview - Test Taker View
+            </DialogTitle>
+            <DialogDescription>
+              This is how the question would appear to students during an exam
+            </DialogDescription>
+          </DialogHeader>
+          
+          {previewQuestion && (
+            <div className="space-y-6">
+              {/* Question Header */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <Badge variant="outline" className="text-xs">
+                    {previewQuestion.questionType.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {previewQuestion.points} points
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Question Text */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  {previewQuestion.questionText}
+                </h3>
+
+                {/* Render based on question type */}
+                {previewQuestion.questionType === 'multiple_choice' && (
+                  <RadioGroup className="space-y-2">
+                    {previewQuestion.answerOptions?.map((option, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <RadioGroupItem value={`option-${index}`} id={`option-${index}`} />
+                        <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                          {option.answerText}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                )}
+
+                {previewQuestion.questionType === 'multiple_response' && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600 mb-3">Select all that apply:</p>
+                    {previewQuestion.answerOptions?.map((option, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Checkbox id={`checkbox-${index}`} />
+                        <Label htmlFor={`checkbox-${index}`} className="cursor-pointer">
+                          {option.answerText}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {previewQuestion.questionType === 'true_false' && (
+                  <RadioGroup className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="true" id="true" />
+                      <Label htmlFor="true" className="cursor-pointer">True</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="false" id="false" />
+                      <Label htmlFor="false" className="cursor-pointer">False</Label>
+                    </div>
+                  </RadioGroup>
+                )}
+
+                {previewQuestion.questionType === 'fill_blank' && (
+                  <div className="space-y-2">
+                    <Input placeholder="Enter your answer..." className="max-w-md" />
+                  </div>
+                )}
+
+                {previewQuestion.questionType === 'multiple_fill_blank' && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Fill in all blanks:</p>
+                    {previewQuestion.answerOptions?.map((option, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Label className="w-16">({index + 1})</Label>
+                        <Input placeholder={`Answer ${index + 1}...`} className="max-w-sm" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {previewQuestion.questionType === 'matching' && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Match items by selecting corresponding pairs:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Items</h4>
+                        {previewQuestion.answerOptions?.map((option, index) => (
+                          <div key={index} className="p-2 border rounded">
+                            {option.answerText.split('→')[0]?.trim()}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Matches</h4>
+                        {previewQuestion.answerOptions?.map((option, index) => (
+                          <Select key={index}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select match..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {previewQuestion.answerOptions?.map((opt, idx) => (
+                                <SelectItem key={idx} value={`match-${idx}`}>
+                                  {opt.answerText.split('→')[1]?.trim()}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {previewQuestion.questionType === 'ordering' && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Drag items to arrange in correct order:</p>
+                    <div className="space-y-2">
+                      {previewQuestion.answerOptions?.map((option, index) => (
+                        <div key={index} className="p-3 border border-dashed border-gray-300 rounded cursor-move hover:bg-gray-50">
+                          {option.answerText}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {previewQuestion.questionType === 'categorization' && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Drag items into appropriate categories:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {previewQuestion.answerOptions?.map((category, index) => (
+                        <div key={index} className="border rounded-lg p-4">
+                          <h4 className="font-medium mb-2">
+                            {category.answerText.split(':')[0]}
+                          </h4>
+                          <div className="min-h-[60px] border-2 border-dashed border-gray-200 rounded p-2">
+                            <div className="text-xs text-gray-400">Drop items here</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Question Info */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Difficulty:</span> {previewQuestion.difficultyScore}/10
+                  </div>
+                  <div>
+                    <span className="font-medium">Bloom's Level:</span> {previewQuestion.bloomsLevel}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      
     </div>
   );
 }

@@ -1407,7 +1407,56 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     // Create truly unique questions using diverse generation strategies
     const questionGenerators = [];
     
-    if (topic.toLowerCase().includes('cardiac') || topic.toLowerCase().includes('heart') || topic.toLowerCase().includes('cardiovascular')) {
+    if (topic.toLowerCase().includes('trauma') || topic.toLowerCase().includes('injury') || topic.toLowerCase().includes('accident')) {
+      // Trauma/Emergency question generators with diverse content
+      questionGenerators.push(
+        () => ({
+          text: `A ${20 + Math.floor(Math.random() * 60)}-year-old patient involved in a motor vehicle accident presents with ${['chest pain and shortness of breath', 'abdominal tenderness and distension', 'altered mental status', 'severe pelvic pain'][Math.floor(Math.random() * 4)]}. What is the priority assessment?`,
+          options: [
+            { text: "Airway, breathing, circulation assessment", correct: true },
+            { text: "Detailed neurological examination", correct: false },
+            { text: "Orthopedic injury evaluation", correct: false },
+            { text: "Pain medication administration", correct: false }
+          ]
+        }),
+        () => ({
+          text: `Signs of ${['tension pneumothorax', 'hemothorax', 'cardiac tamponade', 'hypovolemic shock'][Math.floor(Math.random() * 4)]} include:`,
+          options: [
+            { text: "Decreased breath sounds and tracheal deviation", correct: true },
+            { text: "Normal vital signs and clear lungs", correct: false },
+            { text: "Bradycardia and hypertension", correct: false },
+            { text: "Warm, dry skin", correct: false }
+          ]
+        }),
+        () => ({
+          text: `In a patient with suspected internal bleeding, the most reliable indicator is:`,
+          options: [
+            { text: "Decreasing blood pressure and increasing heart rate", correct: true },
+            { text: "Severe abdominal pain", correct: false },
+            { text: "Normal vital signs", correct: false },
+            { text: "Patient complaint of thirst", correct: false }
+          ]
+        }),
+        () => ({
+          text: `The Glasgow Coma Scale assesses:`,
+          options: [
+            { text: "Eye opening, verbal response, motor response", correct: true },
+            { text: "Blood pressure, pulse, temperature", correct: false },
+            { text: "Respiratory rate and oxygen saturation", correct: false },
+            { text: "Pupil reaction and reflexes", correct: false }
+          ]
+        }),
+        () => ({
+          text: `Spinal immobilization is indicated when:`,
+          options: [
+            { text: "Mechanism of injury suggests spinal trauma", correct: true },
+            { text: "Patient has no complaints", correct: false },
+            { text: "Only neck pain is present", correct: false },
+            { text: "Patient is fully conscious", correct: false }
+          ]
+        })
+      );
+    } else if (topic.toLowerCase().includes('cardiac') || topic.toLowerCase().includes('heart') || topic.toLowerCase().includes('cardiovascular')) {
       // Cardiac/Cardiovascular question generators with diverse content
       questionGenerators.push(
         () => ({
@@ -1539,70 +1588,147 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       let answerOptions = [];
       
       if (questionType === 'true_false') {
+        // Create true/false based on current topic
+        const isTrauma = topic.toLowerCase().includes('trauma');
+        const statements = isTrauma ? [
+          "Spinal immobilization is required for all trauma patients",
+          "The Glasgow Coma Scale ranges from 1-15", 
+          "Tension pneumothorax is a life-threatening emergency",
+          "Internal bleeding always presents with obvious external signs"
+        ] : [
+          "Chest compressions should be performed at 100-120 per minute",
+          "Epinephrine is the first drug given in cardiac arrest",
+          "ST elevation indicates myocardial infarction"
+        ];
+        
+        const correctAnswers = isTrauma ? [false, true, true, false] : [true, true, true];
+        const randomIndex = Math.floor(Math.random() * statements.length);
+        
         finalQuestionData = {
-          text: questionData.text.replace('What is', 'True or False:').replace('Which', 'Statement:').replace('?', ''),
+          text: statements[randomIndex],
           options: [
-            { text: "True", correct: Math.random() > 0.5 },
-            { text: "False", correct: Math.random() > 0.5 }
+            { text: "True", correct: correctAnswers[randomIndex] },
+            { text: "False", correct: !correctAnswers[randomIndex] }
           ]
         };
-        finalQuestionData.options[1].correct = !finalQuestionData.options[0].correct;
       } else if (questionType === 'fill_blank') {
-        const sentence = questionData.text.replace(/\?.*$/, '');
-        const words = questionData.options[0].text.split(' ');
-        const keyWord = words[Math.floor(Math.random() * words.length)];
-        finalQuestionData = {
-          text: `${sentence}. Fill in the blank: _______ is the key approach.`,
-          options: [{ text: keyWord, correct: true }]
-        };
+        if (topic.toLowerCase().includes('trauma')) {
+          finalQuestionData = {
+            text: `In trauma assessment, the primary survey evaluates _______, breathing, circulation, disability, and exposure.`,
+            options: [{ text: "airway", correct: true }]
+          };
+        } else {
+          finalQuestionData = {
+            text: `During cardiac arrest, chest compressions should be performed at a depth of _______ inches.`,
+            options: [{ text: "2-2.4", correct: true }]
+          };
+        }
       } else if (questionType === 'multiple_fill_blank') {
-        finalQuestionData = {
-          text: `Complete the statement: The _____ approach requires _____ protocols and _____ evaluation.`,
-          options: [
-            { text: "systematic", correct: true },
-            { text: "evidence-based", correct: true },
-            { text: "thorough", correct: true }
-          ]
-        };
+        if (topic.toLowerCase().includes('trauma')) {
+          finalQuestionData = {
+            text: `The trauma assessment includes checking for _____ (1), assessing _____ (2), and evaluating _____ (3) status.`,
+            options: [
+              { text: "bleeding", correct: true },
+              { text: "circulation", correct: true },
+              { text: "neurological", correct: true }
+            ]
+          };
+        } else {
+          finalQuestionData = {
+            text: `Cardiac arrest management requires _____ (1) compressions, _____ (2) ventilations, and early _____ (3).`,
+            options: [
+              { text: "continuous", correct: true },
+              { text: "rescue", correct: true },
+              { text: "defibrillation", correct: true }
+            ]
+          };
+        }
       } else if (questionType === 'matching') {
-        finalQuestionData = {
-          text: `Match the cardiovascular condition with its primary treatment:`,
-          options: [
-            { text: "STEMI → Immediate reperfusion", correct: true },
-            { text: "Cardiogenic shock → Supportive care and pressors", correct: true },
-            { text: "VF/VT → Defibrillation", correct: true },
-            { text: "Bradycardia → Atropine or pacing", correct: true }
-          ]
-        };
+        if (topic.toLowerCase().includes('trauma')) {
+          finalQuestionData = {
+            text: `Match the trauma condition with its primary treatment:`,
+            options: [
+              { text: "Tension pneumothorax → Needle decompression", correct: true },
+              { text: "Hemorrhagic shock → Fluid resuscitation", correct: true },
+              { text: "Spinal injury → Immobilization", correct: true },
+              { text: "Open fracture → Splinting and bleeding control", correct: true }
+            ]
+          };
+        } else {
+          finalQuestionData = {
+            text: `Match the cardiac condition with its primary treatment:`,
+            options: [
+              { text: "STEMI → Percutaneous intervention", correct: true },
+              { text: "VF/VT → Defibrillation", correct: true },
+              { text: "Bradycardia → Atropine or pacing", correct: true },
+              { text: "Asystole → High-quality CPR", correct: true }
+            ]
+          };
+        }
       } else if (questionType === 'ordering') {
-        finalQuestionData = {
-          text: `Place the following cardiac arrest interventions in the correct order:`,
-          options: [
-            { text: "1. Check responsiveness", correct: true },
-            { text: "2. Call for help/AED", correct: true },
-            { text: "3. Begin chest compressions", correct: true },
-            { text: "4. Attach AED/defibrillate if indicated", correct: true }
-          ]
-        };
+        if (topic.toLowerCase().includes('trauma')) {
+          finalQuestionData = {
+            text: `Place the following trauma assessment steps in the correct order:`,
+            options: [
+              { text: "1. Ensure scene safety", correct: true },
+              { text: "2. Primary survey (ABCDE)", correct: true },
+              { text: "3. Vital signs assessment", correct: true },
+              { text: "4. Secondary survey", correct: true }
+            ]
+          };
+        } else {
+          finalQuestionData = {
+            text: `Place the following cardiac arrest interventions in the correct order:`,
+            options: [
+              { text: "1. Check responsiveness", correct: true },
+              { text: "2. Call for help/AED", correct: true },
+              { text: "3. Begin chest compressions", correct: true },
+              { text: "4. Attach AED/defibrillate", correct: true }
+            ]
+          };
+        }
       } else if (questionType === 'categorization') {
-        finalQuestionData = {
-          text: `Categorize the following medications by their primary use in cardiac emergencies:`,
-          options: [
-            { text: "Antiarrhythmics: Amiodarone, Lidocaine", correct: true },
-            { text: "Vasopressors: Epinephrine, Norepinephrine", correct: true },
-            { text: "Anticoagulants: Heparin, Aspirin", correct: true }
-          ]
-        };
+        if (topic.toLowerCase().includes('trauma')) {
+          finalQuestionData = {
+            text: `Categorize the following by trauma assessment priority:`,
+            options: [
+              { text: "Immediate threats: Airway obstruction, Tension pneumothorax", correct: true },
+              { text: "Urgent concerns: Internal bleeding, Spinal injury", correct: true },
+              { text: "Secondary issues: Minor fractures, Lacerations", correct: true }
+            ]
+          };
+        } else {
+          finalQuestionData = {
+            text: `Categorize the following medications by their use in cardiac emergencies:`,
+            options: [
+              { text: "Antiarrhythmics: Amiodarone, Lidocaine", correct: true },
+              { text: "Vasopressors: Epinephrine, Vasopressin", correct: true },
+              { text: "Anticoagulants: Heparin, Aspirin", correct: true }
+            ]
+          };
+        }
       } else if (questionType === 'multiple_response') {
-        finalQuestionData = {
-          text: `Which of the following are signs of acute coronary syndrome? (Select all that apply)`,
-          options: [
-            { text: "Chest pain or pressure", correct: true },
-            { text: "Shortness of breath", correct: true },
-            { text: "Nausea and vomiting", correct: true },
-            { text: "Perfect blood pressure", correct: false }
-          ]
-        };
+        if (topic.toLowerCase().includes('trauma')) {
+          finalQuestionData = {
+            text: `Which of the following are signs of internal bleeding? (Select all that apply)`,
+            options: [
+              { text: "Decreasing blood pressure", correct: true },
+              { text: "Increasing heart rate", correct: true },
+              { text: "Cool, clammy skin", correct: true },
+              { text: "Normal mental status", correct: false }
+            ]
+          };
+        } else {
+          finalQuestionData = {
+            text: `Which of the following are signs of acute coronary syndrome? (Select all that apply)`,
+            options: [
+              { text: "Chest pain or pressure", correct: true },
+              { text: "Shortness of breath", correct: true },
+              { text: "Nausea and vomiting", correct: true },
+              { text: "Normal ECG findings", correct: false }
+            ]
+          };
+        }
       }
       
       // Map final options to the required format

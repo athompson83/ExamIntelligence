@@ -1882,9 +1882,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.write(`data: ${JSON.stringify({ 
           type: 'progress',
           status: `Saving question ${i + 1} of ${generatedQuestions.length}...`,
-          current: Math.floor(90 + (i / generatedQuestions.length) * 10),
-          total: 100,
-          percentage: Math.floor(90 + (i / generatedQuestions.length) * 10)
+          current: i + 1,
+          total: generatedQuestions.length,
+          percentage: Math.floor(((i + 1) / generatedQuestions.length) * 100)
         })}\n\n`);
         
         // Normalize questionType to match schema (hyphens to underscores)
