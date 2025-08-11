@@ -1426,6 +1426,9 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     // Create meaningful fallback questions with realistic content based on topic and reference materials
     const fallbackQuestions = [];
     const questionCount = params.questionCount || 10; // Use the actual requested count, don't limit to 10
+    const questionTypes = params.questionTypes || ['multiple_choice'];
+    const difficultyRange = params.difficultyRange || [1, 10];
+    const bloomsLevels = params.bloomsLevels || ['understand'];
     
     // Use reference materials if provided to create contextually relevant fallbacks
     const referenceContent = params.referenceFiles?.map(ref => ref.content).join(' ') || '';
@@ -1623,9 +1626,8 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       }
     }
     
-    // Track used questions to prevent duplicates
+    // Track used questions to prevent duplicates  
     const usedQuestions = new Set<string>();
-    const generatedQuestions = [];
     
     // Generate completely unique questions
     for (let i = 0; i < questionCount; i++) {

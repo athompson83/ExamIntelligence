@@ -1766,13 +1766,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Alternative route pattern for testbank-specific question deletion
-  app.delete('/api/testbanks/:testbankId/questions/:questionId', mockAuth, async (req: any, res) => {
+  app.delete('/api/testbanks/:testbankId/questions/:questionId', async (req: any, res) => {
     try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const userId = req.user?.id || "test-user";
       const reason = req.body?.reason || "User initiated deletion";
       
-      await storage.deleteQuestion(req.params.questionId, userId, reason);
-      res.json({ message: "Question deleted successfully" });
+      const deleted = await storage.deleteQuestion(req.params.questionId, userId, reason);
+      if (!deleted) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+      
+      res.json({ message: "Question deleted successfully", success: true });
     } catch (error) {
       console.error("Error deleting question:", error);
       res.status(500).json({ message: "Failed to delete question" });

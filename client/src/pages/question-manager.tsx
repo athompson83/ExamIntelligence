@@ -337,8 +337,17 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       const response = await apiRequest("DELETE", `/api/testbanks/${effectiveTestbankId}/questions/${questionId}`);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, questionId) => {
+      // Optimistically remove from cache immediately
+      queryClient.setQueryData([`/api/testbanks/${effectiveTestbankId}/questions`], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.filter((question: any) => question.id !== questionId);
+      });
+      
+      // Force refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
+      queryClient.refetchQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
+      
       toast({
         title: "Success",
         description: "Question deleted successfully",
@@ -373,7 +382,16 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
       return response.json();
     },
     onSuccess: (_, questionIds) => {
+      // Optimistically remove from cache immediately
+      queryClient.setQueryData([`/api/testbanks/${effectiveTestbankId}/questions`], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.filter((question: any) => !questionIds.includes(question.id));
+      });
+      
+      // Force refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
+      queryClient.refetchQueries({ queryKey: [`/api/testbanks/${effectiveTestbankId}/questions`] });
+      
       setSelectedQuestions(new Set());
       setIsSelectMode(false);
       toast({
@@ -2402,6 +2420,111 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                   </RadioGroup>
                 )}
 
+                {previewQuestion.questionType === 'matching' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 mb-3">Match items by selecting corresponding pairs:</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium mb-2">Items</h4>
+                        <div className="space-y-2">
+                          {previewQuestion.answerOptions?.filter(opt => opt.answerText?.includes('→')).map((option, index) => {
+                            const parts = option.answerText.split('→');
+                            return (
+                              <div key={index} className="p-2 bg-gray-50 rounded border cursor-pointer hover:bg-gray-100">
+                                {parts[0]?.trim() || `Item ${index + 1}`}
+                              </div>
+                            );
+                          }) || [1,2,3,4].map(i => (
+                            <div key={i} className="p-2 bg-gray-50 rounded border cursor-pointer hover:bg-gray-100">
+                              Item {i}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-2">Matches</h4>
+                        <div className="space-y-2">
+                          {previewQuestion.answerOptions?.filter(opt => opt.answerText?.includes('→')).map((option, index) => {
+                            const parts = option.answerText.split('→');
+                            return (
+                              <div key={index} className="p-2 bg-blue-50 rounded border cursor-pointer hover:bg-blue-100">
+                                {parts[1]?.trim() || `Match ${index + 1}`}
+                              </div>
+                            );
+                          }) || [1,2,3,4].map(i => (
+                            <div key={i} className="p-2 bg-blue-50 rounded border cursor-pointer hover:bg-blue-100">
+                              Match {i}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {previewQuestion.questionType === 'categorization' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 mb-3">Drag items into their correct categories:</p>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-center">Category A</h4>
+                        <div className="min-h-[120px] p-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                          <p className="text-sm text-gray-500 text-center">Drop items here</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-center">Category B</h4>
+                        <div className="min-h-[120px] p-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                          <p className="text-sm text-gray-500 text-center">Drop items here</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-center">Category C</h4>
+                        <div className="min-h-[120px] p-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                          <p className="text-sm text-gray-500 text-center">Drop items here</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2 mt-4">
+                      <h4 className="font-medium">Items to Categorize:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {previewQuestion.answerOptions?.map((option, index) => (
+                          <div key={index} className="p-2 bg-blue-100 rounded border cursor-move">
+                            {option.answerText}
+                          </div>
+                        )) || [1,2,3,4,5,6].map(i => (
+                          <div key={i} className="p-2 bg-blue-100 rounded border cursor-move">
+                            Item {i}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {previewQuestion.questionType === 'ordering' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 mb-3">Drag items to arrange them in the correct order:</p>
+                    <div className="space-y-2">
+                      {previewQuestion.answerOptions?.map((option, index) => (
+                        <div key={index} className="p-3 bg-gray-50 rounded border cursor-move flex items-center justify-between">
+                          <span>{option.answerText.replace(/^\d+\.\s*/, '')}</span>
+                          <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-sm">
+                            ⋮⋮
+                          </div>
+                        </div>
+                      )) || [1,2,3,4].map(i => (
+                        <div key={i} className="p-3 bg-gray-50 rounded border cursor-move flex items-center justify-between">
+                          <span>Step {i}</span>
+                          <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-sm">
+                            ⋮⋮
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {previewQuestion.questionType === 'fill_blank' && (
                   <div className="space-y-2">
                     <Input placeholder="Enter your answer..." className="max-w-md" />
@@ -2417,104 +2540,6 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                         <Input placeholder={`Answer ${index + 1}...`} className="max-w-sm" />
                       </div>
                     ))}
-                  </div>
-                )}
-
-                {previewQuestion.questionType === 'matching' && (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-600">Match items by selecting corresponding pairs:</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Items</h4>
-                        {previewQuestion.answerOptions?.filter(opt => opt.matchingSide === 'left').map((option, index) => (
-                          <div key={index} className="p-2 border rounded">
-                            {option.answerText}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Matches</h4>
-                        {previewQuestion.answerOptions?.filter(opt => opt.matchingSide === 'left').map((option, index) => (
-                          <Select key={index}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select match..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {previewQuestion.answerOptions?.filter(opt => opt.matchingSide === 'right').map((opt, idx) => (
-                                <SelectItem key={idx} value={`match-${idx}`}>
-                                  {opt.answerText}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {previewQuestion.questionType === 'ordering' && (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-600">Drag items to arrange in correct order:</p>
-                    <div className="space-y-2">
-                      {previewQuestion.answerOptions?.sort(() => Math.random() - 0.5).map((option, index) => (
-                        <div key={option.answerText + index} className="p-3 border border-dashed border-gray-300 rounded cursor-move hover:bg-gray-50 transition-colors">
-                          <div className="flex items-center">
-                            <div className="w-6 h-6 mr-3 bg-gray-200 rounded flex items-center justify-center text-xs font-mono">
-                              ⋮⋮
-                            </div>
-                            {option.answerText}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Items are shown in random order for the test. Students drag to arrange correctly.
-                    </p>
-                  </div>
-                )}
-
-                {previewQuestion.questionType === 'categorization' && (
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600">Drag items into appropriate categories:</p>
-                    
-                    {/* Categories Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {previewQuestion.questionText.includes('cardiovascular') || previewQuestion.questionText.includes('cardiac') ? 
-                        ['Antiarrhythmics', 'Vasopressors', 'Anticoagulants'].map((categoryName, index) => (
-                          <div key={index} className="border rounded-lg p-4">
-                            <h4 className="font-medium mb-2 text-center">
-                              {categoryName}
-                            </h4>
-                            <div className="min-h-[120px] border-2 border-dashed border-gray-200 rounded p-2 bg-gray-50">
-                              <div className="text-xs text-gray-400 text-center mt-8">Drop items here</div>
-                            </div>
-                          </div>
-                        )) :
-                        ['Primary Assessment', 'Secondary Assessment', 'Treatment'].map((categoryName, index) => (
-                          <div key={index} className="border rounded-lg p-4">
-                            <h4 className="font-medium mb-2 text-center">
-                              {categoryName}
-                            </h4>
-                            <div className="min-h-[120px] border-2 border-dashed border-gray-200 rounded p-2 bg-gray-50">
-                              <div className="text-xs text-gray-400 text-center mt-8">Drop items here</div>
-                            </div>
-                          </div>
-                        ))
-                      }
-                    </div>
-                    
-                    {/* Draggable Items */}
-                    <div className="mt-6">
-                      <h4 className="font-medium mb-3">Items to categorize:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {previewQuestion.answerOptions?.map((option, index) => (
-                          <div key={index} className="p-3 bg-white border border-gray-300 rounded cursor-move hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm">
-                            {option.answerText}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>
