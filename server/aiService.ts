@@ -798,8 +798,10 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       ${referenceContext}
       
       ${customInstructions ? `
-      CUSTOM INSTRUCTIONS:
+      !!!CRITICAL CUSTOM INSTRUCTIONS - FOLLOW EXACTLY!!!:
       ${customInstructions}
+      
+      MANDATORY: You MUST follow the above custom instructions precisely. They take precedence over general guidelines. Generate questions that specifically match what the custom instructions require. Do not generate generic questions if specific topics or requirements are given.
       ` : ''}
       
       EVIDENCE-BASED QUALITY STANDARDS (Research Guidelines):

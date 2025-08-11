@@ -56,9 +56,93 @@ import {
   Copy,
   Shuffle,
   ArrowLeft,
-  Eye
+  Eye,
+  GripVertical
 } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { format } from "date-fns";
+
+// Sortable item component for ordering preview
+function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="p-3 bg-gray-50 rounded border cursor-move flex items-center space-x-2 hover:bg-gray-100"
+    >
+      <GripVertical className="h-4 w-4 text-gray-400" />
+      {children}
+    </div>
+  );
+}
+
+// Ordering preview component with actual drag functionality
+function OrderingPreview({ answerOptions }: { answerOptions: any[] }) {
+  const [items, setItems] = useState(
+    answerOptions.map((option, index) => ({
+      id: `item-${index}`,
+      text: option.answerText?.replace(/^\d+\.\s*/, '') || `Step ${index + 1}`
+    }))
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  function handleDragEnd(event: any) {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setItems((items) => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-2">
+          {items.map((item) => (
+            <SortableItem key={item.id} id={item.id}>
+              <span>{item.text}</span>
+            </SortableItem>
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
 
 // Import specialized question editors - temporarily disabled problematic ones
 import { MatchingQuestionEditor } from "@/components/question-types/MatchingQuestionEditor";
@@ -976,12 +1060,12 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                 <Home className="h-4 w-4" />
               </Link>
               <ChevronRight className="h-4 w-4" />
-              <span className="text-gray-900 font-medium">Question Manager</span>
+              <span className="text-gray-900 font-medium">Item Banks</span>
             </nav>
             
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Question Manager</h1>
+                <h1 className="text-2xl font-bold text-gray-800">Item Banks</h1>
                 <p className="text-gray-600">Select a test bank to manage questions</p>
               </div>
             </div>
@@ -1067,7 +1151,9 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                 <Home className="h-4 w-4" />
               </Link>
               <ChevronRight className="h-4 w-4" />
-              <span className="text-gray-900 font-medium">Question Manager</span>
+              <Link href="/item-banks" className="hover:text-gray-900">
+                <span className="text-gray-900 font-medium">Item Banks</span>
+              </Link>
               {effectiveTestbankId && testbank && (
                 <>
                   <ChevronRight className="h-4 w-4" />
@@ -1079,8 +1165,8 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
           
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Question Manager</h1>
-              <p className="text-gray-600">{testbank?.title || 'Managing questions'}</p>
+              <h1 className="text-2xl font-bold text-gray-800">{testbank?.title || 'Item Bank'}</h1>
+              <p className="text-gray-600">Managing questions in this item bank</p>
             </div>
             
             <div className="flex items-center space-x-3">
@@ -2424,39 +2510,27 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 mb-3">Match items by selecting corresponding pairs:</p>
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-medium mb-2">Items</h4>
-                        <div className="space-y-2">
-                          {previewQuestion.answerOptions?.filter(opt => opt.answerText?.includes('→')).map((option, index) => {
-                            const parts = option.answerText.split('→');
-                            return (
-                              <div key={index} className="p-2 bg-gray-50 rounded border cursor-pointer hover:bg-gray-100">
-                                {parts[0]?.trim() || `Item ${index + 1}`}
-                              </div>
-                            );
-                          }) || [1,2,3,4].map(i => (
-                            <div key={i} className="p-2 bg-gray-50 rounded border cursor-pointer hover:bg-gray-100">
-                              Item {i}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm text-gray-700">Column A</h4>
+                        {previewQuestion.answerOptions?.filter(opt => opt.answerText.includes('→')).map((option, index) => {
+                          const [leftItem] = option.answerText.split(' → ');
+                          return (
+                            <div key={index} className="p-2 border rounded bg-blue-50 text-sm">
+                              {leftItem}
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
-                      <div>
-                        <h4 className="font-medium mb-2">Matches</h4>
-                        <div className="space-y-2">
-                          {previewQuestion.answerOptions?.filter(opt => opt.answerText?.includes('→')).map((option, index) => {
-                            const parts = option.answerText.split('→');
-                            return (
-                              <div key={index} className="p-2 bg-blue-50 rounded border cursor-pointer hover:bg-blue-100">
-                                {parts[1]?.trim() || `Match ${index + 1}`}
-                              </div>
-                            );
-                          }) || [1,2,3,4].map(i => (
-                            <div key={i} className="p-2 bg-blue-50 rounded border cursor-pointer hover:bg-blue-100">
-                              Match {i}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm text-gray-700">Column B</h4>
+                        {previewQuestion.answerOptions?.filter(opt => opt.answerText.includes('→')).map((option, index) => {
+                          const [, rightItem] = option.answerText.split(' → ');
+                          return (
+                            <div key={index} className="p-2 border rounded bg-green-50 text-sm cursor-pointer hover:bg-green-100">
+                              {rightItem}
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -2505,23 +2579,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                 {previewQuestion.questionType === 'ordering' && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 mb-3">Drag items to arrange them in the correct order:</p>
-                    <div className="space-y-2">
-                      {previewQuestion.answerOptions?.map((option, index) => (
-                        <div key={index} className="p-3 bg-gray-50 rounded border cursor-move flex items-center justify-between">
-                          <span>{option.answerText.replace(/^\d+\.\s*/, '')}</span>
-                          <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-sm">
-                            ⋮⋮
-                          </div>
-                        </div>
-                      )) || [1,2,3,4].map(i => (
-                        <div key={i} className="p-3 bg-gray-50 rounded border cursor-move flex items-center justify-between">
-                          <span>Step {i}</span>
-                          <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-sm">
-                            ⋮⋮
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <OrderingPreview answerOptions={previewQuestion.answerOptions || []} />
                   </div>
                 )}
 

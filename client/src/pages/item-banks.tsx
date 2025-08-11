@@ -140,7 +140,11 @@ export default function ItemBanks() {
   const deleteTestbankMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiRequest(`/api/testbanks/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: "User initiated deletion" })
       });
       return response.json();
     },
@@ -430,7 +434,11 @@ export default function ItemBanks() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => deleteTestbankMutation.mutate(testbank.id)}
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to delete "${testbank.title}"? This action cannot be undone.`)) {
+                          deleteTestbankMutation.mutate(testbank.id);
+                        }
+                      }}
                       className="text-red-600 hover:text-red-700 btn-mobile"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -630,7 +638,11 @@ export default function ItemBanks() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => deleteTestbankMutation.mutate(testbank.id)}
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to delete "${testbank.title}"? This action cannot be undone.`)) {
+                                  deleteTestbankMutation.mutate(testbank.id);
+                                }
+                              }}
                               className="text-xs text-red-600 hover:text-red-700"
                             >
                               <Trash2 className="h-3 w-3" />
