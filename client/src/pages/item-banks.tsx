@@ -362,7 +362,7 @@ export default function ItemBanks() {
               placeholder="Search item banks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-16 pr-4 h-12 text-base btn-mobile"
+              className="pl-20 pr-4 h-12 text-base btn-mobile"
             />
           </div>
 
