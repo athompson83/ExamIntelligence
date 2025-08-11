@@ -357,12 +357,12 @@ export default function ItemBanks() {
 
           {/* Mobile-Responsive Search Bar */}
           <div className="relative mb-6">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
             <Input
               placeholder="Search item banks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-14 h-14 text-lg btn-mobile"
+              className="pl-12 pr-4 h-12 text-base btn-mobile"
             />
           </div>
 

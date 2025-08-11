@@ -843,6 +843,23 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       ${questionStyles.includes('problem_solving') ? '- PROBLEM SOLVING: Present challenges requiring analytical thinking and step-by-step solutions' : ''}
       ${questionStyles.includes('case_study') ? '- CASE STUDY: Provide complex, real-world situations for analysis' : ''}
       
+      **CRITICAL REFERENCE MATERIAL RESTRICTIONS**:
+      NEVER generate questions that reference external materials. Do NOT use phrases like:
+      - "According to the reference materials provided"
+      - "Based on the provided resources"  
+      - "From the attached documents"
+      - "Referring to the handout"
+      - "The materials state that"
+      
+      ALL questions must be self-contained and answerable without additional context.
+      
+      **DUPLICATE PREVENTION STRATEGIES**:
+      - Vary question stems and approaches for similar concepts
+      - Test different aspects of the same topic (causes vs symptoms vs treatment)
+      - Use different clinical scenarios or examples  
+      - Approach from different cognitive levels (remember vs apply vs analyze)
+      - Avoid repetitive phrasing or identical content structure
+      
       **Question Type Best Practices:**
       - Multiple Choice: Test comprehension and application, not just memorization
         * Use realistic scenarios and application-based questions
@@ -1029,21 +1046,25 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       
       **CATEGORIZATION EXAMPLE**:
       {
-        "questionText": "Categorize the following animals into their correct groups:",
+        "questionText": "Categorize the following cardiovascular conditions into their correct pathophysiology groups:",
         "questionType": "categorization",
         "answerOptions": [
-          {"answerText": "Eagle", "isCorrect": true, "displayOrder": 0},
-          {"answerText": "Salmon", "isCorrect": true, "displayOrder": 1},
-          {"answerText": "Elephant", "isCorrect": true, "displayOrder": 2},
-          {"answerText": "Shark", "isCorrect": true, "displayOrder": 3}
+          {"answerText": "Myocardial infarction", "isCorrect": true, "displayOrder": 0},
+          {"answerText": "Atrial fibrillation", "isCorrect": true, "displayOrder": 1},
+          {"answerText": "Congestive heart failure", "isCorrect": true, "displayOrder": 2},
+          {"answerText": "Ventricular tachycardia", "isCorrect": true, "displayOrder": 3},
+          {"answerText": "Hypertensive crisis", "isCorrect": true, "displayOrder": 4},
+          {"answerText": "Supraventricular tachycardia", "isCorrect": true, "displayOrder": 5}
         ],
         "questionConfig": {
-          "categories": ["Birds", "Fish", "Mammals"],
+          "categories": ["Ischemic Events", "Arrhythmias", "Structural Defects"],
           "categoryMappings": {
-            "Eagle": "Birds",
-            "Salmon": "Fish",
-            "Elephant": "Mammals",
-            "Shark": "Fish"
+            "Myocardial infarction": "Ischemic Events",
+            "Atrial fibrillation": "Arrhythmias", 
+            "Congestive heart failure": "Structural Defects",
+            "Ventricular tachycardia": "Arrhythmias",
+            "Hypertensive crisis": "Structural Defects",
+            "Supraventricular tachycardia": "Arrhythmias"
           }
         }
       }
@@ -1461,10 +1482,10 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
           ]
         }),
         () => ({
-          text: `According to the reference materials provided, which approach is recommended for ${topic}?`,
+          text: `Which evidence-based approach is most effective for managing ${topic}?`,
           options: [
-            { text: "The methodology specifically described in the source materials", correct: true },
-            { text: "An alternative approach not mentioned", correct: false },
+            { text: "Systematic assessment and intervention protocols", correct: true },
+            { text: "Unstructured clinical judgment only", correct: false },
             { text: "A contradictory method", correct: false },
             { text: "No specific approach was provided", correct: false }
           ]

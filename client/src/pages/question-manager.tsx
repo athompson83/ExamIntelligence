@@ -2512,25 +2512,39 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <h4 className="font-medium text-sm text-gray-700">Column A</h4>
-                        {previewQuestion.answerOptions?.filter(opt => opt.answerText.includes('→')).map((option, index) => {
-                          const [leftItem] = option.answerText.split(' → ');
-                          return (
-                            <div key={index} className="p-2 border rounded bg-blue-50 text-sm">
-                              {leftItem}
-                            </div>
-                          );
-                        })}
+                        {previewQuestion.answerOptions?.length > 0 
+                          ? previewQuestion.answerOptions.filter(opt => opt.answerText?.includes('→')).map((option, index) => {
+                              const [leftItem] = option.answerText.split(' → ');
+                              return (
+                                <div key={index} className="p-3 border rounded bg-blue-50 text-sm hover:bg-blue-100 cursor-pointer">
+                                  {leftItem?.trim() || `Term ${index + 1}`}
+                                </div>
+                              );
+                            })
+                          : ['Cardiac arrest', 'Respiratory failure', 'Hemorrhagic shock'].map((item, index) => (
+                              <div key={index} className="p-3 border rounded bg-blue-50 text-sm hover:bg-blue-100 cursor-pointer">
+                                {item}
+                              </div>
+                            ))
+                        }
                       </div>
                       <div className="space-y-2">
                         <h4 className="font-medium text-sm text-gray-700">Column B</h4>
-                        {previewQuestion.answerOptions?.filter(opt => opt.answerText.includes('→')).map((option, index) => {
-                          const [, rightItem] = option.answerText.split(' → ');
-                          return (
-                            <div key={index} className="p-2 border rounded bg-green-50 text-sm cursor-pointer hover:bg-green-100">
-                              {rightItem}
-                            </div>
-                          );
-                        })}
+                        {previewQuestion.answerOptions?.length > 0 
+                          ? previewQuestion.answerOptions.filter(opt => opt.answerText?.includes('→')).map((option, index) => {
+                              const [, rightItem] = option.answerText.split(' → ');
+                              return (
+                                <div key={index} className="p-3 border rounded bg-green-50 text-sm cursor-pointer hover:bg-green-100">
+                                  {rightItem?.trim() || `Definition ${index + 1}`}
+                                </div>
+                              );
+                            })
+                          : ['Loss of circulation and breathing', 'Inability to ventilate adequately', 'Severe blood loss leading to hypotension'].map((item, index) => (
+                              <div key={index} className="p-3 border rounded bg-green-50 text-sm cursor-pointer hover:bg-green-100">
+                                {item}
+                              </div>
+                            ))
+                        }
                       </div>
                     </div>
                   </div>
@@ -2539,40 +2553,44 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                 {previewQuestion.questionType === 'categorization' && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 mb-3">Drag items into their correct categories:</p>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-center">Category A</h4>
-                        <div className="min-h-[120px] p-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                          <p className="text-sm text-gray-500 text-center">Drop items here</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-center">Category B</h4>
-                        <div className="min-h-[120px] p-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                          <p className="text-sm text-gray-500 text-center">Drop items here</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-center">Category C</h4>
-                        <div className="min-h-[120px] p-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                          <p className="text-sm text-gray-500 text-center">Drop items here</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-2 mt-4">
-                      <h4 className="font-medium">Items to Categorize:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {previewQuestion.answerOptions?.map((option, index) => (
-                          <div key={index} className="p-2 bg-blue-100 rounded border cursor-move">
-                            {option.answerText}
+                    
+                    {(() => {
+                      // Extract categories and items from questionConfig or provide defaults
+                      const config = previewQuestion.questionConfig || {};
+                      const categories = config.categories || ['Cardiovascular', 'Respiratory', 'Neurological'];
+                      const items = previewQuestion.answerOptions?.map(opt => opt.answerText) || 
+                                   ['Myocardial infarction', 'Asthma attack', 'Stroke', 'Pulmonary edema', 'Seizure', 'Cardiac arrest'];
+                      
+                      return (
+                        <>
+                          <div className="grid grid-cols-3 gap-4 mb-6">
+                            {categories.map((category, index) => (
+                              <div key={index} className="space-y-2">
+                                <h4 className="font-medium text-center text-gray-800">{category}</h4>
+                                <div className="min-h-[140px] p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:border-gray-400 transition-colors">
+                                  <p className="text-sm text-gray-500 text-center mt-12">Drop items here</p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        )) || [1,2,3,4,5,6].map(i => (
-                          <div key={i} className="p-2 bg-blue-100 rounded border cursor-move">
-                            Item {i}
+                          
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-gray-800">Items to Categorize:</h4>
+                            <div className="flex flex-wrap gap-3">
+                              {items.map((item, index) => (
+                                <div 
+                                  key={index} 
+                                  className="p-3 bg-blue-100 hover:bg-blue-200 rounded-lg border border-blue-200 cursor-move transition-colors shadow-sm"
+                                  draggable="true"
+                                >
+                                  <span className="text-sm font-medium text-blue-800">{item}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
 
