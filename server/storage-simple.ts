@@ -488,22 +488,44 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTestbank(id: string, userId?: string, reason?: string): Promise<boolean> {
     try {
-      // For development/testing: Actually delete the testbank to prevent reappearing
-      // In production, this should archive instead for data safety
+      // First, delete all questions associated with this testbank
+      console.log(`Deleting all questions for testbank ${id}`);
+      
+      // Get all questions for this testbank
+      const questionsToDelete = await db
+        .select({ id: questions.id })
+        .from(questions)
+        .where(eq(questions.testbankId, id));
+      
+      console.log(`Found ${questionsToDelete.length} questions to delete`);
+      
+      // Delete all answer options for these questions
+      for (const question of questionsToDelete) {
+        await db
+          .delete(answerOptions)
+          .where(eq(answerOptions.questionId, question.id));
+      }
+      
+      // Delete all questions
+      await db
+        .delete(questions)
+        .where(eq(questions.testbankId, id));
+      
+      // Now delete the testbank
       const result = await db
         .delete(testbanks)
         .where(eq(testbanks.id, id))
         .returning();
       
       if (result.length > 0) {
-        console.log(`Testbank ${id} successfully deleted`);
+        console.log(`Testbank ${id} and all related data successfully deleted`);
         return true;
       }
       
       return false;
     } catch (error) {
       console.error('Error deleting testbank:', error);
-      return false;
+      throw error; // Re-throw to let the route handler catch and return proper error
     }
   }
 
@@ -548,17 +570,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteQuestion(id: string, userId?: string, reason?: string): Promise<boolean> {
-    // Safety protocol: Archive instead of delete
-    // This method is kept for backwards compatibility but now archives
-    const question = await this.getQuestion(id);
-    if (!question) return false;
-    
-    const archived = await this.archiveQuestion(
-      id, 
-      userId || 'system', 
-      reason || 'Deleted via legacy delete method'
-    );
-    return archived !== undefined;
+    try {
+      // Check if question exists first
+      const question = await this.getQuestion(id);
+      if (!question) {
+        console.log(`Question ${id} not found`);
+        return false;
+      }
+      
+      console.log(`Deleting question ${id} and its answer options`);
+      
+      // First delete all answer options for this question
+      await db
+        .delete(answerOptions)
+        .where(eq(answerOptions.questionId, id));
+      
+      // Then delete the question
+      const result = await db
+        .delete(questions)
+        .where(eq(questions.id, id))
+        .returning();
+      
+      if (result.length > 0) {
+        console.log(`Question ${id} successfully deleted`);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error(`Error deleting question ${id}:`, error);
+      return false;
+    }
   }
 
   // Answer option operations

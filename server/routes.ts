@@ -1520,11 +1520,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.id || "test-user";
       const reason = req.body?.reason || "User initiated deletion";
       
-      await storage.deleteTestbank(req.params.id, userId, reason);
-      res.json({ message: "Testbank archived successfully" });
+      const success = await storage.deleteTestbank(req.params.id, userId, reason);
+      if (success) {
+        res.json({ message: "Testbank deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Testbank not found" });
+      }
     } catch (error) {
-      console.error("Error archiving testbank:", error);
-      res.status(500).json({ message: "Failed to archive testbank" });
+      console.error("Error deleting testbank:", error);
+      res.status(500).json({ 
+        message: "Failed to delete testbank", 
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
