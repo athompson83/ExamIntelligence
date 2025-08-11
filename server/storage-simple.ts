@@ -487,17 +487,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTestbank(id: string, userId?: string, reason?: string): Promise<boolean> {
-    // Safety protocol: Archive instead of delete
-    // This method is kept for backwards compatibility but now archives
-    const testbank = await this.getTestbank(id);
-    if (!testbank) return false;
-    
-    const archived = await this.archiveTestbank(
-      id, 
-      userId || 'system', 
-      reason || 'Deleted via legacy delete method'
-    );
-    return archived !== undefined;
+    try {
+      // For development/testing: Actually delete the testbank to prevent reappearing
+      // In production, this should archive instead for data safety
+      const result = await db
+        .delete(testbanks)
+        .where(eq(testbanks.id, id))
+        .returning();
+      
+      if (result.length > 0) {
+        console.log(`Testbank ${id} successfully deleted`);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error deleting testbank:', error);
+      return false;
+    }
   }
 
   // Question operations

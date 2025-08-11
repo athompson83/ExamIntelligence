@@ -1627,8 +1627,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         const randomGenerator = questionGenerators[Math.floor(Math.random() * questionGenerators.length)];
         questionData = randomGenerator();
         
-        // Add unique identifiers to prevent any similarity
-        questionData.text = `${questionData.text} (Item ${i + 1})`;
+        // Keep questions clean without parenthetical item numbers
       } else {
         // Unique fallback with varied structure
         const questionStems = [
@@ -1644,7 +1643,7 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         
         const stem = questionStems[i % questionStems.length];
         questionData = {
-          text: `${stem} when working with ${topic}? (Question ${i + 1})`,
+          text: `${stem} when working with ${topic}?`,
           options: [
             { text: `Following evidence-based protocols and maintaining high standards`, correct: true },
             { text: "Using outdated or unverified methods", correct: false },
@@ -1661,7 +1660,94 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       let finalQuestionData = questionData;
       let answerOptions = [];
       
-      if (questionType === 'true_false') {
+      if (questionType === 'categorization') {
+        // Create categorization questions with proper structure
+        if (topic.toLowerCase().includes('cardiovascular') || topic.toLowerCase().includes('cardiac')) {
+          const categories = ['Antiarrhythmics', 'Vasopressors', 'Anticoagulants'];
+          const items = ['Amiodarone', 'Epinephrine', 'Heparin', 'Lidocaine', 'Dopamine', 'Warfarin'];
+          
+          finalQuestionData = {
+            text: `Categorize the following medications by their primary use in cardiac emergencies:`,
+            options: items.map((item, index) => ({
+              text: item,
+              correct: true, // All are correct - categorization determines placement
+              displayOrder: index
+            }))
+          };
+        } else {
+          const categories = ['Category A', 'Category B', 'Category C'];
+          const items = [`Key concept in ${topic}`, `Method in ${topic}`, `Tool in ${topic}`, `Principle in ${topic}`, `Application in ${topic}`, `Theory in ${topic}`];
+          
+          finalQuestionData = {
+            text: `Categorize the following concepts related to ${topic}:`,
+            options: items.map((item, index) => ({
+              text: item,
+              correct: true,
+              displayOrder: index
+            }))
+          };
+        }
+      } else if (questionType === 'matching') {
+        // Create matching questions with shuffled order to avoid obvious patterns
+        if (topic.toLowerCase().includes('cardiovascular') || topic.toLowerCase().includes('cardiac')) {
+          const pairs = [
+            ['ST elevation', 'STEMI'],
+            ['Chest pain', 'Angina'],
+            ['Irregular rhythm', 'Atrial fibrillation'],
+            ['Low blood pressure', 'Hypotension']
+          ];
+          
+          // Shuffle the order to prevent obvious matching
+          const shuffledLeftSide = pairs.map(p => p[0]).sort(() => Math.random() - 0.5);
+          const rightSide = pairs.map(p => p[1]);
+          
+          finalQuestionData = {
+            text: `Match each cardiovascular condition with its primary characteristic:`,
+            options: [
+              ...shuffledLeftSide.map((item, index) => ({
+                text: item,
+                correct: true,
+                displayOrder: index,
+                matchingSide: 'left'
+              })),
+              ...rightSide.map((item, index) => ({
+                text: item,
+                correct: true,
+                displayOrder: index + shuffledLeftSide.length,
+                matchingSide: 'right'
+              }))
+            ]
+          };
+        } else {
+          const pairs = [
+            [`Primary concept in ${topic}`, 'Core principle'],
+            [`Secondary aspect of ${topic}`, 'Supporting theory'],
+            [`Application of ${topic}`, 'Practical use'],
+            [`Advanced ${topic} technique`, 'Expert method']
+          ];
+          
+          const shuffledLeftSide = pairs.map(p => p[0]).sort(() => Math.random() - 0.5);
+          const rightSide = pairs.map(p => p[1]);
+          
+          finalQuestionData = {
+            text: `Match each ${topic} concept with its description:`,
+            options: [
+              ...shuffledLeftSide.map((item, index) => ({
+                text: item,
+                correct: true,
+                displayOrder: index,
+                matchingSide: 'left'
+              })),
+              ...rightSide.map((item, index) => ({
+                text: item,
+                correct: true,
+                displayOrder: index + shuffledLeftSide.length,
+                matchingSide: 'right'
+              }))
+            ]
+          };
+        }
+      } else if (questionType === 'true_false') {
         // Create true/false based on current topic
         const isTrauma = topic.toLowerCase().includes('trauma');
         const statements = isTrauma ? [
@@ -1689,12 +1775,38 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         if (topic.toLowerCase().includes('trauma')) {
           finalQuestionData = {
             text: `In trauma assessment, the primary survey evaluates _______, breathing, circulation, disability, and exposure.`,
-            options: [{ text: "airway", correct: true }]
+            options: [
+              { text: "airway", correct: true },
+              { text: "airway management", correct: true },
+              { text: "patent airway", correct: true },
+              { text: "air way", correct: true },
+              { text: "breathing assessment", correct: false } // This should be incorrect as it's the second step
+            ]
+          };
+        } else if (topic.toLowerCase().includes('cardiovascular') || topic.toLowerCase().includes('cardiac')) {
+          finalQuestionData = {
+            text: `During cardiac arrest, chest compressions should be performed at a rate of _______ compressions per minute.`,
+            options: [
+              { text: "100-120", correct: true },
+              { text: "100 to 120", correct: true },
+              { text: "110", correct: true },
+              { text: "100", correct: true },
+              { text: "120", correct: true },
+              { text: "between 100 and 120", correct: true },
+              { text: "60-80", correct: false },
+              { text: "150", correct: false }
+            ]
           };
         } else {
           finalQuestionData = {
-            text: `During cardiac arrest, chest compressions should be performed at a depth of _______ inches.`,
-            options: [{ text: "2-2.4", correct: true }]
+            text: `When studying ${topic}, the most important foundational concept is _______.`,
+            options: [
+              { text: "understanding core principles", correct: true },
+              { text: "core principles", correct: true },
+              { text: "fundamental understanding", correct: true },
+              { text: "basic concepts", correct: true },
+              { text: "surface knowledge", correct: false }
+            ]
           };
         }
       } else if (questionType === 'multiple_fill_blank') {

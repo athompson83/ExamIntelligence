@@ -2464,35 +2464,39 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                 )}
 
                 {previewQuestion.questionType === 'categorization' && (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <p className="text-sm text-gray-600">Drag items into appropriate categories:</p>
+                    
+                    {/* Categories Row */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {previewQuestion.answerOptions?.map((category, index) => (
+                      {['Antiarrhythmics', 'Vasopressors', 'Anticoagulants'].map((categoryName, index) => (
                         <div key={index} className="border rounded-lg p-4">
-                          <h4 className="font-medium mb-2">
-                            {category.answerText.split(':')[0]}
+                          <h4 className="font-medium mb-2 text-center">
+                            {categoryName}
                           </h4>
-                          <div className="min-h-[60px] border-2 border-dashed border-gray-200 rounded p-2">
-                            <div className="text-xs text-gray-400">Drop items here</div>
+                          <div className="min-h-[120px] border-2 border-dashed border-gray-200 rounded p-2 bg-gray-50">
+                            <div className="text-xs text-gray-400 text-center mt-8">Drop items here</div>
                           </div>
                         </div>
                       ))}
+                    </div>
+                    
+                    {/* Draggable Items */}
+                    <div className="mt-6">
+                      <h4 className="font-medium mb-3">Items to categorize:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {previewQuestion.answerOptions?.map((option, index) => (
+                          <div key={index} className="p-3 bg-white border border-gray-300 rounded cursor-move hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm">
+                            {option.answerText}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Question Info */}
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Difficulty:</span> {previewQuestion.difficultyScore}/10
-                  </div>
-                  <div>
-                    <span className="font-medium">Bloom's Level:</span> {previewQuestion.bloomsLevel}
-                  </div>
-                </div>
-              </div>
+              {/* Hidden instructor information - not shown to students */}
             </div>
           )}
         </DialogContent>
