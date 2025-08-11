@@ -2,6 +2,31 @@ import OpenAI from "openai";
 import { Question, AnswerOption, QuizAttempt, QuizResponse } from "@shared/schema";
 import { storage } from "./storage-simple";
 
+// Helper function to extract key terms from reference materials
+function extractKeyTerms(text: string): string[] {
+  if (!text || text.length < 20) return [];
+  
+  // Remove common words and extract meaningful terms
+  const commonWords = new Set(['the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'can', 'may', 'might', 'must', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them']);
+  
+  const words = text.toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 3 && !commonWords.has(word))
+    .filter(word => !/^\d+$/.test(word)); // Remove pure numbers
+  
+  // Count frequency and return most common terms
+  const frequency: Record<string, number> = {};
+  words.forEach(word => {
+    frequency[word] = (frequency[word] || 0) + 1;
+  });
+  
+  return Object.entries(frequency)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10)
+    .map(([word]) => word);
+}
+
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY 
@@ -1402,12 +1427,49 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     const customInstructions = params.customInstructions || '';
     const topic = params.topic || 'General Topic';
     
-    console.warn(`AI generation failed completely. Creating ${questionCount} realistic fallback questions for topic: ${topic}`);
+    console.warn(`AI generation failed completely. Creating ${questionCount} fallback questions based on provided topic and reference materials: ${topic}`);
     
-    // Create truly unique questions using diverse generation strategies
+    // Create fallback questions that respect user inputs and reference materials
     const questionGenerators = [];
     
-    if (topic.toLowerCase().includes('trauma') || topic.toLowerCase().includes('injury') || topic.toLowerCase().includes('accident')) {
+    // Check if reference materials provide specific context
+    const hasReferenceContent = referenceContent.length > 100;
+    const hasCustomInstructions = customInstructions.length > 20;
+    
+    if (hasReferenceContent || hasCustomInstructions) {
+      // Create questions based on reference materials and custom instructions
+      const keyTerms = extractKeyTerms(referenceContent + ' ' + customInstructions);
+      
+      questionGenerators.push(
+        () => ({
+          text: `Based on the provided materials, what is the most important concept related to ${keyTerms[0] || topic}?`,
+          options: [
+            { text: "The fundamental principle outlined in the reference materials", correct: true },
+            { text: "A secondary consideration mentioned briefly", correct: false },
+            { text: "An unrelated concept", correct: false },
+            { text: "Information not covered in the materials", correct: false }
+          ]
+        }),
+        () => ({
+          text: `According to the reference materials provided, which approach is recommended for ${topic}?`,
+          options: [
+            { text: "The methodology specifically described in the source materials", correct: true },
+            { text: "An alternative approach not mentioned", correct: false },
+            { text: "A contradictory method", correct: false },
+            { text: "No specific approach was provided", correct: false }
+          ]
+        }),
+        () => ({
+          text: `In the context of the provided materials, what key factor should be considered when dealing with ${topic}?`,
+          options: [
+            { text: "The critical factor highlighted in the reference content", correct: true },
+            { text: "External factors not mentioned in the materials", correct: false },
+            { text: "Irrelevant considerations", correct: false },
+            { text: "Outdated practices", correct: false }
+          ]
+        })
+      );
+    } else if (topic.toLowerCase().includes('trauma') || topic.toLowerCase().includes('injury') || topic.toLowerCase().includes('accident')) {
       // Trauma/Emergency question generators with diverse content
       questionGenerators.push(
         () => ({
@@ -1515,29 +1577,41 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
         })
       );
     } else {
-      // Generic educational question generators with variety
-      const concepts = ['assessment', 'treatment', 'prevention', 'monitoring', 'documentation', 'communication'];
-      const contexts = ['emergency', 'clinical', 'field', 'hospital', 'community', 'training'];
-      const approaches = ['evidence-based', 'systematic', 'comprehensive', 'thorough', 'careful', 'standardized'];
+      // Generic educational question generators that adapt to any topic
+      const educationalConcepts = ['understanding', 'application', 'analysis', 'evaluation', 'implementation', 'methodology'];
+      const cognitiveApproaches = ['systematic', 'comprehensive', 'analytical', 'evidence-based', 'structured', 'strategic'];
       
-      for (let c = 0; c < concepts.length; c++) {
+      // Extract topic-specific terms for more relevant questions
+      const topicWords = topic.toLowerCase().split(/\s+/).filter(word => word.length > 3);
+      const primaryTopic = topicWords[0] || 'subject matter';
+      
+      for (let c = 0; c < educationalConcepts.length; c++) {
         questionGenerators.push(
           () => ({
-            text: `What is the most important ${approaches[Math.floor(Math.random() * approaches.length)]} approach to ${concepts[c]} in ${topic}?`,
+            text: `What is the most important ${cognitiveApproaches[Math.floor(Math.random() * cognitiveApproaches.length)]} approach to ${educationalConcepts[c]} in ${topic}?`,
             options: [
-              { text: `Following established ${contexts[Math.floor(Math.random() * contexts.length)]} protocols and guidelines`, correct: true },
-              { text: "Making decisions based on personal preference alone", correct: false },
-              { text: "Ignoring standard procedures", correct: false },
-              { text: "Avoiding systematic evaluation", correct: false }
+              { text: `Applying established principles and best practices specific to ${primaryTopic}`, correct: true },
+              { text: "Relying solely on intuition without structured analysis", correct: false },
+              { text: "Ignoring foundational concepts and established methods", correct: false },
+              { text: "Avoiding critical evaluation and systematic thinking", correct: false }
             ]
           }),
           () => ({
-            text: `When managing ${topic} situations, the priority should be:`,
+            text: `When working with ${topic}, which factor is most critical for success?`,
             options: [
-              { text: `Patient safety and ${approaches[Math.floor(Math.random() * approaches.length)]} care`, correct: true },
-              { text: "Speed over accuracy", correct: false },
-              { text: "Convenience over protocols", correct: false },
-              { text: "Personal comfort over patient needs", correct: false }
+              { text: `Thorough understanding of core principles and proper application of ${primaryTopic} concepts`, correct: true },
+              { text: "Speed over accuracy and depth of understanding", correct: false },
+              { text: "Convenience over proper methodology", correct: false },
+              { text: "Personal preference over established best practices", correct: false }
+            ]
+          }),
+          () => ({
+            text: `In the study of ${topic}, what represents the highest level of mastery?`,
+            options: [
+              { text: `Ability to synthesize knowledge and apply ${primaryTopic} principles to new situations`, correct: true },
+              { text: "Memorization of facts without understanding connections", correct: false },
+              { text: "Superficial knowledge without practical application", correct: false },
+              { text: "Theoretical knowledge without real-world context", correct: false }
             ]
           })
         );
