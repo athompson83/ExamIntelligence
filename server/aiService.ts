@@ -1048,12 +1048,17 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
     `;
 
     // Send progress update before AI call
-    progressCallback?.({ status: 'Sending request to AI...', current: Math.floor(questionCount * 0.1), total: questionCount });
+    progressCallback?.({ status: 'Connecting to AI provider...', current: Math.floor(questionCount * 0.1), total: questionCount });
 
     // Use multi-provider AI system with automatic fallback
     let response;
     try {
       const { multiProviderAI } = await import('./multiProviderAI');
+      
+      // Get the current provider being used for user feedback
+      const currentProvider = multiProviderAI.getCurrentProvider();
+      progressCallback?.({ status: `Using ${currentProvider || 'AI'} to generate questions...`, current: Math.floor(questionCount * 0.2), total: questionCount });
+      
       response = await multiProviderAI.generateContent({
         messages: [
           {
@@ -1618,17 +1623,22 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       }
     }
     
+    // Track used questions to prevent duplicates
+    const usedQuestions = new Set<string>();
+    const generatedQuestions = [];
+    
     // Generate completely unique questions
     for (let i = 0; i < questionCount; i++) {
       let questionData;
+      let attempts = 0;
+      const maxAttempts = 10;
       
-      if (questionGenerators.length > 0) {
-        // Use random generator each time for true variety
-        const randomGenerator = questionGenerators[Math.floor(Math.random() * questionGenerators.length)];
-        questionData = randomGenerator();
-        
-        // Keep questions clean without parenthetical item numbers
-      } else {
+      do {
+        if (questionGenerators.length > 0) {
+          // Use random generator each time for true variety
+          const randomGenerator = questionGenerators[Math.floor(Math.random() * questionGenerators.length)];
+          questionData = randomGenerator();
+        } else {
         // Unique fallback with varied structure
         const questionStems = [
           "What is the primary consideration",
@@ -1641,17 +1651,25 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
           "Which method is recommended"
         ];
         
-        const stem = questionStems[i % questionStems.length];
-        questionData = {
-          text: `${stem} when working with ${topic}?`,
-          options: [
-            { text: `Following evidence-based protocols and maintaining high standards`, correct: true },
-            { text: "Using outdated or unverified methods", correct: false },
-            { text: "Ignoring established guidelines", correct: false },
-            { text: "Prioritizing convenience over quality", correct: false }
-          ]
-        };
-      }
+          const stem = questionStems[attempts % questionStems.length];
+          const contextVariations = ['when working with', 'regarding', 'in the context of', 'concerning'];
+          const context = contextVariations[attempts % contextVariations.length];
+          
+          questionData = {
+            text: `${stem} ${context} ${topic}? (Question ${i + 1})`,
+            options: [
+              { text: `Following evidence-based protocols and maintaining high standards`, correct: true },
+              { text: "Using outdated or unverified methods", correct: false },
+              { text: "Ignoring established guidelines", correct: false },
+              { text: "Prioritizing convenience over quality", correct: false }
+            ]
+          };
+        }
+        attempts++;
+      } while (usedQuestions.has(questionData.text) && attempts < maxAttempts);
+      
+      // Mark this question as used
+      usedQuestions.add(questionData.text);
       
       // Vary question types if multiple are requested
       const questionType = params.questionTypes?.[i % (params.questionTypes?.length || 1)] || 'multiple_choice';

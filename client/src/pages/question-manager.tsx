@@ -1495,10 +1495,13 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                               multiple
                               accept=".pdf,.doc,.docx,.txt,.ppt,.pptx"
                               onChange={(e) => {
+                                const newFiles = Array.from(e.target.files || []);
                                 setAiForm(prev => ({ 
                                   ...prev, 
-                                  referenceFiles: Array.from(e.target.files || [])
+                                  referenceFiles: [...prev.referenceFiles, ...newFiles]
                                 }));
+                                // Clear the input to allow selecting the same files again
+                                e.target.value = '';
                               }}
                               className="mt-2"
                             />
@@ -2423,23 +2426,23 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <h4 className="font-medium">Items</h4>
-                        {previewQuestion.answerOptions?.map((option, index) => (
+                        {previewQuestion.answerOptions?.filter(opt => opt.matchingSide === 'left').map((option, index) => (
                           <div key={index} className="p-2 border rounded">
-                            {option.answerText.split('→')[0]?.trim()}
+                            {option.answerText}
                           </div>
                         ))}
                       </div>
                       <div className="space-y-2">
                         <h4 className="font-medium">Matches</h4>
-                        {previewQuestion.answerOptions?.map((option, index) => (
+                        {previewQuestion.answerOptions?.filter(opt => opt.matchingSide === 'left').map((option, index) => (
                           <Select key={index}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select match..." />
                             </SelectTrigger>
                             <SelectContent>
-                              {previewQuestion.answerOptions?.map((opt, idx) => (
+                              {previewQuestion.answerOptions?.filter(opt => opt.matchingSide === 'right').map((opt, idx) => (
                                 <SelectItem key={idx} value={`match-${idx}`}>
-                                  {opt.answerText.split('→')[1]?.trim()}
+                                  {opt.answerText}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -2454,12 +2457,20 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                   <div className="space-y-3">
                     <p className="text-sm text-gray-600">Drag items to arrange in correct order:</p>
                     <div className="space-y-2">
-                      {previewQuestion.answerOptions?.map((option, index) => (
-                        <div key={index} className="p-3 border border-dashed border-gray-300 rounded cursor-move hover:bg-gray-50">
-                          {option.answerText}
+                      {previewQuestion.answerOptions?.sort(() => Math.random() - 0.5).map((option, index) => (
+                        <div key={option.answerText + index} className="p-3 border border-dashed border-gray-300 rounded cursor-move hover:bg-gray-50 transition-colors">
+                          <div className="flex items-center">
+                            <div className="w-6 h-6 mr-3 bg-gray-200 rounded flex items-center justify-center text-xs font-mono">
+                              ⋮⋮
+                            </div>
+                            {option.answerText}
+                          </div>
                         </div>
                       ))}
                     </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Items are shown in random order for the test. Students drag to arrange correctly.
+                    </p>
                   </div>
                 )}
 
@@ -2469,16 +2480,28 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     
                     {/* Categories Row */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {['Antiarrhythmics', 'Vasopressors', 'Anticoagulants'].map((categoryName, index) => (
-                        <div key={index} className="border rounded-lg p-4">
-                          <h4 className="font-medium mb-2 text-center">
-                            {categoryName}
-                          </h4>
-                          <div className="min-h-[120px] border-2 border-dashed border-gray-200 rounded p-2 bg-gray-50">
-                            <div className="text-xs text-gray-400 text-center mt-8">Drop items here</div>
+                      {previewQuestion.questionText.includes('cardiovascular') || previewQuestion.questionText.includes('cardiac') ? 
+                        ['Antiarrhythmics', 'Vasopressors', 'Anticoagulants'].map((categoryName, index) => (
+                          <div key={index} className="border rounded-lg p-4">
+                            <h4 className="font-medium mb-2 text-center">
+                              {categoryName}
+                            </h4>
+                            <div className="min-h-[120px] border-2 border-dashed border-gray-200 rounded p-2 bg-gray-50">
+                              <div className="text-xs text-gray-400 text-center mt-8">Drop items here</div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )) :
+                        ['Primary Assessment', 'Secondary Assessment', 'Treatment'].map((categoryName, index) => (
+                          <div key={index} className="border rounded-lg p-4">
+                            <h4 className="font-medium mb-2 text-center">
+                              {categoryName}
+                            </h4>
+                            <div className="min-h-[120px] border-2 border-dashed border-gray-200 rounded p-2 bg-gray-50">
+                              <div className="text-xs text-gray-400 text-center mt-8">Drop items here</div>
+                            </div>
+                          </div>
+                        ))
+                      }
                     </div>
                     
                     {/* Draggable Items */}

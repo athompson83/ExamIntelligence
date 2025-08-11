@@ -18,6 +18,7 @@ export interface AIResponse {
 
 class MultiProviderAI {
   private providers: Map<string, any> = new Map();
+  private currentProvider: string | null = null;
   private providerConfigs: AIProvider[] = [
     { name: 'deepseek', priority: 1, available: true, costPerToken: 0.00000014 }, // Highest priority - cheapest
     { name: 'groq', priority: 2, available: true, costPerToken: 0.00000027 }, // Fast inference
@@ -402,6 +403,7 @@ class MultiProviderAI {
     for (const providerConfig of availableProviders) {
       try {
         console.log(`🔄 Attempting ${providerConfig.name} (priority: ${providerConfig.priority})`);
+        this.currentProvider = providerConfig.name;
         const provider = this.providers.get(providerConfig.name);
         
         switch (providerConfig.name) {
@@ -640,6 +642,10 @@ class MultiProviderAI {
       tokensUsed: response.usage?.total_tokens,
       cost: (response.usage?.total_tokens || 0) * 0.000002
     };
+  }
+
+  getCurrentProvider(): string | null {
+    return this.currentProvider;
   }
 }
 

@@ -184,15 +184,15 @@ export default function ItemBanks() {
         variant: "destructive",
       });
     },
-    onSuccess: () => {
+
+    onSuccess: async () => {
+      // Force immediate cache clearing and refresh
+      queryClient.removeQueries({ queryKey: ['/api/testbanks'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
       toast({
         title: "Success",
         description: "Item bank deleted successfully",
       });
-    },
-    onSettled: () => {
-      // Always refetch after mutation to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['/api/testbanks'] });
     },
   });
 
