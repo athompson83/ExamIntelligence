@@ -1473,19 +1473,19 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
       
       questionGenerators.push(
         () => ({
-          text: `Based on the provided materials, what is the most important concept related to ${keyTerms[0] || topic}?`,
+          text: `What is the most critical assessment finding in a patient with ${keyTerms[0] || topic}?`,
           options: [
-            { text: "The fundamental principle outlined in the reference materials", correct: true },
-            { text: "A secondary consideration mentioned briefly", correct: false },
+            { text: "Altered mental status and unstable vital signs", correct: true },
+            { text: "Minor discomfort with stable vitals", correct: false },
             { text: "An unrelated concept", correct: false },
             { text: "Information not covered in the materials", correct: false }
           ]
         }),
         () => ({
-          text: `Which evidence-based approach is most effective for managing ${topic}?`,
+          text: `What is the most critical intervention priority when managing ${topic}?`,
           options: [
-            { text: "Systematic assessment and intervention protocols", correct: true },
-            { text: "Unstructured clinical judgment only", correct: false },
+            { text: "Rapid assessment and stabilization", correct: true },
+            { text: "Detailed history taking first", correct: false },
             { text: "A contradictory method", correct: false },
             { text: "No specific approach was provided", correct: false }
           ]

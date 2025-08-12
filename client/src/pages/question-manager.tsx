@@ -418,7 +418,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   // Delete questions mutation
   const deleteQuestionMutation = useMutation({
     mutationFn: async (questionId: string) => {
-      const response = await apiRequest("DELETE", `/api/testbanks/${effectiveTestbankId}/questions/${questionId}`);
+      const response = await apiRequest("DELETE", `/api/testbanks/${effectiveTestbankId}/questions/${questionId}`, {});
       return response.json();
     },
     onSuccess: (_, questionId) => {
@@ -2251,7 +2251,14 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => deleteQuestionMutation.mutate(question.id)}
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete this question? This action cannot be undone.`)) {
+                              deleteQuestionMutation.mutate(question.id);
+                            }
+                          }}
+                          disabled={deleteQuestionMutation.isPending}
+                          title="Delete question"
+                          className="text-red-500 hover:text-red-700"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -2508,87 +2515,116 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
 
                 {previewQuestion.questionType === 'matching' && (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600 mb-3">Match items by selecting corresponding pairs:</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-sm text-gray-700">Column A</h4>
-                        {previewQuestion.answerOptions?.length > 0 
-                          ? previewQuestion.answerOptions.filter(opt => opt.answerText?.includes('→')).map((option, index) => {
-                              const [leftItem] = option.answerText.split(' → ');
-                              return (
-                                <div key={index} className="p-3 border rounded bg-blue-50 text-sm hover:bg-blue-100 cursor-pointer">
-                                  {leftItem?.trim() || `Term ${index + 1}`}
-                                </div>
-                              );
-                            })
-                          : ['Cardiac arrest', 'Respiratory failure', 'Hemorrhagic shock'].map((item, index) => (
-                              <div key={index} className="p-3 border rounded bg-blue-50 text-sm hover:bg-blue-100 cursor-pointer">
-                                {item}
+                    <p className="text-sm text-gray-600 mb-3">Match each term with its correct definition using the dropdown:</p>
+                    
+                    {(() => {
+                      // Parse matching pairs from questionConfig or answerOptions
+                      const config = previewQuestion.questionConfig || {};
+                      const pairs = config.matchingPairs || [];
+                      
+                      // If no pairs in config, try to extract from answerOptions
+                      let matchingItems = [];
+                      if (pairs.length > 0) {
+                        matchingItems = pairs;
+                      } else if (previewQuestion.answerOptions?.length > 0) {
+                        matchingItems = previewQuestion.answerOptions
+                          .filter(opt => opt.answerText?.includes('→'))
+                          .map((opt, index) => {
+                            const [term, definition] = opt.answerText.split(' → ');
+                            return { 
+                              id: `pair-${index}`, 
+                              term: term?.trim() || `Term ${index + 1}`, 
+                              definition: definition?.trim() || `Definition ${index + 1}`
+                            };
+                          });
+                      }
+                      
+                      // Fallback examples if no data available
+                      if (matchingItems.length === 0) {
+                        matchingItems = [
+                          { id: 'pair-1', term: 'Preeclampsia', definition: 'High blood pressure during pregnancy' },
+                          { id: 'pair-2', term: 'Eclampsia', definition: 'Seizures in pregnant women with preeclampsia' },
+                          { id: 'pair-3', term: 'HELLP Syndrome', definition: 'Serious complication involving liver and blood platelets' },
+                          { id: 'pair-4', term: 'Placenta Previa', definition: 'Placenta covers cervical opening' }
+                        ];
+                      }
+                      
+                      const definitions = matchingItems.map(item => item.definition);
+                      
+                      return (
+                        <div className="space-y-4">
+                          {matchingItems.map((item, index) => (
+                            <div key={item.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                              <div className="flex-1">
+                                <span className="font-medium text-gray-800">{item.term}</span>
                               </div>
-                            ))
-                        }
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-sm text-gray-700">Column B</h4>
-                        {previewQuestion.answerOptions?.length > 0 
-                          ? previewQuestion.answerOptions.filter(opt => opt.answerText?.includes('→')).map((option, index) => {
-                              const [, rightItem] = option.answerText.split(' → ');
-                              return (
-                                <div key={index} className="p-3 border rounded bg-green-50 text-sm cursor-pointer hover:bg-green-100">
-                                  {rightItem?.trim() || `Definition ${index + 1}`}
-                                </div>
-                              );
-                            })
-                          : ['Loss of circulation and breathing', 'Inability to ventilate adequately', 'Severe blood loss leading to hypotension'].map((item, index) => (
-                              <div key={index} className="p-3 border rounded bg-green-50 text-sm cursor-pointer hover:bg-green-100">
-                                {item}
+                              <div className="flex-1">
+                                <select className="w-full p-2 border border-gray-300 rounded-md bg-white">
+                                  <option value="">Select definition...</option>
+                                  {definitions.map((def, defIndex) => (
+                                    <option key={defIndex} value={def}>
+                                      {def}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
-                            ))
-                        }
-                      </div>
-                    </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
                 {previewQuestion.questionType === 'categorization' && (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600 mb-3">Drag items into their correct categories:</p>
+                    <p className="text-sm text-gray-600 mb-3">Select the correct category for each item using the dropdown:</p>
                     
                     {(() => {
                       // Extract categories and items from questionConfig or provide defaults
                       const config = previewQuestion.questionConfig || {};
-                      const categories = config.categories || ['Cardiovascular', 'Respiratory', 'Neurological'];
+                      const categories = config.categories || ['First Trimester', 'Second Trimester', 'Third Trimester'];
                       const items = previewQuestion.answerOptions?.map(opt => opt.answerText) || 
-                                   ['Myocardial infarction', 'Asthma attack', 'Stroke', 'Pulmonary edema', 'Seizure', 'Cardiac arrest'];
+                                   ['Morning sickness', 'Fetal movement felt', 'Braxton Hicks contractions', 'Neural tube development', 'Viability threshold', 'Lightening occurs'];
                       
                       return (
-                        <>
-                          <div className="grid grid-cols-3 gap-4 mb-6">
-                            {categories.map((category, index) => (
-                              <div key={index} className="space-y-2">
-                                <h4 className="font-medium text-center text-gray-800">{category}</h4>
-                                <div className="min-h-[140px] p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:border-gray-400 transition-colors">
-                                  <p className="text-sm text-gray-500 text-center mt-12">Drop items here</p>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                            <div className="text-center">
+                              <h4 className="font-semibold text-blue-600 mb-2">{categories[0] || 'Category A'}</h4>
+                              <div className="text-xs text-gray-500">Items will appear here when selected</div>
+                            </div>
+                            <div className="text-center">
+                              <h4 className="font-semibold text-green-600 mb-2">{categories[1] || 'Category B'}</h4>
+                              <div className="text-xs text-gray-500">Items will appear here when selected</div>
+                            </div>
+                            <div className="text-center">
+                              <h4 className="font-semibold text-purple-600 mb-2">{categories[2] || 'Category C'}</h4>
+                              <div className="text-xs text-gray-500">Items will appear here when selected</div>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-gray-800">Categorize each item:</h4>
+                            {items.map((item, index) => (
+                              <div key={index} className="flex items-center space-x-4 p-3 bg-white border border-gray-200 rounded-lg">
+                                <div className="flex-1">
+                                  <span className="font-medium text-gray-800">{item}</span>
+                                </div>
+                                <div className="flex-shrink-0 w-48">
+                                  <select className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm">
+                                    <option value="">Select category...</option>
+                                    {categories.map((category, catIndex) => (
+                                      <option key={catIndex} value={category}>
+                                        {category}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </div>
                               </div>
                             ))}
                           </div>
-                          
-                          <div className="space-y-3">
-                            <h4 className="font-medium text-gray-800">Items to Categorize:</h4>
-                            <div className="flex flex-wrap gap-3">
-                              {items.map((item, index) => (
-                                <div 
-                                  key={index} 
-                                  className="p-3 bg-blue-100 hover:bg-blue-200 rounded-lg border border-blue-200 cursor-move transition-colors shadow-sm"
-                                  draggable="true"
-                                >
-                                  <span className="text-sm font-medium text-blue-800">{item}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </>
+                        </div>
                       );
                     })()}
                   </div>
