@@ -42,10 +42,10 @@ export default function Dashboard() {
     <div className="min-h-screen flex bg-background">
       <Sidebar />
       
-      <div className="flex-1 md:ml-64">
+      <div className="flex-1 md:ml-64 flex flex-col">
         <TopBar />
         
-        <main className="p-4 md:p-6 space-y-6">
+        <main className="flex-1 p-4 md:p-6 space-y-6">
           <QuickStats />
           
           {/* Enhanced Main Dashboard - Mobile Responsive */}
