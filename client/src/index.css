@@ -37,12 +37,11 @@
     text-rendering: optimizeLegibility;
   }
   
-  /* Ensure mobile content doesn't go under fixed header */
+  /* Remove any extra mobile padding that causes overlap */
   @media (max-width: 767px) {
-    main[class*="pt-"], 
     .content-container,
-    [class*="main-content"] {
-      padding-top: 6rem !important; /* 96px to account for fixed header */
+    main {
+      padding-top: 1rem !important; /* Standard mobile padding */
     }
   }
   
