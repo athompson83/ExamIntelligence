@@ -61,9 +61,15 @@
     
     input, select, textarea {
       font-size: 16px; /* Prevent iOS zoom */
-      padding: 12px 16px;
+      padding: 12px 56px 12px 16px; /* Extra right padding on mobile */
       line-height: 1.4;
       border-radius: 6px;
+    }
+    
+    /* Search input specific mobile padding */
+    input[placeholder*="Search"] {
+      padding-left: 56px !important; /* Extra left padding for search icon */
+      padding-right: 16px !important;
     }
   }
   

@@ -55,21 +55,22 @@ export default function TopBar() {
   };
 
   return (
-    <header className="bg-surface border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between max-[767px]:px-4">
+    <header className="bg-surface border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between max-[767px]:px-4 fixed top-0 left-0 right-0 z-50 h-16 md:h-auto md:relative">
       <div className="flex items-center flex-1">
         {/* Section titles are in a different area */}
       </div>
       
       <div className="flex items-center space-x-4 max-[767px]:space-x-2">
         {/* Enhanced Search - Mobile Responsive */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 md:h-4 md:w-4 text-gray-400" />
+        <div className="relative hidden sm:block">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
           <Input
             type="text"
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="mobile-input pl-12 md:pl-10 pr-4 w-48 sm:w-56 md:w-64"
+            className="pl-10 pr-4 w-56 md:w-64"
+            style={{ paddingLeft: '2.5rem' }}
           />
         </div>
         
