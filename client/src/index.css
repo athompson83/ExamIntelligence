@@ -37,6 +37,15 @@
     text-rendering: optimizeLegibility;
   }
   
+  /* Ensure mobile content doesn't go under fixed header */
+  @media (max-width: 767px) {
+    main[class*="pt-"], 
+    .content-container,
+    [class*="main-content"] {
+      padding-top: 6rem !important; /* 96px to account for fixed header */
+    }
+  }
+  
   /* Default desktop styling */
   button, [role="button"], input, select, textarea {
     min-height: 36px; /* Standard desktop size */
