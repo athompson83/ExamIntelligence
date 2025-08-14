@@ -52,8 +52,8 @@
     
     /* Content spacing to account for floating header */
     main {
-      margin-top: 4rem !important; /* 64px to clear floating header */
-      padding-top: 1rem !important;
+      margin-top: 4.5rem !important; /* 72px to clear floating header */
+      padding-top: 1.5rem !important;
       overflow-y: auto;
     }
     
