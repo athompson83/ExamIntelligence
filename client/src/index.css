@@ -44,9 +44,17 @@
       flex-direction: column;
     }
     
-    /* Remove any conflicting padding that might cause overlap */
+    /* Add extra padding to mobile content to prevent overlap */
     main {
       overflow-y: auto;
+      padding-top: 1.5rem !important; /* 24px top padding on mobile */
+    }
+    
+    /* Ensure header stays above content when scrolling */
+    header {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 1000 !important;
     }
   }
   
