@@ -101,7 +101,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5 }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 md:mt-0"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-8 md:mt-0"
         >
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white break-words">

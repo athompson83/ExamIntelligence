@@ -52,8 +52,8 @@
     
     /* Content spacing to account for floating header */
     main {
-      margin-top: 4.5rem !important; /* 72px to clear floating header */
-      padding-top: 1.5rem !important;
+      margin-top: 5rem !important; /* 80px to clear floating header */
+      padding-top: 2rem !important;
       overflow-y: auto;
     }
     
@@ -65,6 +65,17 @@
     /* Ensure sidebar doesn't interfere on mobile */
     .flex-1 {
       padding-top: 0 !important;
+    }
+    
+    /* Additional spacing for welcome header on mobile */
+    .space-y-6 > div:first-child {
+      margin-top: 1rem !important;
+    }
+    
+    /* Specific spacing for main content on mobile */
+    .mobile-main-spacing {
+      padding-top: 2rem !important;
+      margin-top: 5rem !important;
     }
   }
   
