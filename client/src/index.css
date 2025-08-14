@@ -47,7 +47,8 @@
     /* Add extra padding to mobile content to prevent overlap */
     main {
       overflow-y: auto;
-      padding-top: 1.5rem !important; /* 24px top padding on mobile */
+      padding-top: 2.5rem !important; /* 40px top padding on mobile */
+      margin-top: 0.5rem !important; /* Additional margin for clearance */
     }
     
     /* Ensure header stays above content when scrolling */
@@ -55,6 +56,12 @@
       position: sticky !important;
       top: 0 !important;
       z-index: 1000 !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; /* Add shadow for better separation */
+    }
+    
+    /* Ensure content container has proper spacing */
+    .content-container {
+      padding-top: 1rem !important;
     }
   }
   

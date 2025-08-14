@@ -45,7 +45,7 @@ export default function Dashboard() {
       <div className="flex-1 md:ml-64 flex flex-col">
         <TopBar />
         
-        <main className="flex-1 p-4 pt-6 md:p-6 space-y-6">
+        <main className="flex-1 p-4 pt-10 md:p-6 md:pt-6 space-y-6">
           <QuickStats />
           
           {/* Enhanced Main Dashboard - Mobile Responsive */}
