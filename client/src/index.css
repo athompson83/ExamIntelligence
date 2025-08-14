@@ -37,31 +37,34 @@
     text-rendering: optimizeLegibility;
   }
   
-  /* Ensure proper mobile layout without overlap */
+  /* Mobile layout with floating header */
   @media (max-width: 767px) {
-    /* Make sure the main layout uses flexbox properly */
-    .min-h-screen {
-      flex-direction: column;
-    }
-    
-    /* Add extra padding to mobile content to prevent overlap */
-    main {
-      overflow-y: auto;
-      padding-top: 2.5rem !important; /* 40px top padding on mobile */
-      margin-top: 0.5rem !important; /* Additional margin for clearance */
-    }
-    
-    /* Ensure header stays above content when scrolling */
+    /* Floating header with proper spacing */
     header {
-      position: sticky !important;
+      position: fixed !important;
       top: 0 !important;
-      z-index: 1000 !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; /* Add shadow for better separation */
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 9999 !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+      backdrop-filter: blur(8px) !important;
     }
     
-    /* Ensure content container has proper spacing */
-    .content-container {
+    /* Content spacing to account for floating header */
+    main {
+      margin-top: 4rem !important; /* 64px to clear floating header */
       padding-top: 1rem !important;
+      overflow-y: auto;
+    }
+    
+    /* Layout container adjustments */
+    .min-h-screen {
+      position: relative;
+    }
+    
+    /* Ensure sidebar doesn't interfere on mobile */
+    .flex-1 {
+      padding-top: 0 !important;
     }
   }
   
