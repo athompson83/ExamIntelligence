@@ -46,8 +46,8 @@
     
     /* Content spacing to account for mobile header */
     main {
-      margin-top: 4rem !important; /* 64px to clear mobile header */
-      padding-top: 1rem !important;
+      margin-top: 4.5rem !important; /* 72px to clear mobile header */
+      padding-top: 0.5rem !important;
       overflow-y: auto;
     }
     
@@ -64,8 +64,8 @@
     
     /* Specific spacing for main content on mobile */
     .mobile-main-spacing {
-      padding-top: 1rem !important;
-      margin-top: 4rem !important;
+      padding-top: 0.5rem !important;
+      margin-top: 4.5rem !important;
     }
   }
   
