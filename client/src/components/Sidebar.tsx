@@ -234,7 +234,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Enhanced Mobile Navigation Bar (shown on small screens) */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-primary z-50 px-4 py-3 shadow-lg">
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-primary z-[9999] px-4 py-3 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="bg-white rounded-xl p-2 mr-3">
