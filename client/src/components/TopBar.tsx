@@ -28,7 +28,7 @@ export default function TopBar() {
   // Use switched user if available, otherwise use the regular user
   const currentUser = switchedUser || user;
 
-  const { data: notifications } = useQuery({
+  const { data: notifications } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
     retry: false,
   });
@@ -128,7 +128,7 @@ export default function TopBar() {
             <Button variant="ghost" className="flex items-center space-x-2 md:space-x-3 p-3 md:p-2 btn-mobile">
               <div className="text-right hidden md:block">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {currentUser?.firstName} {currentUser?.lastName}
+                  {(currentUser as any)?.firstName} {(currentUser as any)?.lastName}
                   {isSwitched && (
                     <Badge variant="secondary" className="ml-2 text-xs">
                       Test
@@ -136,13 +136,13 @@ export default function TopBar() {
                   )}
                 </div>
                 <div className="text-xs text-gray-500 capitalize">
-                  {currentUser?.role?.replace('_', ' ') || 'User'}
+                  {(currentUser as any)?.role?.replace('_', ' ') || 'User'}
                 </div>
               </div>
               <Avatar className="h-10 w-10 md:h-8 md:w-8">
-                <AvatarImage src={currentUser?.profileImageUrl || ''} alt="Profile" />
+                <AvatarImage src={(currentUser as any)?.profileImageUrl || ''} alt="Profile" />
                 <AvatarFallback className="text-base md:text-sm font-bold">
-                  {getUserInitials(currentUser?.firstName, currentUser?.lastName)}
+                  {getUserInitials((currentUser as any)?.firstName, (currentUser as any)?.lastName)}
                 </AvatarFallback>
               </Avatar>
             </Button>

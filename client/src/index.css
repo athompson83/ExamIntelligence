@@ -45,27 +45,15 @@
     }
     
     /* Content spacing to account for mobile header */
-    main {
+    .mobile-main-spacing {
       margin-top: 4.5rem !important; /* 72px to clear mobile header */
       padding-top: 0.5rem !important;
-      overflow-y: auto;
     }
     
     /* Remove conflicting TopBar styles on mobile */
     header {
       position: relative !important;
       z-index: 1 !important;
-    }
-    
-    /* Layout container adjustments */
-    .min-h-screen {
-      position: relative;
-    }
-    
-    /* Specific spacing for main content on mobile */
-    .mobile-main-spacing {
-      padding-top: 0.5rem !important;
-      margin-top: 4.5rem !important;
     }
   }
   

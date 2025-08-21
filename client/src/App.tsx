@@ -21,7 +21,7 @@ import { useEffect } from "react";
 
 // Core pages that are always needed
 import Landing from "@/pages/Landing";
-import Dashboard from "@/pages/Dashboard";
+import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 
 // Lazy load pages to reduce initial bundle size

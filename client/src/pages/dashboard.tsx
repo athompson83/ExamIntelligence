@@ -2,12 +2,11 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import Sidebar from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
-import { QuickStats } from "@/components/dashboard/quick-stats";
-import { LiveExamMonitoring } from "@/components/dashboard/live-exam-monitoring";
-import { RecentActivity } from "@/components/dashboard/recent-activity";
-import { AnalyticsOverview } from "@/components/dashboard/analytics-overview";
+import Layout from "@/components/Layout";
+import { QuickStats } from "@/components/dashboard/QuickStats";
+import { LiveExamMonitoring } from "@/components/dashboard/LiveExamMonitoring";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { AnalyticsOverview } from "@/components/dashboard/AnalyticsOverview";
 import { Button } from "@/components/ui/button";
 import { Plus, Puzzle, Bot, Eye } from "lucide-react";
 
@@ -39,13 +38,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <Sidebar />
-      
-      <div className="flex-1 md:ml-64 flex flex-col">
-        <TopBar />
-        
-        <main className="flex-1 p-4 md:p-6 md:pt-6 space-y-6">
+    <Layout>
+      <div className="space-y-6">
           <QuickStats />
           
           {/* Enhanced Main Dashboard - Mobile Responsive */}
@@ -112,8 +106,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        </main>
       </div>
-    </div>
+    </Layout>
   );
 }
