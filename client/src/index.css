@@ -47,13 +47,13 @@
     /* TopBar should be below mobile sidebar but above content */
     header {
       z-index: 100 !important;
-      margin-top: 3.5rem !important; /* Account for mobile sidebar header */
+      margin-top: 3.25rem !important; /* Account for mobile sidebar header (52px) */
     }
     
     /* Content spacing to account for both mobile sidebar header AND TopBar */
     .mobile-main-spacing {
-      margin-top: 8rem !important; /* 128px to clear both headers (56px + 72px) */
-      padding-top: 0.5rem !important;
+      margin-top: 6.75rem !important; /* 108px total: 52px (sidebar header) + 56px (TopBar height) */
+      padding-top: 1rem !important;
     }
   }
   
