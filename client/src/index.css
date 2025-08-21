@@ -39,21 +39,21 @@
   
   /* Mobile layout with proper header hierarchy */
   @media (max-width: 767px) {
-    /* Ensure mobile header is absolute top layer */
+    /* Ensure mobile sidebar header is absolute top layer */
     .lg\:hidden.fixed.top-0 {
-      z-index: 10000 !important;
+      z-index: 9999 !important;
     }
     
-    /* Content spacing to account for mobile header */
-    .mobile-main-spacing {
-      margin-top: 4.5rem !important; /* 72px to clear mobile header */
-      padding-top: 0.5rem !important;
-    }
-    
-    /* Remove conflicting TopBar styles on mobile */
+    /* TopBar should be below mobile sidebar but above content */
     header {
-      position: relative !important;
-      z-index: 1 !important;
+      z-index: 100 !important;
+      margin-top: 3.5rem !important; /* Account for mobile sidebar header */
+    }
+    
+    /* Content spacing to account for both mobile sidebar header AND TopBar */
+    .mobile-main-spacing {
+      margin-top: 8rem !important; /* 128px to clear both headers (56px + 72px) */
+      padding-top: 0.5rem !important;
     }
   }
   
