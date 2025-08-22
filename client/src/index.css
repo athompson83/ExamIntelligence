@@ -52,7 +52,7 @@
     
     /* Content spacing to account for both mobile sidebar header AND TopBar */
     .mobile-main-spacing {
-      margin-top: 6.75rem !important; /* 108px total: 52px (sidebar header) + 56px (TopBar height) */
+      margin-top: 8.5rem !important; /* 136px total: 52px (sidebar header) + 56px (TopBar) + extra space */
       padding-top: 1rem !important;
     }
   }
