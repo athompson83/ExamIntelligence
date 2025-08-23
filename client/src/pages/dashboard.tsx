@@ -39,7 +39,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 pt-20 lg:pt-0">
           <QuickStats />
           
           {/* Enhanced Main Dashboard - Mobile Responsive */}
