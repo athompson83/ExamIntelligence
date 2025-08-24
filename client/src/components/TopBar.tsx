@@ -55,7 +55,7 @@ export default function TopBar() {
   };
 
   return (
-    <header className="bg-surface border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between sticky z-[100] h-14 md:h-16 md:px-6 md:py-4 top-16 lg:top-0 mt-0 lg:mt-0">
+    <header className="bg-surface border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between sticky z-[100] h-14 md:h-16 md:px-6 md:py-4 top-12 lg:top-0 mt-0 lg:mt-0">
       <div className="flex items-center flex-1">
         {/* Section titles are in a different area */}
       </div>

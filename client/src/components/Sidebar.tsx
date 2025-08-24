@@ -234,22 +234,22 @@ export default function Sidebar() {
   return (
     <>
       {/* Enhanced Mobile Navigation Bar (shown on small screens) */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-primary z-[9999] px-4 py-3 shadow-lg">
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-primary z-[9999] px-4 py-2 shadow-lg backdrop-blur-md bg-primary/95">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="bg-white rounded-xl p-2 mr-3">
-              <ClipboardCheck className="h-5 w-5 text-primary" />
+            <div className="bg-white rounded-lg p-1.5 mr-2">
+              <ClipboardCheck className="h-4 w-4 text-primary" />
             </div>
-            <h1 className="text-white text-lg font-bold">ProficiencyAI</h1>
+            <h1 className="text-white text-base font-bold">ProficiencyAI</h1>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-xl text-white hover:bg-white/20 transition-colors btn-mobile min-h-[44px] min-w-[44px]"
+            className="p-2 rounded-lg text-white hover:bg-white/20 transition-all duration-200 btn-mobile min-h-[36px] min-w-[36px]"
           >
-            <div className="w-6 h-6 flex flex-col justify-center space-y-1">
-              <div className={`w-6 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
-              <div className={`w-6 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
-              <div className={`w-6 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
+            <div className="w-5 h-5 flex flex-col justify-center space-y-1">
+              <div className={`w-5 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+              <div className={`w-5 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
+              <div className={`w-5 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
             </div>
           </button>
         </div>
@@ -267,8 +267,9 @@ export default function Sidebar() {
         w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 z-[9991]
         lg:translate-x-0
         lg:block
-        max-w-[85vw] transform transition-all duration-300
+        max-w-[85vw] transform transition-all duration-300 ease-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        ${isMobileMenuOpen ? 'pt-12' : 'pt-0 lg:pt-0'}
       `}>
         {/* Enhanced Logo */}
         <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0 lg:h-16 lg:px-4">
@@ -379,7 +380,7 @@ export default function Sidebar() {
       )}
     </nav>
       {/* Mobile Content Spacer */}
-      <div className="lg:hidden block h-16" />
+      <div className="lg:hidden block h-12" />
     </>
   );
 }

@@ -198,7 +198,7 @@
     /* TopBar positioning for mobile - below mobile sidebar header */
     header[class*="sticky"] {
       z-index: 100 !important;
-      top: 4rem !important; /* Position below mobile ProficiencyAI header */
+      top: 3rem !important; /* Position below slimmer mobile ProficiencyAI header */
     }
     
     /* Fix z-index hierarchy for mobile */
@@ -208,7 +208,12 @@
     
     /* Mobile main content clearance - account for both mobile headers */
     main {
-      padding-top: 2rem !important; /* Clear both mobile headers */
+      padding-top: 1.5rem !important; /* Clear both mobile headers with optimized spacing */
+    }
+    
+    /* Mobile page content should start below headers */
+    .lg\\:ml-64 {
+      padding-top: 6rem; /* Space for mobile headers */
     }
     
     /* Mobile dialog positioning */
@@ -246,6 +251,11 @@
       /* Reset TopBar position for desktop */
       header[class*="sticky"] {
         top: 0 !important;
+      }
+      
+      /* Reset mobile page padding for desktop */
+      .lg\\:ml-64 {
+        padding-top: 0 !important;
       }
     }
   }
