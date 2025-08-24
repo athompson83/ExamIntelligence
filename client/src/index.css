@@ -195,26 +195,19 @@
       z-index: 9999 !important;
     }
     
-    /* TopBar positioning for mobile - below mobile sidebar header */
-    header[class*="sticky"] {
-      z-index: 100 !important;
-      top: 3rem !important; /* Position below slimmer mobile ProficiencyAI header */
-    }
+    /* Remove TopBar floating positioning - now in document flow */
     
     /* Fix z-index hierarchy for mobile */
     .lg\\:hidden.fixed.top-0 {
       z-index: 10000 !important; /* Mobile ProficiencyAI header - highest priority */
     }
     
-    /* Mobile main content clearance - account for both mobile headers */
+    /* Mobile page content - natural flow without overlapping headers */
     main {
-      padding-top: 1.5rem !important; /* Clear both mobile headers with optimized spacing */
+      padding: 1rem !important; /* Natural spacing for content */
     }
     
-    /* Mobile page content should start below headers */
-    .lg\\:ml-64 {
-      padding-top: 6rem; /* Space for mobile headers */
-    }
+    /* Remove mobile header overlap compensation - now using natural flow */
     
     /* Mobile dialog positioning */
     [role="dialog"] {
@@ -248,14 +241,9 @@
         z-index: initial !important;
       }
       
-      /* Reset TopBar position for desktop */
-      header[class*="sticky"] {
-        top: 0 !important;
-      }
-      
-      /* Reset mobile page padding for desktop */
-      .lg\\:ml-64 {
-        padding-top: 0 !important;
+      /* Desktop natural flow */
+      main {
+        padding: 1.5rem !important; /* Standard desktop spacing */
       }
     }
   }

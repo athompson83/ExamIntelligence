@@ -379,7 +379,7 @@ export default function Sidebar() {
         </div>
       )}
     </nav>
-      {/* Mobile Content Spacer */}
+      {/* Mobile Content Spacer - for mobile header only */}
       <div className="lg:hidden block h-12" />
     </>
   );
