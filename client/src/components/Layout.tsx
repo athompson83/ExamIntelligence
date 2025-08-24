@@ -10,23 +10,28 @@ export default function Layout({ children }: LayoutProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Trigger fade-in animation after component mounts
+    // Enhanced loading animation with preload optimization
     const timer = setTimeout(() => {
       setIsLoaded(true);
-    }, 50);
+    }, 100);
+
+    // Preload critical resources
+    requestAnimationFrame(() => {
+      document.documentElement.style.setProperty('--page-loaded', '1');
+    });
 
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div className="min-h-screen flex bg-background transition-all duration-200 overflow-x-hidden">
+    <div className="min-h-screen flex bg-gradient-to-br from-background via-background to-background/95 transition-all duration-500 overflow-x-hidden">
       <Sidebar />
-      <div className="flex-1 lg:ml-64 transition-all duration-200 w-full min-w-0 flex flex-col">
+      <div className="flex-1 lg:ml-64 transition-all duration-300 ease-out w-full min-w-0 flex flex-col">
         <TopBar />
-        <main className={`flex-1 p-4 transition-all duration-300 lg:p-6 lg:pt-6 ${
-          isLoaded ? 'opacity-100 transform-none' : 'opacity-0 translate-y-2'
+        <main className={`flex-1 p-4 transition-all duration-500 ease-out lg:p-6 lg:pt-6 ${
+          isLoaded ? 'opacity-100 transform-none' : 'opacity-0 translate-y-4 blur-sm'
         }`}>
-          <div className="lg:pt-0">
+          <div className="lg:pt-0 animate-in fade-in-0 duration-700">
             {children}
           </div>
         </main>

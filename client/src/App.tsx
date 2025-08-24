@@ -18,6 +18,7 @@ import { usePageTracking } from "@/hooks/usePageTracking";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import SmoothLoadingFallback from "@/components/SmoothLoadingFallback";
 import { useEffect } from "react";
+import './styles/performance.css';
 
 // Core pages that are always needed
 import Landing from "@/pages/Landing";

@@ -1,0 +1,198 @@
+/* Performance Optimization CSS */
+
+/* Critical path optimization */
+@layer critical {
+  /* Prevent layout shifts */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* Optimize font loading */
+  @font-face {
+    font-family: 'System';
+    src: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-display: swap;
+  }
+
+  /* Critical content visibility */
+  .above-fold {
+    contain: layout style paint;
+  }
+
+  .below-fold {
+    content-visibility: auto;
+    contain-intrinsic-size: 200px;
+  }
+}
+
+/* GPU acceleration for interactive elements */
+@layer performance {
+  /* High-performance selectors */
+  .gpu-accelerated,
+  button,
+  [role="button"],
+  .card,
+  .dialog-content,
+  .loading-spinner {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    will-change: transform, opacity;
+  }
+
+  /* Smooth 60fps animations */
+  .animate-smooth {
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Hardware-accelerated transitions */
+  .transition-hardware {
+    transition-property: transform, opacity, filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.3s;
+  }
+
+  /* Optimize repaints */
+  .optimized-repaint {
+    contain: layout style paint;
+    isolation: isolate;
+  }
+
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Beautiful visual enhancements */
+@layer visual {
+  /* Enhanced shadows with better performance */
+  .shadow-elegant {
+    box-shadow: 
+      0 1px 2px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -2px rgba(0, 0, 0, 0.1),
+      0 4px 8px -4px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-dramatic {
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 8px 25px -8px rgba(0, 0, 0, 0.1),
+      0 12px 48px -12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Subtle gradients for depth */
+  .gradient-subtle {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.05) 100%);
+  }
+
+  .dark .gradient-subtle {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.05) 0%, 
+      rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  /* Beautiful focus states */
+  .focus-elegant:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+    transition: all 0.2s ease-in-out;
+  }
+}
+
+/* Optimized loading states */
+@layer loading {
+  /* Shimmer effect optimization */
+  .shimmer-effect {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .dark .shimmer-effect {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Skeleton loading optimization */
+  .skeleton-loading {
+    background: hsl(var(--muted));
+    border-radius: 0.375rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .skeleton-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--shimmer-effect);
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+}
+
+/* High-performance scroll */
+@layer scroll {
+  /* Smooth scrolling optimization */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Invisible scrollbars with better UX */
+  .invisible-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .invisible-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .invisible-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  .invisible-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+
+  /* Firefox */
+  .invisible-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  }
+}
