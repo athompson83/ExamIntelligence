@@ -55,10 +55,21 @@
       padding-top: 5rem !important; /* 80px to clear mobile header completely */
     }
     
+    /* Mobile dialog positioning adjustments */
+    [role="dialog"] {
+      margin-top: 3rem !important; /* Adjust dialog position on mobile */
+      max-height: calc(100vh - 6rem) !important; /* Account for header space */
+    }
+    
     /* Reset desktop padding */
     @media (min-width: 1024px) {
       main {
         padding-top: 1.5rem !important; /* Reset to desktop spacing */
+      }
+      
+      [role="dialog"] {
+        margin-top: 0 !important; /* Reset dialog positioning on desktop */
+        max-height: 90vh !important;
       }
     }
   }
