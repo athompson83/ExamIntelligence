@@ -50,15 +50,14 @@
       margin-top: 3.5rem !important; /* Account for mobile sidebar header with buffer */
     }
     
-    /* Content spacing to account for both mobile sidebar header AND TopBar */
+    /* Global mobile page spacing to prevent header overlap */
     .mobile-main-spacing {
-      padding-top: 12rem !important; /* 192px total: generous spacing to clear all headers */
+      padding-top: 8rem !important; /* 128px to clear mobile headers */
     }
     
-    /* Apply spacing to first child of main content on mobile */
-    .mobile-main-spacing > div:first-child {
-      margin-top: 0 !important;
-      padding-top: 0 !important;
+    /* Ensure all Layout-based pages have sufficient mobile spacing */
+    main > div:first-child {
+      padding-top: 5rem !important; /* 80px minimum for all pages */
     }
   }
   
