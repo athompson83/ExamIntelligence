@@ -195,10 +195,10 @@
       z-index: 9999 !important;
     }
     
-    /* TopBar should be below mobile sidebar but above content */
-    header {
+    /* TopBar positioning for mobile - below mobile sidebar header */
+    header[class*="sticky"] {
       z-index: 100 !important;
-      margin-top: 3.5rem !important; /* Account for mobile sidebar header with buffer */
+      top: 4rem !important; /* Position below mobile ProficiencyAI header */
     }
     
     /* Fix z-index hierarchy for mobile */
@@ -206,9 +206,9 @@
       z-index: 10000 !important; /* Mobile ProficiencyAI header - highest priority */
     }
     
-    /* Mobile main content clearance */
+    /* Mobile main content clearance - account for both mobile headers */
     main {
-      padding-top: 4rem !important; /* Clear mobile header */
+      padding-top: 2rem !important; /* Clear both mobile headers */
     }
     
     /* Mobile dialog positioning */
@@ -241,6 +241,11 @@
       
       [class*="lg:hidden"][class*="fixed"][class*="top-0"] {
         z-index: initial !important;
+      }
+      
+      /* Reset TopBar position for desktop */
+      header[class*="sticky"] {
+        top: 0 !important;
       }
     }
   }
