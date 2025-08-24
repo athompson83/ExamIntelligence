@@ -50,26 +50,46 @@
       margin-top: 3.5rem !important; /* Account for mobile sidebar header with buffer */
     }
     
-    /* Mobile header clearance - mobile header is ~60px high */
+    /* Fix z-index hierarchy for mobile */
+    .lg\\:hidden.fixed.top-0 {
+      z-index: 10000 !important; /* Mobile ProficiencyAI header - highest priority */
+    }
+    
+    /* Mobile main content clearance */
     main {
-      padding-top: 5rem !important; /* 80px to clear mobile header completely */
+      padding-top: 4rem !important; /* Clear mobile header */
     }
     
-    /* Mobile dialog positioning adjustments */
+    /* Mobile dialog positioning */
     [role="dialog"] {
-      margin-top: 3rem !important; /* Adjust dialog position on mobile */
-      max-height: calc(100vh - 6rem) !important; /* Account for header space */
+      z-index: 10001 !important; /* Above all headers */
+      margin-top: 2rem !important;
+      max-height: calc(100vh - 4rem) !important;
     }
     
-    /* Reset desktop padding */
+    /* Mobile overlay for sidebar */
+    .z-\\[9990\\] {
+      z-index: 9990 !important;
+    }
+    
+    /* Mobile sidebar drawer */
+    .z-\\[9991\\] {
+      z-index: 9991 !important;
+    }
+    
+    /* Reset desktop styles */
     @media (min-width: 1024px) {
       main {
-        padding-top: 1.5rem !important; /* Reset to desktop spacing */
+        padding-top: 1.5rem !important;
       }
       
       [role="dialog"] {
-        margin-top: 0 !important; /* Reset dialog positioning on desktop */
+        margin-top: 0 !important;
         max-height: 90vh !important;
+      }
+      
+      .lg\\:hidden.fixed.top-0 {
+        z-index: initial !important;
       }
     }
   }

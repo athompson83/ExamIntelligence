@@ -257,14 +257,14 @@ export default function Sidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-[9990]"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
       {/* Enhanced Desktop Sidebar & Mobile Drawer */}
       <nav className={`
         sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
-        w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 z-50
+        w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 z-[9991]
         lg:translate-x-0
         lg:block
         max-w-[85vw] transform transition-all duration-300
