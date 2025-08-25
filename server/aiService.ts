@@ -1500,6 +1500,100 @@ export async function generateQuestionsWithAI(params: AIQuestionGenerationParams
           ]
         })
       );
+    } else if (topic.toLowerCase().includes('hazmat') || topic.toLowerCase().includes('hazardous') || topic.toLowerCase().includes('chemical') || topic.toLowerCase().includes('environmental')) {
+      // HAZMAT/Chemical Emergency question generators with authentic content
+      questionGenerators.push(
+        () => ({
+          text: `A patient presents with respiratory distress after chemical exposure. What is the immediate priority?`,
+          options: [
+            { text: "Ensure scene safety and decontamination before assessment", correct: true },
+            { text: "Immediately start IV access and medications", correct: false },
+            { text: "Perform detailed neurological assessment first", correct: false },
+            { text: "Transport immediately without decontamination", correct: false }
+          ]
+        }),
+        () => ({
+          text: `A HAZMAT incident involves an unknown chemical leak. Your first action should be:`,
+          options: [
+            { text: "Establish hot, warm, and cold zones", correct: true },
+            { text: "Rush in to evacuate victims immediately", correct: false },
+            { text: "Start treating patients on scene", correct: false },
+            { text: "Wait for chemical identification before any action", correct: false }
+          ]
+        }),
+        () => ({
+          text: `Signs of organophosphate poisoning include:`,
+          options: [
+            { text: "SLUDGE syndrome (salivation, lacrimation, urination, defecation, GI upset, emesis)", correct: true },
+            { text: "Dry mouth, dilated pupils, flushed skin", correct: false },
+            { text: "Hypertension, bradycardia, warm skin", correct: false },
+            { text: "Normal vital signs with mild confusion", correct: false }
+          ]
+        }),
+        () => ({
+          text: `The antidote for organophosphate poisoning is:`,
+          options: [
+            { text: "Atropine and pralidoxime (2-PAM)", correct: true },
+            { text: "Naloxone and flumazenil", correct: false },
+            { text: "Activated charcoal only", correct: false },
+            { text: "Epinephrine and corticosteroids", correct: false }
+          ]
+        }),
+        () => ({
+          text: `During decontamination of a chemical exposure patient:`,
+          options: [
+            { text: "Remove all clothing and irrigate with copious water", correct: true },
+            { text: "Apply neutralizing agents to the affected area", correct: false },
+            { text: "Cover exposed areas with petroleum-based products", correct: false },
+            { text: "Use hot water to increase chemical absorption", correct: false }
+          ]
+        }),
+        () => ({
+          text: `A worker is exposed to chlorine gas. Expected symptoms include:`,
+          options: [
+            { text: "Coughing, dyspnea, chest tightness, pulmonary edema", correct: true },
+            { text: "Euphoria, altered mental status, seizures", correct: false },
+            { text: "Hypotension, bradycardia, hypothermia", correct: false },
+            { text: "Muscle weakness, paralysis, respiratory depression", correct: false }
+          ]
+        }),
+        () => ({
+          text: `Carbon monoxide poisoning presents with:`,
+          options: [
+            { text: "Headache, nausea, cherry-red skin color, altered mental status", correct: true },
+            { text: "Cyanosis, bradycardia, hypertension", correct: false },
+            { text: "Fever, tachycardia, diaphoresis", correct: false },
+            { text: "Muscle cramps, tetany, seizures", correct: false }
+          ]
+        }),
+        () => ({
+          text: `When managing a cyanide poisoning victim:`,
+          options: [
+            { text: "Administer high-flow oxygen and consider hydroxocobalamin", correct: true },
+            { text: "Give activated charcoal and induce vomiting", correct: false },
+            { text: "Start IV fluids and monitor blood sugar", correct: false },
+            { text: "Apply cool compresses and elevate extremities", correct: false }
+          ]
+        }),
+        () => ({
+          text: `Proper PPE for HAZMAT response includes:`,
+          options: [
+            { text: "Level A: fully encapsulating chemical protective suit with SCBA", correct: true },
+            { text: "Standard EMS uniform with latex gloves", correct: false },
+            { text: "N95 mask with eye protection only", correct: false },
+            { text: "Surgical gown with face shield", correct: false }
+          ]
+        }),
+        () => ({
+          text: `A patient exposed to hydrofluoric acid requires:`,
+          options: [
+            { text: "Immediate calcium gluconate gel application and systemic calcium", correct: true },
+            { text: "Sodium bicarbonate irrigation and pain medication", correct: false },
+            { text: "Petroleum jelly application and bandaging", correct: false },
+            { text: "Cold compresses and elevation of affected area", correct: false }
+          ]
+        })
+      );
     } else if (topic.toLowerCase().includes('trauma') || topic.toLowerCase().includes('injury') || topic.toLowerCase().includes('accident')) {
       // Trauma/Emergency question generators with diverse content
       questionGenerators.push(

@@ -92,7 +92,7 @@ class MultiProviderAI {
               
             case 'google':
             case 'gemini':
-              this.providers.set('gemini', new GoogleGenAI(apiKey));
+              this.providers.set('gemini', new GoogleGenAI({ apiKey }));
               break;
               
             case 'anthropic':
@@ -231,7 +231,7 @@ class MultiProviderAI {
           break;
           
         case 'gemini':
-          this.providers.set('gemini', new GoogleGenAI(provider.key));
+          this.providers.set('gemini', new GoogleGenAI({ apiKey: provider.key }));
           break;
           
         case 'anthropic':
@@ -275,7 +275,7 @@ class MultiProviderAI {
             
           case 'google':
             if (provider.apiKey) {
-              this.providers.set('gemini', new GoogleGenAI(provider.apiKey));
+              this.providers.set('gemini', new GoogleGenAI({ apiKey: provider.apiKey }));
             }
             break;
             
