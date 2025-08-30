@@ -87,7 +87,7 @@ export function QuickStats() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.98 }}
         >
-          <Card className="p-6 cursor-pointer group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-card to-card/95">
+          <Card className="card-modern cursor-pointer group border-0 bg-gradient-to-br from-card to-card/95">
             <CardContent className="p-0">
               <div className="flex items-center justify-between">
                 <div className="text-right">

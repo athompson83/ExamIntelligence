@@ -4,33 +4,38 @@
 
 /* Enhanced CSS Variables for Beautiful Design System */
 :root {
-  /* Primary brand colors with better contrast */
+  /* Enhanced color system with better contrast */
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 4.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
+  --primary: 207 90% 54%;
   --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222.2 84% 4.9%;
+  --secondary: 142 70% 45%;
+  --secondary-foreground: 210 40% 98%;
   --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222.2 84% 4.9%;
+  --muted-foreground: 215.4 16.3% 44.9%;
+  --accent: 36 100% 50%;
+  --accent-foreground: 210 40% 98%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.75rem;
+  --ring: 207 90% 54%;
+  --radius: 0.5rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
   
-  /* Enhanced shadows for depth */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  /* Modern shadow system */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow-md: 0 2px 8px -2px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 4px 16px -4px rgb(0 0 0 / 0.12);
+  --shadow-xl: 0 8px 32px -8px rgb(0 0 0 / 0.16);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
   
   /* Smooth transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -143,17 +148,19 @@
     transform: translateY(0) scale(0.98);
   }
 
-  /* Beautiful glassmorphism effects */
+  /* Modern glassmorphism effects */
   .glass-effect {
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-card);
   }
 
   .dark .glass-effect {
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
   }
 
   /* Scroll improvements */
@@ -248,108 +255,121 @@
     }
   }
   
-  /* Default desktop styling */
-  button, [role="button"], input, select, textarea {
-    min-height: 36px; /* Standard desktop size */
-    min-width: auto;
-    border-radius: 4px;
+  /* Modern form elements */
+  button, [role="button"] {
+    min-height: 2.5rem;
+    border-radius: var(--radius-md);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   input, select, textarea {
-    font-size: 14px;
-    padding: 8px 12px;
-    line-height: 1.4;
-    border-radius: 4px;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    line-height: 1.5;
+    border-radius: var(--radius-md);
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    transition: all 0.2s ease;
   }
   
-  /* Mobile overrides */
+  input:focus, select:focus, textarea:focus {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-color: hsl(var(--ring));
+  }
+  
+  /* Mobile optimizations */
   @media (max-width: 767px) {
-    button, [role="button"], input, select, textarea {
-      min-height: 44px; /* Touch-friendly on mobile */
-      min-width: 44px;
-      border-radius: 6px;
+    button, [role="button"] {
+      min-height: 3rem;
+      border-radius: var(--radius-lg);
     }
     
     input, select, textarea {
-      font-size: 16px; /* Prevent iOS zoom */
-      padding: 12px 56px 12px 16px; /* Extra right padding on mobile */
-      line-height: 1.4;
-      border-radius: 6px;
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-lg);
+      min-height: 3rem;
     }
     
-    /* Search input specific mobile padding */
+    /* Search input adjustments */
     input[placeholder*="Search"] {
-      padding-left: 56px !important; /* Extra left padding for search icon */
-      padding-right: 16px !important;
+      padding-left: 3rem !important;
     }
   }
   
-  /* Default desktop typography */
+  /* Consistent Typography Hierarchy */
   h1 {
-    font-size: 2.5rem; /* Standard desktop size */
+    font-size: 2.25rem; /* Standardized */
     line-height: 1.2;
     font-weight: 700;
     letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
   }
   
   /* Mobile typography overrides */
   @media (max-width: 767px) {
     h1 {
-      font-size: 2rem; /* Smaller on mobile */
-      line-height: 1.2;
+      font-size: 1.875rem; /* Consistent scale */
+      line-height: 1.25;
       font-weight: 700;
       letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
     }
   }
   
   h2 {
-    font-size: 1.875rem;
-    line-height: 1.25;
+    font-size: 1.75rem;
+    line-height: 1.3;
     font-weight: 600;
     letter-spacing: -0.02em;
+    margin-bottom: 0.375rem;
   }
   
   h3 {
-    font-size: 1.5rem;
-    line-height: 1.3;
+    font-size: 1.375rem;
+    line-height: 1.35;
     font-weight: 600;
+    margin-bottom: 0.25rem;
   }
   
   h4 {
-    font-size: 1.25rem;
-    line-height: 1.35;
+    font-size: 1.125rem;
+    line-height: 1.4;
     font-weight: 500;
+    margin-bottom: 0.25rem;
   }
   
   p, span, div {
-    font-size: 1rem; /* Base size, will scale with html font-size */
-    line-height: 1.6; /* Better readability */
+    font-size: 1rem;
+    line-height: 1.6;
+    color: hsl(var(--foreground));
   }
   
   /* Enhanced desktop typography scaling */
   @media (min-width: 1024px) {
     h1 {
-      font-size: 2.75rem; /* Even larger on desktop */
-      line-height: 1.15;
-    }
-    
-    h2 {
-      font-size: 2.25rem;
+      font-size: 2.5rem;
       line-height: 1.2;
     }
     
-    h3 {
-      font-size: 1.875rem;
+    h2 {
+      font-size: 2rem;
       line-height: 1.25;
     }
     
-    h4 {
-      font-size: 1.5rem;
+    h3 {
+      font-size: 1.625rem;
       line-height: 1.3;
     }
     
+    h4 {
+      font-size: 1.25rem;
+      line-height: 1.35;
+    }
+    
     p, span, div {
-      line-height: 1.55;
+      line-height: 1.6;
     }
   }
 }
@@ -460,30 +480,42 @@
     @apply p-6 space-y-6; /* More generous spacing */
   }
   
-  /* Default desktop button styling */
-  .btn-mobile {
-    font-size: 14px !important; /* Standard desktop font size */
+  /* Modern button system */
+  .btn-modern {
+    font-size: 0.875rem;
     font-weight: 500;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    padding: 8px 16px !important; /* Standard desktop padding */
-    min-height: 36px !important; /* Standard desktop height */
+    border-radius: var(--radius-md);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0.5rem 1rem;
+    min-height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
   
-  /* Mobile button overrides */
+  .btn-modern:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .btn-modern:active {
+    transform: translateY(0) scale(0.98);
+  }
+  
+  /* Mobile button enhancements */
   @media (max-width: 767px) {
-    .btn-mobile {
-      @apply text-lg min-h-[56px]; /* Enhanced touch targets */
-      font-size: 18px !important; /* Prevent zoom on iOS */
-      font-weight: 500;
-      border-radius: 12px;
-      transition: all 0.2s ease;
-      padding: 16px 24px !important; /* Explicit padding for left and right sides */
+    .btn-modern {
+      font-size: 1rem;
+      min-height: 3rem;
+      border-radius: var(--radius-lg);
+      padding: 0.75rem 1.5rem;
     }
-    
-    .btn-mobile:active {
-      transform: scale(0.98);
-    }
+  }
+  
+  /* Legacy support */
+  .btn-mobile {
+    @apply btn-modern;
   }
     
   /* Default desktop typography */
@@ -536,13 +568,27 @@
     }
   }
     
-    /* Enhanced cards for mobile with better scaling */
-    .card-mobile {
-      @apply min-h-[140px];
-      margin: 0 6px;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    /* Modern card system */
+    .card-modern {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 1.5rem;
+    }
+    
+    .card-modern:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    
+    @media (max-width: 767px) {
+      .card-modern {
+        padding: 1rem;
+        border-radius: var(--radius-lg);
+        min-height: 140px;
+      }
     }
     
     /* Enhanced text utilities for mobile */

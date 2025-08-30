@@ -77,7 +77,7 @@ export default function TopBar() {
         {/* Enhanced Notifications - Mobile Responsive */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="relative btn-mobile min-h-[52px] min-w-[52px] md:min-h-[44px] md:min-w-[44px]" data-tour="notifications">
+            <Button variant="ghost" size="sm" className="relative btn-modern" data-tour="notifications">
               <Bell className="h-6 w-6 md:h-5 md:w-5" />
               {unreadCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-6 w-6 md:h-5 md:w-5 rounded-full p-0 flex items-center justify-center text-sm md:text-xs font-bold">
@@ -114,7 +114,7 @@ export default function TopBar() {
           currentUser={currentUser} 
           onUserSwitch={switchUser}
           trigger={
-            <Button variant="outline" size="sm" className="text-base md:text-xs btn-mobile px-3 py-2">
+            <Button variant="outline" size="sm" className="btn-modern">
               <Users className="h-5 w-5 md:h-4 md:w-4 mr-2 md:mr-1" />
               <span className="hidden sm:inline">{isSwitched ? 'Test User' : 'Switch User'}</span>
               <span className="sm:hidden">{isSwitched ? 'Test' : 'Switch'}</span>
@@ -125,7 +125,7 @@ export default function TopBar() {
         {/* Enhanced User Profile - Mobile Responsive */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center space-x-2 md:space-x-3 p-3 md:p-2 btn-mobile">
+            <Button variant="ghost" className="flex items-center space-x-2 md:space-x-3 btn-modern">
               <div className="text-right hidden md:block">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {(currentUser as any)?.firstName} {(currentUser as any)?.lastName}

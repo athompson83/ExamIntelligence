@@ -244,7 +244,7 @@ export default function Sidebar() {
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg text-white hover:bg-white/20 transition-all duration-200 btn-mobile min-h-[36px] min-w-[36px]"
+            className="p-2 rounded-lg text-white hover:bg-white/20 transition-all duration-200 btn-modern"
           >
             <div className="w-5 h-5 flex flex-col justify-center space-y-1">
               <div className={`w-5 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
@@ -348,7 +348,7 @@ export default function Sidebar() {
                         key={item.href}
                         href={item.href}
                         ref={active ? activeItemRef : undefined}
-                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm lg:text-sm" : "text-base lg:text-base"} btn-mobile min-h-[44px] lg:min-h-[44px]`}
+                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm" : "text-base"} btn-modern`}
                         data-tour={item.tourId}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
