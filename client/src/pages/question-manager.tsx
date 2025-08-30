@@ -194,6 +194,9 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
   
+  // Question expansion state for mobile
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
+  
   // If no testbankId provided, show testbank selection first
   const effectiveTestbankId = testbankId || selectedTestbankId;
 
@@ -2057,57 +2060,61 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          {/* Mobile-First Filters */}
+          <div className="space-y-3 mb-6">
+            {/* Search bar - full width on mobile */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
               <Input
                 placeholder="Search questions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 w-full"
               />
             </div>
             
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                <SelectItem value="multiple_response">Multiple Response</SelectItem>
-                <SelectItem value="true_false">True/False</SelectItem>
-                <SelectItem value="essay">Essay</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Difficulty" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="easy">Easy</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="hard">Hard</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select value={filterBloomsLevel} onValueChange={setFilterBloomsLevel}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Bloom's" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
-                <SelectItem value="remember">Remember</SelectItem>
-                <SelectItem value="understand">Understand</SelectItem>
-                <SelectItem value="apply">Apply</SelectItem>
-                <SelectItem value="analyze">Analyze</SelectItem>
-                <SelectItem value="evaluate">Evaluate</SelectItem>
-                <SelectItem value="create">Create</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Filter controls - stack on mobile, flex on larger screens */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                  <SelectItem value="multiple_response">Multiple Response</SelectItem>
+                  <SelectItem value="true_false">True/False</SelectItem>
+                  <SelectItem value="essay">Essay</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
+                <SelectTrigger className="w-full sm:w-32">
+                  <SelectValue placeholder="Difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={filterBloomsLevel} onValueChange={setFilterBloomsLevel}>
+                <SelectTrigger className="w-full sm:w-32">
+                  <SelectValue placeholder="Bloom's" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="remember">Remember</SelectItem>
+                  <SelectItem value="understand">Understand</SelectItem>
+                  <SelectItem value="apply">Apply</SelectItem>
+                  <SelectItem value="analyze">Analyze</SelectItem>
+                  <SelectItem value="evaluate">Evaluate</SelectItem>
+                  <SelectItem value="create">Create</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Questions List */}
@@ -2139,174 +2146,225 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                 </Button>
               </div>
             ) : filteredQuestions && filteredQuestions.length > 0 ? (
-              filteredQuestions.map((question: Question) => (
-                <Card key={question.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      {/* Selection checkbox */}
-                      {isSelectMode && (
-                        <div className="flex items-center mr-4 pt-1">
-                          <Checkbox
-                            checked={selectedQuestions.has(question.id)}
-                            onCheckedChange={() => toggleSelectQuestion(question.id)}
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <CardTitle className="text-base mb-2">{question.questionText || 'No question text'}</CardTitle>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline">{question.questionType ? question.questionType.replace('_', ' ') : 'Unknown'}</Badge>
-                          <Badge variant="secondary">{question.bloomsLevel || 'N/A'}</Badge>
-                          <Badge 
-                            variant={
-                              (question.difficultyScore || 0) <= 3 ? "default" :
-                              (question.difficultyScore || 0) <= 7 ? "secondary" : "destructive"
-                            }
+              filteredQuestions.map((question: Question) => {
+                const isExpanded = expandedQuestions.has(question.id);
+                const toggleExpanded = () => {
+                  const newExpanded = new Set(expandedQuestions);
+                  if (isExpanded) {
+                    newExpanded.delete(question.id);
+                  } else {
+                    newExpanded.add(question.id);
+                  }
+                  setExpandedQuestions(newExpanded);
+                };
+                
+                return (
+                  <Card key={question.id} className="hover:shadow-md transition-shadow overflow-hidden">
+                    <CardHeader className="pb-3">
+                      {/* Mobile-First Layout */}
+                      <div className="space-y-3">
+                        {/* Top Row: Checkbox + Question Text + Toggle */}
+                        <div className="flex items-start gap-3">
+                          {isSelectMode && (
+                            <div className="flex items-center pt-1 flex-shrink-0">
+                              <Checkbox
+                                checked={selectedQuestions.has(question.id)}
+                                onCheckedChange={() => toggleSelectQuestion(question.id)}
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-sm sm:text-base leading-tight line-clamp-2 pr-2">
+                              {question.questionText || 'No question text'}
+                            </CardTitle>
+                          </div>
+                          {/* Mobile Toggle Button */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={toggleExpanded}
+                            className="flex-shrink-0 h-8 w-8 p-0 sm:hidden"
+                            title={isExpanded ? "Collapse" : "Expand"}
                           >
-                            Difficulty: {question.difficultyScore || 0}/10
+                            <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                          </Button>
+                        </div>
+                        
+                        {/* Basic badges - always visible but responsive */}
+                        <div className="flex flex-wrap items-center gap-1 text-xs">
+                          <Badge variant="outline" className="text-xs">
+                            {question.questionType ? question.questionType.replace('_', ' ') : 'Unknown'}
                           </Badge>
-                          <Badge variant="outline">{question.points || 0} pts</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {question.points || 0} pts
+                          </Badge>
                           {question.aiValidationStatus && (
                             <Badge 
                               variant={
                                 question.aiValidationStatus === "approved" ? "default" :
                                 question.aiValidationStatus === "rejected" ? "destructive" : "secondary"
                               }
+                              className="text-xs"
                             >
                               AI: {question.aiValidationStatus}
                             </Badge>
                           )}
                         </div>
-                        {question.tags && question.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {question.tags.map((tag, index) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                <Tag className="h-3 w-3 mr-1" />
-                                {tag}
-                              </Badge>
-                            ))}
+                        
+                        {/* Expandable content on mobile, always visible on desktop */}
+                        <div className={`${isExpanded ? 'block' : 'hidden'} sm:block space-y-2`}>
+                          {/* Additional badges */}
+                          <div className="flex flex-wrap items-center gap-1">
+                            <Badge variant="secondary" className="text-xs">{question.bloomsLevel || 'N/A'}</Badge>
+                            <Badge 
+                              variant={
+                                (question.difficultyScore || 0) <= 3 ? "default" :
+                                (question.difficultyScore || 0) <= 7 ? "secondary" : "destructive"
+                              }
+                              className="text-xs"
+                            >
+                              Difficulty: {question.difficultyScore || 0}/10
+                            </Badge>
                           </div>
-                        )}
+                          
+                          {/* Tags */}
+                          {question.tags && question.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {question.tags.map((tag, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  <Tag className="h-2 w-2 mr-1" />
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       
-                      {/* Mobile-responsive action buttons */}
-                      <div className="flex items-center">
+                      {/* Action buttons row */}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                         {/* Priority actions - always visible */}
-                        {question.aiValidationStatus === 'pending' && (
-                          <div className="flex items-center space-x-1 mr-2">
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleAcceptQuestion(question.id)}
-                              className="bg-green-600 hover:bg-green-700 h-8 w-8 p-0"
-                              title="Accept"
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleRejectQuestion(question.id)}
-                              className="h-8 w-8 p-0"
-                              title="Reject"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                        
-                        {/* Essential actions - visible on mobile */}
                         <div className="flex items-center space-x-1">
+                          {question.aiValidationStatus === 'pending' && (
+                            <>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleAcceptQuestion(question.id)}
+                                className="bg-green-600 hover:bg-green-700 h-7 w-7 p-0"
+                                title="Accept"
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleRejectQuestion(question.id)}
+                                className="h-7 w-7 p-0"
+                                title="Reject"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                          
+                          {/* Essential actions */}
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditQuestion(question)}
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7 p-0"
                             title="Edit"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3 w-3" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handlePreviewQuestion(question)}
                             title="Preview"
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7 p-0"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3 w-3" />
                           </Button>
-                          
-                          {/* Secondary actions - hidden on mobile portrait, visible on landscape and desktop */}
-                          <div className="hidden sm:flex items-center space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRefreshQuestion(question)}
-                              title="Generate new version"
-                              className="h-8 w-8 p-0"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleCreateSimilar(question)}
-                              title="Create similar"
-                              className="h-8 w-8 p-0"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleChangeOptions(question)}
-                              title="Change options"
-                              className="h-8 w-8 p-0"
-                            >
-                              <Shuffle className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          
+                        </div>
+                        
+                        {/* Secondary actions - visible on larger screens */}
+                        <div className="hidden sm:flex items-center space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              if (confirm(`Are you sure you want to delete this question? This action cannot be undone.`)) {
-                                deleteQuestionMutation.mutate(question.id);
-                              }
-                            }}
-                            disabled={deleteQuestionMutation.isPending}
-                            title="Delete"
-                            className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                            onClick={() => handleRefreshQuestion(question)}
+                            title="Generate new version"
+                            className="h-7 w-7 p-0"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <RefreshCw className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCreateSimilar(question)}
+                            title="Create similar"
+                            className="h-7 w-7 p-0"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleChangeOptions(question)}
+                            title="Change options"
+                            className="h-7 w-7 p-0"
+                          >
+                            <Shuffle className="h-3 w-3" />
                           </Button>
                         </div>
+                        
+                        {/* Delete button - always visible */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete this question? This action cannot be undone.`)) {
+                              deleteQuestionMutation.mutate(question.id);
+                            }
+                          }}
+                          disabled={deleteQuestionMutation.isPending}
+                          title="Delete"
+                          className="text-red-500 hover:text-red-700 h-7 w-7 p-0"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
-                    </div>
-                  </CardHeader>
-                  
-                  {question.answerOptions && question.answerOptions.length > 0 && (
-                    <CardContent>
-                      <div className="space-y-1">
-                        <Label className="text-sm font-medium">Answer Options:</Label>
-                        {question.answerOptions.map((option, index) => (
-                          <div key={option.id} className="flex items-center space-x-2">
-                            {option.isCorrect ? (
-                              <Check className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <div className="h-4 w-4" />
-                            )}
-                            <span className={`text-sm ${option.isCorrect ? 'font-medium text-green-700' : 'text-gray-600'}`}>
-                              {String.fromCharCode(65 + index)}. {option.answerText}
-                            </span>
+                    </CardHeader>
+                    
+                    {/* Answer options - collapsible on mobile */}
+                    {question.answerOptions && question.answerOptions.length > 0 && (
+                      <CardContent className={`${isExpanded ? 'block' : 'hidden'} sm:block pt-0`}>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Answer Options</Label>
+                          <div className="space-y-1">
+                            {question.answerOptions.map((option, index) => (
+                              <div key={option.id} className="flex items-start space-x-2 text-sm">
+                                <div className="flex-shrink-0 mt-0.5">
+                                  {option.isCorrect ? (
+                                    <Check className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <div className="h-3 w-3 rounded-full border border-gray-300" />
+                                  )}
+                                </div>
+                                <span className={`${option.isCorrect ? 'font-medium text-green-700' : 'text-gray-600'} break-words`}>
+                                  {String.fromCharCode(65 + index)}. {option.answerText}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              ))
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })
             ) : (
               <div className="text-center py-12">
                 <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
