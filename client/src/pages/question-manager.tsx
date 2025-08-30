@@ -2189,14 +2189,17 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                         )}
                       </div>
                       
-                      <div className="flex items-center space-x-2">
+                      {/* Mobile-responsive action buttons */}
+                      <div className="flex items-center">
+                        {/* Priority actions - always visible */}
                         {question.aiValidationStatus === 'pending' && (
-                          <>
+                          <div className="flex items-center space-x-1 mr-2">
                             <Button
                               variant="default"
                               size="sm"
                               onClick={() => handleAcceptQuestion(question.id)}
-                              className="bg-green-600 hover:bg-green-700"
+                              className="bg-green-600 hover:bg-green-700 h-8 w-8 p-0"
+                              title="Accept"
                             >
                               <Check className="h-4 w-4" />
                             </Button>
@@ -2204,64 +2207,81 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                               variant="destructive"
                               size="sm"
                               onClick={() => handleRejectQuestion(question.id)}
+                              className="h-8 w-8 p-0"
+                              title="Reject"
                             >
                               <X className="h-4 w-4" />
                             </Button>
-                          </>
+                          </div>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRefreshQuestion(question)}
-                          title="Generate new version"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCreateSimilar(question)}
-                          title="Create similar question"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleChangeOptions(question)}
-                          title="Change answer options"
-                        >
-                          <Shuffle className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handlePreviewQuestion(question)}
-                          title="Preview question"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditQuestion(question)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to delete this question? This action cannot be undone.`)) {
-                              deleteQuestionMutation.mutate(question.id);
-                            }
-                          }}
-                          disabled={deleteQuestionMutation.isPending}
-                          title="Delete question"
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        
+                        {/* Essential actions - visible on mobile */}
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditQuestion(question)}
+                            className="h-8 w-8 p-0"
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePreviewQuestion(question)}
+                            title="Preview"
+                            className="h-8 w-8 p-0"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          
+                          {/* Secondary actions - hidden on mobile portrait, visible on landscape and desktop */}
+                          <div className="hidden sm:flex items-center space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRefreshQuestion(question)}
+                              title="Generate new version"
+                              className="h-8 w-8 p-0"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCreateSimilar(question)}
+                              title="Create similar"
+                              className="h-8 w-8 p-0"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleChangeOptions(question)}
+                              title="Change options"
+                              className="h-8 w-8 p-0"
+                            >
+                              <Shuffle className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete this question? This action cannot be undone.`)) {
+                                deleteQuestionMutation.mutate(question.id);
+                              }
+                            }}
+                            disabled={deleteQuestionMutation.isPending}
+                            title="Delete"
+                            className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
