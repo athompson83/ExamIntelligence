@@ -735,7 +735,7 @@ export default function Assignments() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 overflow-hidden">
               <div>
                 <Label htmlFor="title">Assignment Title *</Label>
                 <Input
@@ -796,7 +796,7 @@ export default function Assignments() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 overflow-hidden">
               <WorkingDatePicker
                 label="Available From"
                 value={formData.availableFrom}
@@ -831,7 +831,7 @@ export default function Assignments() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 overflow-hidden">
               <div>
                 <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
                 <Input
@@ -875,7 +875,7 @@ export default function Assignments() {
               {/* Late Submission Settings */}
               {formData.allowLateSubmission && (
                 <div className="ml-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
                     <div>
                       <Label htmlFor="percentLostPerDay">Grade Decrease per Day (%)</Label>
                       <Input
@@ -915,7 +915,7 @@ export default function Assignments() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -996,7 +996,7 @@ export default function Assignments() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -1148,7 +1148,7 @@ export default function Assignments() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
                   <div>
                     <Label htmlFor="catTerminationCriteria">Termination Criteria</Label>
                     <Select
@@ -1193,7 +1193,7 @@ export default function Assignments() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 overflow-hidden">
               <div>
                 <Label>Students</Label>
                 <MultiSelect

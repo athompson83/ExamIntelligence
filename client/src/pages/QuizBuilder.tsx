@@ -198,14 +198,14 @@ export default function QuizBuilder() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quiz Builder</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white break-words">Quiz Builder</h1>
+            <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1">
               Create comprehensive assessments with advanced features
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Badge variant="outline" className="adaptive-badge">
               <Puzzle className="h-3 w-3 mr-1" />
               Advanced Builder
@@ -216,8 +216,8 @@ export default function QuizBuilder() {
         {/* Progress Indicator */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <Button
                   variant={currentStep === "basic" ? "default" : "outline"}
                   size="sm"
@@ -291,7 +291,7 @@ export default function QuizBuilder() {
                       )}
                     />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
                       <FormField
                         control={form.control}
                         name="timeLimit"

@@ -149,17 +149,17 @@ export default function Settings() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white break-words">Settings</h1>
+            <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1">
               Manage your account preferences and application settings
             </p>
           </div>
         </div>
 
         {/* Settings Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 overflow-hidden">
           {/* Settings Navigation */}
           <Card className="lg:col-span-1">
             <CardHeader>
@@ -252,7 +252,7 @@ export default function Settings() {
                 <CardContent>
                   <Form {...profileForm}>
                     <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
                         <FormField
                           control={profileForm.control}
                           name="firstName"
@@ -308,7 +308,7 @@ export default function Settings() {
                         )}
                       />
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
                         <FormField
                           control={profileForm.control}
                           name="timezone"
@@ -507,7 +507,7 @@ export default function Settings() {
 
                       <Separator />
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
                         <FormField
                           control={securityForm.control}
                           name="sessionTimeout"
@@ -739,7 +739,7 @@ export default function Settings() {
                 <CardContent>
                   <Form {...systemForm}>
                     <form onSubmit={systemForm.handleSubmit(onSystemSubmit)} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
                         <FormField
                           control={systemForm.control}
                           name="defaultTimeLimit"

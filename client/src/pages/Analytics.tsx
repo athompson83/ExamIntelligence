@@ -132,12 +132,12 @@ export default function Analytics() {
     <Layout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-300">Comprehensive assessment analytics and insights</p>
+        <div className="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-center lg:space-y-0">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white break-words">Analytics Dashboard</h1>
+            <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300">Comprehensive assessment analytics and insights</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 lg:gap-3">
             <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
               <SelectTrigger className="w-32">
                 <SelectValue />
@@ -157,7 +157,7 @@ export default function Analytics() {
         </div>
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 overflow-hidden">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
@@ -232,17 +232,17 @@ export default function Analytics() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="questions">Question Analysis</TabsTrigger>
-            <TabsTrigger value="students">Student Insights</TabsTrigger>
-            <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
+            <TabsTrigger value="questions" className="text-xs sm:text-sm">Questions</TabsTrigger>
+            <TabsTrigger value="students" className="text-xs sm:text-sm">Students</TabsTrigger>
+            <TabsTrigger value="trends" className="text-xs sm:text-sm">Trends</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="overview" className="space-y-4 lg:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 overflow-hidden">
               <Card>
                 <CardHeader>
                   <CardTitle>Performance Distribution</CardTitle>
@@ -369,8 +369,8 @@ export default function Analytics() {
           </TabsContent>
 
           {/* Student Insights Tab */}
-          <TabsContent value="students" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="students" className="space-y-4 lg:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 overflow-hidden">
               <Card>
                 <CardHeader>
                   <CardTitle>Top Performers</CardTitle>

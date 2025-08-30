@@ -374,7 +374,7 @@ export default function LiveExams() {
       e.preventDefault();
       handleCreateLiveExam(new FormData(e.target as HTMLFormElement));
     }} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
         <div>
           <Label htmlFor="title">Exam Title</Label>
           <Input
@@ -419,7 +419,7 @@ export default function LiveExams() {
           <Label className="text-base font-medium">Select Participants</Label>
           <p className="text-sm text-muted-foreground mb-3">Choose students or sections for this live exam</p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
             <div>
               <Label className="text-sm font-medium">Individual Students</Label>
               <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
@@ -474,7 +474,7 @@ export default function LiveExams() {
       {/* Proctoring Settings */}
       <div className="space-y-4">
         <Label className="text-base font-medium">Proctoring Settings</Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <Checkbox id="requireCamera" name="requireCamera" defaultChecked />
