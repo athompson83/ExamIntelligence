@@ -43,64 +43,64 @@ export default function Dashboard() {
           <QuickStats />
           
           {/* Enhanced Main Dashboard - Mobile Responsive */}
-          <div className="mobile-section space-y-8">
+          <div className="space-y-6 md:space-y-8 overflow-hidden">
             {/* Mobile: Stack vertically, Desktop: Side by side */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-              <div className="lg:col-span-2 order-2 lg:order-1">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+              <div className="lg:col-span-2 order-2 lg:order-1 min-w-0">
                 <LiveExamMonitoring />
               </div>
-              <div className="order-1 lg:order-2">
+              <div className="order-1 lg:order-2 min-w-0">
                 <RecentActivity />
               </div>
             </div>
 
             <AnalyticsOverview />
 
-            {/* Enhanced Quick Actions - Mobile Grid */}
-            <div className="space-y-6">
-              <h3 className="text-2xl md:text-xl font-bold text-gray-800 dark:text-gray-200">Quick Actions</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Enhanced Quick Actions - Apple UI Guidelines */}
+            <div className="space-y-4 md:space-y-6">
+              <h3 className="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-200">Quick Actions</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
                 <Button 
-                  className="w-full bg-primary text-white h-auto hover:bg-primary/90 btn-modern min-h-[160px] px-6 py-8"
+                  className="w-full bg-primary text-white h-auto hover:bg-primary/90 btn-modern min-h-[140px] md:min-h-[160px] px-4 py-6 md:px-6 md:py-8"
                   onClick={() => setLocation('/item-banks')}
                 >
-                  <div className="flex flex-col items-center space-y-3 md:space-y-3">
-                    <Plus className="h-8 w-8 md:h-8 md:w-8" />
-                    <span className="font-semibold text-lg md:text-base text-center">Create Item Bank</span>
-                    <span className="text-xs md:text-sm opacity-90 text-center">Build question collections</span>
+                  <div className="flex flex-col items-center space-y-2 md:space-y-3 text-center">
+                    <Plus className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0" />
+                    <span className="font-medium text-base md:text-lg leading-tight">Create Item Bank</span>
+                    <span className="text-xs md:text-sm opacity-90 leading-tight">Build question collections</span>
                   </div>
                 </Button>
                 
                 <Button 
-                  className="w-full bg-blue-600 text-white h-auto hover:bg-blue-700 btn-modern min-h-[160px] px-6 py-8"
+                  className="w-full bg-blue-600 text-white h-auto hover:bg-blue-700 btn-modern min-h-[140px] md:min-h-[160px] px-4 py-6 md:px-6 md:py-8"
                   onClick={() => setLocation('/quiz-builder')}
                 >
-                  <div className="flex flex-col items-center space-y-3 md:space-y-3">
-                    <Puzzle className="h-8 w-8 md:h-8 md:w-8" />
-                    <span className="font-semibold text-lg md:text-base text-center">Build Quiz</span>
-                    <span className="text-sm md:text-sm opacity-90 text-center">Create assessments</span>
+                  <div className="flex flex-col items-center space-y-2 md:space-y-3 text-center">
+                    <Puzzle className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0" />
+                    <span className="font-medium text-base md:text-lg leading-tight">Build Quiz</span>
+                    <span className="text-xs md:text-sm opacity-90 leading-tight">Create assessments</span>
                   </div>
                 </Button>
                 
                 <Button 
-                  className="w-full bg-orange-500 text-white h-auto hover:bg-orange-600 btn-modern min-h-[160px] px-6 py-8"
+                  className="w-full bg-orange-500 text-white h-auto hover:bg-orange-600 btn-modern min-h-[140px] md:min-h-[160px] px-4 py-6 md:px-6 md:py-8"
                   onClick={() => setLocation('/ai-resources')}
                 >
-                  <div className="flex flex-col items-center space-y-3 md:space-y-3">
-                    <Bot className="h-8 w-8 md:h-8 md:w-8" />
-                    <span className="font-semibold text-lg md:text-base text-center">AI Generate</span>
-                    <span className="text-sm md:text-sm opacity-90 text-center">Smart content creation</span>
+                  <div className="flex flex-col items-center space-y-2 md:space-y-3 text-center">
+                    <Bot className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0" />
+                    <span className="font-medium text-base md:text-lg leading-tight">AI Generate</span>
+                    <span className="text-xs md:text-sm opacity-90 leading-tight">Smart content creation</span>
                   </div>
                 </Button>
                 
                 <Button 
-                  className="w-full bg-purple-600 text-white h-auto hover:bg-purple-700 btn-modern min-h-[160px] px-6 py-8"
+                  className="w-full bg-purple-600 text-white h-auto hover:bg-purple-700 btn-modern min-h-[140px] md:min-h-[160px] px-4 py-6 md:px-6 md:py-8"
                   onClick={() => setLocation('/live-exams')}
                 >
-                  <div className="flex flex-col items-center space-y-3 md:space-y-3">
-                    <Eye className="h-8 w-8 md:h-8 md:w-8" />
-                    <span className="font-semibold text-lg md:text-base text-center">Monitor Exams</span>
-                    <span className="text-sm md:text-sm opacity-90 text-center">Live proctoring</span>
+                  <div className="flex flex-col items-center space-y-2 md:space-y-3 text-center">
+                    <Eye className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0" />
+                    <span className="font-medium text-base md:text-lg leading-tight">Monitor Exams</span>
+                    <span className="text-xs md:text-sm opacity-90 leading-tight">Live proctoring</span>
                   </div>
                 </Button>
               </div>
