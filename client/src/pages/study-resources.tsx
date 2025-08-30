@@ -192,28 +192,54 @@ export default function StudyResources() {
 
   const handleExportResource = async (resource: StudyResource, format: 'pdf' | 'txt' | 'csv' | 'json') => {
     try {
+      // Show loading state
+      toast({
+        title: "Exporting...",
+        description: `Preparing your ${format.toUpperCase()} export`,
+      });
+      
       const response = await apiRequest(`/api/study-resources/${resource.id}/export?format=${format}`, {
         method: 'GET',
       });
       
+      if (!response.ok) {
+        throw new Error(`Export failed with status ${response.status}`);
+      }
+      
       const blob = await response.blob();
+      
+      // Check if blob is empty
+      if (blob.size === 0) {
+        throw new Error('Export generated empty file');
+      }
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${resource.title}.${format}`;
+      
+      // Clean filename for better compatibility
+      const cleanTitle = resource.title.replace(/[^a-zA-Z0-9]/g, '_');
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+      a.download = `${cleanTitle}_${timestamp}.${format}`;
+      
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      
+      // Clean up
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
       
       toast({
-        title: "Success",
-        description: `Resource exported as ${format.toUpperCase()}`,
+        title: "Export Complete",
+        description: `"${resource.title}" exported as ${format.toUpperCase()}`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Export error:', error);
       toast({
-        title: "Error",
-        description: "Failed to export resource",
+        title: "Export Failed",
+        description: error.message || "Failed to export resource. Please try again.",
         variant: "destructive",
       });
     }
@@ -275,6 +301,21 @@ export default function StudyResources() {
 
   const handleBulkExport = async (format: 'pdf' | 'txt' | 'csv' | 'json') => {
     try {
+      if (selectedResources.length === 0) {
+        toast({
+          title: "No Resources Selected",
+          description: "Please select resources to export",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Show loading state
+      toast({
+        title: "Bulk Export Starting...",
+        description: `Preparing ${selectedResources.length} resources for ${format.toUpperCase()} export`,
+      });
+      
       const response = await apiRequest('/api/study-resources/bulk-export', {
         method: 'POST',
         body: JSON.stringify({
@@ -283,24 +324,44 @@ export default function StudyResources() {
         }),
       });
       
+      if (!response.ok) {
+        throw new Error(`Bulk export failed with status ${response.status}`);
+      }
+      
       const blob = await response.blob();
+      
+      if (blob.size === 0) {
+        throw new Error('Bulk export generated empty file');
+      }
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `study-resources-bulk.${format}`;
+      
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+      a.download = `study-resources-bulk-${timestamp}.${format}`;
+      
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      
+      // Clean up
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+      
+      // Clear selections after successful export
+      setSelectedResources([]);
       
       toast({
-        title: "Success",
+        title: "Bulk Export Complete",
         description: `${selectedResources.length} resources exported as ${format.toUpperCase()}`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Bulk export error:', error);
       toast({
-        title: "Error",
-        description: "Failed to export resources",
+        title: "Bulk Export Failed",
+        description: error.message || "Failed to export resources. Please try again.",
         variant: "destructive",
       });
     }
