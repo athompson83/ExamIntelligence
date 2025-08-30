@@ -1172,67 +1172,74 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
               <p className="text-gray-600">Managing questions in this item bank</p>
             </div>
             
-            <div className="flex items-center space-x-3">
+            {/* Mobile-First Action Buttons */}
+            <div className="space-y-3">
               {/* Bulk Actions Toolbar */}
               {isSelectMode ? (
-                <div className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 space-y-2">
+                  <div className="text-sm text-blue-700 dark:text-blue-300">
                     {selectedQuestions.size} selected
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={selectAllQuestions}
-                    className="text-xs"
-                  >
-                    Select All
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={deselectAllQuestions}
-                    className="text-xs"
-                  >
-                    Deselect All
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleBulkDelete}
-                    disabled={selectedQuestions.size === 0}
-                    className="text-xs"
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Delete ({selectedQuestions.size})
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleSelectMode}
-                    className="text-xs"
-                  >
-                    Cancel
-                  </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={selectAllQuestions}
+                      className="text-xs flex-1 sm:flex-none"
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={deselectAllQuestions}
+                      className="text-xs flex-1 sm:flex-none"
+                    >
+                      Deselect All
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      disabled={selectedQuestions.size === 0}
+                      className="text-xs flex-1 sm:flex-none"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Delete ({selectedQuestions.size})
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleSelectMode}
+                      className="text-xs flex-1 sm:flex-none"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <Button
-                  variant="outline"
-                  onClick={toggleSelectMode}
-                  className="text-sm"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Select Multiple
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    variant="outline"
+                    onClick={toggleSelectMode}
+                    className="text-sm w-full sm:w-auto"
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Select Multiple
+                  </Button>
+                </div>
               )}
 
-              {/* AI Generation Dialog */}
-              <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-                    <Brain className="mr-2 h-4 w-4" />
-                    AI Generate Questions
-                  </Button>
-                </DialogTrigger>
+              {/* Main Action Buttons */}
+              <div className="space-y-2">
+                {/* AI Generation Dialog */}
+                <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 w-full sm:w-auto">
+                      <Brain className="mr-2 h-4 w-4" />
+                      AI Generate Questions
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
@@ -1710,20 +1717,21 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                 </DialogContent>
               </Dialog>
 
-              {/* Manual Create Dialog */}
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setEditingQuestion(null);
-                      resetQuestionForm();
-                    }}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Question
-                  </Button>
-                </DialogTrigger>
+                {/* Manual Create Dialog */}
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setEditingQuestion(null);
+                        resetQuestionForm();
+                      }}
+                      className="w-full sm:w-auto"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Question
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
@@ -2056,7 +2064,8 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
                     </div>
                   </div>
                 </DialogContent>
-              </Dialog>
+                </Dialog>
+              </div>
             </div>
           </div>
 
