@@ -237,10 +237,9 @@ export default function Sidebar() {
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-primary z-[9999] px-4 py-2 shadow-lg backdrop-blur-md bg-primary/95">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="bg-white rounded-lg p-1.5 mr-2">
+            <div className="bg-white rounded-lg p-1.5">
               <ClipboardCheck className="h-4 w-4 text-primary" />
             </div>
-            <h1 className="text-white text-base font-bold">ProficiencyAI</h1>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -274,10 +273,9 @@ export default function Sidebar() {
         {/* Enhanced Logo */}
         <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0 lg:h-16 lg:px-4">
           <div className="flex items-center">
-            <div className="bg-white rounded-xl p-2 mr-3 lg:p-2 lg:mr-3">
+            <div className="bg-white rounded-xl p-2 lg:p-2">
               <ClipboardCheck className="h-6 w-6 text-primary lg:h-6 lg:w-6" />
             </div>
-            <h1 className="text-white text-xl font-bold lg:text-xl">ProficiencyAI</h1>
           </div>
         </div>
       
