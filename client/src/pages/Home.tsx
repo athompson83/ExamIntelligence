@@ -8,10 +8,21 @@ import { LiveExamMonitoring } from "@/components/dashboard/LiveExamMonitoring";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { AnalyticsOverview } from "@/components/dashboard/AnalyticsOverview";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { useUserSwitching } from "@/hooks/useUserSwitching";
+import UserRoleSwitcher from "@/components/UserRoleSwitcher";
+import { Button } from "@/components/ui/button";
+import { User } from "lucide-react";
 
 export default function Home() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const { switchedUser, switchUser, clearUserSwitch, isSwitched } = useUserSwitching();
+  
+  // Get effective user (switched user or original user)
+  const effectiveUser = switchedUser || user;
+  
+  // Check if user is admin or super admin
+  const isAdminOrSuperAdmin = effectiveUser?.role === 'admin' || effectiveUser?.role === 'super_admin';
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -35,6 +46,24 @@ export default function Home() {
   return (
     <DashboardLayout title="Dashboard">
       <div className="space-y-8">
+        {/* Student View Button - Only visible for admin/super admin in mobile landscape */}
+        {isAdminOrSuperAdmin && (
+          <div className="block md:hidden landscape:block portrait:hidden">
+            <div className="flex justify-end mb-4">
+              <UserRoleSwitcher
+                currentUser={effectiveUser}
+                onUserSwitch={switchUser}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <User className="h-4 w-4" />
+                    Student View
+                  </Button>
+                }
+              />
+            </div>
+          </div>
+        )}
+
         {/* Quick Stats */}
         <QuickStats />
 
