@@ -53,11 +53,14 @@ export function AnalyticsOverview() {
   return (
     <Card className="mt-8">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="space-y-4">
+          {/* Title on its own row */}
           <CardTitle className="text-lg font-semibold">Performance Analytics</CardTitle>
-          <div className="flex items-center space-x-2">
+          
+          {/* Dropdown on its own row on mobile, inline on larger screens */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <Select defaultValue="7days">
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full sm:w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -66,7 +69,9 @@ export function AnalyticsOverview() {
                 <SelectItem value="90days">Last 90 days</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="link" className="text-primary hover:text-primary/80">
+            
+            {/* Button on its own row on mobile */}
+            <Button variant="link" className="text-primary hover:text-primary/80 w-full sm:w-auto justify-start sm:justify-center">
               View Full Report
             </Button>
           </div>
