@@ -1772,21 +1772,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Alternative route pattern for testbank-specific question deletion
+  // Alternative route pattern for testbank-specific question archival (soft delete)
   app.delete('/api/testbanks/:testbankId/questions/:questionId', mockAuth, async (req: any, res) => {
     try {
       const userId = req.user?.id || "test-user";
       const reason = req.body?.reason || "User initiated deletion";
       
-      const deleted = await storage.deleteQuestion(req.params.questionId, userId, reason);
-      if (!deleted) {
+      const archived = await storage.archiveQuestion(req.params.questionId, userId, reason);
+      if (!archived) {
         return res.status(404).json({ message: "Question not found" });
       }
       
-      res.json({ message: "Question deleted successfully", success: true });
+      res.json({ message: "Question archived successfully", success: true });
     } catch (error) {
-      console.error("Error deleting question:", error);
-      res.status(500).json({ message: "Failed to delete question" });
+      console.error("Error archiving question:", error);
+      res.status(500).json({ message: "Failed to archive question" });
     }
   });
 
@@ -2105,13 +2105,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Question IDs are required" });
       }
 
+      const userId = req.user?.id || "test-user";
+      const reason = req.body?.reason || "Bulk deletion by user";
+      
       const results = [];
       for (const questionId of questionIds) {
         try {
-          await storage.deleteQuestion(questionId);
-          results.push({ id: questionId, success: true });
+          const archived = await storage.archiveQuestion(questionId, userId, reason);
+          if (archived) {
+            results.push({ id: questionId, success: true });
+          } else {
+            results.push({ id: questionId, success: false, error: "Question not found" });
+          }
         } catch (error) {
-          console.error(`Failed to delete question ${questionId}:`, error);
+          console.error(`Failed to archive question ${questionId}:`, error);
           results.push({ id: questionId, success: false, error: error.message });
         }
       }
@@ -2119,7 +2126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const successCount = results.filter(r => r.success).length;
       
       res.json({ 
-        message: `${successCount} of ${questionIds.length} questions deleted successfully`,
+        message: `${successCount} of ${questionIds.length} questions archived successfully`,
         results 
       });
     } catch (error: any) {
