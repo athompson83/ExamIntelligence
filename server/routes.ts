@@ -1764,8 +1764,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.id || "test-user";
       const reason = req.body?.reason || "User initiated deletion";
       
-      await storage.deleteQuestion(req.params.id, userId, reason);
-      res.json({ message: "Question archived successfully" });
+      const archived = await storage.archiveQuestion(req.params.id, userId, reason);
+      if (!archived) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+      
+      res.json({ message: "Question archived successfully", success: true });
     } catch (error) {
       console.error("Error archiving question:", error);
       res.status(500).json({ message: "Failed to archive question" });
