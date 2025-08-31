@@ -142,12 +142,9 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Header */}
       <div className="flex items-center justify-between h-16 bg-primary px-4">
         <div className="flex items-center">
-          <div className="bg-white rounded-lg p-2 mr-2">
+          <div className="bg-white rounded-lg p-2">
             <GraduationCap className="text-primary h-6 w-6" />
           </div>
-          {!isCollapsed && (
-            <h1 className="text-white text-xl font-bold">ProficiencyAI</h1>
-          )}
         </div>
         <button
           onClick={toggleSidebar}
