@@ -3,14 +3,14 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 import { 
-  BookOpen, 
-  Puzzle, 
-  Calendar, 
-  BarChart3, 
-  TrendingUp, 
-  GraduationCap, 
-  FileText, 
-  PlayCircle 
+  Search, 
+  Bell, 
+  Users, 
+  Archive, 
+  Building, 
+  Shield, 
+  Monitor, 
+  Code 
 } from "lucide-react";
 
 export function InstagramStyleNav() {
@@ -26,8 +26,8 @@ export function InstagramStyleNav() {
     const handleScroll = () => {
       const st = window.pageYOffset || document.documentElement.scrollTop;
       
-      // Only hide when scrolling down AND the header is out of view (scrolled past 60px)
-      if (st > lastScrollTop && st > 60) {
+      // Only hide when scrolling down AND the header is out of view (scrolled past 80px)
+      if (st > lastScrollTop && st > 80) {
         // Scrolling down past header - hide with delay
         setIsVisible(false);
       } else {
@@ -56,17 +56,17 @@ export function InstagramStyleNav() {
   };
 
   const teacherNavItems = [
-    { href: "/item-banks", label: "Item Banks", icon: BookOpen },
-    { href: "/quiz-manager", label: "Quizzes", icon: Puzzle },
-    { href: "/assignments", label: "Assignments", icon: Calendar },
-    { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/user-management", label: "Students", icon: Users },
+    { href: "/archive-management", label: "Archive", icon: Archive },
+    { href: "/super-admin-settings", label: "Admin", icon: Shield },
+    { href: "/project-status", label: "Status", icon: Monitor },
   ];
 
   const studentNavItems = [
-    { href: "/progress-tracking", label: "Progress", icon: TrendingUp },
-    { href: "/assignments", label: "Calendar", icon: Calendar },
-    { href: "/study-aids", label: "Study", icon: FileText },
-    { href: "/live-exams", label: "Exams", icon: PlayCircle },
+    { href: "/notifications", label: "Alerts", icon: Bell },
+    { href: "/prerequisites", label: "Prereqs", icon: Building },
+    { href: "/accessibility-settings", label: "Access", icon: Monitor },
+    { href: "/system-test", label: "Test", icon: Code },
   ];
 
   const navItems = isStudentView ? studentNavItems : teacherNavItems;
@@ -76,7 +76,7 @@ export function InstagramStyleNav() {
       className="instagram-style-nav fixed left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm lg:hidden"
       style={{
         top: getTopPosition(),
-        transition: 'top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        transition: 'top 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
         zIndex: 99999,
         width: '100vw'
       }}
