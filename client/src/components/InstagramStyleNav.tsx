@@ -41,6 +41,19 @@ export function InstagramStyleNav() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollTop]);
 
+  // Calculate top position based on scroll position
+  const getTopPosition = () => {
+    if (!isVisible) return '-80px';
+    
+    // If we're near the top (within 56px of TopBar height), position below TopBar
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+    if (scrollY <= 56) {
+      return '56px'; // Below TopBar
+    } else {
+      return '0px'; // At top of viewport when TopBar is scrolled out
+    }
+  };
+
   const teacherNavItems = [
     { href: "/item-banks", label: "Item Banks", icon: BookOpen },
     { href: "/quiz-manager", label: "Quizzes", icon: Puzzle },
@@ -61,7 +74,7 @@ export function InstagramStyleNav() {
     <div 
       className="instagram-style-nav fixed left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm lg:hidden"
       style={{
-        top: isVisible ? '56px' : '-80px',
+        top: getTopPosition(),
         transition: 'top 0.2s ease-in-out',
         zIndex: 99999,
         width: '100vw'
