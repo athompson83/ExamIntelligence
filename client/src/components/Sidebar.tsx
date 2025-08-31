@@ -234,7 +234,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Enhanced Mobile Navigation Bar (shown on small screens) */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-primary z-[9999] px-4 py-2 shadow-lg backdrop-blur-md bg-primary/95">
+      <div className={`lg:hidden fixed top-0 left-0 right-0 bg-primary px-4 py-2 shadow-lg backdrop-blur-md bg-primary/95 ${isMobileMenuOpen ? 'z-[9998]' : 'z-[9999]'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="bg-white rounded-lg p-1.5">
@@ -257,14 +257,14 @@ export default function Sidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-[9990]"
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-[10000]"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
       {/* Enhanced Desktop Sidebar & Mobile Drawer */}
       <nav className={`
         sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
-        w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 z-[9991]
+        w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 ${isMobileMenuOpen ? 'z-[10001]' : 'z-[9991]'}
         lg:translate-x-0
         lg:block
         max-w-[85vw] transform transition-all duration-300 ease-out

@@ -11,7 +11,7 @@ export default function FloatingBugReportButton() {
     <>
       <Button
         onClick={() => setShowBugReportDialog(true)}
-        className="fixed bottom-20 right-4 z-50 h-12 w-12 rounded-full bg-red-600 hover:bg-red-700 shadow-lg border-2 border-white"
+        className="fixed bottom-32 right-4 z-50 h-12 w-12 rounded-full bg-red-600 hover:bg-red-700 shadow-lg border-2 border-white"
         title="Report a Bug"
       >
         <Bug className="h-5 w-5 text-white" />

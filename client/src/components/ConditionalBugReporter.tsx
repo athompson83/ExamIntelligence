@@ -63,7 +63,7 @@ export default function ConditionalBugReporter({ onError, featureName }: Conditi
   return (
     <>
       {/* Temporary bug report button that appears only when there are errors */}
-      <div className="fixed bottom-20 right-4 z-50 flex flex-col items-end space-y-2">
+      <div className="fixed bottom-32 right-4 z-50 flex flex-col items-end space-y-2">
         {/* Error notification badge */}
         <div className="bg-red-100 border border-red-300 rounded-lg p-3 shadow-lg max-w-sm">
           <div className="flex items-start justify-between">
