@@ -1670,6 +1670,17 @@ export const insertCatExamCategorySchema = createInsertSchema(catExamCategories)
 export const insertCatExamAssignmentSchema = createInsertSchema(catExamAssignments).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCatExamSessionSchema = createInsertSchema(catExamSessions).omit({ id: true, createdAt: true, updatedAt: true });
 
+// Additional Insert Schemas
+export const insertProctoringLogSchema = createInsertSchema(proctoringLogs).omit({ id: true, createdAt: true });
+export const insertReferenceBankSchema = createInsertSchema(referenceBanks).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertReferenceSchema = createInsertSchema(references).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertScheduledAssignmentSchema = createInsertSchema(scheduledAssignments).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertStudyAidSchema = createInsertSchema(studyAids).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAssignmentSubmissionSchema = createInsertSchema(assignmentSubmissions).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertMobileDeviceSchema = createInsertSchema(mobileDevices).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertLlmProviderSchema = createInsertSchema(llmProviders).omit({ id: true, createdAt: true, updatedAt: true });
+
 
 
 // Types

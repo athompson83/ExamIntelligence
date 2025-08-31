@@ -23,6 +23,15 @@ import {
   insertQuestionGroupSchema,
   insertQuizQuestionSchema,
   insertQuizProgressSchema,
+  insertProctoringLogSchema,
+  insertReferenceBankSchema,
+  insertReferenceSchema,
+  insertScheduledAssignmentSchema,
+  insertStudyAidSchema,
+  insertAssignmentSubmissionSchema,
+  insertMobileDeviceSchema,
+  insertPromptTemplateSchema,
+  insertLlmProviderSchema,
 } from "@shared/schema";
 import { 
   validateQuestion, 
@@ -53,7 +62,7 @@ import Stripe from "stripe";
 let stripe: Stripe | null = null;
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-06-30.basil",
+    apiVersion: "2024-06-20",
   });
 } else {
   console.warn('Stripe secret key not found. Payment features will be disabled.');
