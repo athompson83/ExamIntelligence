@@ -12,6 +12,8 @@ import ConditionalBugReporter from "@/components/ConditionalBugReporter";
 import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense } from "react";
 import CATExamBuilder from "@/pages/CATExamBuilder";
+import { BottomTabNav } from "@/components/BottomTabNav";
+import { InstagramStyleNav } from "@/components/InstagramStyleNav";
 
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -437,6 +439,8 @@ function App() {
                 <Router />
                 <OnboardingTour />
                 <ConditionalBugReporter />
+                <InstagramStyleNav />
+                <BottomTabNav />
               </OnboardingTourProvider>
             </AITooltipProvider>
           </CustomTooltipProvider>

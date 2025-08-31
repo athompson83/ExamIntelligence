@@ -1,8 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
-import { InstagramStyleNav } from "./InstagramStyleNav";
-import { BottomTabNav } from "./BottomTabNav";
 
 interface LayoutProps {
   children: ReactNode;
@@ -30,7 +28,6 @@ export default function Layout({ children }: LayoutProps) {
       <Sidebar />
       <div className="flex-1 lg:ml-64 transition-all duration-300 ease-out w-full min-w-0 flex flex-col min-h-screen">
         <TopBar />
-        <InstagramStyleNav />
         <main className={`flex-1 p-4 transition-all duration-300 ease-out lg:p-6 pb-24 lg:pb-4 ${
           isLoaded ? 'opacity-100 transform-none fade-in-fast' : 'opacity-0 translate-y-4'
         }`}>
@@ -39,7 +36,6 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </main>
       </div>
-      <BottomTabNav />
     </div>
   );
 }

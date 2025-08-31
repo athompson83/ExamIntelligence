@@ -61,7 +61,7 @@ export function InstagramStyleNav() {
     <div 
       className="instagram-style-nav fixed left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm lg:hidden"
       style={{
-        top: isVisible ? '64px' : '-80px',
+        top: isVisible ? '56px' : '-80px',
         transition: 'top 0.2s ease-in-out',
         zIndex: 99999,
         width: '100vw'
