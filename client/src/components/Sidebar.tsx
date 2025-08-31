@@ -236,10 +236,11 @@ export default function Sidebar() {
       {/* Enhanced Mobile Navigation Bar (shown on small screens) */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-primary z-[9999] px-4 py-2 shadow-lg backdrop-blur-md bg-primary/95">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-2">
             <div className="bg-white rounded-lg p-1.5">
               <ClipboardCheck className="h-4 w-4 text-primary" />
             </div>
+            <h1 className="text-white text-base font-bold">ProficiencyAI</h1>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -270,11 +271,11 @@ export default function Sidebar() {
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${isMobileMenuOpen ? 'pt-12' : 'pt-0 lg:pt-0'}
       `}>
-        {/* Enhanced Logo */}
-        <div className="flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0 lg:h-16 lg:px-4">
+        {/* Enhanced Logo - Hidden for mobile since we have title in mobile nav bar */}
+        <div className="hidden lg:flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
           <div className="flex items-center">
-            <div className="bg-white rounded-xl p-2 lg:p-2">
-              <ClipboardCheck className="h-6 w-6 text-primary lg:h-6 lg:w-6" />
+            <div className="bg-white rounded-xl p-2">
+              <ClipboardCheck className="h-6 w-6 text-primary" />
             </div>
           </div>
         </div>
