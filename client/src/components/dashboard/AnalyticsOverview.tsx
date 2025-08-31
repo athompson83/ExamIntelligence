@@ -74,8 +74,9 @@ export function AnalyticsOverview() {
       </CardHeader>
       
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Exam Performance Chart */}
+        {/* Mobile-first layout: Chart takes full width, then 2-column grid for metrics */}
+        <div className="space-y-6">
+          {/* Exam Performance Chart - Full width on all devices */}
           <div className="bg-muted rounded-lg p-4">
             <h4 className="font-medium text-foreground mb-3">Exam Performance Trends</h4>
             <div className="h-32">
@@ -91,58 +92,61 @@ export function AnalyticsOverview() {
             </div>
             <p className="text-xs text-muted-foreground mt-2">Average score: 78.5%</p>
           </div>
-          
-          {/* Question Difficulty Distribution */}
-          <div className="bg-muted rounded-lg p-4">
-            <h4 className="font-medium text-foreground mb-3">Question Difficulty</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Easy</span>
-                <div className="flex items-center space-x-2">
-                  <Progress value={75} className="w-20" />
-                  <span className="text-xs text-muted-foreground">75%</span>
+
+          {/* Metrics Grid - 1 column on mobile, 2 columns on larger screens */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Question Difficulty Distribution */}
+            <div className="bg-muted rounded-lg p-4">
+              <h4 className="font-medium text-foreground mb-3">Question Difficulty</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Easy</span>
+                  <div className="flex items-center space-x-2">
+                    <Progress value={75} className="w-20" />
+                    <span className="text-xs text-muted-foreground">75%</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Medium</span>
-                <div className="flex items-center space-x-2">
-                  <Progress value={50} className="w-20" />
-                  <span className="text-xs text-muted-foreground">50%</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Medium</span>
+                  <div className="flex items-center space-x-2">
+                    <Progress value={50} className="w-20" />
+                    <span className="text-xs text-muted-foreground">50%</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Hard</span>
-                <div className="flex items-center space-x-2">
-                  <Progress value={25} className="w-20" />
-                  <span className="text-xs text-muted-foreground">25%</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Hard</span>
+                  <div className="flex items-center space-x-2">
+                    <Progress value={25} className="w-20" />
+                    <span className="text-xs text-muted-foreground">25%</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          
-          {/* AI Insights */}
-          <div className="bg-muted rounded-lg p-4">
-            <h4 className="font-medium text-foreground mb-3">AI Insights</h4>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-2">
-                <Lightbulb className="h-4 w-4 text-accent mt-1" />
-                <div>
-                  <p className="text-sm text-foreground">Question clarity improved by 23%</p>
-                  <p className="text-xs text-muted-foreground">After AI validation</p>
+            
+            {/* AI Insights */}
+            <div className="bg-muted rounded-lg p-4">
+              <h4 className="font-medium text-foreground mb-3">AI Insights</h4>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-2">
+                  <Lightbulb className="h-4 w-4 text-accent mt-1" />
+                  <div>
+                    <p className="text-sm text-foreground">Question clarity improved by 23%</p>
+                    <p className="text-xs text-muted-foreground">After AI validation</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start space-x-2">
-                <TrendingUp className="h-4 w-4 text-secondary mt-1" />
-                <div>
-                  <p className="text-sm text-foreground">Student engagement +15%</p>
-                  <p className="text-xs text-muted-foreground">With adaptive testing</p>
+                <div className="flex items-start space-x-2">
+                  <TrendingUp className="h-4 w-4 text-secondary mt-1" />
+                  <div>
+                    <p className="text-sm text-foreground">Student engagement +15%</p>
+                    <p className="text-xs text-muted-foreground">With adaptive testing</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start space-x-2">
-                <Shield className="h-4 w-4 text-primary mt-1" />
-                <div>
-                  <p className="text-sm text-foreground">Exam integrity: 98.7%</p>
-                  <p className="text-xs text-muted-foreground">Proctoring effectiveness</p>
+                <div className="flex items-start space-x-2">
+                  <Shield className="h-4 w-4 text-primary mt-1" />
+                  <div>
+                    <p className="text-sm text-foreground">Exam integrity: 98.7%</p>
+                    <p className="text-xs text-muted-foreground">Proctoring effectiveness</p>
+                  </div>
                 </div>
               </div>
             </div>
