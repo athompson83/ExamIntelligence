@@ -37,12 +37,10 @@ export function InstagramStyleNav() {
             return;
           }
           
-          // Hide when scrolling down, show when scrolling up
-          if (currentScrollY > lastScrollY && currentScrollY > 64) {
-            // Scrolling down - hide menu
+          // Show by default, hide when scrolling down
+          if (currentScrollY > lastScrollY && currentScrollY > 80) {
             setIsScrollingDown(true);
           } else {
-            // Scrolling up or at top - show menu
             setIsScrollingDown(false);
           }
           

@@ -43,8 +43,8 @@ export function BottomTabNav() {
             return;
           }
           
-          // Hide when scrolling down, show when scrolling up
-          if (currentScrollY > lastScrollY && currentScrollY > 100) {
+          // Show by default, hide only when scrolling down significantly
+          if (currentScrollY > lastScrollY && currentScrollY > 80) {
             setIsScrollingDown(true);
           } else {
             setIsScrollingDown(false);
