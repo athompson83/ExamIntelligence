@@ -69,7 +69,7 @@ export default function StudentDashboard() {
   const [selectedQuizForStudy, setSelectedQuizForStudy] = useState<string>('');
 
   // Check if user is admin/teacher viewing as student
-  const isAdminViewingAsStudent = user && ['super_admin', 'admin', 'teacher', 'manager'].includes(user.role || '');
+  const isAdminViewingAsStudent = user && ['super_admin', 'admin', 'teacher', 'manager'].includes((user as any)?.role || '');
   
   const handleSwitchBackToAdminView = () => {
     navigate('/');
@@ -190,7 +190,7 @@ export default function StudentDashboard() {
           <Shield className="h-4 w-4 text-amber-600" />
           <AlertDescription className="flex items-center justify-between">
             <span className="text-amber-800 dark:text-amber-200">
-              You are viewing as a student. Your actual role is: <strong>{user?.role}</strong>
+              You are viewing as a student. Your actual role is: <strong>{(user as any)?.role}</strong>
             </span>
             <Button
               variant="outline"

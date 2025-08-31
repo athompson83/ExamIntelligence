@@ -23,7 +23,7 @@ import { useEffect } from "react";
 import './styles/performance.css';
 
 // Core pages that are always needed
-import Landing from "@/pages/Landing";
+import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 
@@ -31,7 +31,7 @@ import NotFound from "@/pages/not-found";
 const ItemBanks = lazy(() => import("@/pages/item-banks"));
 const QuestionManager = lazy(() => import("@/pages/question-manager"));
 const LiveExams = lazy(() => import("@/pages/live-exams"));
-const Analytics = lazy(() => import("@/pages/Analytics"));
+const Analytics = lazy(() => import("@/pages/analytics"));
 const AnalyticsDashboard = lazy(() => import("@/pages/analytics-dashboard"));
 const SpeedGrader = lazy(() => import("@/pages/speed-grader"));
 const UserManagement = lazy(() => import("@/pages/user-management"));
@@ -163,7 +163,7 @@ function Router() {
             {() => <Suspense fallback={<SmoothLoadingFallback />}><QuestionManager /></Suspense>}
           </Route>
           <Route path="/testbanks/:id/questions">
-            {(params) => <Suspense fallback={<LoadingSpinner />}><QuestionManager testbankId={params?.id} /></Suspense>}
+            {(params) => <Suspense fallback={<LoadingSpinner />}><QuestionManager testbankId={params?.id || ''} /></Suspense>}
           </Route>
           <Route path="/quiz-manager">
             {() => <Suspense fallback={<LoadingSpinner />}><QuizManager /></Suspense>}
