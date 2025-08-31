@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
@@ -19,11 +20,46 @@ import {
 } from "lucide-react";
 
 export function BottomTabNav() {
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [location] = useLocation();
   const { user } = useAuth();
   
   const userRole = (user as any)?.role || 'teacher';
   const isStudentView = location.startsWith('/student') || userRole === 'student';
+
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const delta = 5;
+          
+          // Only update if scrolled more than delta
+          if (Math.abs(lastScrollY - currentScrollY) <= delta) {
+            ticking = false;
+            return;
+          }
+          
+          // Hide when scrolling down, show when scrolling up
+          if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            setIsScrollingDown(true);
+          } else {
+            setIsScrollingDown(false);
+          }
+          
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   // Context-aware navigation based on current page
   const getContextualTabs = () => {
@@ -128,7 +164,13 @@ export function BottomTabNav() {
   const tabs = getContextualTabs();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-gray-100 shadow-2xl lg:hidden">
+    <div 
+      className="fixed left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-gray-100 shadow-2xl lg:hidden"
+      style={{
+        bottom: isScrollingDown ? '-100px' : '0px',
+        transition: 'bottom 0.2s ease-in-out'
+      }}
+    >
       <div className="flex pb-safe">
         {tabs.map((tab) => {
           const Icon = tab.icon;

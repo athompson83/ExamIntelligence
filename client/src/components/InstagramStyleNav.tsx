@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export function InstagramStyleNav() {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [location] = useLocation();
   const { user } = useAuth();
@@ -23,21 +23,34 @@ export function InstagramStyleNav() {
   const isStudentView = location.startsWith('/student') || userRole === 'student';
 
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Instagram/Twitter behavior: instant response to scroll direction
-      if (currentScrollY <= 10) {
-        setIsVisible(true);
-      } else if (currentScrollY < lastScrollY) {
-        // Show immediately on any upward scroll
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY) {
-        // Hide on any downward scroll
-        setIsVisible(false);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const delta = 5;
+          
+          // Only update if scrolled more than delta to avoid jitter
+          if (Math.abs(lastScrollY - currentScrollY) <= delta) {
+            ticking = false;
+            return;
+          }
+          
+          // Hide when scrolling down, show when scrolling up
+          if (currentScrollY > lastScrollY && currentScrollY > 64) {
+            // Scrolling down - hide menu
+            setIsScrollingDown(true);
+          } else {
+            // Scrolling up or at top - show menu
+            setIsScrollingDown(false);
+          }
+          
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
       }
-      
-      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -62,9 +75,11 @@ export function InstagramStyleNav() {
 
   return (
     <div 
-      className={`fixed top-16 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm transition-transform duration-150 ease-out lg:hidden ${
-        isVisible ? 'translate-y-0' : '-translate-y-full'
-      }`}
+      className="fixed left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm lg:hidden"
+      style={{
+        top: isScrollingDown ? '-64px' : '64px',
+        transition: 'top 0.2s ease-in-out'
+      }}
     >
       <div className="flex">
         {navItems.map((item) => {
