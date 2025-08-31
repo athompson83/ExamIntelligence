@@ -56,17 +56,17 @@ export function InstagramStyleNav() {
   };
 
   const teacherNavItems = [
+    { href: "/search", label: "Search", icon: Search },
+    { href: "/notifications", label: "Alerts", icon: Bell },
     { href: "/user-management", label: "Students", icon: Users },
-    { href: "/archive-management", label: "Archive", icon: Archive },
     { href: "/super-admin-settings", label: "Admin", icon: Shield },
-    { href: "/project-status", label: "Status", icon: Monitor },
   ];
 
   const studentNavItems = [
+    { href: "/search", label: "Search", icon: Search },
     { href: "/notifications", label: "Alerts", icon: Bell },
     { href: "/prerequisites", label: "Prereqs", icon: Building },
     { href: "/accessibility-settings", label: "Access", icon: Monitor },
-    { href: "/system-test", label: "Test", icon: Code },
   ];
 
   const navItems = isStudentView ? studentNavItems : teacherNavItems;

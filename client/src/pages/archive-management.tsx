@@ -68,11 +68,13 @@ export default function ArchiveManagement() {
   });
 
   // Fetch archive history
-  const { data: archiveHistory = [] } = useQuery({
+  const { data: archiveHistoryResponse } = useQuery({
     queryKey: ['archive-history', selectedItemForHistory?.id],
     queryFn: () => apiRequest(`/api/archive/history?itemId=${selectedItemForHistory?.id}`),
     enabled: !!selectedItemForHistory,
   });
+  
+  const archiveHistory = Array.isArray(archiveHistoryResponse) ? archiveHistoryResponse : [];
 
   // Restore mutations
   const restoreQuestionMutation = useMutation({
@@ -129,9 +131,9 @@ export default function ArchiveManagement() {
 
   // Combine all archived items
   const allArchivedItems: ArchivedItem[] = [
-    ...archivedQuestions.map((q: any) => ({ ...q, type: 'question' })),
-    ...archivedQuizzes.map((q: any) => ({ ...q, type: 'quiz' })),
-    ...archivedTestbanks.map((t: any) => ({ ...t, type: 'testbank' })),
+    ...(Array.isArray(archivedQuestions) ? archivedQuestions.map((q: any) => ({ ...q, type: 'question' })) : []),
+    ...(Array.isArray(archivedQuizzes) ? archivedQuizzes.map((q: any) => ({ ...q, type: 'quiz' })) : []),
+    ...(Array.isArray(archivedTestbanks) ? archivedTestbanks.map((t: any) => ({ ...t, type: 'testbank' })) : []),
   ];
 
   // Filter archived items
@@ -266,7 +268,7 @@ export default function ArchiveManagement() {
               <HelpCircle className="h-5 w-5 text-blue-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Questions</p>
-                <p className="text-2xl font-bold">{archivedQuestions.length}</p>
+                <p className="text-2xl font-bold">{Array.isArray(archivedQuestions) ? archivedQuestions.length : 0}</p>
               </div>
             </div>
           </CardContent>
@@ -277,7 +279,7 @@ export default function ArchiveManagement() {
               <FileText className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Quizzes</p>
-                <p className="text-2xl font-bold">{archivedQuizzes.length}</p>
+                <p className="text-2xl font-bold">{Array.isArray(archivedQuizzes) ? archivedQuizzes.length : 0}</p>
               </div>
             </div>
           </CardContent>
@@ -288,7 +290,7 @@ export default function ArchiveManagement() {
               <Brain className="h-5 w-5 text-purple-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Testbanks</p>
-                <p className="text-2xl font-bold">{archivedTestbanks.length}</p>
+                <p className="text-2xl font-bold">{Array.isArray(archivedTestbanks) ? archivedTestbanks.length : 0}</p>
               </div>
             </div>
           </CardContent>

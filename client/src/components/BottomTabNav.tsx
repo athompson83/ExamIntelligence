@@ -15,7 +15,8 @@ import {
   Plus,
   Search,
   GraduationCap,
-  Brain
+  Brain,
+  Archive
 } from "lucide-react";
 
 export function BottomTabNav() {
@@ -105,6 +106,16 @@ export function BottomTabNav() {
         { href: "/user-management", label: "Users", icon: Users },
         { href: "/assignments", label: "Assign", icon: Calendar },
         { href: "/analytics", label: "Analytics", icon: BarChart3 },
+        { href: "/settings", label: "Settings", icon: Settings }
+      ];
+    }
+
+    if (location.startsWith('/archive-management')) {
+      return [
+        { href: "/", label: "Home", icon: Home },
+        { href: "/archive-management", label: "Archive", icon: Archive },
+        { href: "/item-banks", label: "Banks", icon: BookOpen },
+        { href: "/quiz-manager", label: "Quizzes", icon: Puzzle },
         { href: "/settings", label: "Settings", icon: Settings }
       ];
     }
