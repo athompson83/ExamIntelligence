@@ -26,10 +26,14 @@ export function InstagramStyleNav() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Show immediately when scrolling up, hide when scrolling down (after small threshold)
-      if (currentScrollY < lastScrollY) {
+      // Always show at top, show immediately when scrolling up, hide when scrolling down
+      if (currentScrollY === 0) {
         setIsVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 50) {
+      } else if (currentScrollY < lastScrollY) {
+        // Show immediately when scrolling up
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY) {
+        // Hide when scrolling down
         setIsVisible(false);
       }
       
@@ -58,11 +62,11 @@ export function InstagramStyleNav() {
 
   return (
     <div 
-      className={`fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-md transition-transform duration-200 lg:hidden ${
+      className={`fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-md transition-transform duration-150 lg:hidden ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
-      <div className="flex items-center justify-around py-3">
+      <div className="flex items-center py-3 px-0">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href || location.startsWith(item.href);
@@ -71,7 +75,7 @@ export function InstagramStyleNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center space-y-1 p-2 rounded-lg transition-colors flex-1 ${
+              className={`flex flex-col items-center space-y-1 py-2 px-1 transition-colors flex-1 text-center ${
                 isActive 
                   ? 'text-primary bg-primary/10' 
                   : 'text-gray-600 hover:text-primary hover:bg-gray-50'
