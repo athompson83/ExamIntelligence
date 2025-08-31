@@ -1773,12 +1773,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Alternative route pattern for testbank-specific question deletion
-  app.delete('/api/testbanks/:testbankId/questions/:questionId', async (req: any, res) => {
+  app.delete('/api/testbanks/:testbankId/questions/:questionId', mockAuth, async (req: any, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
       const userId = req.user?.id || "test-user";
       const reason = req.body?.reason || "User initiated deletion";
       
@@ -2100,11 +2096,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk delete questions
-  app.post("/api/testbanks/:id/questions/bulk-delete", async (req: any, res) => {
+  app.post("/api/testbanks/:id/questions/bulk-delete", mockAuth, async (req: any, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
 
       const { questionIds } = req.body;
       
