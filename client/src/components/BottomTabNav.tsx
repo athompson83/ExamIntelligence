@@ -128,8 +128,8 @@ export function BottomTabNav() {
   const tabs = getContextualTabs();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg lg:hidden">
-      <div className="flex items-center justify-around px-2 py-2 safe-area-inset-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg lg:hidden">
+      <div className="flex safe-area-inset-bottom">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = location === tab.href || (tab.href !== '/' && location.startsWith(tab.href));
@@ -138,14 +138,14 @@ export function BottomTabNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-col items-center space-y-1 p-2 rounded-lg transition-colors min-w-0 flex-1 ${
+              className={`flex flex-col items-center justify-center py-2 flex-1 transition-colors ${
                 isActive 
-                  ? 'text-primary bg-primary/10' 
-                  : 'text-gray-600 hover:text-primary hover:bg-gray-50'
+                  ? 'text-primary bg-primary/5' 
+                  : 'text-gray-600 hover:text-primary active:bg-gray-50'
               }`}
             >
-              <Icon className="h-5 w-5 flex-shrink-0" />
-              <span className="text-xs font-medium truncate">{tab.label}</span>
+              <Icon className="h-5 w-5 mb-1" />
+              <span className="text-xs font-medium">{tab.label}</span>
             </Link>
           );
         })}

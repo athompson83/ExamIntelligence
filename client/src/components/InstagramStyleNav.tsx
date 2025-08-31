@@ -23,21 +23,27 @@ export function InstagramStyleNav() {
   const isStudentView = location.startsWith('/student') || userRole === 'student';
 
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Always show at top, show immediately when scrolling up, hide when scrolling down
-      if (currentScrollY === 0) {
-        setIsVisible(true);
-      } else if (currentScrollY < lastScrollY) {
-        // Show immediately when scrolling up
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY) {
-        // Hide when scrolling down
-        setIsVisible(false);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          
+          // Instagram/Twitter behavior: show immediately on any upward movement
+          if (currentScrollY <= 0) {
+            setIsVisible(true);
+          } else if (currentScrollY < lastScrollY) {
+            setIsVisible(true);
+          } else if (currentScrollY > lastScrollY + 1) {
+            setIsVisible(false);
+          }
+          
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
       }
-      
-      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -62,11 +68,11 @@ export function InstagramStyleNav() {
 
   return (
     <div 
-      className={`fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-md transition-transform duration-150 lg:hidden ${
+      className={`fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm transition-transform duration-200 ease-out lg:hidden ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
-      <div className="flex items-center py-3 px-0">
+      <div className="flex">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href || location.startsWith(item.href);
@@ -75,13 +81,13 @@ export function InstagramStyleNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center space-y-1 py-2 px-1 transition-colors flex-1 text-center ${
+              className={`flex flex-col items-center justify-center py-3 flex-1 transition-colors ${
                 isActive 
-                  ? 'text-primary bg-primary/10' 
-                  : 'text-gray-600 hover:text-primary hover:bg-gray-50'
+                  ? 'text-primary bg-primary/5' 
+                  : 'text-gray-600 hover:text-primary active:bg-gray-50'
               }`}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-5 w-5 mb-1" />
               <span className="text-xs font-medium">{item.label}</span>
             </Link>
           );
