@@ -421,7 +421,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   // Delete questions mutation
   const deleteQuestionMutation = useMutation({
     mutationFn: async (questionId: string) => {
-      const response = await apiRequest("DELETE", `/api/testbanks/${effectiveTestbankId}/questions/${questionId}`, {});
+      const response = await apiRequest(`/api/testbanks/${effectiveTestbankId}/questions/${questionId}`, { method: "DELETE" });
       return response.json();
     },
     onSuccess: (_, questionId) => {
@@ -463,8 +463,9 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   // Bulk delete questions mutation
   const bulkDeleteQuestionsMutation = useMutation({
     mutationFn: async (questionIds: string[]) => {
-      const response = await apiRequest("POST", `/api/testbanks/${effectiveTestbankId}/questions/bulk-delete`, { 
-        questionIds 
+      const response = await apiRequest(`/api/testbanks/${effectiveTestbankId}/questions/bulk-delete`, { 
+        method: "POST",
+        body: JSON.stringify({ questionIds })
       });
       return response.json();
     },
