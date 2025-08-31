@@ -230,6 +230,15 @@
       z-index: 10000 !important; /* Mobile ProficiencyAI header - highest priority */
     }
     
+    /* Mobile navigation components - highest priority */
+    .instagram-style-nav {
+      z-index: 10002 !important;
+    }
+    
+    .bottom-tab-nav {
+      z-index: 10003 !important;
+    }
+    
     /* Mobile page content - natural flow without overlapping headers */
     main {
       padding: 1rem !important; /* Natural spacing for content */

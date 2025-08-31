@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 
 export function BottomTabNav() {
-  const [isHidden, setIsHidden] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const [prevScrollPos, setPrevScrollPos] = useState(0);
+  const [visible, setVisible] = useState(true);
   const [location] = useLocation();
   const { user } = useAuth();
   
@@ -30,33 +30,16 @@ export function BottomTabNav() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Show at top
-      if (currentScrollY <= 20) {
-        setIsHidden(false);
-        setLastScrollY(currentScrollY);
-        return;
-      }
-      
-      // Only process if scroll difference is significant (avoid jitter)
-      if (Math.abs(currentScrollY - lastScrollY) < 5) {
-        return;
-      }
-      
-      // Hide when scrolling down, show when scrolling up
-      if (currentScrollY > lastScrollY) {
-        setIsHidden(true);
-      } else {
-        setIsHidden(false);
-      }
-      
-      setLastScrollY(currentScrollY);
+      const currentScrollPos = window.pageYOffset;
+      const visible = prevScrollPos > currentScrollPos || currentScrollPos < 10;
+
+      setVisible(visible);
+      setPrevScrollPos(currentScrollPos);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, [prevScrollPos, visible]);
 
   // Context-aware navigation based on current page
   const getContextualTabs = () => {
@@ -162,10 +145,12 @@ export function BottomTabNav() {
 
   return (
     <div 
-      className="fixed left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-gray-100 shadow-2xl lg:hidden"
+      className={`bottom-tab-nav fixed left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-100 shadow-2xl lg:hidden ${
+        visible ? 'bottom-0' : '-bottom-24'
+      }`}
       style={{
-        bottom: isHidden ? '-100px' : '0px',
-        transition: 'bottom 0.2s ease-in-out'
+        transition: 'bottom 0.3s ease-in-out',
+        zIndex: 10003
       }}
     >
       <div className="flex pb-safe">

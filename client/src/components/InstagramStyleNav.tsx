@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 
 export function InstagramStyleNav() {
-  const [isHidden, setIsHidden] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const [prevScrollPos, setPrevScrollPos] = useState(0);
+  const [visible, setVisible] = useState(true);
   const [location] = useLocation();
   const { user } = useAuth();
   
@@ -24,33 +24,16 @@ export function InstagramStyleNav() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Show at top
-      if (currentScrollY <= 20) {
-        setIsHidden(false);
-        setLastScrollY(currentScrollY);
-        return;
-      }
-      
-      // Only process if scroll difference is significant (avoid jitter)
-      if (Math.abs(currentScrollY - lastScrollY) < 5) {
-        return;
-      }
-      
-      // Hide when scrolling down, show when scrolling up
-      if (currentScrollY > lastScrollY) {
-        setIsHidden(true);
-      } else {
-        setIsHidden(false);
-      }
-      
-      setLastScrollY(currentScrollY);
+      const currentScrollPos = window.pageYOffset;
+      const visible = prevScrollPos > currentScrollPos || currentScrollPos < 10;
+
+      setVisible(visible);
+      setPrevScrollPos(currentScrollPos);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, [prevScrollPos, visible]);
 
   const teacherNavItems = [
     { href: "/item-banks", label: "Item Banks", icon: BookOpen },
@@ -70,10 +53,12 @@ export function InstagramStyleNav() {
 
   return (
     <div 
-      className="fixed left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm lg:hidden"
+      className={`instagram-style-nav fixed left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm lg:hidden ${
+        visible ? 'top-16' : '-top-20'
+      }`}
       style={{
-        top: isHidden ? '-64px' : '64px',
-        transition: 'top 0.2s ease-in-out'
+        transition: 'top 0.3s ease-in-out',
+        zIndex: 10002
       }}
     >
       <div className="flex">
