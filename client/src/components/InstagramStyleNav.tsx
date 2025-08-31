@@ -26,11 +26,12 @@ export function InstagramStyleNav() {
     const handleScroll = () => {
       const st = window.pageYOffset || document.documentElement.scrollTop;
       
-      if (st > lastScrollTop) {
-        // Scrolling down - hide
+      // Only hide when scrolling down AND the header is out of view (scrolled past 60px)
+      if (st > lastScrollTop && st > 60) {
+        // Scrolling down past header - hide with delay
         setIsVisible(false);
       } else {
-        // Scrolling up - show
+        // Scrolling up OR still near top - show
         setIsVisible(true);
       }
       
@@ -75,7 +76,7 @@ export function InstagramStyleNav() {
       className="instagram-style-nav fixed left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm lg:hidden"
       style={{
         top: getTopPosition(),
-        transition: 'top 0.2s ease-in-out',
+        transition: 'top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         zIndex: 99999,
         width: '100vw'
       }}
