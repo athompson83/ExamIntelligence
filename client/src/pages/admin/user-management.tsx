@@ -609,6 +609,7 @@ export default function UserManagement() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
