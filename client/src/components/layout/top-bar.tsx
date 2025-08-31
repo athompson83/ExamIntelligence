@@ -58,7 +58,12 @@ export function TopBar() {
   return (
     <header className="h-16 border-b bg-white flex items-center justify-between px-6">
       <div className="flex items-center space-x-4">
-        <h1 className="text-xl font-semibold text-gray-800">ProficiencyAI</h1>
+        <div className="flex items-center space-x-2">
+          <div className="bg-primary rounded-lg p-1.5">
+            <GraduationCap className="h-5 w-5 text-white" />
+          </div>
+          <h1 className="text-xl font-semibold text-gray-800">ProficiencyAI</h1>
+        </div>
       </div>
       
       <div className="flex items-center space-x-4">
