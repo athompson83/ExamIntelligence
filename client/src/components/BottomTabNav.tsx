@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 export function BottomTabNav() {
-  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [location] = useLocation();
   const { user } = useAuth();
@@ -29,32 +29,29 @@ export function BottomTabNav() {
   const isStudentView = location.startsWith('/student') || userRole === 'student';
 
   useEffect(() => {
-    let ticking = false;
-    
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          const delta = 5;
-          
-          // Only update if scrolled more than delta
-          if (Math.abs(lastScrollY - currentScrollY) <= delta) {
-            ticking = false;
-            return;
-          }
-          
-          // Show by default, hide only when scrolling down significantly
-          if (currentScrollY > lastScrollY && currentScrollY > 80) {
-            setIsScrollingDown(true);
-          } else {
-            setIsScrollingDown(false);
-          }
-          
-          setLastScrollY(currentScrollY);
-          ticking = false;
-        });
-        ticking = true;
+      const currentScrollY = window.scrollY;
+      
+      // Show at top
+      if (currentScrollY <= 20) {
+        setIsHidden(false);
+        setLastScrollY(currentScrollY);
+        return;
       }
+      
+      // Only process if scroll difference is significant (avoid jitter)
+      if (Math.abs(currentScrollY - lastScrollY) < 5) {
+        return;
+      }
+      
+      // Hide when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY) {
+        setIsHidden(true);
+      } else {
+        setIsHidden(false);
+      }
+      
+      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -167,7 +164,7 @@ export function BottomTabNav() {
     <div 
       className="fixed left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-gray-100 shadow-2xl lg:hidden"
       style={{
-        bottom: isScrollingDown ? '-100px' : '0px',
+        bottom: isHidden ? '-100px' : '0px',
         transition: 'bottom 0.2s ease-in-out'
       }}
     >
