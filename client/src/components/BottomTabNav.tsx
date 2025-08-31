@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
@@ -20,26 +19,11 @@ import {
 } from "lucide-react";
 
 export function BottomTabNav() {
-  const [prevScrollPos, setPrevScrollPos] = useState(0);
-  const [visible, setVisible] = useState(true);
   const [location] = useLocation();
   const { user } = useAuth();
   
   const userRole = (user as any)?.role || 'teacher';
   const isStudentView = location.startsWith('/student') || userRole === 'student';
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollPos = window.pageYOffset;
-      const visible = prevScrollPos > currentScrollPos || currentScrollPos < 10;
-
-      setVisible(visible);
-      setPrevScrollPos(currentScrollPos);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [prevScrollPos, visible]);
 
   // Context-aware navigation based on current page
   const getContextualTabs = () => {
@@ -145,12 +129,9 @@ export function BottomTabNav() {
 
   return (
     <div 
-      className={`bottom-tab-nav fixed left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-100 shadow-2xl lg:hidden ${
-        visible ? 'bottom-0' : '-bottom-24'
-      }`}
+      className="bottom-tab-nav fixed left-0 right-0 bottom-0 bg-white/90 backdrop-blur-lg border-t border-gray-100 shadow-2xl lg:hidden"
       style={{
-        transition: 'bottom 0.3s ease-in-out',
-        zIndex: 10003
+        zIndex: 99999
       }}
     >
       <div className="flex pb-safe">

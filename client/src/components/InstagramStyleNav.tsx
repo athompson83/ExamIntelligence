@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 
 export function InstagramStyleNav() {
-  const [prevScrollPos, setPrevScrollPos] = useState(0);
-  const [visible, setVisible] = useState(true);
+  const [lastScrollTop, setLastScrollTop] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
   const [location] = useLocation();
   const { user } = useAuth();
   
@@ -24,16 +24,22 @@ export function InstagramStyleNav() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollPos = window.pageYOffset;
-      const visible = prevScrollPos > currentScrollPos || currentScrollPos < 10;
-
-      setVisible(visible);
-      setPrevScrollPos(currentScrollPos);
+      const st = window.pageYOffset || document.documentElement.scrollTop;
+      
+      if (st > lastScrollTop) {
+        // Scrolling down - hide
+        setIsVisible(false);
+      } else {
+        // Scrolling up - show
+        setIsVisible(true);
+      }
+      
+      setLastScrollTop(st <= 0 ? 0 : st); // For Mobile or negative scrolling
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [prevScrollPos, visible]);
+  }, [lastScrollTop]);
 
   const teacherNavItems = [
     { href: "/item-banks", label: "Item Banks", icon: BookOpen },
@@ -53,12 +59,12 @@ export function InstagramStyleNav() {
 
   return (
     <div 
-      className={`instagram-style-nav fixed left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm lg:hidden ${
-        visible ? 'top-16' : '-top-20'
-      }`}
+      className="instagram-style-nav fixed left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm lg:hidden"
       style={{
-        transition: 'top 0.3s ease-in-out',
-        zIndex: 10002
+        top: isVisible ? '64px' : '-80px',
+        transition: 'top 0.2s ease-in-out',
+        zIndex: 99999,
+        width: '100vw'
       }}
     >
       <div className="flex">
