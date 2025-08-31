@@ -46,10 +46,10 @@ export default function Home() {
   return (
     <DashboardLayout title="Dashboard">
       <div className="space-y-8">
-        {/* Student View Button - Only visible for admin/super admin in mobile landscape */}
+        {/* Student View Button - Only visible for admin/super admin */}
         {isAdminOrSuperAdmin && (
-          <div className="block md:hidden landscape:block portrait:hidden">
-            <div className="flex justify-end mb-4">
+          <div className="block sm:hidden mb-4">
+            <div className="flex justify-end">
               <UserRoleSwitcher
                 currentUser={effectiveUser}
                 onUserSwitch={switchUser}

@@ -200,27 +200,28 @@ export default function SuperAdminSettings() {
         </div>
 
         {/* Tabs Navigation */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <nav className="-mb-px flex space-x-1 md:space-x-8 min-w-max">
             {[
-              { id: "accounts", label: "Account Management", icon: Building },
-              { id: "users", label: "User Management", icon: Users },
-              { id: "prompts", label: "AI Prompt Templates", icon: MessageSquare },
-              { id: "mobile", label: "Mobile App Testing", icon: Smartphone },
-              { id: "landing", label: "Landing Page Editor", icon: Globe },
-              { id: "ai", label: "AI Providers", icon: Brain },
+              { id: "accounts", label: "Account Management", icon: Building, shortLabel: "Accounts" },
+              { id: "users", label: "User Management", icon: Users, shortLabel: "Users" },
+              { id: "prompts", label: "AI Prompt Templates", icon: MessageSquare, shortLabel: "Prompts" },
+              { id: "mobile", label: "Mobile App Testing", icon: Smartphone, shortLabel: "Mobile" },
+              { id: "landing", label: "Landing Page Editor", icon: Globe, shortLabel: "Landing" },
+              { id: "ai", label: "AI Providers", icon: Brain, shortLabel: "AI" },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`group inline-flex items-center py-4 px-2 md:px-4 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap ${
                   activeTab === tab.id
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
-                <tab.icon className="h-5 w-5 mr-2" />
-                {tab.label}
+                <tab.icon className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
               </button>
             ))}
           </nav>

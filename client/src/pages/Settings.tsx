@@ -225,16 +225,6 @@ export default function Settings() {
                     System
                   </Button>
                 )}
-                {user?.role === 'super_admin' && (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => window.location.href = "/super-admin-settings"}
-                  >
-                    <Shield className="h-4 w-4 mr-2" />
-                    Super Admin CRM
-                  </Button>
-                )}
               </nav>
             </CardContent>
           </Card>

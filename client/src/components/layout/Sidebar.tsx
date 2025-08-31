@@ -68,6 +68,27 @@ const getAdminNavigation = (t: any) => [
   { name: t('navigation.settings'), href: "/settings", icon: Settings },
 ];
 
+const getSuperAdminNavigation = (t: any) => [
+  { name: t('navigation.dashboard'), href: "/", icon: LayoutDashboard },
+  { name: t('navigation.itemBanks'), href: "/item-banks", icon: FolderOpen },
+  { name: t('navigation.quizBuilder'), href: "/quiz-manager", icon: Puzzle },
+  { name: "CAT Exams", href: "/cat-exams", icon: Target },
+  { name: "AI CAT Generator", href: "/ai-cat-generator", icon: Brain },
+  { name: "Assignments", href: "/assignments", icon: Calendar },
+  { name: "Study Aids", href: "/study-aids", icon: BookOpen },
+  { name: "Prerequisites", href: "/prerequisites", icon: Link2 },
+  { name: "Gradebook", href: "/gradebook", icon: BarChart3 },
+  { name: "Progress Tracking", href: "/progress-tracking", icon: TrendingUp },
+  { name: t('navigation.liveExams'), href: "/live-exams", icon: Play },
+  { name: t('navigation.analytics'), href: "/analytics", icon: BarChart3 },
+  { name: "AI Resources", href: "/ai-resources", icon: Brain },
+  { name: t('navigation.userManagement'), href: "/user-management", icon: Users },
+  { name: "User Activity", href: "/admin/user-activity", icon: Activity },
+  { name: "Super Admin CRM", href: "/super-admin-settings", icon: Shield },
+  { name: "Customer Support", href: "/customer-support", icon: Headphones },
+  { name: t('navigation.settings'), href: "/settings", icon: Settings },
+];
+
 const getStudentNavigation = (t: any) => [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "My Assignments", href: "/assignments", icon: Calendar },
@@ -88,11 +109,14 @@ export function Sidebar({ className }: SidebarProps) {
   
   // Determine navigation based on user role
   const isStudentView = location.startsWith('/student') || userRole === 'student';
-  const isAdminView = userRole === 'admin' || userRole === 'super_admin';
+  const isSuperAdminView = userRole === 'super_admin';
+  const isAdminView = userRole === 'admin';
   
   let navigation;
   if (isStudentView) {
     navigation = getStudentNavigation(t);
+  } else if (isSuperAdminView) {
+    navigation = getSuperAdminNavigation(t);
   } else if (isAdminView) {
     navigation = getAdminNavigation(t);
   } else {

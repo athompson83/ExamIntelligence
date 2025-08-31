@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, MoreHorizontal, Edit2, Trash2, UserCheck, UserX, Mail, Shield, Users } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Edit2, Trash2, UserCheck, UserX, Mail, Shield, Users, Eye } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserSwitching } from "@/hooks/useUserSwitching";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +44,11 @@ interface CreateUserForm {
 export default function UserManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { switchedUser, switchUser, clearUserSwitch, isSwitched } = useUserSwitching();
+  
+  // Get effective user (switched user or original user)
+  const effectiveUser = switchedUser || user;
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
@@ -553,30 +560,42 @@ export default function UserManagement() {
                             {new Date(user.createdAt).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
+                            <div className="flex space-x-2">
+                              {effectiveUser?.role === 'super_admin' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => switchUser(user)}
+                                  className="h-8"
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View As
                                 </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                  <Edit2 className="mr-2 h-4 w-4" />
-                                  Edit User
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleToggleUserStatus(user.id, user.isActive)}>
-                                  {user.isActive ? (
-                                    <>
-                                      <UserX className="mr-2 h-4 w-4" />
-                                      Deactivate
-                                    </>
-                                  ) : (
-                                    <>
-                                      <UserCheck className="mr-2 h-4 w-4" />
-                                      Activate
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                                    <Edit2 className="mr-2 h-4 w-4" />
+                                    Edit User
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleToggleUserStatus(user.id, user.isActive)}>
+                                    {user.isActive ? (
+                                      <>
+                                        <UserX className="mr-2 h-4 w-4" />
+                                        Deactivate
+                                      </>
+                                    ) : (
+                                      <>
+                                        <UserCheck className="mr-2 h-4 w-4" />
+                                        Activate
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Mail className="mr-2 h-4 w-4" />
                                   Send Email
