@@ -232,6 +232,7 @@ export default function UserManagement() {
   };
 
   const handleToggleUserStatus = (userId: string, currentStatus: boolean) => {
+    console.log('Toggling user status:', { userId, currentStatus, newStatus: !currentStatus });
     toggleUserStatusMutation.mutate({ userId, isActive: !currentStatus });
   };
 
@@ -565,7 +566,10 @@ export default function UserManagement() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => switchUser(user)}
+                                  onClick={() => {
+                                    console.log('Switching to user:', user);
+                                    switchUser(user);
+                                  }}
                                   className="h-8"
                                 >
                                   <Eye className="h-4 w-4 mr-1" />
