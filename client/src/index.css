@@ -1243,3 +1243,27 @@ html {
   white-space: nowrap;
   border: 0;
 }
+
+
+/* Enhanced Mobile Bottom Navigation Fix - Final Override */
+@media (max-width: 1023px) {
+  /* Force all main content areas to have proper bottom clearance */
+  main,
+  main[class*="pb-"],
+  [role="main"],
+  .main-content {
+    padding-bottom: 8rem !important; /* 128px - clears bottom navigation completely */
+  }
+
+  /* Override for Layout component and custom layouts */
+  div[class*="min-h-screen"] main,
+  div[class*="flex-1"] main,
+  div[class*="lg:ml-64"] main {
+    padding-bottom: 8rem !important;
+  }
+
+  /* Specific selector for question manager and other standalone pages */
+  .min-h-screen.bg-background main {
+    padding-bottom: 8rem !important;
+  }
+}
