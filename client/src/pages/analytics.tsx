@@ -114,7 +114,7 @@ export default function Analytics() {
       <div className="flex-1 md:ml-64">
         <TopBar />
         
-        <main className="p-4 md:p-6 pt-20 md:pt-6">
+        <main className="p-4 md:p-6 pt-20 md:pt-6 pb-32 md:pb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Analytics Dashboard</h1>

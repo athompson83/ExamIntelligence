@@ -305,7 +305,7 @@ export default function SpeedGrader({ quizId }: SpeedGraderProps) {
         <Sidebar />
         <div className="flex-1 md:md:ml-64">
           <TopBar />
-          <main className="p-6">
+          <main className="p-6 pb-32 md:pb-8">
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Submissions</h3>
