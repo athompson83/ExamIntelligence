@@ -442,6 +442,24 @@
     -ms-overflow-style: auto !important;
     scroll-behavior: smooth !important;
   }
+
+  /* Mobile sidebar positioning fix - override any conflicting styles */
+  @media (max-width: 1023px) {
+    nav.sidebar {
+      padding-top: 5rem !important; /* 80px - proper spacing for mobile header */
+    }
+    
+    /* Ensure mobile sidebar menu appears below the mobile top bar */
+    nav.sidebar[class*="translate-x-0"] {
+      padding-top: 5rem !important;
+      top: 0 !important;
+    }
+    
+    /* Mobile sidebar open state with proper spacing */
+    .mobile-sidebar-open {
+      padding-top: 5rem !important; /* 80px - clears mobile header completely */
+    }
+  }
   
   .sidebar-scroll::-webkit-scrollbar {
     width: 8px !important;

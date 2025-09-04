@@ -269,7 +269,7 @@ export default function Sidebar() {
         lg:block
         max-w-[85vw] transform transition-all duration-300 ease-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        ${isMobileMenuOpen ? 'pt-20' : 'pt-0 lg:pt-0'}
+        ${isMobileMenuOpen ? 'mobile-sidebar-open' : 'pt-0 lg:pt-0'}
       `}>
         {/* Enhanced Logo - Hidden for mobile since we have title in mobile nav bar */}
         <div className="hidden lg:flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
