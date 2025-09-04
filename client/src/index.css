@@ -443,21 +443,18 @@
     scroll-behavior: smooth !important;
   }
 
-  /* Mobile sidebar positioning fix - override any conflicting styles */
+  /* Mobile sidebar positioning fix - starts below mobile header */
   @media (max-width: 1023px) {
-    nav.sidebar {
-      padding-top: 5rem !important; /* 80px - proper spacing for mobile header */
-    }
-    
-    /* Ensure mobile sidebar menu appears below the mobile top bar */
     nav.sidebar[class*="translate-x-0"] {
-      padding-top: 5rem !important;
-      top: 0 !important;
+      top: 4rem !important; /* 64px - starts below mobile header bar */
+      height: calc(100vh - 4rem) !important; /* Full height minus header */
+      padding-top: 1rem !important; /* Small padding at top for visual spacing */
     }
     
-    /* Mobile sidebar open state with proper spacing */
+    /* Remove any conflicting top positioning on mobile */
     .mobile-sidebar-open {
-      padding-top: 5rem !important; /* 80px - clears mobile header completely */
+      top: 4rem !important;
+      padding-top: 1rem !important;
     }
   }
   

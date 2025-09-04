@@ -264,11 +264,11 @@ export default function Sidebar() {
       {/* Enhanced Desktop Sidebar & Mobile Drawer */}
       <nav className={`
         sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
-        w-64 min-w-64 max-w-64 fixed inset-y-0 left-0 ${isMobileMenuOpen ? 'z-[10001]' : 'z-[9991]'}
-        lg:translate-x-0
+        w-64 min-w-64 max-w-64 fixed left-0 ${isMobileMenuOpen ? 'z-[10001]' : 'z-[9991]'}
+        lg:translate-x-0 lg:inset-y-0
         lg:block
         max-w-[85vw] transform transition-all duration-300 ease-out
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        ${isMobileMenuOpen ? 'translate-x-0 top-16 bottom-0' : '-translate-x-full lg:translate-x-0 lg:top-0'}
         ${isMobileMenuOpen ? 'mobile-sidebar-open' : 'pt-0 lg:pt-0'}
       `}>
         {/* Enhanced Logo - Hidden for mobile since we have title in mobile nav bar */}
