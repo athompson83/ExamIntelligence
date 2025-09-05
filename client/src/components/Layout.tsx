@@ -31,7 +31,7 @@ export default function Layout({ children }: LayoutProps) {
         <main className={`flex-1 p-4 transition-all duration-300 ease-out lg:p-6 pb-32 lg:pb-6 ${
           isLoaded ? 'opacity-100 transform-none fade-in-fast' : 'opacity-0 translate-y-4'
         }`}>
-          <div className="animate-in fade-in-0 duration-700 pt-20 lg:pt-0">
+          <div className="animate-in fade-in-0 duration-700 pt-6 lg:pt-0">
             {children}
           </div>
         </main>
