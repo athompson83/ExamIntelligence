@@ -1199,26 +1199,21 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Enhanced fixed header and scroll behavior */
+/* Enhanced scroll behavior - header scrolls with content */
 @media (max-width: 1023px) {
   /* Ensure smooth scroll behavior on mobile */
   * {
     scroll-behavior: smooth;
   }
   
-  /* Fixed header stays in place during scroll */
-  header.fixed {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 10002 !important;
+  /* Header scrolls naturally with page content */
+  header {
+    position: relative !important;
   }
   
-  /* Account for fixed header spacing */
+  /* Maintain proper spacing without fixed positioning */
   main, .main-content {
-    margin-top: 3.5rem; /* 56px for mobile header */
-    padding-top: 1rem; /* Additional spacing */
+    padding-top: 1rem;
   }
   
   /* Override conflicting pt-20 styles on mobile */
