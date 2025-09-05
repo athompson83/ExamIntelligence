@@ -448,13 +448,13 @@
     nav.sidebar[class*="translate-x-0"] {
       top: 4rem !important; /* 64px - starts below mobile header bar */
       height: calc(100vh - 4rem) !important; /* Full height minus header */
-      padding-top: 1rem !important; /* Small padding at top for visual spacing */
+      padding-top: 1.5rem !important; /* Extra padding to ensure Dashboard link is visible */
     }
     
     /* Remove any conflicting top positioning on mobile */
     .mobile-sidebar-open {
       top: 4rem !important;
-      padding-top: 1rem !important;
+      padding-top: 1.5rem !important; /* Extra padding for top navigation item visibility */
     }
   }
   
