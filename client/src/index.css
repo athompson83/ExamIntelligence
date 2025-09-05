@@ -448,13 +448,18 @@
     nav.sidebar[class*="translate-x-0"] {
       top: 4rem !important; /* 64px - starts below mobile header bar */
       height: calc(100vh - 4rem) !important; /* Full height minus header */
-      padding-top: 1.5rem !important; /* Extra padding to ensure Dashboard link is visible */
+      padding-top: 2.5rem !important; /* Generous padding to ensure Dashboard link is fully visible */
     }
     
     /* Remove any conflicting top positioning on mobile */
     .mobile-sidebar-open {
       top: 4rem !important;
-      padding-top: 1.5rem !important; /* Extra padding for top navigation item visibility */
+      padding-top: 2.5rem !important; /* Generous padding for top navigation item visibility */
+    }
+    
+    /* Additional override for any stubborn styles */
+    nav.sidebar.mobile-sidebar-open {
+      padding-top: 2.5rem !important;
     }
   }
   
@@ -1192,6 +1197,24 @@ img {
 /* Smooth scrolling for better UX */
 html {
   scroll-behavior: smooth;
+}
+
+/* Enhanced sticky header and scroll behavior */
+@media (max-width: 1023px) {
+  /* Ensure smooth scroll behavior on mobile */
+  * {
+    scroll-behavior: smooth;
+  }
+  
+  /* Fix sticky header scroll synchronization */
+  header.sticky {
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease;
+  }
+  
+  /* Prevent header jumping during scroll */
+  main, .main-content {
+    scroll-margin-top: 4rem; /* Account for sticky header height */
+  }
 }
 
 /* Loading states for better perceived performance */
