@@ -28,6 +28,7 @@ import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import Layout from "@/components/Layout";
 
 interface Quiz {
   id: string;
@@ -246,7 +247,8 @@ export default function QuizManager() {
   const publishedQuizzes = filteredQuizzes.filter((q: Quiz) => q.publishedAt);
 
   return (
-    <div className="p-6">
+    <Layout>
+      <div className="space-y-6">
       {/* Breadcrumb Navigation */}
       <div className="flex items-center space-x-1 text-sm text-muted-foreground mb-6">
         <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard')}>
@@ -668,6 +670,7 @@ export default function QuizManager() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </Layout>
   );
 }
