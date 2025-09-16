@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -21,6 +21,9 @@ import { useUserSwitching } from "@/hooks/useUserSwitching";
 export default function TopBar() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const headerRef = useRef<HTMLElement>(null);
   const [location, navigate] = useLocation();
   const { switchedUser, switchUser, clearUserSwitch, isSwitched } = useUserSwitching();
 
@@ -53,8 +56,42 @@ export default function TopBar() {
     return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || 'U';
   };
 
+  // Handle scroll behavior for sticky header with better performance
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          
+          // Show header when scrolling up or at the top
+          if (currentScrollY < lastScrollY.current || currentScrollY < 10) {
+            setIsVisible(true);
+          } 
+          // Hide header when scrolling down
+          else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+            setIsVisible(false);
+          }
+          
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className="bg-surface border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between h-14 md:h-16 md:px-6 md:py-4 flex-shrink-0 overflow-hidden relative">
+    <header 
+      ref={headerRef}
+      className={`bg-surface border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between h-14 md:h-16 md:px-6 md:py-4 flex-shrink-0 overflow-hidden fixed top-0 left-0 right-0 z-[10002] transition-transform duration-300 ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+    >
       <div className="flex items-center flex-1 min-w-0">
         {/* Section titles are in a different area */}
       </div>

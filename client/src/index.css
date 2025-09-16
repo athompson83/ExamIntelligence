@@ -1199,36 +1199,47 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Enhanced scroll behavior - perfectly synchronized */
+/* Define header heights as CSS variables */
+:root {
+  --header-height-mobile: 3.5rem; /* 56px */
+  --header-height-desktop: 4rem; /* 64px */
+}
+
+/* Enhanced sticky header behavior */
 @media (max-width: 1023px) {
-  /* Disable all conflicting transforms and transitions on scroll elements */
-  header, main, .main-content {
-    transform: none !important;
-    transition: none !important;
-    will-change: auto !important;
-    backface-visibility: visible !important;
-    perspective: none !important;
-  }
-  
-  /* Header scrolls naturally with page content */
+  /* Fixed header with smooth transitions */
   header {
-    position: relative !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10002;
+    height: var(--header-height-mobile);
   }
   
-  /* Unified scroll container behavior */
-  .flex-1 {
-    overflow: visible !important;
+  /* Ensure sidebar appears below header when open */
+  nav.sidebar[class*="translate-x-0"] {
+    top: var(--header-height-mobile);
+    height: calc(100vh - var(--header-height-mobile));
+  }
+}
+
+/* Desktop sticky header behavior */
+@media (min-width: 1024px) {
+  /* Fixed header on desktop too */
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10002;
+    height: var(--header-height-desktop);
   }
   
-  /* Remove conflicting spacing that could cause offset */
-  main, .main-content {
-    margin-top: 0 !important;
-    padding-top: 1rem !important;
-  }
-  
-  /* Override conflicting pt-20 styles on mobile */
-  main[class*="pt-20"] {
-    padding-top: 1rem !important;
+  /* Sidebar on desktop also accounts for fixed header */
+  nav.sidebar {
+    top: var(--header-height-desktop);
+    height: calc(100vh - var(--header-height-desktop));
   }
 }
 

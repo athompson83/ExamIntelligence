@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/Sidebar";
-import { TopBar } from "@/components/layout/top-bar";
+import TopBar from "@/components/TopBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -114,7 +114,7 @@ export default function Analytics() {
       <div className="flex-1 md:ml-64">
         <TopBar />
         
-        <main className="p-4 md:p-6 pt-20 md:pt-6 pb-32 md:pb-8">
+        <main className="p-4 md:p-6 pt-24 md:pt-24 pb-32 md:pb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Analytics Dashboard</h1>
