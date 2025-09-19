@@ -1205,41 +1205,41 @@ html {
   --header-height-desktop: 4rem; /* 64px */
 }
 
-/* Enhanced sticky header behavior */
+/* Sticky header behavior - scrolls with page initially */
+header {
+  position: sticky !important;
+  top: 0;
+  z-index: 10002;
+  background: var(--surface);
+  backdrop-filter: blur(8px);
+}
+
+/* Smooth scroll for the entire page */
+html, body {
+  scroll-behavior: smooth;
+}
+
+/* Ensure consistent scroll speed */
+* {
+  scroll-behavior: inherit;
+}
+
+/* Mobile sidebar positioning */
 @media (max-width: 1023px) {
-  /* Fixed header with smooth transitions */
-  header {
+  nav.sidebar[class*="translate-x-0"] {
     position: fixed;
     top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10002;
-    height: var(--header-height-mobile);
-  }
-  
-  /* Ensure sidebar appears below header when open */
-  nav.sidebar[class*="translate-x-0"] {
-    top: var(--header-height-mobile);
-    height: calc(100vh - var(--header-height-mobile));
+    height: 100vh;
+    z-index: 10003; /* Above header */
   }
 }
 
-/* Desktop sticky header behavior */
+/* Desktop sidebar positioning */
 @media (min-width: 1024px) {
-  /* Fixed header on desktop too */
-  header {
+  nav.sidebar {
     position: fixed;
     top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10002;
-    height: var(--header-height-desktop);
-  }
-  
-  /* Sidebar on desktop also accounts for fixed header */
-  nav.sidebar {
-    top: var(--header-height-desktop);
-    height: calc(100vh - var(--header-height-desktop));
+    height: 100vh;
   }
 }
 
