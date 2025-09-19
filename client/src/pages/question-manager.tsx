@@ -1134,7 +1134,6 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   return (
     <div className="min-h-screen bg-background">
       <TopBar />
-      <div className="h-14 md:h-16 flex-shrink-0"></div>
       
       <main className="p-4 md:p-6 pb-32 md:pb-8">
           {/* Mobile Back Button & Breadcrumb Navigation */}

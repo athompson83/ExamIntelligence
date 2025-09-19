@@ -323,7 +323,6 @@ export default function SpeedGrader({ quizId }: SpeedGraderProps) {
       
       <div className="flex-1 md:md:ml-64">
         <TopBar />
-        <div className="h-14 md:h-16 flex-shrink-0"></div>
         
         {/* SpeedGrader Header */}
         <div className="bg-white border-b shadow-sm">
