@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/Sidebar";
-import { TopBar } from "@/components/layout/top-bar";
+import TopBar from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -323,6 +323,7 @@ export default function SpeedGrader({ quizId }: SpeedGraderProps) {
       
       <div className="flex-1 md:md:ml-64">
         <TopBar />
+        <div className="h-14 md:h-16 flex-shrink-0"></div>
         
         {/* SpeedGrader Header */}
         <div className="bg-white border-b shadow-sm">

@@ -56,7 +56,7 @@ export default function TopBar() {
     return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || 'U';
   };
 
-  // Handle scroll behavior - header scrolls with page initially, then becomes sticky
+  // Handle scroll behavior for hide/show on scroll direction
   useEffect(() => {
     let ticking = false;
     
@@ -65,18 +65,16 @@ export default function TopBar() {
         window.requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
           
-          // When scrolled past initial position, enable sticky behavior
-          if (currentScrollY > 200) {
-            // Show header when scrolling up
-            if (currentScrollY < lastScrollY.current) {
-              setIsVisible(true);
-            } 
-            // Hide header when scrolling down
-            else if (currentScrollY > lastScrollY.current) {
-              setIsVisible(false);
-            }
-          } else {
-            // Always show header when near top
+          // Always show when at the top
+          if (currentScrollY < 50) {
+            setIsVisible(true);
+          } 
+          // Hide when scrolling down (with threshold to prevent jitter)
+          else if (currentScrollY > lastScrollY.current + 5 && currentScrollY > 100) {
+            setIsVisible(false);
+          }
+          // Show when scrolling up (with threshold to prevent jitter)
+          else if (currentScrollY < lastScrollY.current - 5) {
             setIsVisible(true);
           }
           
@@ -94,7 +92,7 @@ export default function TopBar() {
   return (
     <header 
       ref={headerRef}
-      className={`bg-surface border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between h-14 md:h-16 md:px-6 md:py-4 flex-shrink-0 overflow-hidden sticky top-0 z-[10002] transition-transform duration-300 ${
+      className={`bg-surface border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between h-14 md:h-16 md:px-6 md:py-4 flex-shrink-0 overflow-hidden fixed top-0 left-0 right-0 w-full z-[10002] transition-transform duration-300 ease-in-out ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >

@@ -265,6 +265,7 @@ export default function EnhancedDifficultyTrackingPage() {
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <TopBar />
+        <div className="h-14 md:h-16 flex-shrink-0"></div>
         <div className="flex-1 p-6 overflow-auto">
           <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">

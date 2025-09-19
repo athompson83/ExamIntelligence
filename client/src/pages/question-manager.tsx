@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import Sidebar from "@/components/Sidebar";
-import { TopBar } from "@/components/layout/top-bar";
+import TopBar from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1134,6 +1134,7 @@ export default function QuestionManager({ testbankId }: QuestionManagerProps) {
   return (
     <div className="min-h-screen bg-background">
       <TopBar />
+      <div className="h-14 md:h-16 flex-shrink-0"></div>
       
       <main className="p-4 md:p-6 pb-32 md:pb-8">
           {/* Mobile Back Button & Breadcrumb Navigation */}
