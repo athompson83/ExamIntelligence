@@ -244,7 +244,10 @@ export default function Sidebar() {
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg text-white hover:bg-white/20 transition-all duration-200 btn-modern"
+            className="p-2 rounded-lg text-white hover:bg-white/20 transition-all duration-200 btn-modern min-h-[44px] min-w-[44px]"
+            data-testid="button-mobile-menu"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMobileMenuOpen}
           >
             <div className="w-5 h-5 flex flex-col justify-center space-y-1">
               <div className={`w-5 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
@@ -262,7 +265,8 @@ export default function Sidebar() {
         />
       )}
       {/* Enhanced Desktop Sidebar & Mobile Drawer */}
-      <nav className={`
+      <nav 
+        className={`
         sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
         w-64 min-w-64 max-w-64 fixed left-0 ${isMobileMenuOpen ? 'z-[10001]' : 'z-[9991]'}
         lg:translate-x-0 lg:inset-y-0
@@ -270,7 +274,11 @@ export default function Sidebar() {
         max-w-[85vw] transform transition-all duration-300 ease-out
         ${isMobileMenuOpen ? 'translate-x-0 top-16 bottom-0' : '-translate-x-full lg:translate-x-0 lg:top-0'}
         ${isMobileMenuOpen ? 'mobile-sidebar-open' : 'pt-0 lg:pt-0'}
-      `}>
+      `}
+        role="navigation"
+        aria-label="Main navigation"
+        data-testid="sidebar-navigation"
+      >
         {/* Enhanced Logo - Hidden for mobile since we have title in mobile nav bar */}
         <div className="hidden lg:flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
           <div className="flex items-center">
@@ -285,10 +293,12 @@ export default function Sidebar() {
         <div className="flex-shrink-0 px-4 py-1">
           <button
             onClick={scrollUp}
-            className={`w-full flex items-center justify-center py-2 rounded-lg text-gray-500 hover:text-primary hover:bg-primary/10 dark:text-gray-400 dark:hover:text-primary transition-all duration-200 ${
+            className={`w-full flex items-center justify-center py-2 rounded-lg text-gray-500 hover:text-primary hover:bg-primary/10 dark:text-gray-400 dark:hover:text-primary transition-all duration-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
               isScrolling ? 'animate-pulse' : 'scroll-indicator'
             }`}
             title="Scroll up to see more items"
+            data-testid="button-scroll-up"
+            aria-label="Scroll up to see more navigation items"
           >
             <ChevronUp className="h-4 w-4" />
           </button>
@@ -318,12 +328,15 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleGroup(group.id)}
                   className={`
-                    w-full group flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ease-out whitespace-nowrap mx-2 min-h-[44px] lg:px-4 lg:py-2.5 lg:text-sm lg:min-h-[44px]
+                    w-full group flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ease-out whitespace-nowrap mx-2 min-h-[48px] lg:px-4 lg:py-2.5 lg:text-sm lg:min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none
                     ${groupHasActiveItem 
                       ? 'bg-gradient-to-r from-primary/15 to-primary/10 text-primary border-l-2 border-primary shadow-sm' 
                       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 hover:text-gray-800 dark:hover:text-gray-200'
                     }
                   `}
+                  data-testid={`group-toggle-${group.id}`}
+                  aria-expanded={shouldBeExpanded}
+                  aria-label={`${shouldBeExpanded ? 'Collapse' : 'Expand'} ${group.label}`}
                 >
                   <div className="flex items-center">
                     <GroupIcon className="mr-3 h-5 w-5 flex-shrink-0 lg:mr-3 lg:h-5 lg:w-5" />
@@ -347,8 +360,10 @@ export default function Sidebar() {
                         key={item.href}
                         href={item.href}
                         ref={active ? activeItemRef : undefined}
-                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm" : "text-base"} btn-modern`}
+                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm" : "text-base"} btn-modern min-h-[48px] lg:min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none`}
                         data-tour={item.tourId}
+                        data-testid={`nav-link-${item.tourId || item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                        aria-current={active ? 'page' : undefined}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Icon className="h-4 w-4 mr-3 flex-shrink-0 lg:h-4 lg:w-4 lg:mr-3" />
@@ -368,10 +383,12 @@ export default function Sidebar() {
         <div className="flex-shrink-0 px-4 py-1">
           <button
             onClick={scrollDown}
-            className={`w-full flex items-center justify-center py-2 rounded-lg text-gray-500 hover:text-primary hover:bg-primary/10 dark:text-gray-400 dark:hover:text-primary transition-all duration-200 ${
+            className={`w-full flex items-center justify-center py-2 rounded-lg text-gray-500 hover:text-primary hover:bg-primary/10 dark:text-gray-400 dark:hover:text-primary transition-all duration-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
               isScrolling ? 'animate-pulse' : 'scroll-indicator'
             }`}
             title="Scroll down to see more items"
+            data-testid="button-scroll-down"
+            aria-label="Scroll down to see more navigation items"
           >
             <ChevronDown className="h-4 w-4" />
           </button>

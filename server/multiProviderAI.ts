@@ -379,6 +379,43 @@ class MultiProviderAI {
     }
   }
 
+  // Alias for backward compatibility
+  async generateWithAI(params: {
+    messages: Array<{ role: string; content: string }>;
+    model?: string;
+    maxTokens?: number;
+    temperature?: number;
+    responseFormat?: { type: string };
+    taskType?: string;
+  }): Promise<AIResponse> {
+    return this.generateContent(params);
+  }
+
+  async testProviderConnection(provider: any): Promise<{ success: boolean; message?: string }> {
+    try {
+      // Test connection by trying a simple completion
+      const testMessages = [
+        { role: 'user', content: 'Reply with "OK" if you can read this.' }
+      ];
+      
+      const response = await this.generateContent({
+        messages: testMessages,
+        maxTokens: 10,
+        temperature: 0
+      });
+      
+      return {
+        success: true,
+        message: `Provider ${provider.name || 'unknown'} is working correctly`
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: `Provider test failed: ${error.message}`
+      };
+    }
+  }
+
   async generateContent(params: {
     messages: Array<{ role: string; content: string }>;
     model?: string;

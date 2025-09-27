@@ -103,6 +103,8 @@ export default function TopBar() {
       
       <header 
         ref={headerRef}
+        role="banner"
+        aria-label="Top navigation"
         className={`bg-surface border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between h-14 md:h-16 md:px-6 md:py-4 flex-shrink-0 overflow-hidden z-[10002] transition-all duration-300 ${
           isSticky 
             ? `fixed top-0 left-0 right-0 w-full ${isVisible ? 'translate-y-0' : '-translate-y-full'}` 
@@ -116,22 +118,31 @@ export default function TopBar() {
       <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
         {/* Enhanced Search - Mobile Responsive */}
         <div className="relative hidden sm:block flex-shrink-0">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" aria-hidden="true" />
           <Input
             type="text"
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 w-48 md:w-56 lg:w-64"
+            className="pl-10 pr-4 w-48 md:w-56 lg:w-64 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             style={{ paddingLeft: '2.5rem' }}
+            data-testid="input-search"
+            aria-label="Search"
           />
         </div>
         
         {/* Enhanced Notifications - Mobile Responsive */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="relative btn-modern" data-tour="notifications">
-              <Bell className="h-6 w-6 md:h-5 md:w-5" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="relative btn-modern" 
+              data-tour="notifications"
+              data-testid="button-notifications"
+              aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
+            >
+              <Bell className="h-6 w-6 md:h-5 md:w-5" aria-hidden="true" />
               {unreadCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-6 w-6 md:h-5 md:w-5 rounded-full p-0 flex items-center justify-center text-sm md:text-xs font-bold">
                   {unreadCount}
@@ -166,8 +177,14 @@ export default function TopBar() {
             currentUser={currentUser} 
             onUserSwitch={switchUser}
             trigger={
-              <Button variant="outline" size="sm" className="btn-modern">
-                <Users className="h-4 w-4 mr-1" />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="btn-modern"
+                data-testid="button-switch-user"
+                aria-label="Switch user"
+              >
+                <Users className="h-4 w-4 mr-1" aria-hidden="true" />
                 <span className="whitespace-nowrap">{isSwitched ? 'Test User' : 'Switch User'}</span>
               </Button>
             }
@@ -177,7 +194,14 @@ export default function TopBar() {
         {/* Enhanced User Profile - Mobile Responsive */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center space-x-2 btn-modern p-2 flex-shrink-0">
+            <Button 
+              variant="ghost" 
+              className="flex items-center space-x-2 btn-modern p-2 flex-shrink-0"
+              data-testid="button-user-menu"
+              aria-label="User menu"
+              aria-expanded="false"
+              aria-haspopup="true"
+            >
               <div className="text-right hidden lg:block">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
                   {(currentUser as any)?.firstName} {(currentUser as any)?.lastName}
@@ -206,39 +230,48 @@ export default function TopBar() {
             {/* Clear User Switch if active */}
             {isSwitched && (
               <>
-                <DropdownMenuItem onClick={clearUserSwitch}>
-                  <Users className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={clearUserSwitch} data-testid="menu-return-original-user">
+                  <Users className="mr-2 h-4 w-4" aria-hidden="true" />
                   Return to Original User
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </>
             )}
             
-            <DropdownMenuItem onClick={handleViewToggle}>
+            <DropdownMenuItem 
+              onClick={handleViewToggle}
+              data-testid={isStudentView ? "menu-switch-teacher-view" : "menu-switch-student-view"}
+            >
               {isStudentView ? (
                 <>
-                  <BookOpen className="mr-2 h-4 w-4" />
+                  <BookOpen className="mr-2 h-4 w-4" aria-hidden="true" />
                   Switch to Teacher View
                 </>
               ) : (
                 <>
-                  <GraduationCap className="mr-2 h-4 w-4" />
+                  <GraduationCap className="mr-2 h-4 w-4" aria-hidden="true" />
                   Switch to Student View
                 </>
               )}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
+            <DropdownMenuItem data-testid="menu-profile">
+              <User className="mr-2 h-4 w-4" aria-hidden="true" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/settings')}>
-              <Settings className="mr-2 h-4 w-4" />
+            <DropdownMenuItem 
+              onClick={() => navigate('/settings')}
+              data-testid="menu-settings"
+            >
+              <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
+            <DropdownMenuItem 
+              onClick={handleLogout}
+              data-testid="menu-logout"
+            >
+              <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

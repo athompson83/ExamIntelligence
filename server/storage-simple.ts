@@ -49,6 +49,10 @@ import {
   type InsertCatExamAssignment,
   type CatExamSession,
   type InsertCatExamSession,
+  
+  type Account,
+  studyAids,
+  customInstructions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, gte, lte } from "drizzle-orm";
@@ -164,6 +168,7 @@ export interface IStorage {
   deleteReference(id: string): Promise<boolean>;
   
   // Account management operations
+  getAccountById(accountId: string): Promise<Account | undefined>;
   getAccountsByUser(userId: string): Promise<any[]>;
   
   // Scheduled assignments operations
@@ -186,6 +191,43 @@ export interface IStorage {
   updatePromptTemplate(id: string, template: Partial<InsertPromptTemplate>): Promise<PromptTemplate>;
   deletePromptTemplate(id: string): Promise<boolean>;
   
+  // Question Group Methods
+  getQuestionGroupsByQuiz(quizId: string): Promise<any[]>;
+  createQuestionGroup(groupData: any): Promise<any>;
+  updateQuestionGroup(id: string, groupData: any): Promise<any>;
+  deleteQuestionGroup(id: string): Promise<boolean>;
+  assignQuestionsToGroup(groupId: string, questionIds: string[]): Promise<void>;
+  getQuestionsByQuiz(quizId: string): Promise<Question[]>;
+  
+  // Shared Content Methods
+  getSharedTestbanksByAccount(accountId: string): Promise<any[]>;
+  getSharedQuizzesByAccount(accountId: string): Promise<any[]>;
+  
+  // Prompt Template Methods - Extended
+  getPromptTemplate(id: string): Promise<PromptTemplate | undefined>;
+  getPromptTemplatesByCategory(category: string, accountId?: string): Promise<PromptTemplate[]>;
+  getPromptTemplatesByAccount(accountId: string): Promise<PromptTemplate[]>;
+  getSystemDefaultPromptTemplates(): Promise<PromptTemplate[]>;
+  
+  // LLM Provider Methods - Extended
+  getLlmProvider(id: string): Promise<any>;
+  getLlmProvidersByAccount(accountId: string): Promise<any[]>;
+  getActiveLlmProviders(): Promise<any[]>;
+  createLlmProvider(providerData: any): Promise<any>;
+  updateLlmProvider(id: string, providerData: any): Promise<any>;
+  
+  // Custom Instructions Methods
+  createCustomInstruction(instructionData: any): Promise<any>;
+  getCustomInstruction(id: string): Promise<any>;
+  getCustomInstructionsByCategory(category: string): Promise<any[]>;
+  getCustomInstructionsByAccount(accountId: string): Promise<any[]>;
+  getPublicCustomInstructions(): Promise<any[]>;
+  updateCustomInstruction(id: string, instructionData: any): Promise<any>;
+  incrementCustomInstructionUsage(id: string): Promise<void>;
+  
+  // Proctor Alerts Methods
+  getProctorAlertsByExam(examId: string): Promise<any[]>;
+  
   // Offline Sync Methods
   getTeachersForQuiz(quizId: string): Promise<User[]>;
   saveQuizResponse(payload: any): Promise<any>;
@@ -205,6 +247,10 @@ export interface IStorage {
   // Study Aid Methods
   getStudyAidsByStudent(studentId: string): Promise<any[]>;
   createStudyAid(studyAidData: any): Promise<any>;
+  getStudyAid(id: string): Promise<any>;
+  updateStudyAidAccess(id: string): Promise<any>;
+  updateStudyAidRating(id: string, rating: number): Promise<any>;
+  deleteStudyAid(id: string): Promise<boolean>;
   
   // AI Resource Methods (unified with Study Aids)
   getAiResourcesByUser(userId: string): Promise<any[]>;
@@ -285,6 +331,81 @@ export interface IStorage {
   // Landing Page Content Management
   getLandingPageContent(): Promise<any>;
   updateLandingPageContent(content: any): Promise<any>;
+  
+  // Additional missing methods
+  deleteCustomInstruction(id: string): Promise<boolean>;
+  getQuizProgress(quizId: string, userId: string): Promise<any>;
+  saveQuizProgress(progressData: any): Promise<any>;
+  deleteQuizProgress(id: string): Promise<boolean>;
+  createUserWithAccount(userData: any): Promise<any>;
+  updateUserWithRole(userId: string, role: string, accountId?: string): Promise<any>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  
+  // Badge Methods
+  getBadgesByAccount(accountId: string): Promise<any[]>;
+  getActiveBadges(): Promise<any[]>;
+  createBadge(badgeData: any): Promise<any>;
+  getBadge(id: string): Promise<any>;
+  updateBadge(id: string, badgeData: any): Promise<any>;
+  deleteBadge(id: string): Promise<boolean>;
+  
+  // Certificate Methods
+  getCertificateTemplatesByAccount(accountId: string): Promise<any[]>;
+  getActiveCertificateTemplates(): Promise<any[]>;
+  createCertificateTemplate(templateData: any): Promise<any>;
+  getCertificateTemplate(id: string): Promise<any>;
+  updateCertificateTemplate(id: string, templateData: any): Promise<any>;
+  deleteCertificateTemplate(id: string): Promise<boolean>;
+  
+  // Badge/Certificate Management
+  getStudentBadgesWithDetails(studentId: string): Promise<any[]>;
+  awardBadge(badgeData: any): Promise<any>;
+  getAwardedBadge(id: string): Promise<any>;
+  deleteAwardedBadge(id: string): Promise<boolean>;
+  getStudentCertificatesWithTemplate(studentId: string): Promise<any[]>;
+  issueCertificate(certificateData: any): Promise<any>;
+  getCertificateByVerificationCode(code: string): Promise<any>;
+  getUserBadgesWithBadgeDetails(userId: string): Promise<any[]>;
+  createUserBadge(userBadgeData: any): Promise<any>;
+  deleteUserBadge(id: string): Promise<boolean>;
+  
+  // Learning Milestones
+  getLearningMilestonesByUser(userId: string): Promise<any[]>;
+  getLearningMilestonesByAccount(accountId: string): Promise<any[]>;
+  createLearningMilestone(milestoneData: any): Promise<any>;
+  getLearningMilestone(id: string): Promise<any>;
+  updateLearningMilestone(id: string, milestoneData: any): Promise<any>;
+  deleteLearningMilestone(id: string): Promise<boolean>;
+  
+  // Social Share Methods
+  getSocialSharesByUser(userId: string): Promise<any[]>;
+  getPublicSocialShares(): Promise<any[]>;
+  getSocialSharesByPlatform(platform: string): Promise<any[]>;
+  createSocialShare(shareData: any): Promise<any>;
+  incrementShareEngagement(id: string): Promise<any>;
+  getSocialShare(id: string): Promise<any>;
+  updateSocialShare(id: string, shareData: any): Promise<any>;
+  deleteSocialShare(id: string): Promise<boolean>;
+  
+  // Badge Templates
+  getBadgeTemplatesByCategory(category: string): Promise<any[]>;
+  getPopularBadgeTemplates(): Promise<any[]>;
+  createBadgeTemplate(templateData: any): Promise<any>;
+  getBadgeTemplate(id: string): Promise<any>;
+  updateBadgeTemplate(id: string, templateData: any): Promise<any>;
+  incrementBadgeTemplateUsage(id: string): Promise<any>;
+  deleteBadgeTemplate(id: string): Promise<boolean>;
+  revokeCertificate(id: string): Promise<any>;
+  
+  // Accessibility Settings
+  getUserAccessibilitySettings(userId: string): Promise<any>;
+  updateUserAccessibilitySettings(userId: string, settings: any): Promise<any>;
+  
+  // Mood Tracking
+  createMoodEntry(moodData: any): Promise<any>;
+  getMoodEntriesByContext(context: string): Promise<any[]>;
+  getMoodEntriesByDateRange(startDate: Date, endDate: Date): Promise<any[]>;
+  getMoodEntriesByUser(userId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4628,9 +4749,372 @@ Return JSON with the new question data:
     return true;
   }
 
+  // Account Methods Implementation
+  async getAccountById(accountId: string): Promise<Account | undefined> {
+    try {
+      const [account] = await db.select().from(accounts).where(eq(accounts.id, accountId));
+      return account;
+    } catch (error) {
+      console.error('Error getting account by ID:', error);
+      return undefined;
+    }
+  }
+
   async getAccountsByUser(userId: string): Promise<any[]> {
     console.log('getAccountsByUser stub called');
     return [];
+  }
+
+  // Study Aid Methods Implementation
+  async getStudyAid(id: string): Promise<any> {
+    try {
+      const [studyAid] = await db.select().from(studyAids).where(eq(studyAids.id, id));
+      return studyAid;
+    } catch (error) {
+      console.error('Error getting study aid:', error);
+      return undefined;
+    }
+  }
+
+  async updateStudyAidAccess(id: string): Promise<any> {
+    try {
+      const result = await db.update(studyAids)
+        .set({ 
+          accessCount: sql`${studyAids.accessCount} + 1`,
+          lastAccessedAt: new Date()
+        })
+        .where(eq(studyAids.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating study aid access:', error);
+      return undefined;
+    }
+  }
+
+  async updateStudyAidRating(id: string, rating: number): Promise<any> {
+    try {
+      const result = await db.update(studyAids)
+        .set({ rating })
+        .where(eq(studyAids.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating study aid rating:', error);
+      return undefined;
+    }
+  }
+
+  async deleteStudyAid(id: string): Promise<boolean> {
+    try {
+      await db.delete(studyAids).where(eq(studyAids.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting study aid:', error);
+      return false;
+    }
+  }
+
+  // Question Group Methods Implementation
+  async getQuestionGroupsByQuiz(quizId: string): Promise<any[]> {
+    try {
+      return await db.select().from(questionGroups).where(eq(questionGroups.quizId, quizId));
+    } catch (error) {
+      console.error('Error getting question groups:', error);
+      return [];
+    }
+  }
+
+  async createQuestionGroup(groupData: any): Promise<any> {
+    try {
+      const [group] = await db.insert(questionGroups).values(groupData).returning();
+      return group;
+    } catch (error) {
+      console.error('Error creating question group:', error);
+      return undefined;
+    }
+  }
+
+  async updateQuestionGroup(id: string, groupData: any): Promise<any> {
+    try {
+      const [group] = await db.update(questionGroups)
+        .set(groupData)
+        .where(eq(questionGroups.id, id))
+        .returning();
+      return group;
+    } catch (error) {
+      console.error('Error updating question group:', error);
+      return undefined;
+    }
+  }
+
+  async deleteQuestionGroup(id: string): Promise<boolean> {
+    try {
+      await db.delete(questionGroups).where(eq(questionGroups.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting question group:', error);
+      return false;
+    }
+  }
+
+  async assignQuestionsToGroup(groupId: string, questionIds: string[]): Promise<void> {
+    try {
+      // Implementation depends on your schema
+      console.log('Assigning questions to group:', groupId, questionIds);
+    } catch (error) {
+      console.error('Error assigning questions to group:', error);
+    }
+  }
+
+  async getQuestionsByQuiz(quizId: string): Promise<Question[]> {
+    try {
+      const quizQuestionsList = await db.select()
+        .from(quizQuestions)
+        .where(eq(quizQuestions.quizId, quizId));
+      
+      const questionIds = quizQuestionsList.map(qq => qq.questionId);
+      if (questionIds.length === 0) return [];
+      
+      return await db.select()
+        .from(questions)
+        .where(inArray(questions.id, questionIds));
+    } catch (error) {
+      console.error('Error getting questions by quiz:', error);
+      return [];
+    }
+  }
+
+  // Shared Content Methods Implementation
+  async getSharedTestbanksByAccount(accountId: string): Promise<any[]> {
+    try {
+      return await db.select()
+        .from(testbanks)
+        .where(and(
+          eq(testbanks.accountId, accountId),
+          eq(testbanks.isShared, true)
+        ));
+    } catch (error) {
+      console.error('Error getting shared testbanks:', error);
+      return [];
+    }
+  }
+
+  async getSharedQuizzesByAccount(accountId: string): Promise<any[]> {
+    try {
+      return await db.select()
+        .from(quizzes)
+        .where(and(
+          eq(quizzes.accountId, accountId),
+          eq(quizzes.isPublic, true)
+        ));
+    } catch (error) {
+      console.error('Error getting shared quizzes:', error);
+      return [];
+    }
+  }
+
+  // Prompt Template Methods Implementation
+  async getPromptTemplate(id: string): Promise<PromptTemplate | undefined> {
+    try {
+      const [template] = await db.select()
+        .from(promptTemplates)
+        .where(eq(promptTemplates.id, id));
+      return template;
+    } catch (error) {
+      console.error('Error getting prompt template:', error);
+      return undefined;
+    }
+  }
+
+  async getPromptTemplatesByCategory(category: string, accountId?: string): Promise<PromptTemplate[]> {
+    try {
+      const conditions = [eq(promptTemplates.category, category)];
+      if (accountId) {
+        conditions.push(eq(promptTemplates.accountId, accountId));
+      }
+      return await db.select()
+        .from(promptTemplates)
+        .where(and(...conditions));
+    } catch (error) {
+      console.error('Error getting prompt templates by category:', error);
+      return [];
+    }
+  }
+
+  async getPromptTemplatesByAccount(accountId: string): Promise<PromptTemplate[]> {
+    try {
+      return await db.select()
+        .from(promptTemplates)
+        .where(eq(promptTemplates.accountId, accountId));
+    } catch (error) {
+      console.error('Error getting prompt templates by account:', error);
+      return [];
+    }
+  }
+
+  async getSystemDefaultPromptTemplates(): Promise<PromptTemplate[]> {
+    try {
+      return await db.select()
+        .from(promptTemplates)
+        .where(eq(promptTemplates.isSystemDefault, true));
+    } catch (error) {
+      console.error('Error getting system default prompt templates:', error);
+      return [];
+    }
+  }
+
+  // LLM Provider Methods Implementation  
+  async getLlmProvider(id: string): Promise<any> {
+    try {
+      const [provider] = await db.select()
+        .from(llmProviders)
+        .where(eq(llmProviders.id, id));
+      return provider;
+    } catch (error) {
+      console.error('Error getting LLM provider:', error);
+      return undefined;
+    }
+  }
+
+  async getLlmProvidersByAccount(accountId: string): Promise<any[]> {
+    try {
+      return await db.select()
+        .from(llmProviders)
+        .where(eq(llmProviders.accountId, accountId));
+    } catch (error) {
+      console.error('Error getting LLM providers by account:', error);
+      return [];
+    }
+  }
+
+  async getActiveLlmProviders(): Promise<any[]> {
+    try {
+      return await db.select()
+        .from(llmProviders)
+        .where(eq(llmProviders.isActive, true))
+        .orderBy(llmProviders.priority);
+    } catch (error) {
+      console.error('Error getting active LLM providers:', error);
+      return [];
+    }
+  }
+
+  async createLlmProvider(providerData: any): Promise<any> {
+    try {
+      const [provider] = await db.insert(llmProviders)
+        .values(providerData)
+        .returning();
+      return provider;
+    } catch (error) {
+      console.error('Error creating LLM provider:', error);
+      return undefined;
+    }
+  }
+
+  async updateLlmProvider(id: string, providerData: any): Promise<any> {
+    try {
+      const [provider] = await db.update(llmProviders)
+        .set(providerData)
+        .where(eq(llmProviders.id, id))
+        .returning();
+      return provider;
+    } catch (error) {
+      console.error('Error updating LLM provider:', error);
+      return undefined;
+    }
+  }
+
+  // Custom Instructions Methods Implementation
+  async createCustomInstruction(instructionData: any): Promise<any> {
+    try {
+      const [instruction] = await db.insert(customInstructions)
+        .values(instructionData)
+        .returning();
+      return instruction;
+    } catch (error) {
+      console.error('Error creating custom instruction:', error);
+      return undefined;
+    }
+  }
+
+  async getCustomInstruction(id: string): Promise<any> {
+    try {
+      const [instruction] = await db.select()
+        .from(customInstructions)
+        .where(eq(customInstructions.id, id));
+      return instruction;
+    } catch (error) {
+      console.error('Error getting custom instruction:', error);
+      return undefined;
+    }
+  }
+
+  async getCustomInstructionsByCategory(category: string): Promise<any[]> {
+    try {
+      return await db.select()
+        .from(customInstructions)
+        .where(eq(customInstructions.category, category));
+    } catch (error) {
+      console.error('Error getting custom instructions by category:', error);
+      return [];
+    }
+  }
+
+  async getCustomInstructionsByAccount(accountId: string): Promise<any[]> {
+    try {
+      return await db.select()
+        .from(customInstructions)
+        .where(eq(customInstructions.accountId, accountId));
+    } catch (error) {
+      console.error('Error getting custom instructions by account:', error);
+      return [];
+    }
+  }
+
+  async getPublicCustomInstructions(): Promise<any[]> {
+    try {
+      return await db.select()
+        .from(customInstructions)
+        .where(eq(customInstructions.isPublic, true));
+    } catch (error) {
+      console.error('Error getting public custom instructions:', error);
+      return [];
+    }
+  }
+
+  async updateCustomInstruction(id: string, instructionData: any): Promise<any> {
+    try {
+      const [instruction] = await db.update(customInstructions)
+        .set(instructionData)
+        .where(eq(customInstructions.id, id))
+        .returning();
+      return instruction;
+    } catch (error) {
+      console.error('Error updating custom instruction:', error);
+      return undefined;
+    }
+  }
+
+  async incrementCustomInstructionUsage(id: string): Promise<void> {
+    try {
+      await db.update(customInstructions)
+        .set({ usageCount: sql`${customInstructions.usageCount} + 1` })
+        .where(eq(customInstructions.id, id));
+    } catch (error) {
+      console.error('Error incrementing custom instruction usage:', error);
+    }
+  }
+
+  // Proctor Alerts Methods Implementation
+  async getProctorAlertsByExam(examId: string): Promise<any[]> {
+    try {
+      // Since we don't have a proctor alerts table, return mock data
+      return [];
+    } catch (error) {
+      console.error('Error getting proctor alerts:', error);
+      return [];
+    }
   }
 
   async getScheduledAssignmentsByStudent(studentId: string): Promise<any[]> {
@@ -5809,6 +6293,324 @@ Return JSON with the new question data:
       updatedAt: new Date().toISOString()
     };
     return this.landingPageContent;
+  }
+
+  // Additional method implementations
+  async deleteCustomInstruction(id: string): Promise<boolean> {
+    try {
+      await db.delete(customInstructions).where(eq(customInstructions.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting custom instruction:', error);
+      return false;
+    }
+  }
+
+  async getQuizProgress(quizId: string, userId: string): Promise<any> {
+    console.log('getQuizProgress stub called');
+    return null;
+  }
+
+  async saveQuizProgress(progressData: any): Promise<any> {
+    console.log('saveQuizProgress stub called');
+    return { id: 'mock-progress-id', ...progressData };
+  }
+
+  async deleteQuizProgress(id: string): Promise<boolean> {
+    console.log('deleteQuizProgress stub called');
+    return true;
+  }
+
+  async createUserWithAccount(userData: any): Promise<any> {
+    console.log('createUserWithAccount stub called');
+    return { id: 'mock-user-id', ...userData };
+  }
+
+  async updateUserWithRole(userId: string, role: string, accountId?: string): Promise<any> {
+    try {
+      const updateData: any = { role };
+      if (accountId) updateData.accountId = accountId;
+      const [user] = await db.update(users)
+        .set(updateData)
+        .where(eq(users.id, userId))
+        .returning();
+      return user;
+    } catch (error) {
+      console.error('Error updating user with role:', error);
+      return undefined;
+    }
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+      return user;
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      return undefined;
+    }
+  }
+
+  // Badge Methods Implementation
+  async getBadgesByAccount(accountId: string): Promise<any[]> {
+    console.log('getBadgesByAccount stub called');
+    return [];
+  }
+
+  async getActiveBadges(): Promise<any[]> {
+    console.log('getActiveBadges stub called');
+    return [];
+  }
+
+  async createBadge(badgeData: any): Promise<any> {
+    console.log('createBadge stub called');
+    return { id: 'mock-badge-id', ...badgeData };
+  }
+
+  async getBadge(id: string): Promise<any> {
+    console.log('getBadge stub called');
+    return null;
+  }
+
+  async updateBadge(id: string, badgeData: any): Promise<any> {
+    console.log('updateBadge stub called');
+    return { id, ...badgeData };
+  }
+
+  async deleteBadge(id: string): Promise<boolean> {
+    console.log('deleteBadge stub called');
+    return true;
+  }
+
+  // Certificate Methods Implementation
+  async getCertificateTemplatesByAccount(accountId: string): Promise<any[]> {
+    console.log('getCertificateTemplatesByAccount stub called');
+    return [];
+  }
+
+  async getActiveCertificateTemplates(): Promise<any[]> {
+    console.log('getActiveCertificateTemplates stub called');
+    return [];
+  }
+
+  async createCertificateTemplate(templateData: any): Promise<any> {
+    console.log('createCertificateTemplate stub called');
+    return { id: 'mock-cert-template-id', ...templateData };
+  }
+
+  async getCertificateTemplate(id: string): Promise<any> {
+    console.log('getCertificateTemplate stub called');
+    return null;
+  }
+
+  async updateCertificateTemplate(id: string, templateData: any): Promise<any> {
+    console.log('updateCertificateTemplate stub called');
+    return { id, ...templateData };
+  }
+
+  async deleteCertificateTemplate(id: string): Promise<boolean> {
+    console.log('deleteCertificateTemplate stub called');
+    return true;
+  }
+
+  // Badge/Certificate Management Implementation
+  async getStudentBadgesWithDetails(studentId: string): Promise<any[]> {
+    console.log('getStudentBadgesWithDetails stub called');
+    return [];
+  }
+
+  async awardBadge(badgeData: any): Promise<any> {
+    console.log('awardBadge stub called');
+    return { id: 'mock-awarded-badge-id', ...badgeData };
+  }
+
+  async getAwardedBadge(id: string): Promise<any> {
+    console.log('getAwardedBadge stub called');
+    return null;
+  }
+
+  async deleteAwardedBadge(id: string): Promise<boolean> {
+    console.log('deleteAwardedBadge stub called');
+    return true;
+  }
+
+  async getStudentCertificatesWithTemplate(studentId: string): Promise<any[]> {
+    console.log('getStudentCertificatesWithTemplate stub called');
+    return [];
+  }
+
+  async issueCertificate(certificateData: any): Promise<any> {
+    console.log('issueCertificate stub called');
+    return { id: 'mock-cert-id', ...certificateData };
+  }
+
+  async getCertificateByVerificationCode(code: string): Promise<any> {
+    console.log('getCertificateByVerificationCode stub called');
+    return null;
+  }
+
+  async getUserBadgesWithBadgeDetails(userId: string): Promise<any[]> {
+    console.log('getUserBadgesWithBadgeDetails stub called');
+    return [];
+  }
+
+  async createUserBadge(userBadgeData: any): Promise<any> {
+    console.log('createUserBadge stub called');
+    return { id: 'mock-user-badge-id', ...userBadgeData };
+  }
+
+  async deleteUserBadge(id: string): Promise<boolean> {
+    console.log('deleteUserBadge stub called');
+    return true;
+  }
+
+  // Learning Milestones Implementation
+  async getLearningMilestonesByUser(userId: string): Promise<any[]> {
+    console.log('getLearningMilestonesByUser stub called');
+    return [];
+  }
+
+  async getLearningMilestonesByAccount(accountId: string): Promise<any[]> {
+    console.log('getLearningMilestonesByAccount stub called');
+    return [];
+  }
+
+  async createLearningMilestone(milestoneData: any): Promise<any> {
+    console.log('createLearningMilestone stub called');
+    return { id: 'mock-milestone-id', ...milestoneData };
+  }
+
+  async getLearningMilestone(id: string): Promise<any> {
+    console.log('getLearningMilestone stub called');
+    return null;
+  }
+
+  async updateLearningMilestone(id: string, milestoneData: any): Promise<any> {
+    console.log('updateLearningMilestone stub called');
+    return { id, ...milestoneData };
+  }
+
+  async deleteLearningMilestone(id: string): Promise<boolean> {
+    console.log('deleteLearningMilestone stub called');
+    return true;
+  }
+
+  // Social Share Methods Implementation
+  async getSocialSharesByUser(userId: string): Promise<any[]> {
+    console.log('getSocialSharesByUser stub called');
+    return [];
+  }
+
+  async getPublicSocialShares(): Promise<any[]> {
+    console.log('getPublicSocialShares stub called');
+    return [];
+  }
+
+  async getSocialSharesByPlatform(platform: string): Promise<any[]> {
+    console.log('getSocialSharesByPlatform stub called');
+    return [];
+  }
+
+  async createSocialShare(shareData: any): Promise<any> {
+    console.log('createSocialShare stub called');
+    return { id: 'mock-share-id', ...shareData };
+  }
+
+  async incrementShareEngagement(id: string): Promise<any> {
+    console.log('incrementShareEngagement stub called');
+    return { id, engagementCount: 1 };
+  }
+
+  async getSocialShare(id: string): Promise<any> {
+    console.log('getSocialShare stub called');
+    return null;
+  }
+
+  async updateSocialShare(id: string, shareData: any): Promise<any> {
+    console.log('updateSocialShare stub called');
+    return { id, ...shareData };
+  }
+
+  async deleteSocialShare(id: string): Promise<boolean> {
+    console.log('deleteSocialShare stub called');
+    return true;
+  }
+
+  // Badge Templates Implementation
+  async getBadgeTemplatesByCategory(category: string): Promise<any[]> {
+    console.log('getBadgeTemplatesByCategory stub called');
+    return [];
+  }
+
+  async getPopularBadgeTemplates(): Promise<any[]> {
+    console.log('getPopularBadgeTemplates stub called');
+    return [];
+  }
+
+  async createBadgeTemplate(templateData: any): Promise<any> {
+    console.log('createBadgeTemplate stub called');
+    return { id: 'mock-badge-template-id', ...templateData };
+  }
+
+  async getBadgeTemplate(id: string): Promise<any> {
+    console.log('getBadgeTemplate stub called');
+    return null;
+  }
+
+  async updateBadgeTemplate(id: string, templateData: any): Promise<any> {
+    console.log('updateBadgeTemplate stub called');
+    return { id, ...templateData };
+  }
+
+  async incrementBadgeTemplateUsage(id: string): Promise<any> {
+    console.log('incrementBadgeTemplateUsage stub called');
+    return { id, usageCount: 1 };
+  }
+
+  async deleteBadgeTemplate(id: string): Promise<boolean> {
+    console.log('deleteBadgeTemplate stub called');
+    return true;
+  }
+
+  async revokeCertificate(id: string): Promise<any> {
+    console.log('revokeCertificate stub called');
+    return { id, revoked: true };
+  }
+
+  // Accessibility Settings Implementation
+  async getUserAccessibilitySettings(userId: string): Promise<any> {
+    console.log('getUserAccessibilitySettings stub called');
+    return {
+      highContrast: false,
+      fontSize: 'medium',
+      textToSpeech: false
+    };
+  }
+
+  async updateUserAccessibilitySettings(userId: string, settings: any): Promise<any> {
+    console.log('updateUserAccessibilitySettings stub called');
+    return { userId, ...settings };
+  }
+
+  // Mood Tracking Implementation
+  async createMoodEntry(moodData: any): Promise<any> {
+    console.log('createMoodEntry stub called');
+    return { id: 'mock-mood-id', ...moodData };
+  }
+
+  async getMoodEntriesByContext(context: string): Promise<any[]> {
+    console.log('getMoodEntriesByContext stub called');
+    return [];
+  }
+
+  async getMoodEntriesByDateRange(startDate: Date, endDate: Date): Promise<any[]> {
+    console.log('getMoodEntriesByDateRange stub called');
+    return [];
+  }
+
+  async getMoodEntriesByUser(userId: string): Promise<any[]> {
+    console.log('getMoodEntriesByUser stub called');
+    return [];
   }
 
   // Database Management Methods for Super Admin

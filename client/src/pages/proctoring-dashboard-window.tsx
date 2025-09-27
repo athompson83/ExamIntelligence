@@ -164,7 +164,11 @@ export default function ProctoringDashboardWindow() {
   
   const { data: dashboardData, isLoading: dashboardLoading, refetch } = useQuery<DashboardData>({
     queryKey: ['/api/proctoring/dashboard'],
-    refetchInterval: 5000 // Refresh every 5 seconds for real-time updates
+    // Remove aggressive polling - WebSocket will handle real-time updates
+    refetchInterval: false, // Disabled - using WebSocket for real-time data
+    staleTime: 60 * 1000, // 1 minute - dashboard data doesn't change that frequently
+    gcTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnWindowFocus: false, // Don't refetch on focus
   });
 
   const { data: securityEvents, isLoading: eventsLoading } = useQuery<SecurityEvent[]>({

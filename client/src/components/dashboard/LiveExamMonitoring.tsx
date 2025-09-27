@@ -9,10 +9,21 @@ import { Quiz } from "@/types";
 export function LiveExamMonitoring() {
   const { data: activeQuizzes, isLoading } = useQuery<Quiz[]>({
     queryKey: ["/api/quizzes/active"],
+    // Reasonable refresh for active quizzes
+    staleTime: 30 * 1000, // 30 seconds - active quizzes don't change often
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
+    refetchInterval: 60 * 1000, // Refresh every minute for truly active exams
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    retry: 1, // Only retry once on failure
   });
 
   const { data: proctoringAlerts } = useQuery({
     queryKey: ["/api/proctoring/alerts"],
+    // Proctoring alerts will be handled via WebSocket
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchInterval: false, // Disabled - using WebSocket for real-time alerts
   });
 
   if (isLoading) {

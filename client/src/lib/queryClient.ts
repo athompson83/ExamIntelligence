@@ -51,30 +51,33 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: 2 * 60 * 1000, // 2 minutes - faster updates
-      gcTime: 5 * 60 * 1000, // 5 minutes cache time
+      // Global defaults optimized for performance
+      refetchInterval: false, // No automatic polling by default
+      refetchOnWindowFocus: false, // Don't refetch when window regains focus by default
+      refetchOnMount: true, // Refetch on mount only if stale
+      refetchOnReconnect: 'always', // Refetch when reconnecting
+      staleTime: 5 * 60 * 1000, // 5 minutes - data is considered fresh for 5 minutes
+      gcTime: 15 * 60 * 1000, // 15 minutes - keep cache for 15 minutes
       retry: (failureCount, error) => {
         // Don't retry on 401, 403, or 404 errors
         if (error.message.includes('401') || error.message.includes('403') || error.message.includes('404')) {
           return false;
         }
-        // Retry up to 3 times for other errors
-        return failureCount < 3;
+        // Retry only once for other errors (reduced from 3)
+        return failureCount < 1;
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Max 5 seconds
     },
     mutations: {
       retry: (failureCount, error) => {
         // Don't retry client errors (4xx)
-        if (error.message.includes('4')) {
+        if (error.message.match(/4\d{2}/)) {
           return false;
         }
-        // Retry server errors (5xx) up to 2 times
-        return failureCount < 2;
+        // Don't retry server errors either - fail fast
+        return false;
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Max 3 seconds
     },
   },
 });

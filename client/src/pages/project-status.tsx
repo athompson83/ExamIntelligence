@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle, Clock, AlertCircle, Users, Brain, Shield, BarChart3, Smartphone, Globe, Zap, Database, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

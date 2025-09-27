@@ -9,11 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Building, Users, Settings, CreditCard, BarChart3 } from "lucide-react";
+import { AlertTriangle, Building, Users, Settings, CreditCard, BarChart3, Trash2, Shield, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
 import { apiRequest } from "@/lib/queryClient";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useLocation } from "wouter";
 
 interface AccountSettings {
   id: string;
@@ -81,8 +84,11 @@ interface AccountSettings {
 export default function AccountSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("general");
   const [settings, setSettings] = useState<AccountSettings | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch account settings
   const { data: accountData, isLoading } = useQuery({
@@ -613,6 +619,129 @@ export default function AccountSettings() {
               </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Data Management and Deletion Section */}
+          <Card className="mt-6 border-destructive/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Danger Zone
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Data Protection Rights:</strong> Under GDPR and CCPA, you have the right to request deletion of your personal data. Educational records may be retained for legal compliance.
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2">Export Your Data</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Download all your data including assessments, grades, and account information.
+                  </p>
+                  <Button variant="outline" data-testid="button-export-data">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Export All Data
+                  </Button>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-2 text-destructive">Delete Account</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Permanently delete your account and all associated data. This action cannot be undone.
+                  </p>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" data-testid="button-delete-account">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete My Account
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="max-w-lg">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-destructive">
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-3">
+                          <p className="font-semibold">
+                            This will permanently delete your account and all associated data:
+                          </p>
+                          <ul className="list-disc list-inside space-y-1 text-sm">
+                            <li>All quiz and exam data</li>
+                            <li>Performance analytics and grades</li>
+                            <li>Item banks and questions</li>
+                            <li>Proctoring recordings (if any)</li>
+                            <li>Account settings and preferences</li>
+                          </ul>
+                          <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertDescription>
+                              <strong>Warning:</strong> This action cannot be undone. Your data will be permanently deleted within 30 days. Some educational records may be retained for legal compliance.
+                            </AlertDescription>
+                          </Alert>
+                          <div className="mt-4">
+                            <Label htmlFor="delete-confirmation">Type "DELETE MY ACCOUNT" to confirm:</Label>
+                            <Input
+                              id="delete-confirmation"
+                              type="text"
+                              value={deleteConfirmation}
+                              onChange={(e) => setDeleteConfirmation(e.target.value)}
+                              placeholder="DELETE MY ACCOUNT"
+                              className="mt-2"
+                              data-testid="input-delete-confirmation"
+                            />
+                          </div>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel
+                          onClick={() => setDeleteConfirmation("")}
+                          data-testid="button-cancel-delete"
+                        >
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={async () => {
+                            if (deleteConfirmation === "DELETE MY ACCOUNT") {
+                              setIsDeleting(true);
+                              try {
+                                await apiRequest("POST", "/api/account/delete");
+                                toast({
+                                  title: "Account Deletion Initiated",
+                                  description: "Your account will be deleted within 30 days. Check your email for confirmation.",
+                                });
+                                setTimeout(() => {
+                                  navigate("/");
+                                }, 2000);
+                              } catch (error: any) {
+                                toast({
+                                  title: "Deletion Failed",
+                                  description: error.message || "Failed to delete account. Please contact support.",
+                                  variant: "destructive",
+                                });
+                              } finally {
+                                setIsDeleting(false);
+                                setDeleteConfirmation("");
+                              }
+                            }
+                          }}
+                          disabled={deleteConfirmation !== "DELETE MY ACCOUNT" || isDeleting}
+                          className="bg-destructive hover:bg-destructive/90"
+                          data-testid="button-confirm-delete"
+                        >
+                          {isDeleting ? "Deleting..." : "Delete Account"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </main>
       </div>
     </div>

@@ -21,6 +21,11 @@ const performanceData = [
 export function AnalyticsOverview() {
   const { data: systemAnalytics, isLoading } = useQuery({
     queryKey: ["/api/analytics/system"],
+    // Cache analytics data for 5 minutes - it doesn't change frequently
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
   });
 
   if (isLoading) {

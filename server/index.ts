@@ -1,8 +1,123 @@
 import express, { type Request, Response, NextFunction } from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// Configure CORS with origin allowlist
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // In development mode, allow all origins for Replit compatibility
+    if (app.get("env") === "development") {
+      callback(null, true);
+      return;
+    }
+    
+    // In production, use strict origin checking
+    if (!origin) return callback(null, true);
+    
+    // Get allowed origins from environment or use defaults
+    const allowedOrigins = process.env.CORS_ORIGINS 
+      ? process.env.CORS_ORIGINS.split(',') 
+      : [
+          'http://localhost:5000',
+          'http://localhost:3000',
+        ];
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['X-Rate-Limit-Limit', 'X-Rate-Limit-Remaining', 'X-Rate-Limit-Reset'],
+  maxAge: 86400, // 24 hours
+};
+
+app.use(cors(corsOptions));
+
+// Configure Helmet for security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "https://api.stripe.com", "https://api.openai.com", "wss:", "ws:"],
+      frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      childSrc: ["'self'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Disable for development with Replit
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  },
+  frameguard: {
+    action: 'deny'
+  },
+  noSniff: true,
+  xssFilter: true,
+  referrerPolicy: {
+    policy: 'strict-origin-when-cross-origin'
+  },
+  permittedCrossDomainPolicies: false,
+  dnsPrefetchControl: {
+    allow: false
+  },
+  ieNoOpen: true,
+  hidePoweredBy: true
+}));
+
+// Configure rate limiting
+const authLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // 5 requests per minute for auth endpoints
+  message: "Too many authentication attempts, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute for general API
+  message: "Too many API requests, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const strictLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 10, // 10 requests per 5 minutes for sensitive operations
+  message: "Too many requests to this sensitive endpoint, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiting to specific routes
+app.use('/api/login', authLimiter);
+app.use('/api/callback', authLimiter);
+app.use('/api/test-login', authLimiter);
+app.use('/api/auth', authLimiter);
+app.use('/api/billing/create-checkout-session', strictLimiter);
+app.use('/api/billing/update-payment-method', strictLimiter);
+app.use('/api/billing/cancel-subscription', strictLimiter);
+app.use('/api/admin', strictLimiter);
+app.use('/api', apiLimiter); // General API rate limit
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 

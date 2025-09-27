@@ -104,6 +104,8 @@ const DatabaseManagement = lazy(() => import("@/pages/admin/database-management"
 const UserActivityDashboard = lazy(() => import("@/pages/admin/UserActivityDashboard"));
 const AdminUserManagement = lazy(() => import("@/pages/admin/user-management"));
 const ErrorLogsManagement = lazy(() => import("@/pages/ErrorLogsManagement"));
+const PrivacyPolicy = lazy(() => import("@/pages/privacy-policy"));
+const TermsOfService = lazy(() => import("@/pages/terms-of-service"));
 const BugReportingDemo = lazy(() => import("@/pages/BugReportingDemo"));
 const CATExamGenerationTest = lazy(() => import("@/pages/CATExamGenerationTest"));
 const CATGenerationSuccess = lazy(() => import("@/pages/CATGenerationSuccess"));
@@ -416,6 +418,14 @@ function Router() {
           </Route>
         </>
       )}
+      
+      {/* Legal pages - accessible to everyone */}
+      <Route path="/privacy-policy">
+        {() => <Suspense fallback={<SmoothLoadingFallback />}><PrivacyPolicy /></Suspense>}
+      </Route>
+      <Route path="/terms-of-service">
+        {() => <Suspense fallback={<SmoothLoadingFallback />}><TermsOfService /></Suspense>}
+      </Route>
       <Route path="/join/:token">
         {(params) => <Suspense fallback={<LoadingSpinner />}><AccountRegistration /></Suspense>}
       </Route>

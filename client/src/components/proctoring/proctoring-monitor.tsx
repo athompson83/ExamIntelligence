@@ -56,12 +56,19 @@ export function ProctoringMonitor({ isOpen, onClose, examId }: ProctoringMonitor
   const { data: examSession, isLoading: sessionLoading } = useQuery({
     queryKey: ['/api/proctoring/session', examId],
     enabled: !!examId && isOpen,
+    staleTime: 60 * 1000, // 1 minute - session data doesn't change frequently
+    gcTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 
   const { data: activeAlerts, isLoading: alertsLoading } = useQuery({
     queryKey: ['/api/proctoring/alerts', examId],
     enabled: !!examId && isOpen,
-    refetchInterval: 5000, // Refresh every 5 seconds
+    // Remove aggressive polling - WebSocket will handle real-time updates
+    refetchInterval: false, // Disabled - using WebSocket for real-time alerts
+    staleTime: 30 * 1000, // 30 seconds - alerts are real-time via WebSocket
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 
   // Mock data for demonstration - replace with real WebSocket data

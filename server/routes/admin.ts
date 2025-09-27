@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { requireSuperAdmin, requireAdmin } from '../permissions';
 import { storage } from '../storage-simple';
 import { initializeStripe, getStripe } from '../stripe';
+import { validateBody, validateParams, validateQuery } from '../validation';
+import { z } from 'zod';
 
 const router = Router();
 
@@ -20,16 +22,33 @@ router.get('/system-settings', requireSuperAdmin, async (req, res) => {
   }
 });
 
+// Validation schemas
+const systemSettingSchema = z.object({
+  key: z.string().min(1, 'Setting key is required'),
+  value: z.string().optional().default(''),
+  isSecret: z.boolean().optional().default(false),
+  description: z.string().optional().default(''),
+});
+
+const userRoleSchema = z.object({
+  role: z.enum(['student', 'teacher', 'admin', 'super_admin'], {
+    errorMap: () => ({ message: 'Invalid role' }),
+  }),
+});
+
+const accountSubscriptionSchema = z.object({
+  tier: z.enum(['starter', 'basic', 'professional', 'institutional', 'enterprise'], {
+    errorMap: () => ({ message: 'Invalid subscription tier' }),
+  }),
+  billingCycle: z.enum(['monthly', 'yearly']).optional().default('monthly'),
+});
+
 /**
  * Update system setting (Super Admin only)
  */
-router.put('/system-settings', requireSuperAdmin, async (req, res) => {
+router.put('/system-settings', requireSuperAdmin, validateBody(systemSettingSchema), async (req, res) => {
   try {
     const { key, value, isSecret, description } = req.body;
-
-    if (!key) {
-      return res.status(400).json({ error: 'Setting key is required' });
-    }
 
     const setting = await storage.updateSystemSetting({
       key,
@@ -180,14 +199,10 @@ router.get('/users', requireAdmin, async (req, res) => {
 /**
  * Update user role (Admin+)
  */
-router.put('/users/:userId/role', requireAdmin, async (req, res) => {
+router.put('/users/:userId/role', requireAdmin, validateBody(userRoleSchema), async (req, res) => {
   try {
     const { userId } = req.params;
     const { role } = req.body;
-
-    if (!['student', 'teacher', 'admin', 'super_admin'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role' });
-    }
 
     // Only super admins can assign super_admin role
     if (role === 'super_admin' && req.user!.role !== 'super_admin') {
@@ -230,14 +245,10 @@ router.get('/accounts', requireAdmin, async (req, res) => {
 /**
  * Update account subscription tier (Super Admin only)
  */
-router.put('/accounts/:accountId/subscription', requireSuperAdmin, async (req, res) => {
+router.put('/accounts/:accountId/subscription', requireSuperAdmin, validateBody(accountSubscriptionSchema), async (req, res) => {
   try {
     const { accountId } = req.params;
     const { tier, billingCycle } = req.body;
-
-    if (!['starter', 'basic', 'professional', 'institutional', 'enterprise'].includes(tier)) {
-      return res.status(400).json({ error: 'Invalid subscription tier' });
-    }
 
     const account = await storage.updateAccountSubscription(accountId, {
       subscriptionTier: tier,

@@ -295,13 +295,20 @@ export default function LiveExams() {
     queryKey: ["/api/quizzes", "active"],
     enabled: isAuthenticated,
     retry: false,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    // Optimized polling - WebSocket handles real-time updates
+    refetchInterval: 60000, // Only refresh every 60 seconds for fallback
+    staleTime: 30 * 1000, // Data is fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when tab regains focus
   });
 
   const { data: upcomingQuizzes = [] } = useQuery({
     queryKey: ["/api/quizzes", "upcoming"],
     enabled: isAuthenticated,
     retry: false,
+    staleTime: 5 * 60 * 1000, // Upcoming quizzes don't change often
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch when tab regains focus
   });
 
   const getStatusBadge = (status: string) => {

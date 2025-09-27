@@ -2452,6 +2452,7 @@ export const insertRollbackHistorySchema = createInsertSchema(rollbackHistory).o
 export const insertEnhancedSecurityEventSchema = createInsertSchema(enhancedSecurityEvents).omit({ id: true, createdAt: true });
 export const insertPermissionAuditSchema = createInsertSchema(permissionAudits).omit({ id: true, createdAt: true });
 export const insertUserActionTrackerSchema = createInsertSchema(userActionTracker).omit({ id: true, createdAt: true });
+export const insertCustomInstructionSchema = createInsertSchema(customInstructions).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types for new tables
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
@@ -2464,3 +2465,7 @@ export type InsertPermissionAudit = z.infer<typeof insertPermissionAuditSchema>;
 export type PermissionAudit = typeof permissionAudits.$inferSelect;
 export type InsertUserActionTracker = z.infer<typeof insertUserActionTrackerSchema>;
 export type UserActionTracker = typeof userActionTracker.$inferSelect;
+export type InsertCustomInstruction = z.infer<typeof insertCustomInstructionSchema>;
+export type CustomInstruction = typeof customInstructions.$inferSelect;
+export type InsertPromptTemplate = z.infer<typeof insertPromptTemplateSchema>;
+export type PromptTemplate = typeof promptTemplates.$inferSelect;

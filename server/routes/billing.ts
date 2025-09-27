@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { requireFeature, checkQuota, requireAdmin, requireSuperAdmin } from '../permissions';
+import { isAuthenticated } from '../replitAuth';
+import { validateBody } from '../validation';
+import { z } from 'zod';
 import { 
   createCheckoutSession, 
   createBillingPortalSession, 
@@ -16,20 +19,27 @@ const router = Router();
 // Initialize Stripe on router load
 initializeStripe();
 
+// Validation schemas
+const checkoutSessionSchema = z.object({
+  priceId: z.string().min(1, 'Price ID is required'),
+  isUpgrade: z.boolean().optional().default(false),
+});
+
+const webhookSchema = z.object({
+  type: z.string(),
+  data: z.object({}),
+});
+
 /**
  * Create Stripe checkout session for new subscription or upgrade
  */
-router.post('/create-checkout-session', async (req, res) => {
+router.post('/create-checkout-session', isAuthenticated, validateBody(checkoutSessionSchema), async (req, res) => {
   try {
     if (!req.user?.accountId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { priceId, isUpgrade = false } = req.body;
-
-    if (!priceId) {
-      return res.status(400).json({ error: 'Price ID is required' });
-    }
+    const { priceId, isUpgrade } = req.body;
 
     const result = await createCheckoutSession(req.user.accountId, priceId, isUpgrade);
     res.json(result);
@@ -44,7 +54,7 @@ router.post('/create-checkout-session', async (req, res) => {
 /**
  * Create billing portal session for subscription management
  */
-router.post('/update-payment-method', async (req, res) => {
+router.post('/update-payment-method', isAuthenticated, async (req, res) => {
   try {
     if (!req.user?.accountId) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -63,7 +73,7 @@ router.post('/update-payment-method', async (req, res) => {
 /**
  * Get current subscription and billing information
  */
-router.get('/subscription', async (req, res) => {
+router.get('/subscription', isAuthenticated, async (req, res) => {
   try {
     if (!req.user?.accountId) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -117,7 +127,7 @@ router.get('/subscription', async (req, res) => {
 /**
  * Get invoice history
  */
-router.get('/invoices', async (req, res) => {
+router.get('/invoices', isAuthenticated, async (req, res) => {
   try {
     if (!req.user?.accountId) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -136,7 +146,7 @@ router.get('/invoices', async (req, res) => {
 /**
  * Cancel subscription at period end
  */
-router.post('/cancel-subscription', async (req, res) => {
+router.post('/cancel-subscription', isAuthenticated, async (req, res) => {
   try {
     if (!req.user?.accountId) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -155,7 +165,7 @@ router.post('/cancel-subscription', async (req, res) => {
 /**
  * Reactivate canceled subscription
  */
-router.post('/reactivate-subscription', async (req, res) => {
+router.post('/reactivate-subscription', isAuthenticated, async (req, res) => {
   try {
     if (!req.user?.accountId) {
       return res.status(401).json({ error: 'Authentication required' });

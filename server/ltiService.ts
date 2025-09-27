@@ -72,24 +72,47 @@ export function getLTIConfig(): LTIConfig {
     ? `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}` 
     : 'http://localhost:5000';
 
+  // Ensure sensitive keys are not exposed if not configured
+  const privateKey = process.env.LTI_PRIVATE_KEY || '';
+  const publicKey = process.env.LTI_PUBLIC_KEY || '';
+  
+  if (!privateKey || !publicKey) {
+    console.warn('LTI keys not configured - LTI functionality will be limited');
+  }
+
   return {
     issuer: baseUrl,
     clientId: process.env.LTI_CLIENT_ID || 'ProficiencyAI',
     keysetUrl: `${baseUrl}/keys`,
     loginUrl: `${baseUrl}/login`,
     redirectUrl: `${baseUrl}/`,
-    privateKey: process.env.LTI_PRIVATE_KEY || '',
-    publicKey: process.env.LTI_PUBLIC_KEY || ''
+    privateKey: privateKey,
+    publicKey: publicKey
   };
 }
 
 // Middleware to check LTI authentication
 export function requireLTIAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  // Check if LTI authentication is required (configurable)
+  const requireStrictLTI = process.env.REQUIRE_LTI_AUTH === 'true';
+  
   if (req.session && req.session.ltiUser) {
+    // Validate LTI session is not expired
+    if (req.session.ltiToken && req.session.ltiToken.exp) {
+      const now = Math.floor(Date.now() / 1000);
+      if (now > req.session.ltiToken.exp) {
+        return res.status(401).json({ error: 'LTI session expired' });
+      }
+    }
     return next();
   }
   
-  // If not LTI authenticated, fall back to regular auth
+  // If strict LTI is required, don't allow fallback
+  if (requireStrictLTI) {
+    return res.status(401).json({ error: 'LTI authentication required' });
+  }
+  
+  // Otherwise, fall back to regular auth
   return next();
 }
 
