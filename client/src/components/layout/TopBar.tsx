@@ -40,7 +40,7 @@ export function TopBar({ title = "Dashboard" }: TopBarProps) {
     : user?.email || "User";
 
   return (
-    <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+    <header className="bg-background/95 backdrop-blur-md border-b border-border px-6 py-4 flex items-center justify-between shadow-sm">
       <div className="flex items-center">
         <h2 className="text-2xl font-bold text-foreground">{title}</h2>
       </div>

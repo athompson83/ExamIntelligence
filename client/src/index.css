@@ -110,6 +110,11 @@
     box-sizing: border-box;
   }
 
+  /* Ensure smooth scrolling and prevent content jump */
+  html {
+    scroll-padding-top: 80px; /* Account for sticky header */
+  }
+
   /* GPU acceleration for transforms and animations */
   [class*="transform"],
   [class*="transition"],

@@ -39,13 +39,16 @@ export default function Layout({ children }: LayoutProps) {
       <Sidebar />
       
       <div className="flex-1 lg:ml-64 transition-all duration-300 ease-out w-full min-w-0 flex flex-col min-h-screen">
-        <TopBar />
+        {/* Fixed/Sticky header container */}
+        <div className="sticky top-0 z-[100] bg-background">
+          <TopBar />
+        </div>
         
         <main 
           id="main-content"
           role="main"
           aria-label="Main content"
-          className={`flex-1 p-4 lg:p-6 pb-32 lg:pb-6 ${
+          className={`flex-1 p-4 lg:p-6 pb-32 lg:pb-6 overflow-auto ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           tabIndex={-1}
