@@ -3,6 +3,7 @@ import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { Link } from "wouter";
 import { Shield, Scale, FileText, HelpCircle, Mail, Globe } from "lucide-react";
+import { useScrollHeader } from "@/hooks/useScrollHeader";
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,6 +11,10 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const { isVisible, headerHeight } = useScrollHeader({
+    scrollThreshold: 100,
+    scrollSensitivity: 5
+  });
 
   useEffect(() => {
     // Enhanced loading animation with preload optimization
@@ -39,10 +44,18 @@ export default function Layout({ children }: LayoutProps) {
       <Sidebar />
       
       <div className="flex-1 lg:ml-64 transition-all duration-300 ease-out w-full min-w-0 flex flex-col min-h-screen">
-        {/* Fixed/Sticky header container */}
-        <div className="sticky top-0 z-[100] bg-background">
+        {/* Fixed header with hide-on-scroll behavior */}
+        <div 
+          className="fixed top-0 left-0 right-0 lg:left-64 z-[100] transition-transform duration-300 ease-in-out bg-background shadow-md"
+          style={{
+            transform: `translateY(${isVisible ? '0' : '-100%'})`,
+          }}
+        >
           <TopBar />
         </div>
+        
+        {/* Spacer to push content down below fixed header */}
+        <div style={{ height: `${headerHeight}px` }} className="flex-shrink-0" />
         
         <main 
           id="main-content"

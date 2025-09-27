@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -21,10 +21,6 @@ import { useUserSwitching } from "@/hooks/useUserSwitching";
 export default function TopBar() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSticky, setIsSticky] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const lastScrollY = useRef(0);
-  const headerRef = useRef<HTMLElement>(null);
   const [location, navigate] = useLocation();
   const { switchedUser, switchUser, clearUserSwitch, isSwitched } = useUserSwitching();
 
@@ -57,60 +53,12 @@ export default function TopBar() {
     return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || 'U';
   };
 
-  // Handle scroll behavior - header becomes sticky and can hide/show
-  useEffect(() => {
-    let ticking = false;
-    const headerHeight = 64; // Height of header
-    
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          
-          // Become sticky after scrolling past header height
-          if (currentScrollY > headerHeight) {
-            setIsSticky(true);
-            
-            // Hide when scrolling down
-            if (currentScrollY > lastScrollY.current + 5) {
-              setIsVisible(false);
-            }
-            // Show when scrolling up
-            else if (currentScrollY < lastScrollY.current - 5) {
-              setIsVisible(true);
-            }
-          } else {
-            // Not sticky when at top
-            setIsSticky(false);
-            setIsVisible(true);
-          }
-          
-          lastScrollY.current = currentScrollY;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
-    <>
-      {/* Placeholder to maintain layout when header becomes fixed */}
-      {isSticky && <div className="h-14 md:h-16 flex-shrink-0" />}
-      
-      <header 
-        ref={headerRef}
-        role="banner"
-        aria-label="Top navigation"
-        className={`bg-surface border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between h-14 md:h-16 md:px-6 md:py-4 flex-shrink-0 overflow-hidden z-[10002] transition-all duration-300 ${
-          isSticky 
-            ? `fixed top-0 left-0 right-0 w-full ${isVisible ? 'translate-y-0' : '-translate-y-full'}` 
-            : 'relative'
-        }`}
-      >
+    <header 
+      role="banner"
+      aria-label="Top navigation"
+      className="bg-background border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between h-16 md:px-6 md:py-4 flex-shrink-0 overflow-hidden"
+    >
       <div className="flex items-center flex-1 min-w-0">
         {/* Section titles are in a different area */}
       </div>
@@ -278,6 +226,5 @@ export default function TopBar() {
         </DropdownMenu>
       </div>
       </header>
-    </>
   );
 }
