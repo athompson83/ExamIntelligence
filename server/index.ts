@@ -45,12 +45,18 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions));
 
 // Configure Helmet for security headers
+const isDevelopment = app.get("env") === "development";
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://unpkg.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: isDevelopment 
+        ? ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://unpkg.com"]
+        : ["'self'", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+      styleSrc: isDevelopment
+        ? ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"]
+        : ["'self'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: ["'self'", "https://api.stripe.com", "https://api.openai.com", "wss:", "ws:"],

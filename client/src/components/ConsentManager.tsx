@@ -41,15 +41,20 @@ export default function ConsentManager({ isOpen = false, onClose, showBanner = f
   });
 
   // Fetch current consent preferences
-  const { data: savedPreferences } = useQuery({
+  const { data: savedPreferences } = useQuery<ConsentPreferences>({
     queryKey: ["/api/user/consent-preferences"],
     retry: false
   });
 
   // Save consent preferences mutation
   const saveConsentMutation = useMutation({
-    mutationFn: (data: ConsentPreferences) =>
-      apiRequest("POST", "/api/user/consent-preferences", data),
+    mutationFn: async (data: ConsentPreferences) => {
+      const response = await apiRequest("/api/user/consent-preferences", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Preferences Saved",
