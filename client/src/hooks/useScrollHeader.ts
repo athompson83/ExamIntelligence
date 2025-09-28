@@ -1,27 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
 
 interface UseScrollHeaderOptions {
-  scrollThreshold?: number;  // Minimum scroll distance before hiding (default 100px)
+  headerHeight?: number; // Height of the header element (default 64px)
   scrollSensitivity?: number; // Minimum scroll difference to detect direction (default 5px)
 }
 
 interface UseScrollHeaderReturn {
-  isVisible: boolean;
-  isAtTop: boolean;
+  isFixed: boolean; // Whether header should be fixed positioned
+  isScrollingUp: boolean; // Whether user is scrolling up
+  isAtTop: boolean; // Whether at top of page
   scrollY: number;
   headerHeight: number;
+  headerOutOfView: boolean; // Whether the sticky header has scrolled out of view
 }
 
 export function useScrollHeader(options: UseScrollHeaderOptions = {}): UseScrollHeaderReturn {
   const {
-    scrollThreshold = 100,
+    headerHeight = 64,
     scrollSensitivity = 5
   } = options;
 
-  const [isVisible, setIsVisible] = useState(true);
+  const [isFixed, setIsFixed] = useState(false);
+  const [isScrollingUp, setIsScrollingUp] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   const [scrollY, setScrollY] = useState(0);
-  const [headerHeight] = useState(64); // Standard header height
+  const [headerOutOfView, setHeaderOutOfView] = useState(false);
   
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
@@ -39,22 +42,34 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}): UseScroll
           const atTop = currentScrollY < 10;
           setIsAtTop(atTop);
           
-          // Always show header when at top or near top
-          if (atTop || currentScrollY < scrollThreshold) {
-            setIsVisible(true);
-          } else {
-            // Determine scroll direction
-            const scrollDelta = currentScrollY - lastScrollY.current;
-            
-            // Hide when scrolling down (positive delta)
-            if (scrollDelta > scrollSensitivity) {
-              setIsVisible(false);
-            }
-            // Show when scrolling up (negative delta)
-            else if (scrollDelta < -scrollSensitivity) {
-              setIsVisible(true);
-            }
+          // Check if header would be out of view (scrolled past header height)
+          const outOfView = currentScrollY > headerHeight;
+          setHeaderOutOfView(outOfView);
+          
+          // Determine scroll direction
+          const scrollDelta = currentScrollY - lastScrollY.current;
+          const scrollingUp = scrollDelta < -scrollSensitivity;
+          const scrollingDown = scrollDelta > scrollSensitivity;
+          
+          setIsScrollingUp(scrollingUp);
+          
+          // Header positioning logic:
+          // 1. At top of page: sticky (isFixed = false)
+          // 2. Scrolling down: let it scroll away naturally (isFixed = false)
+          // 3. Scrolling up when header is out of view: show as fixed (isFixed = true)
+          // 4. When back at top: return to sticky (isFixed = false)
+          
+          if (atTop) {
+            // At top - use sticky positioning
+            setIsFixed(false);
+          } else if (scrollingUp && outOfView) {
+            // Scrolling up and header is out of view - show as fixed
+            setIsFixed(true);
+          } else if (scrollingDown) {
+            // Scrolling down - let header scroll away
+            setIsFixed(false);
           }
+          // Keep current state for small movements
           
           lastScrollY.current = currentScrollY;
           ticking.current = false;
@@ -74,12 +89,14 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}): UseScroll
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [scrollThreshold, scrollSensitivity]);
+  }, [headerHeight, scrollSensitivity]);
 
   return {
-    isVisible,
+    isFixed,
+    isScrollingUp,
     isAtTop,
     scrollY,
-    headerHeight
+    headerHeight,
+    headerOutOfView
   };
 }

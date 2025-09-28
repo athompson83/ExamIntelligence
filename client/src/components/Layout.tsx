@@ -11,8 +11,8 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const { isVisible, headerHeight } = useScrollHeader({
-    scrollThreshold: 100,
+  const { isFixed, isScrollingUp, isAtTop, headerHeight, headerOutOfView } = useScrollHeader({
+    headerHeight: 64,
     scrollSensitivity: 5
   });
 
@@ -44,18 +44,17 @@ export default function Layout({ children }: LayoutProps) {
       <Sidebar />
       
       <div className="flex-1 lg:ml-64 transition-all duration-300 ease-out w-full min-w-0 flex flex-col min-h-screen">
-        {/* Fixed header with hide-on-scroll behavior */}
+        {/* Header with sticky by default, fixed when scrolling up after header is out of view */}
         <div 
-          className="fixed top-0 left-0 right-0 lg:left-64 z-[100] transition-transform duration-300 ease-in-out bg-background shadow-md"
-          style={{
-            transform: `translateY(${isVisible ? '0' : '-100%'})`,
-          }}
+          className={`
+            header-wrapper
+            ${isFixed ? 'header-fixed' : 'header-sticky'}
+            top-0 left-0 right-0 lg:left-64 z-[100] 
+            bg-background shadow-md
+          `}
         >
           <TopBar />
         </div>
-        
-        {/* Spacer to push content down below fixed header */}
-        <div style={{ height: `${headerHeight}px` }} className="flex-shrink-0" />
         
         <main 
           id="main-content"

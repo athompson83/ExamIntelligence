@@ -115,6 +115,26 @@
     scroll-padding-top: 80px; /* Account for sticky header */
   }
 
+  /* Header positioning classes */
+  .header-sticky {
+    position: sticky;
+    top: 0;
+  }
+
+  .header-fixed {
+    position: fixed;
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
   /* GPU acceleration for transforms and animations */
   [class*="transform"],
   [class*="transition"],
@@ -169,6 +189,31 @@
     background: rgba(15, 23, 42, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+  }
+
+  /* Header positioning classes */
+  .header-wrapper {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, position;
+  }
+
+  .header-sticky {
+    position: sticky;
+    position: -webkit-sticky;
+  }
+
+  .header-fixed {
+    position: fixed;
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(0);
+    }
   }
 
   /* Scroll improvements */
