@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage-simple";
+import { storage } from "./storage";
 import billingRoutes from "./routes/billing";
 import adminRoutes from "./routes/admin";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -149,7 +149,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(logs);
     } catch (error) {
-      console.error('Error fetching activity logs:', error);
       res.status(500).json({ error: 'Failed to fetch activity logs' });
     }
   });
@@ -158,7 +157,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.json([]); // Mock empty rollback history
     } catch (error) {
-      console.error('Error fetching rollback history:', error);
       res.status(500).json({ error: 'Failed to fetch rollback history' });
     }
   });
@@ -167,7 +165,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.json([]); // Mock empty security events
     } catch (error) {
-      console.error('Error fetching security events:', error);
       res.status(500).json({ error: 'Failed to fetch security events' });
     }
   });
@@ -176,7 +173,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.json([]); // Mock empty permission audits
     } catch (error) {
-      console.error('Error fetching permission audits:', error);
       res.status(500).json({ error: 'Failed to fetch permission audits' });
     }
   });
@@ -206,7 +202,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(summary);
     } catch (error) {
-      console.error('Error fetching user activity summary:', error);
       res.status(500).json({ error: 'Failed to fetch user activity summary' });
     }
   });
@@ -215,7 +210,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.json({ message: 'Rollback executed successfully' });
     } catch (error) {
-      console.error('Error executing rollback:', error);
       res.status(500).json({ error: 'Failed to execute rollback' });
     }
   });
@@ -225,7 +219,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.json(mockUsers);
     } catch (error) {
-      console.error('Error fetching users:', error);
       res.status(500).json({ error: 'Failed to fetch users' });
     }
   });
@@ -280,7 +273,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const switchedUser = await storage.getUserById(req.session.switchedUserId);
         return switchedUser;
       } catch (error) {
-        console.error('Error fetching switched user:', error);
         // Fall back to default user
       }
     }
@@ -300,7 +292,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.json(mockUser);
     } catch (error) {
-      console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
@@ -311,7 +302,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Since we're using mock authentication, just redirect to landing page
       res.redirect('/');
     } catch (error) {
-      console.error("Error during logout:", error);
       res.status(500).json({ message: "Failed to logout" });
     }
   });
@@ -338,7 +328,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(401).json({ success: false, message: "Invalid credentials" });
       }
     } catch (error) {
-      console.error("Error during test login:", error);
       res.status(500).json({ success: false, message: "Login failed" });
     }
   });
@@ -364,7 +353,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(sampleQuizzes);
     } catch (error) {
-      console.error("Error fetching available quizzes:", error);
       res.status(500).json({ message: "Failed to fetch available quizzes" });
     }
   });
@@ -758,13 +746,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assignedQuizzes: quizzes.filter(q => q.status === 'published').length,
         completedQuizzes: 0, // This would be calculated from actual attempts
         averageScore: 87, // This would be calculated from actual scores
-        totalQuestions: testbanks.reduce((sum, tb) => sum + (tb.questionCount || 0), 0),
+        totalQuestions: testbanks.reduce((sum, tb) => sum + ((tb as any).questionCount || 0), 0),
         upcomingDeadlines: quizzes.filter(q => q.dueDate && new Date(q.dueDate) > new Date()).length,
         recentActivity: quizzes.slice(0, 3).map(quiz => ({
           id: quiz.id,
           title: quiz.title,
           status: quiz.status,
-          questionCount: quiz.questionCount || 0,
+          questionCount: (quiz as any).questionCount || 0,
           dueDate: quiz.dueDate
         }))
       };
@@ -786,7 +774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: testbank.id,
         title: testbank.title,
         description: testbank.description,
-        questionCount: testbank.questionCount || 0,
+        questionCount: (testbank as any).questionCount || 0,
         timeLimit: 60, // Default time limit
         difficulty: Math.floor(Math.random() * 3) + 2, // Random difficulty 2-4
         status: 'assigned', // Default status
@@ -821,7 +809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: testbank.id,
         title: testbank.title,
         description: testbank.description,
-        questionCount: testbank.questionCount || 0,
+        questionCount: (testbank as any).questionCount || 0,
         timeLimit: 60,
         difficulty: Math.floor(Math.random() * 3) + 2,
         status: 'assigned',
@@ -2577,7 +2565,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const quizzes = await storage.getQuizzesByUser(userId);
       res.json(quizzes);
     } catch (error) {
-      console.error("Error fetching available quizzes:", error);
       res.status(500).json({ message: "Failed to fetch available quizzes" });
     }
   });

@@ -56,28 +56,29 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false, // Don't refetch when window regains focus by default
       refetchOnMount: true, // Refetch on mount only if stale
       refetchOnReconnect: 'always', // Refetch when reconnecting
-      staleTime: 5 * 60 * 1000, // 5 minutes - data is considered fresh for 5 minutes
-      gcTime: 15 * 60 * 1000, // 15 minutes - keep cache for 15 minutes
+      staleTime: 10 * 60 * 1000, // 10 minutes - data is considered fresh for 10 minutes
+      gcTime: 30 * 60 * 1000, // 30 minutes - keep cache for 30 minutes (increased for better performance)
       retry: (failureCount, error) => {
-        // Don't retry on 401, 403, or 404 errors
-        if (error.message.includes('401') || error.message.includes('403') || error.message.includes('404')) {
-          return false;
-        }
-        // Retry only once for other errors (reduced from 3)
-        return failureCount < 1;
-      },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Max 5 seconds
-    },
-    mutations: {
-      retry: (failureCount, error) => {
-        // Don't retry client errors (4xx)
+        // Don't retry on 4xx client errors
         if (error.message.match(/4\d{2}/)) {
           return false;
         }
-        // Don't retry server errors either - fail fast
-        return false;
+        // Retry only once for server errors
+        return failureCount < 1;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Max 3 seconds
+      networkMode: 'offlineFirst', // Prefer cached data when offline
+    },
+    mutations: {
+      retry: false, // Don't retry mutations - fail fast
+      networkMode: 'offlineFirst', // Allow mutations to be queued when offline
+      onError: (error: Error) => {
+        // Global error handler for mutations
+        if (error.message.includes('401')) {
+          // Handle unauthorized globally
+          window.location.href = '/login';
+        }
+      },
     },
   },
 });

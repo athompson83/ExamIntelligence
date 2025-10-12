@@ -139,7 +139,11 @@ export const users = pgTable("users", {
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_users_account_id").on(table.accountId),
+  index("idx_users_email").on(table.email),
+  index("idx_users_role").on(table.role),
+]);
 
 // Testbank table
 export const testbanks = pgTable("testbanks", {
@@ -162,7 +166,11 @@ export const testbanks = pgTable("testbanks", {
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_testbanks_creator_id").on(table.creatorId),
+  index("idx_testbanks_account_id").on(table.accountId),
+  index("idx_testbanks_is_archived").on(table.isArchived),
+]);
 
 // Question table - Enhanced with full Canvas LMS support
 export const questions = pgTable("questions", {
@@ -269,7 +277,13 @@ export const questions = pgTable("questions", {
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_questions_testbank_id").on(table.testbankId),
+  index("idx_questions_question_type").on(table.questionType),
+  index("idx_questions_blooms_level").on(table.bloomsLevel),
+  index("idx_questions_is_archived").on(table.isArchived),
+  index("idx_questions_difficulty_score").on(table.difficultyScore),
+]);
 
 // Answer options table
 export const answerOptions = pgTable("answer_options", {
@@ -378,7 +392,12 @@ export const quizzes = pgTable("quizzes", {
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_quizzes_creator_id").on(table.creatorId),
+  index("idx_quizzes_account_id").on(table.accountId),
+  index("idx_quizzes_is_archived").on(table.isArchived),
+  index("idx_quizzes_availability_dates").on(table.availabilityStart, table.availabilityEnd),
+]);
 
 // Question groups for quiz organization (Canvas-style)
 export const questionGroups = pgTable("question_groups", {
@@ -429,7 +448,12 @@ export const quizAttempts = pgTable("quiz_attempts", {
   userAgent: text("user_agent"),
   status: varchar("status", { enum: ["in_progress", "submitted", "graded", "incomplete"] }).default("in_progress"),
   metadata: jsonb("metadata"),
-});
+}, (table) => [
+  index("idx_quiz_attempts_quiz_id").on(table.quizId),
+  index("idx_quiz_attempts_student_id").on(table.studentId),
+  index("idx_quiz_attempts_status").on(table.status),
+  index("idx_quiz_attempts_started_at").on(table.startedAt),
+]);
 
 // Quiz responses (individual question answers)
 export const quizResponses = pgTable("quiz_responses", {
@@ -442,7 +466,11 @@ export const quizResponses = pgTable("quiz_responses", {
   timeSpent: integer("time_spent"), // in seconds
   flagged: boolean("flagged").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_quiz_responses_attempt_id").on(table.attemptId),
+  index("idx_quiz_responses_question_id").on(table.questionId),
+  index("idx_quiz_responses_is_correct").on(table.isCorrect),
+]);
 
 // Quiz Progress table - tracks user progress within a quiz session for persistence
 export const quizProgress = pgTable("quiz_progress", {
@@ -1652,34 +1680,34 @@ export const quizAssignmentsRelations = relations(quizAssignments, ({ one }) => 
 // certificateTemplatesRelations moved to NEW FEATURES section
 
 // Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertTestbankSchema = createInsertSchema(testbanks).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertQuestionSchema = createInsertSchema(questions).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertAnswerOptionSchema = createInsertSchema(answerOptions).omit({ id: true });
-export const insertQuizSchema = createInsertSchema(quizzes).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertQuestionGroupSchema = createInsertSchema(questionGroups).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertQuizQuestionSchema = createInsertSchema(quizQuestions).omit({ id: true });
-export const insertQuizAttemptSchema = createInsertSchema(quizAttempts).omit({ id: true });
-export const insertQuizResponseSchema = createInsertSchema(quizResponses).omit({ id: true, createdAt: true });
-export const insertQuizProgressSchema = createInsertSchema(quizProgress).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertUserSchema = createInsertSchema(users);
+export const insertTestbankSchema = createInsertSchema(testbanks);
+export const insertQuestionSchema = createInsertSchema(questions);
+export const insertAnswerOptionSchema = createInsertSchema(answerOptions);
+export const insertQuizSchema = createInsertSchema(quizzes);
+export const insertQuestionGroupSchema = createInsertSchema(questionGroups);
+export const insertQuizQuestionSchema = createInsertSchema(quizQuestions);
+export const insertQuizAttemptSchema = createInsertSchema(quizAttempts);
+export const insertQuizResponseSchema = createInsertSchema(quizResponses);
+export const insertQuizProgressSchema = createInsertSchema(quizProgress);
+export const insertAccountSchema = createInsertSchema(accounts);
 
 // CAT Exam Insert Schemas
-export const insertCatExamSchema = createInsertSchema(catExams).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertCatExamCategorySchema = createInsertSchema(catExamCategories).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertCatExamAssignmentSchema = createInsertSchema(catExamAssignments).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertCatExamSessionSchema = createInsertSchema(catExamSessions).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCatExamSchema = createInsertSchema(catExams);
+export const insertCatExamCategorySchema = createInsertSchema(catExamCategories);
+export const insertCatExamAssignmentSchema = createInsertSchema(catExamAssignments);
+export const insertCatExamSessionSchema = createInsertSchema(catExamSessions);
 
 // Additional Insert Schemas
-export const insertProctoringLogSchema = createInsertSchema(proctoringLogs).omit({ id: true, createdAt: true });
-export const insertReferenceBankSchema = createInsertSchema(referenceBanks).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertReferenceSchema = createInsertSchema(references).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertScheduledAssignmentSchema = createInsertSchema(scheduledAssignments).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertStudyAidSchema = createInsertSchema(studyAids).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertAssignmentSubmissionSchema = createInsertSchema(assignmentSubmissions).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertMobileDeviceSchema = createInsertSchema(mobileDevices).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertLlmProviderSchema = createInsertSchema(llmProviders).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertProctoringLogSchema = createInsertSchema(proctoringLogs);
+export const insertReferenceBankSchema = createInsertSchema(referenceBanks);
+export const insertReferenceSchema = createInsertSchema(references);
+export const insertScheduledAssignmentSchema = createInsertSchema(scheduledAssignments);
+export const insertStudyAidSchema = createInsertSchema(studyAids);
+export const insertAssignmentSubmissionSchema = createInsertSchema(assignmentSubmissions);
+export const insertMobileDeviceSchema = createInsertSchema(mobileDevices);
+export const insertPromptTemplateSchema = createInsertSchema(promptTemplates);
+export const insertLlmProviderSchema = createInsertSchema(llmProviders);
 
 
 
@@ -1716,6 +1744,29 @@ export type InsertCatExamAssignment = z.infer<typeof insertCatExamAssignmentSche
 export type CatExamAssignment = typeof catExamAssignments.$inferSelect;
 export type InsertCatExamSession = z.infer<typeof insertCatExamSessionSchema>;
 export type CatExamSession = typeof catExamSessions.$inferSelect;
+
+// Additional Types for Storage
+export type InsertProctoringLog = z.infer<typeof insertProctoringLogSchema>;
+export type ProctoringLog = typeof proctoringLogs.$inferSelect;
+export type InsertReferenceBank = z.infer<typeof insertReferenceBankSchema>;
+export type ReferenceBank = typeof referenceBanks.$inferSelect;
+export type InsertReference = z.infer<typeof insertReferenceSchema>;
+export type Reference = typeof references.$inferSelect;
+export type InsertScheduledAssignment = z.infer<typeof insertScheduledAssignmentSchema>;
+export type ScheduledAssignment = typeof scheduledAssignments.$inferSelect;
+export type InsertStudyAid = z.infer<typeof insertStudyAidSchema>;
+export type StudyAid = typeof studyAids.$inferSelect;
+export type InsertAssignmentSubmission = z.infer<typeof insertAssignmentSubmissionSchema>;
+export type AssignmentSubmission = typeof assignmentSubmissions.$inferSelect;
+export type InsertMobileDevice = z.infer<typeof insertMobileDeviceSchema>;
+export type MobileDevice = typeof mobileDevices.$inferSelect;
+export type InsertPromptTemplate = z.infer<typeof insertPromptTemplateSchema>;
+export type PromptTemplate = typeof promptTemplates.$inferSelect;
+export type InsertLlmProvider = z.infer<typeof insertLlmProviderSchema>;
+export type LlmProvider = typeof llmProviders.$inferSelect;
+export type InsertCustomInstruction = z.infer<typeof insertCustomInstructionSchema>;
+export type CustomInstruction = typeof customInstructions.$inferSelect;
+
 // Additional types can be added here as needed
 
 // Additional tables for badge and certificate system
@@ -1984,10 +2035,10 @@ export const deviceSyncStatusRelations = relations(deviceSyncStatus, ({ one }) =
 }));
 
 // Offline sync schemas
-export const insertOfflineSyncQueueSchema = createInsertSchema(offlineSyncQueue).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertConnectionLogSchema = createInsertSchema(connectionLogs).omit({ id: true, timestamp: true });
-export const insertTeacherNotificationSchema = createInsertSchema(teacherNotifications).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertDeviceSyncStatusSchema = createInsertSchema(deviceSyncStatus).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertOfflineSyncQueueSchema = createInsertSchema(offlineSyncQueue);
+export const insertConnectionLogSchema = createInsertSchema(connectionLogs);
+export const insertTeacherNotificationSchema = createInsertSchema(teacherNotifications);
+export const insertDeviceSyncStatusSchema = createInsertSchema(deviceSyncStatus);
 
 // ============= NEW FEATURES: QUESTION FEEDBACK & EXPLANATIONS =============
 
@@ -2447,12 +2498,12 @@ export const userActionTrackerRelations = relations(userActionTracker, ({ one })
 }));
 
 // Insert schemas for new tables
-export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true, createdAt: true });
-export const insertRollbackHistorySchema = createInsertSchema(rollbackHistory).omit({ id: true, createdAt: true });
-export const insertEnhancedSecurityEventSchema = createInsertSchema(enhancedSecurityEvents).omit({ id: true, createdAt: true });
-export const insertPermissionAuditSchema = createInsertSchema(permissionAudits).omit({ id: true, createdAt: true });
-export const insertUserActionTrackerSchema = createInsertSchema(userActionTracker).omit({ id: true, createdAt: true });
-export const insertCustomInstructionSchema = createInsertSchema(customInstructions).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertActivityLogSchema = createInsertSchema(activityLogs);
+export const insertRollbackHistorySchema = createInsertSchema(rollbackHistory);
+export const insertEnhancedSecurityEventSchema = createInsertSchema(enhancedSecurityEvents);
+export const insertPermissionAuditSchema = createInsertSchema(permissionAudits);
+export const insertUserActionTrackerSchema = createInsertSchema(userActionTracker);
+export const insertCustomInstructionSchema = createInsertSchema(customInstructions);
 
 // Types for new tables
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
