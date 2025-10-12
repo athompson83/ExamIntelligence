@@ -27,14 +27,14 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Account/Organization table
+// Account/Organization table - OPTIMIZED with indexes
 export const accounts = pgTable("accounts", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name").notNull(),
   description: text("description"),
   subscriptionTier: varchar("subscription_tier", { enum: ["starter", "basic", "professional", "institutional", "enterprise"] }).notNull().default("starter"),
   billingCycle: varchar("billing_cycle", { enum: ["monthly", "annual"] }).default("monthly"),
-  maxUsers: integer("max_users").default(10),
+  maxUsers: integer("max_users").default(10).notNull(),
   
   // Stripe integration
   stripeCustomerId: varchar("stripe_customer_id").unique(),
@@ -44,26 +44,31 @@ export const accounts = pgTable("accounts", {
   stripeStatus: varchar("stripe_status", { enum: ["active", "canceled", "incomplete", "incomplete_expired", "past_due", "trialing", "unpaid"] }),
   stripePriceId: varchar("stripe_price_id"),
   
-  // Usage tracking for quotas
-  monthlyQuizzes: integer("monthly_quizzes").default(0),
-  monthlyAiGenerated: integer("monthly_ai_generated").default(0),
-  monthlyAiValidations: integer("monthly_ai_validations").default(0),
-  monthlyProctoringHours: integer("monthly_proctoring_hours").default(0),
-  currentSeatCount: integer("current_seat_count").default(1),
+  // Usage tracking for quotas - with constraints
+  monthlyQuizzes: integer("monthly_quizzes").default(0).notNull(),
+  monthlyAiGenerated: integer("monthly_ai_generated").default(0).notNull(),
+  monthlyAiValidations: integer("monthly_ai_validations").default(0).notNull(),
+  monthlyProctoringHours: integer("monthly_proctoring_hours").default(0).notNull(),
+  currentSeatCount: integer("current_seat_count").default(1).notNull(),
   
   // Billing
   billingEmail: varchar("billing_email"),
   billingAddress: jsonb("billing_address"),
   
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_accounts_stripe_customer_id").on(table.stripeCustomerId),
+  index("idx_accounts_stripe_subscription_id").on(table.stripeSubscriptionId),
+  index("idx_accounts_subscription_tier").on(table.subscriptionTier),
+  index("idx_accounts_is_active").on(table.isActive),
+]);
 
-// Subscription Management
+// Subscription Management - OPTIMIZED with indexes
 export const subscriptions = pgTable("subscriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
-  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }).notNull(),
   stripeSubscriptionId: varchar("stripe_subscription_id").unique().notNull(),
   stripePriceId: varchar("stripe_price_id").notNull(),
   stripeCustomerId: varchar("stripe_customer_id").notNull(),
@@ -72,22 +77,27 @@ export const subscriptions = pgTable("subscriptions", {
   }).notNull(),
   currentPeriodStart: timestamp("current_period_start").notNull(),
   currentPeriodEnd: timestamp("current_period_end").notNull(),
-  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
   canceledAt: timestamp("canceled_at"),
   tier: varchar("tier", { enum: ["starter", "basic", "professional", "institutional", "enterprise"] }).notNull(),
   billingCycle: varchar("billing_cycle", { enum: ["monthly", "annual"] }).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_subscriptions_account_id").on(table.accountId),
+  index("idx_subscriptions_stripe_customer_id").on(table.stripeCustomerId),
+  index("idx_subscriptions_status").on(table.status),
+  index("idx_subscriptions_tier").on(table.tier),
+]);
 
-// Invoice History
+// Invoice History - OPTIMIZED with indexes
 export const invoices = pgTable("invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
-  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }).notNull(),
   stripeInvoiceId: varchar("stripe_invoice_id").unique().notNull(),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   amount: integer("amount").notNull(), // in cents
-  currency: varchar("currency").default("usd"),
+  currency: varchar("currency").default("usd").notNull(),
   status: varchar("status", { 
     enum: ["draft", "open", "paid", "uncollectible", "void"] 
   }).notNull(),
@@ -100,20 +110,53 @@ export const invoices = pgTable("invoices", {
   periodStart: timestamp("period_start"),
   periodEnd: timestamp("period_end"),
   description: text("description"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_invoices_account_id").on(table.accountId),
+  index("idx_invoices_stripe_subscription_id").on(table.stripeSubscriptionId),
+  index("idx_invoices_status").on(table.status),
+  index("idx_invoices_paid_at").on(table.paidAt),
+]);
 
-// System Settings (for Stripe keys and configuration)
+// System Settings (for Stripe keys and configuration) - OPTIMIZED
 export const systemSettings = pgTable("system_settings", {
   id: uuid("id").primaryKey().defaultRandom(),
   key: varchar("key").unique().notNull(),
   value: text("value"),
-  isSecret: boolean("is_secret").default(false),
+  isSecret: boolean("is_secret").default(false).notNull(),
   description: text("description"),
   updatedBy: varchar("updated_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_system_settings_key").on(table.key),
+  index("idx_system_settings_updated_by").on(table.updatedBy),
+]);
+
+// CENTRALIZED ARCHIVE TRACKING - Eliminates redundancy across tables
+export const archivedItems = pgTable("archived_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  entityType: varchar("entity_type", { 
+    enum: ["testbank", "question", "quiz", "user", "account", "reference", "assignment"] 
+  }).notNull(),
+  entityId: uuid("entity_id").notNull(),
+  archivedAt: timestamp("archived_at").defaultNow().notNull(),
+  archivedBy: varchar("archived_by").references(() => users.id).notNull(),
+  archiveReason: text("archive_reason"),
+  canRestore: boolean("can_restore").default(true).notNull(),
+  restoredAt: timestamp("restored_at"),
+  restoredBy: varchar("restored_by").references(() => users.id),
+}, (table) => [
+  index("idx_archived_items_entity").on(table.entityType, table.entityId),
+  index("idx_archived_items_archived_by").on(table.archivedBy),
+  index("idx_archived_items_archived_at").on(table.archivedAt),
+  index("idx_archived_items_can_restore").on(table.canRestore),
+]);
+
+// Create types for the archived items table
+export const insertArchivedItemSchema = createInsertSchema(archivedItems);
+export type ArchivedItem = typeof archivedItems.$inferSelect;
+export type InsertArchivedItem = z.infer<typeof insertArchivedItemSchema>;
 
 // User storage table (mandatory for Replit Auth)
 export const users = pgTable("users", {
@@ -145,31 +188,26 @@ export const users = pgTable("users", {
   index("idx_users_role").on(table.role),
 ]);
 
-// Testbank table
+// Testbank table - OPTIMIZED (removed redundant archive fields)
 export const testbanks = pgTable("testbanks", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title").notNull(),
   description: text("description"),
-  creatorId: varchar("creator_id").references(() => users.id).notNull(),
-  accountId: uuid("account_id").references(() => accounts.id).notNull(),
+  creatorId: varchar("creator_id").references(() => users.id, { onDelete: "set null" }).notNull(),
+  accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }).notNull(),
   isShared: boolean("is_shared").notNull().default(true), // Shared within account
-  tags: jsonb("tags").$type<string[]>().default([]),
-  learningObjectives: jsonb("learning_objectives").$type<string[]>().default([]),
+  tags: jsonb("tags").$type<string[]>().default([]).notNull(),
+  learningObjectives: jsonb("learning_objectives").$type<string[]>().default([]).notNull(),
   lastRevalidatedAt: timestamp("last_revalidated_at"),
   
-  // Safety deletion protocol - Archive instead of delete
-  isArchived: boolean("is_archived").default(false),
-  archivedAt: timestamp("archived_at"),
-  archivedBy: varchar("archived_by").references(() => users.id),
-  archiveReason: text("archive_reason"),
-  canRestore: boolean("can_restore").default(true),
+  // Removed redundant archive fields - now tracked in archivedItems table
   
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("idx_testbanks_creator_id").on(table.creatorId),
   index("idx_testbanks_account_id").on(table.accountId),
-  index("idx_testbanks_is_archived").on(table.isArchived),
+  index("idx_testbanks_created_at").on(table.createdAt),
 ]);
 
 // Question table - Enhanced with full Canvas LMS support
@@ -268,34 +306,34 @@ export const questions = pgTable("questions", {
   // Additional Canvas features
   additionalData: jsonb("additional_data"),
   
-  // Safety deletion protocol - Archive instead of delete
-  isArchived: boolean("is_archived").default(false),
-  archivedAt: timestamp("archived_at"),
-  archivedBy: varchar("archived_by").references(() => users.id),
-  archiveReason: text("archive_reason"),
-  canRestore: boolean("can_restore").default(true),
+  // Removed redundant archive fields - now tracked in archivedItems table
   
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("idx_questions_testbank_id").on(table.testbankId),
   index("idx_questions_question_type").on(table.questionType),
   index("idx_questions_blooms_level").on(table.bloomsLevel),
-  index("idx_questions_is_archived").on(table.isArchived),
   index("idx_questions_difficulty_score").on(table.difficultyScore),
+  index("idx_questions_ai_validation_status").on(table.aiValidationStatus),
+  index("idx_questions_usage_count").on(table.usageCount),
 ]);
 
-// Answer options table
+// Answer options table - OPTIMIZED with indexes
 export const answerOptions = pgTable("answer_options", {
   id: uuid("id").primaryKey().defaultRandom(),
-  questionId: uuid("question_id").references(() => questions.id).notNull(),
+  questionId: uuid("question_id").references(() => questions.id, { onDelete: "cascade" }).notNull(),
   answerText: text("answer_text").notNull(),
-  isCorrect: boolean("is_correct").default(false),
+  isCorrect: boolean("is_correct").default(false).notNull(),
   mediaUrl: varchar("media_url"),
-  displayOrder: integer("display_order").default(0),
+  displayOrder: integer("display_order").default(0).notNull(),
   reasoning: text("reasoning"), // AI-generated explanation for why this answer is correct/incorrect
   feedback: text("feedback"), // Feedback shown to students when this option is selected
-});
+}, (table) => [
+  index("idx_answer_options_question_id").on(table.questionId),
+  index("idx_answer_options_is_correct").on(table.isCorrect),
+  index("idx_answer_options_display_order").on(table.displayOrder),
+]);
 
 // Quiz table - Simplified to match actual database schema
 export const quizzes = pgTable("quizzes", {
@@ -380,59 +418,62 @@ export const quizzes = pgTable("quizzes", {
   // Availability settings (replaces startTime/endTime)
   availabilityStart: timestamp("availability_start"),
   availabilityEnd: timestamp("availability_end"),
-  alwaysAvailable: boolean("always_available").default(true),
+  alwaysAvailable: boolean("always_available").default(true).notNull(),
   
-  // Safety deletion protocol - Archive instead of delete
-  isArchived: boolean("is_archived").default(false),
-  archivedAt: timestamp("archived_at"),
-  archivedBy: varchar("archived_by").references(() => users.id),
-  archiveReason: text("archive_reason"),
-  canRestore: boolean("can_restore").default(true),
+  // Removed redundant archive fields - now tracked in archivedItems table
   
   // Timestamps
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("idx_quizzes_creator_id").on(table.creatorId),
   index("idx_quizzes_account_id").on(table.accountId),
-  index("idx_quizzes_is_archived").on(table.isArchived),
   index("idx_quizzes_availability_dates").on(table.availabilityStart, table.availabilityEnd),
+  index("idx_quizzes_adaptive_testing").on(table.adaptiveTesting),
 ]);
 
-// Question groups for quiz organization (Canvas-style)
+// Question groups for quiz organization (Canvas-style) - OPTIMIZED
 export const questionGroups = pgTable("question_groups", {
   id: uuid("id").primaryKey().defaultRandom(),
-  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
+  quizId: uuid("quiz_id").references(() => quizzes.id, { onDelete: "cascade" }).notNull(),
   title: varchar("title").notNull(),
   description: text("description"),
-  pickCount: integer("pick_count").default(1), // Number of questions to randomly select
-  totalQuestions: integer("total_questions").default(0), // Total questions in this group
-  pointsPerQuestion: numeric("points_per_question", { precision: 5, scale: 2 }).default("1.00"),
-  displayOrder: integer("display_order").default(0),
+  pickCount: integer("pick_count").default(1).notNull(), // Number of questions to randomly select
+  totalQuestions: integer("total_questions").default(0).notNull(), // Total questions in this group
+  pointsPerQuestion: numeric("points_per_question", { precision: 5, scale: 2 }).default("1.00").notNull(),
+  displayOrder: integer("display_order").default(0).notNull(),
   
   // CAT/Difficulty-based selection
-  useCAT: boolean("use_cat").default(false), // Computer Adaptive Testing
-  difficultyWeight: numeric("difficulty_weight", { precision: 3, scale: 2 }).default("1.00"),
-  bloomsWeight: numeric("blooms_weight", { precision: 3, scale: 2 }).default("1.00"),
+  useCAT: boolean("use_cat").default(false).notNull(), // Computer Adaptive Testing
+  difficultyWeight: numeric("difficulty_weight", { precision: 3, scale: 2 }).default("1.00").notNull(),
+  bloomsWeight: numeric("blooms_weight", { precision: 3, scale: 2 }).default("1.00").notNull(),
   
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_question_groups_quiz_id").on(table.quizId),
+  index("idx_question_groups_display_order").on(table.displayOrder),
+]);
 
-// Quiz questions (many-to-many relationship) - Enhanced for groups
+// Quiz questions (many-to-many relationship) - OPTIMIZED with indexes
 export const quizQuestions = pgTable("quiz_questions", {
   id: uuid("id").primaryKey().defaultRandom(),
-  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
-  questionId: uuid("question_id").references(() => questions.id).notNull(),
-  questionGroupId: uuid("question_group_id").references(() => questionGroups.id), // Optional group assignment
-  displayOrder: integer("display_order").default(0),
-  points: numeric("points", { precision: 5, scale: 2 }).default("1.00"),
+  quizId: uuid("quiz_id").references(() => quizzes.id, { onDelete: "cascade" }).notNull(),
+  questionId: uuid("question_id").references(() => questions.id, { onDelete: "cascade" }).notNull(),
+  questionGroupId: uuid("question_group_id").references(() => questionGroups.id, { onDelete: "cascade" }), // Optional group assignment
+  displayOrder: integer("display_order").default(0).notNull(),
+  points: numeric("points", { precision: 5, scale: 2 }).default("1.00").notNull(),
   
   // Canvas-style question settings
-  isRequired: boolean("is_required").default(true),
-  showFeedback: boolean("show_feedback").default(false),
-  partialCredit: boolean("partial_credit").default(false),
-});
+  isRequired: boolean("is_required").default(true).notNull(),
+  showFeedback: boolean("show_feedback").default(false).notNull(),
+  partialCredit: boolean("partial_credit").default(false).notNull(),
+}, (table) => [
+  index("idx_quiz_questions_quiz_id").on(table.quizId),
+  index("idx_quiz_questions_question_id").on(table.questionId),
+  index("idx_quiz_questions_group_id").on(table.questionGroupId),
+  index("idx_quiz_questions_display_order").on(table.displayOrder),
+]);
 
 // Quiz attempts/results
 export const quizAttempts = pgTable("quiz_attempts", {

@@ -106,12 +106,49 @@ class DatabaseStorage implements IStorage {
   }
 
   async getAllUsersWithAccountInfo(): Promise<(User & { account: Account | null })[]> {
-    const usersList = await db.select().from(users);
-    const accountsList = await db.select().from(accounts);
+    // OPTIMIZED: Use a single JOIN query instead of two separate queries
+    const result = await db.select({
+      // User fields
+      id: users.id,
+      email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      profileImageUrl: users.profileImageUrl,
+      role: users.role,
+      accountId: users.accountId,
+      accessibilitySettings: users.accessibilitySettings,
+      isActive: users.isActive,
+      lastLoginAt: users.lastLoginAt,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+      // Account fields
+      accountName: accounts.name,
+      accountTier: accounts.subscriptionTier,
+      accountIsActive: accounts.isActive,
+    })
+    .from(users)
+    .leftJoin(accounts, eq(users.accountId, accounts.id))
+    .orderBy(desc(users.createdAt));
     
-    return usersList.map(user => ({
-      ...user,
-      account: accountsList.find(acc => acc.id === user.accountId) || null
+    return result.map(row => ({
+      id: row.id,
+      email: row.email,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      profileImageUrl: row.profileImageUrl,
+      role: row.role,
+      accountId: row.accountId,
+      accessibilitySettings: row.accessibilitySettings,
+      isActive: row.isActive,
+      lastLoginAt: row.lastLoginAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      account: row.accountId ? {
+        id: row.accountId,
+        name: row.accountName!,
+        subscriptionTier: row.accountTier!,
+        isActive: row.accountIsActive!
+      } as Account : null
     }));
   }
 
