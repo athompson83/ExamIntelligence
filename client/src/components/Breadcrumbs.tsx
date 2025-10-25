@@ -51,7 +51,7 @@ export default function Breadcrumbs({ items, className }: BreadcrumbsProps) {
     <nav
       aria-label="Breadcrumb"
       className={cn(
-        "sticky top-16 left-0 lg:left-64 right-0 z-40 flex items-center px-4 md:px-6 py-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50",
+        "sticky top-32 lg:top-16 left-0 lg:left-64 right-0 z-40 flex items-center px-4 md:px-6 py-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50",
         className
       )}
       data-testid="breadcrumbs"

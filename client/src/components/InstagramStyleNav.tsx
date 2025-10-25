@@ -46,10 +46,10 @@ export function InstagramStyleNav() {
   const getTopPosition = () => {
     if (!isVisible) return '-80px';
     
-    // If we're near the top (within 56px of TopBar height), position below TopBar
+    // If we're near the top (within 64px of TopBar height), position below TopBar
     const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-    if (scrollY <= 56) {
-      return '56px'; // Below TopBar
+    if (scrollY <= 64) {
+      return '64px'; // Below TopBar (h-16 = 64px)
     } else {
       return '0px'; // At top of viewport when TopBar is scrolled out
     }

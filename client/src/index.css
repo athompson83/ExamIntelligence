@@ -444,7 +444,7 @@
     main {
       padding-left: 1rem !important;
       padding-right: 1rem !important;
-      padding-top: 6.5rem !important; /* TopBar (4rem) + Breadcrumbs (2.5rem) */
+      padding-top: 11rem !important; /* TopBar (64px) + InstagramNav (64px) + Breadcrumbs (40px) = 168px = ~11rem */
       padding-bottom: 7rem !important; /* Bottom nav clearance */
     }
     
