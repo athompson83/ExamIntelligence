@@ -283,7 +283,7 @@ export default function ReferenceBanks() {
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" aria-label="More options">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

@@ -604,13 +604,13 @@ export default function UserManagement() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm" data-testid={`button-edit-${u.id}`}>
+                            <Button variant="ghost" size="sm" aria-label="Edit user" data-testid={`button-edit-${u.id}`}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600" data-testid={`button-delete-${u.id}`}>
+                            <Button variant="ghost" size="sm" className="text-red-600" aria-label="Delete user" data-testid={`button-delete-${u.id}`}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" data-testid={`button-more-${u.id}`}>
+                            <Button variant="ghost" size="sm" aria-label="More options" data-testid={`button-more-${u.id}`}>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </div>

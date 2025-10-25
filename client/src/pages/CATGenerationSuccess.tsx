@@ -44,7 +44,7 @@ export default function CATGenerationSuccess() {
           </p>
         </div>
 
-        <Alert>
+        <Alert role="alert" aria-live="polite">
           <CheckCircle className="h-4 w-4 text-green-500" />
           <AlertDescription>
             <strong>Fixed Critical Issues:</strong> Resolved OpenAI API errors, implemented safe error handling, 
@@ -222,7 +222,7 @@ export default function CATGenerationSuccess() {
           </Button>
         </div>
 
-        <Alert>
+        <Alert role="alert" aria-live="polite">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <strong>Next Steps:</strong> The system is now production-ready with comprehensive error tracking. 

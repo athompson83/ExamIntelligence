@@ -418,7 +418,7 @@ export default function QuizManager() {
                           <div className="flex items-center gap-1">
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)}>
+                                <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)} aria-label="Edit quiz">
                                   <Edit className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
@@ -426,7 +426,7 @@ export default function QuizManager() {
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)}>
+                                <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)} aria-label="Preview quiz">
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
@@ -434,7 +434,7 @@ export default function QuizManager() {
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => handleAssign(quiz)}>
+                                <Button variant="outline" size="sm" onClick={() => handleAssign(quiz)} aria-label="Assign to students">
                                   <UserPlus className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
@@ -444,7 +444,7 @@ export default function QuizManager() {
                               <>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)}>
+                                    <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)} aria-label="View analytics">
                                       <BarChart3 className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -452,7 +452,7 @@ export default function QuizManager() {
                                 </Tooltip>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="default" size="sm" onClick={() => handleStartLiveExam(quiz)}>
+                                    <Button variant="default" size="sm" onClick={() => handleStartLiveExam(quiz)} aria-label="Start live exam">
                                       <Users className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -462,7 +462,7 @@ export default function QuizManager() {
                             )}
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
+                                <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)} aria-label="Copy quiz">
                                   <Copy className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
@@ -470,7 +470,7 @@ export default function QuizManager() {
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700">
+                                <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700" aria-label="Delete quiz">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>

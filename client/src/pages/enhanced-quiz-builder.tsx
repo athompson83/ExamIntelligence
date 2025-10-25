@@ -70,6 +70,43 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { Droppable } from "@hello-pangea/dnd";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import type { Quiz, Question, Testbank, QuestionGroup } from "@shared/schema";
+
+// Type definitions for the component
+interface QuizState {
+  title: string;
+  description: string;
+  instructions: string;
+  timeLimit: number;
+  alwaysAvailable: boolean;
+  shuffleQuestions: boolean;
+  shuffleAnswers: boolean;
+  allowMultipleAttempts: boolean;
+  maxAttempts: number;
+  showCorrectAnswers: boolean;
+  showCorrectAnswersAt: string;
+  passingGrade: number;
+  gradeToShow: string;
+  enableQuestionFeedback: boolean;
+  enableLearningPrescription: boolean;
+  availabilityStart: string | null;
+  availabilityEnd: string | null;
+  passwordProtected: boolean;
+  password: string;
+  proctoring: boolean;
+  showQuestionsAfterAttempt: boolean;
+  proctoringSettings: Record<string, any>;
+}
+
+interface QuizQuestionWithDetails extends Question {
+  groupId?: string;
+  order?: number;
+}
+
+interface QuizWithRelations extends Quiz {
+  questions?: QuizQuestionWithDetails[];
+  questionGroups?: QuestionGroup[];
+}
 
 // Simple enhanced quiz builder with fixed JSX structure
 export default function EnhancedQuizBuilder() {
@@ -77,7 +114,7 @@ export default function EnhancedQuizBuilder() {
   const { toast } = useToast();
 
   // Basic state management
-  const [quiz, setQuiz] = useState({
+  const [quiz, setQuiz] = useState<QuizState>({
     title: '',
     description: '',
     instructions: '',
@@ -102,16 +139,16 @@ export default function EnhancedQuizBuilder() {
     proctoringSettings: {}
   });
 
-  const [quizQuestions, setQuizQuestions] = useState([]);
-  const [questionGroups, setQuestionGroups] = useState([]);
-  const [selectedQuestions, setSelectedQuestions] = useState([]);
-  const [viewingQuizQuestions, setViewingQuizQuestions] = useState(false);
-  const [isAddToGroupDialogOpen, setIsAddToGroupDialogOpen] = useState(false);
-  const [isEditGroupDialogOpen, setIsEditGroupDialogOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState(null);
-  const [expandedGroups, setExpandedGroups] = useState(new Set());
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTestbank, setSelectedTestbank] = useState('all');
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestionWithDetails[]>([]);
+  const [questionGroups, setQuestionGroups] = useState<QuestionGroup[]>([]);
+  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [viewingQuizQuestions, setViewingQuizQuestions] = useState<boolean>(false);
+  const [isAddToGroupDialogOpen, setIsAddToGroupDialogOpen] = useState<boolean>(false);
+  const [isEditGroupDialogOpen, setIsEditGroupDialogOpen] = useState<boolean>(false);
+  const [editingGroup, setEditingGroup] = useState<QuestionGroup | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedTestbank, setSelectedTestbank] = useState<string>('all');
 
   // Parse URL parameters to get quiz ID for editing
   const urlParams = new URLSearchParams(window.location.search);
@@ -127,7 +164,7 @@ export default function EnhancedQuizBuilder() {
   });
 
   // Load existing quiz data if editing
-  const { data: existingQuiz, isLoading: quizLoading, error: quizError } = useQuery({
+  const { data: existingQuiz, isLoading: quizLoading, error: quizError } = useQuery<QuizWithRelations>({
     queryKey: [`/api/quizzes/${quizId}`],
     enabled: isEditing && !!quizId,
   });
@@ -164,8 +201,8 @@ export default function EnhancedQuizBuilder() {
         gradeToShow: existingQuiz.gradeToShow || 'percentage',
         enableQuestionFeedback: existingQuiz.enableQuestionFeedback ?? true,
         enableLearningPrescription: existingQuiz.enableLearningPrescription ?? true,
-        availabilityStart: existingQuiz.availabilityStart,
-        availabilityEnd: existingQuiz.availabilityEnd,
+        availabilityStart: existingQuiz.availabilityStart ? new Date(existingQuiz.availabilityStart).toISOString().slice(0, 16) : null,
+        availabilityEnd: existingQuiz.availabilityEnd ? new Date(existingQuiz.availabilityEnd).toISOString().slice(0, 16) : null,
         passwordProtected: existingQuiz.passwordProtected || false,
         password: existingQuiz.password || '',
         proctoring: existingQuiz.proctoring || false,
@@ -184,12 +221,12 @@ export default function EnhancedQuizBuilder() {
   }, [existingQuiz]);
 
   // Load testbanks and questions
-  const { data: testbanks = [], isLoading: testbanksLoading } = useQuery({
+  const { data: testbanks = [], isLoading: testbanksLoading } = useQuery<Testbank[]>({
     queryKey: ['/api/testbanks'],
     enabled: !viewingQuizQuestions,
   });
 
-  const { data: availableQuestions = [], isLoading: questionsLoading } = useQuery({
+  const { data: availableQuestions = [], isLoading: questionsLoading } = useQuery<Question[]>({
     queryKey: ['/api/questions'],
     enabled: !viewingQuizQuestions,
   });
@@ -213,8 +250,8 @@ export default function EnhancedQuizBuilder() {
         gradeToShow: existingQuiz.gradeToShow || 'percentage',
         enableQuestionFeedback: existingQuiz.enableQuestionFeedback !== false,
         enableLearningPrescription: existingQuiz.enableLearningPrescription !== false,
-        availabilityStart: existingQuiz.availabilityStart || null,
-        availabilityEnd: existingQuiz.availabilityEnd || null,
+        availabilityStart: existingQuiz.availabilityStart ? new Date(existingQuiz.availabilityStart).toISOString().slice(0, 16) : null,
+        availabilityEnd: existingQuiz.availabilityEnd ? new Date(existingQuiz.availabilityEnd).toISOString().slice(0, 16) : null,
         passwordProtected: existingQuiz.passwordProtected || false,
         password: existingQuiz.password || '',
         proctoring: existingQuiz.proctoring || false,
@@ -254,18 +291,18 @@ export default function EnhancedQuizBuilder() {
     })
   );
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
+    if (active.id !== over?.id) {
       setQuizQuestions((items) => {
         const oldIndex = items.findIndex(item => item.id === active.id);
-        const newIndex = items.findIndex(item => item.id === over.id);
+        const newIndex = items.findIndex(item => item.id === over?.id);
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
 
-  const handleSelectQuestion = (questionId, selected) => {
+  const handleSelectQuestion = (questionId: string, selected: boolean) => {
     setSelectedQuestions(prev => 
       selected 
         ? [...prev, questionId]
@@ -273,7 +310,7 @@ export default function EnhancedQuizBuilder() {
     );
   };
 
-  const handleSelectAllQuestions = (checked) => {
+  const handleSelectAllQuestions = (checked: boolean) => {
     setSelectedQuestions(checked ? quizQuestions.map(q => q.id) : []);
   };
 
@@ -282,7 +319,7 @@ export default function EnhancedQuizBuilder() {
     setSelectedQuestions([]);
   };
 
-  const toggleGroupExpansion = (groupId) => {
+  const toggleGroupExpansion = (groupId: string) => {
     setExpandedGroups(prev => {
       const newSet = new Set(prev);
       if (newSet.has(groupId)) {
@@ -403,7 +440,15 @@ export default function EnhancedQuizBuilder() {
   };
 
   // DraggableQuestion component
-  function DraggableQuestion({ question, onRemove, isSelected, onSelect, showCheckbox = false }) {
+  interface DraggableQuestionProps {
+    question: QuizQuestionWithDetails;
+    onRemove: (questionId: string) => void;
+    isSelected: boolean;
+    onSelect: (questionId: string, selected: boolean) => void;
+    showCheckbox?: boolean;
+  }
+  
+  function DraggableQuestion({ question, onRemove, isSelected, onSelect, showCheckbox = false }: DraggableQuestionProps) {
     const {
       attributes,
       listeners,
@@ -433,7 +478,7 @@ export default function EnhancedQuizBuilder() {
         {showCheckbox && (
           <Checkbox
             checked={isSelected}
-            onCheckedChange={(checked) => onSelect(question.id, checked)}
+            onCheckedChange={(checked) => onSelect(question.id, checked === true)}
             className="mt-1"
           />
         )}
@@ -441,7 +486,7 @@ export default function EnhancedQuizBuilder() {
         <div className="flex-1">
           <div className="font-medium">{question.questionText}</div>
           <div className="text-sm text-muted-foreground mt-1">
-            {question.questionType} • Difficulty: {question.difficulty}/10 • Blooms: {question.bloomsLevel}
+            {question.questionType} • Difficulty: {question.difficultyScore}/10 • Blooms: {question.bloomsLevel}
           </div>
         </div>
         
@@ -450,6 +495,7 @@ export default function EnhancedQuizBuilder() {
           size="sm"
           onClick={() => onRemove(question.id)}
           className="text-red-500 hover:text-red-700"
+          aria-label="Remove question"
         >
           <X className="h-4 w-4" />
         </Button>
@@ -477,19 +523,23 @@ export default function EnhancedQuizBuilder() {
     <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
       {/* Breadcrumb Navigation */}
       <Breadcrumb className="mb-4 sm:mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
+        <BreadcrumbList className="flex items-center">
+          <BreadcrumbItem className="flex items-center">
             <Home className="h-4 w-4 cursor-pointer" onClick={() => navigate('/')} />
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
+          <BreadcrumbSeparator className="mx-2">
+            <span>/</span>
+          </BreadcrumbSeparator>
+          <BreadcrumbItem className="flex items-center">
             <span className="cursor-pointer text-sm" onClick={() => navigate('/quiz-manager')}>
               <span className="hidden sm:inline">Quiz Manager</span>
               <span className="sm:hidden">Quizzes</span>
             </span>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
+          <BreadcrumbSeparator className="mx-2">
+            <span>/</span>
+          </BreadcrumbSeparator>
+          <BreadcrumbItem className="flex items-center">
             <BreadcrumbPage className="text-sm">
               <span className="hidden sm:inline">
                 {isEditing ? `Edit Quiz: ${quiz.title || 'Loading...'}` : 'Enhanced Quiz Builder'}
@@ -708,7 +758,7 @@ export default function EnhancedQuizBuilder() {
                                         <Target className="h-4 w-4" />
                                       </div>
                                       <div>
-                                        <h4 className="font-medium">{group.name}</h4>
+                                        <h4 className="font-medium">{group.title}</h4>
                                         <p className="text-sm text-muted-foreground">
                                           {groupQuestions.length} questions • Pick {group.pickCount || 'all'} • {group.pointsPerQuestion || 1} points each
                                         </p>
@@ -911,7 +961,7 @@ export default function EnhancedQuizBuilder() {
                                     {question.questionType}
                                   </span>
                                   <span className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-md text-xs font-medium">
-                                    Difficulty: {question.difficulty}/10
+                                    Difficulty: {question.difficultyScore}/10
                                   </span>
                                   <span className="inline-flex items-center px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-md text-xs font-medium">
                                     Blooms: {question.bloomsLevel}
