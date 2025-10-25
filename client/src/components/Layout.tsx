@@ -38,7 +38,7 @@ export default function Layout({ children }: LayoutProps) {
           id="main-content"
           role="main"
           aria-label="Main content"
-          className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-32 pb-20 lg:pb-8"
+          className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 pb-24 lg:pt-6 lg:pb-8"
           tabIndex={-1}
         >
           {children}

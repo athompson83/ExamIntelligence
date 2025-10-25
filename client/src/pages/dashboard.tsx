@@ -40,9 +40,9 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
         {/* Compact Hero Banner */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-6 md:p-8 mb-6 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-4 md:p-6 mb-4 relative overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
           <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
@@ -60,12 +60,12 @@ export default function Dashboard() {
         </div>
 
         {/* Stat Cards Section - NO overlap */}
-        <div className="mb-6">
+        <div className="mb-4">
           <QuickStats />
         </div>
 
         {/* Main Dashboard Content */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Mobile: Stack vertically, Desktop: Side by side */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2" data-testid="section-live-exam-monitoring">
