@@ -105,31 +105,48 @@
   --ring: 217.2 91.2% 69.8%;
 }
 
-/* Gradient Utility Classes */
+/* Gradient Utility Classes - Using explicit colors for reliability */
 @layer utilities {
   .gradient-blue {
-    background: linear-gradient(135deg, hsl(var(--primary-dark)), hsl(var(--primary)));
+    background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
   }
   
   .gradient-green {
-    background: linear-gradient(135deg, #059669, hsl(var(--success)));
+    background: linear-gradient(135deg, #059669, #10b981) !important;
   }
   
   .gradient-amber {
-    background: linear-gradient(135deg, #d97706, hsl(var(--warning)));
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
   }
   
   .gradient-red {
-    background: linear-gradient(135deg, #dc2626, hsl(var(--error)));
+    background: linear-gradient(135deg, #dc2626, #ef4444) !important;
   }
   
   .gradient-purple {
-    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    background: linear-gradient(135deg, #7c3aed, #a78bfa) !important;
   }
   
   .gradient-hero {
-    background: linear-gradient(to right, #2563eb, #3b82f6);
+    background: linear-gradient(to right, #2563eb, #3b82f6) !important;
   }
+}
+
+/* Dark mode gradient overrides */
+.dark .gradient-blue {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa) !important;
+}
+
+.dark .gradient-green {
+  background: linear-gradient(135deg, #10b981, #14b8a6) !important;
+}
+
+.dark .gradient-amber {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24) !important;
+}
+
+.dark .gradient-purple {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa) !important;
 }
 
 /* Animation Keyframes */
