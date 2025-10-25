@@ -14,17 +14,32 @@ export function RecentActivity() {
     return (
       <Card className="rounded-2xl shadow-lg border-0">
         <CardHeader className="p-6">
-          <Skeleton className="h-7 w-40" />
+          <div className="relative overflow-hidden rounded-lg h-7 w-40">
+            <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+          </div>
         </CardHeader>
         <CardContent className="p-6 pt-0">
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-start space-x-3 p-3 rounded-xl animate-pulse">
-                <Skeleton className="h-10 w-10 rounded-full" />
+              <div key={i} className="flex items-start space-x-3 p-3 rounded-xl">
+                <div className="relative overflow-hidden rounded-full h-10 w-10 flex-shrink-0">
+                  <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                </div>
                 <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-48" />
-                  <Skeleton className="h-3 w-32" />
-                  <Skeleton className="h-3 w-24" />
+                  <div className="relative overflow-hidden rounded-lg h-4 w-48">
+                    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                  </div>
+                  <div className="relative overflow-hidden rounded-lg h-3 w-32">
+                    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                  </div>
+                  <div className="relative overflow-hidden rounded-lg h-3 w-24">
+                    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                  </div>
                 </div>
               </div>
             ))}

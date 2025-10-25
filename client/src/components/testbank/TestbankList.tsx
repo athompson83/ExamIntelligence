@@ -83,23 +83,37 @@ export function TestbankList({ onCreateNew, onEdit, onView }: TestbankListProps)
     return (
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-64" />
+          <div className="relative overflow-hidden rounded-lg h-10 w-64">
+            <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+          </div>
         </div>
-        <Skeleton className="h-12 w-full rounded-2xl" />
+        <div className="relative overflow-hidden rounded-2xl h-12 w-full">
+          <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="rounded-2xl shadow-lg overflow-hidden">
-              <div className="h-24 gradient-blue animate-pulse" />
-              <CardContent className="p-6">
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-2/3 mb-4" />
-                <div className="flex justify-between items-center">
-                  <Skeleton className="h-8 w-24" />
-                  <Skeleton className="h-8 w-24" />
+            <div key={i} className="rounded-2xl shadow-lg overflow-hidden relative">
+              <div className="h-24 relative overflow-hidden">
+                <div className="h-full w-full bg-gradient-to-r from-blue-400 via-blue-500 to-blue-400 dark:from-blue-800 dark:via-blue-700 dark:to-blue-800 animate-pulse" />
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+              </div>
+              <div className="p-6 space-y-3">
+                <div className="relative overflow-hidden rounded-lg h-6 w-3/4">
+                  <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="relative overflow-hidden rounded-lg h-4 w-full">
+                  <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                </div>
+                <div className="relative overflow-hidden rounded-lg h-4 w-2/3">
+                  <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>

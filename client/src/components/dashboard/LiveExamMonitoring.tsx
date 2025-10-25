@@ -31,27 +31,33 @@ export function LiveExamMonitoring() {
       <Card className="lg:col-span-2 rounded-2xl shadow-lg border-0">
         <CardHeader className="gradient-blue p-6">
           <div className="flex items-center justify-between">
-            <Skeleton className="h-6 w-48 bg-white/20" />
-            <Skeleton className="h-10 w-24 bg-white/20" />
+            <div className="relative overflow-hidden rounded-lg h-6 w-48">
+              <div className="h-full w-full bg-white/20 animate-pulse" />
+              <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            </div>
+            <div className="relative overflow-hidden rounded-xl h-10 w-24">
+              <div className="h-full w-full bg-white/20 animate-pulse" />
+              <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2].map((i) => (
-              <div key={i} className="border rounded-xl p-5 animate-pulse">
-                <Skeleton className="h-6 w-32 mb-3" />
-                <div className="space-y-2 mb-3">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  <Skeleton className="aspect-square rounded-lg" />
-                  <Skeleton className="aspect-square rounded-lg" />
-                  <Skeleton className="aspect-square rounded-lg" />
-                </div>
-                <div className="flex justify-between items-center">
-                  <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-6 w-16" />
+              <div key={i} className="border rounded-xl p-5 relative overflow-hidden">
+                <div className="space-y-4">
+                  <div className="relative overflow-hidden rounded-lg h-6 w-32">
+                    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[1, 2, 3].map((j) => (
+                      <div key={j} className="relative overflow-hidden rounded-lg aspect-square">
+                        <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}

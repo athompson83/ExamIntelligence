@@ -22,15 +22,10 @@ export function QuickStats() {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="rounded-2xl shadow-lg animate-shimmer">
-            <CardContent className="p-6">
-              <div className="space-y-3">
-                <EnhancedSkeleton className="h-4 w-20" />
-                <EnhancedSkeleton className="h-10 w-16" />
-                <EnhancedSkeleton className="h-3 w-24" />
-              </div>
-            </CardContent>
-          </Card>
+          <div key={i} className="relative overflow-hidden rounded-2xl shadow-lg">
+            <div className="h-32 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+          </div>
         ))}
       </div>
     );
