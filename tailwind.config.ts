@@ -3,6 +3,25 @@ import type { Config } from "tailwindcss";
 export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  safelist: [
+    'gradient-blue',
+    'gradient-green',
+    'gradient-amber',
+    'gradient-purple',
+    'gradient-red',
+    'gradient-hero',
+    'bg-gradient-to-br',
+    'from-blue-600',
+    'to-blue-500',
+    'from-green-600',
+    'to-emerald-500',
+    'from-orange-600',
+    'to-amber-500',
+    'from-purple-600',
+    'to-purple-400',
+    'from-blue-500',
+    'to-blue-600',
+  ],
   theme: {
     extend: {
       borderRadius: {
