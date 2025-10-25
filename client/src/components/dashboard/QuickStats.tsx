@@ -19,10 +19,7 @@ export function QuickStats() {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="relative overflow-hidden rounded-2xl shadow-lg">
-            <div className="h-32 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
-            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
-          </div>
+          <div key={i} className="relative overflow-hidden rounded-2xl shadow-lg h-40 animate-pulse" style={{ background: '#e5e7eb' }} />
         ))}
       </div>
     );
@@ -33,29 +30,48 @@ export function QuickStats() {
   const totalTestbanks = analytics?.testbanks?.totalTestbanks || 0;
   const validationsCount = alertsLoading ? "..." : ((proctoringAlerts as any[])?.length || 0);
 
+  const cardStyle = {
+    borderRadius: '1rem',
+    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+    transition: 'all 0.3s ease',
+    cursor: 'pointer',
+    color: 'white',
+    position: 'relative' as const,
+    overflow: 'hidden',
+    padding: '1.5rem',
+  };
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {/* Active Exams - Blue Gradient */}
       <div 
-        className="rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer text-white animate-fade-in relative overflow-hidden p-6"
+        data-testid="stat-card-active-exams"
         style={{ 
-          background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
-          animationDelay: '0ms'
+          ...cardStyle,
+          backgroundImage: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 25px 50px -12px rgb(0 0 0 / 0.25)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)';
         }}
       >
-        <div className="absolute top-4 right-4 opacity-20">
-          <Play className="h-16 w-16 text-white" />
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', opacity: 0.2 }}>
+          <Play style={{ width: '4rem', height: '4rem', color: 'white' }} />
         </div>
-        <div className="relative z-10">
-          <p className="text-sm font-semibold text-white/80 uppercase tracking-wide mb-2">
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
             Active Exams
           </p>
-          <p className="text-4xl font-bold text-white mb-3">
+          <p style={{ fontSize: '2.25rem', fontWeight: 700, color: 'white', marginBottom: '0.75rem' }}>
             {activeExamsCount}
           </p>
-          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 w-fit">
-            <TrendingUp className="h-3 w-3 text-white" />
-            <span className="text-xs font-semibold text-white">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', borderRadius: '9999px', padding: '0.25rem 0.75rem', width: 'fit-content' }}>
+            <TrendingUp style={{ height: '0.75rem', width: '0.75rem', color: 'white' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'white' }}>
               +2 from yesterday
             </span>
           </div>
@@ -64,25 +80,33 @@ export function QuickStats() {
 
       {/* Total Students - Green Gradient */}
       <div 
-        className="rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer text-white animate-fade-in relative overflow-hidden p-6"
+        data-testid="stat-card-total-students"
         style={{ 
-          background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-          animationDelay: '100ms'
+          ...cardStyle,
+          backgroundImage: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 25px 50px -12px rgb(0 0 0 / 0.25)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)';
         }}
       >
-        <div className="absolute top-4 right-4 opacity-20">
-          <Users className="h-16 w-16 text-white" />
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', opacity: 0.2 }}>
+          <Users style={{ width: '4rem', height: '4rem', color: 'white' }} />
         </div>
-        <div className="relative z-10">
-          <p className="text-sm font-semibold text-white/80 uppercase tracking-wide mb-2">
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
             Total Students
           </p>
-          <p className="text-4xl font-bold text-white mb-3">
+          <p style={{ fontSize: '2.25rem', fontWeight: 700, color: 'white', marginBottom: '0.75rem' }}>
             {totalStudents}
           </p>
-          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 w-fit">
-            <TrendingUp className="h-3 w-3 text-white" />
-            <span className="text-xs font-semibold text-white">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', borderRadius: '9999px', padding: '0.25rem 0.75rem', width: 'fit-content' }}>
+            <TrendingUp style={{ height: '0.75rem', width: '0.75rem', color: 'white' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'white' }}>
               +15 new this week
             </span>
           </div>
@@ -91,25 +115,33 @@ export function QuickStats() {
 
       {/* Item Banks - Orange/Amber Gradient */}
       <div 
-        className="rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer text-white animate-fade-in relative overflow-hidden p-6"
+        data-testid="stat-card-item-banks"
         style={{ 
-          background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
-          animationDelay: '200ms'
+          ...cardStyle,
+          backgroundImage: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 25px 50px -12px rgb(0 0 0 / 0.25)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)';
         }}
       >
-        <div className="absolute top-4 right-4 opacity-20">
-          <FolderOpen className="h-16 w-16 text-white" />
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', opacity: 0.2 }}>
+          <FolderOpen style={{ width: '4rem', height: '4rem', color: 'white' }} />
         </div>
-        <div className="relative z-10">
-          <p className="text-sm font-semibold text-white/80 uppercase tracking-wide mb-2">
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
             Item Banks
           </p>
-          <p className="text-4xl font-bold text-white mb-3">
+          <p style={{ fontSize: '2.25rem', fontWeight: 700, color: 'white', marginBottom: '0.75rem' }}>
             {totalTestbanks}
           </p>
-          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 w-fit">
-            <TrendingUp className="h-3 w-3 text-white" />
-            <span className="text-xs font-semibold text-white">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', borderRadius: '9999px', padding: '0.25rem 0.75rem', width: 'fit-content' }}>
+            <TrendingUp style={{ height: '0.75rem', width: '0.75rem', color: 'white' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'white' }}>
               +3 updated today
             </span>
           </div>
@@ -118,24 +150,32 @@ export function QuickStats() {
 
       {/* AI Validations - Purple Gradient */}
       <div 
-        className="rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer text-white animate-fade-in relative overflow-hidden p-6"
+        data-testid="stat-card-ai-validations"
         style={{ 
-          background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
-          animationDelay: '300ms'
+          ...cardStyle,
+          backgroundImage: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 25px 50px -12px rgb(0 0 0 / 0.25)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)';
         }}
       >
-        <div className="absolute top-4 right-4 opacity-20">
-          <Brain className="h-16 w-16 text-white" />
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', opacity: 0.2 }}>
+          <Brain style={{ width: '4rem', height: '4rem', color: 'white' }} />
         </div>
-        <div className="relative z-10">
-          <p className="text-sm font-semibold text-white/80 uppercase tracking-wide mb-2">
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
             AI Validations
           </p>
-          <p className="text-4xl font-bold text-white mb-3">
+          <p style={{ fontSize: '2.25rem', fontWeight: 700, color: 'white', marginBottom: '0.75rem' }}>
             {validationsCount}
           </p>
-          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 w-fit">
-            <span className="text-xs font-semibold text-white">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', borderRadius: '9999px', padding: '0.25rem 0.75rem', width: 'fit-content' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'white' }}>
               24 pending review
             </span>
           </div>
