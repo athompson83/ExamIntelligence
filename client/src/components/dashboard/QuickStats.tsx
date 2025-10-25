@@ -21,15 +21,10 @@ export function QuickStats() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: i * 0.1 }}
-          >
-            <Card className="p-6 hover:shadow-xl transition-shadow duration-300">
+          <Card key={i} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
                   <EnhancedSkeleton className="h-4 w-20" />
@@ -38,8 +33,8 @@ export function QuickStats() {
                 <EnhancedSkeleton className="h-12 w-12 rounded-full" />
               </div>
               <EnhancedSkeleton className="h-3 w-24 mt-2" />
-            </Card>
-          </motion.div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
@@ -77,52 +72,26 @@ export function QuickStats() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8 overflow-hidden">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (
-        <motion.div
-          key={stat.name}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: index * 0.1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Card className="card-modern cursor-pointer group border-0 bg-gradient-to-br from-card to-card/95">
-            <CardContent className="p-0">
-              <div className="flex items-center justify-between">
-                <div className="text-right">
-                  <motion.p 
-                    className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors duration-300"
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 + 0.2 }}
-                  >
-                    {stat.value}
-                  </motion.p>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors duration-300">
-                    {stat.name}
-                  </p>
-                </div>
-                <motion.div 
-                  className={cn("p-3 rounded-full group-hover:scale-110 transition-transform duration-300", stat.color)}
-                  initial={{ rotate: -10 }}
-                  animate={{ rotate: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 + 0.3 }}
-                >
-                  <stat.icon className="h-6 w-6" />
-                </motion.div>
+        <Card key={stat.name} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.name}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  {stat.change}
+                </p>
               </div>
-              <motion.p 
-                className="text-xs text-gray-500 dark:text-gray-400 mt-4 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors duration-300"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: index * 0.1 + 0.4 }}
-              >
-                {stat.change}
-              </motion.p>
-            </CardContent>
-          </Card>
-        </motion.div>
+              <div className={cn("p-3 rounded-full", stat.color)}>
+                <stat.icon className="h-6 w-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

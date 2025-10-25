@@ -47,16 +47,11 @@ export default function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   // Generate breadcrumbs from current location if not provided
   const breadcrumbItems = items || generateBreadcrumbs(location);
 
-  // Don't show breadcrumbs on homepage
-  if (location === '/' && !items) {
-    return null;
-  }
-
   return (
     <nav
       aria-label="Breadcrumb"
       className={cn(
-        "flex items-center space-x-2 px-4 md:px-6 py-3 bg-muted/30 border-b text-sm",
+        "fixed top-16 left-0 lg:left-64 right-0 z-40 flex items-center space-x-2 px-4 md:px-6 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800",
         className
       )}
       data-testid="breadcrumbs"
@@ -114,8 +109,9 @@ function generateBreadcrumbs(path: string): BreadcrumbItem[] {
   // Remove trailing slash
   const cleanPath = path.replace(/\/$/, '');
   
+  // Dashboard home route should show "Dashboard"
   if (cleanPath === '' || cleanPath === '/') {
-    return [];
+    return [{ label: 'Dashboard' }];
   }
 
   // Check for direct route match first

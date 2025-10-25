@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import type { User } from "@shared/schema";
 
 interface TopBarProps {
   title?: string;
@@ -21,8 +22,9 @@ interface TopBarProps {
 export function TopBar({ title = "Dashboard" }: TopBarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
+  const typedUser = user as User | undefined;
 
-  const { data: unreadCount } = useQuery({
+  const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
     enabled: !!user,
   });
@@ -31,13 +33,13 @@ export function TopBar({ title = "Dashboard" }: TopBarProps) {
     window.location.href = "/api/logout";
   };
 
-  const userInitials = user?.firstName && user?.lastName 
-    ? `${user.firstName[0]}${user.lastName[0]}`
-    : user?.email?.[0]?.toUpperCase() || "U";
+  const userInitials = typedUser?.firstName && typedUser?.lastName 
+    ? `${typedUser.firstName[0]}${typedUser.lastName[0]}`
+    : typedUser?.email?.[0]?.toUpperCase() || "U";
 
-  const userDisplayName = user?.firstName && user?.lastName
-    ? `${user.firstName} ${user.lastName}`
-    : user?.email || "User";
+  const userDisplayName = typedUser?.firstName && typedUser?.lastName
+    ? `${typedUser.firstName} ${typedUser.lastName}`
+    : typedUser?.email || "User";
 
   return (
     <header className="bg-background/95 backdrop-blur-md border-b border-border px-6 py-4 flex items-center justify-between shadow-sm">
@@ -77,10 +79,10 @@ export function TopBar({ title = "Dashboard" }: TopBarProps) {
             <Button variant="ghost" className="flex items-center space-x-3 h-auto py-2">
               <div className="text-right">
                 <div className="text-sm font-medium text-foreground">{userDisplayName}</div>
-                <div className="text-xs text-muted-foreground capitalize">{user?.role}</div>
+                <div className="text-xs text-muted-foreground capitalize">{typedUser?.role}</div>
               </div>
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.profileImageUrl || ""} alt={userDisplayName} />
+                <AvatarImage src={typedUser?.profileImageUrl || ""} alt={userDisplayName} />
                 <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
               </Avatar>
               <ChevronDown className="h-4 w-4" />

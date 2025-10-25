@@ -11,7 +11,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen flex bg-background transition-all duration-200">
+    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-950 transition-all duration-200">
       {/* Skip to content link for screen readers */}
       <a
         href="#main-content"
@@ -26,52 +26,52 @@ export default function Layout({ children }: LayoutProps) {
 
       <div className="flex-1 lg:ml-64 transition-all duration-200 w-full min-w-0 flex flex-col min-h-screen">
         {/* Fixed Header */}
-        <div className="fixed top-0 left-0 right-0 lg:left-64 z-50">
-          <TopBar />
-          <Breadcrumbs />
-        </div>
+        <TopBar />
 
-        {/* Main Content - offset by header height (h-16) + breadcrumb */}
+        {/* Fixed Breadcrumbs */}
+        <Breadcrumbs />
+
+        {/* Main Content - with padding to offset fixed header and breadcrumbs */}
         <main
           id="main-content"
           role="main"
           aria-label="Main content"
-          className="flex-1 pt-28 lg:pt-32 p-4 lg:p-6 pb-32 lg:pb-6"
+          className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-32 pb-8"
           tabIndex={-1}
         >
           {children}
         </main>
 
         {/* Footer with legal and compliance links */}
-        <footer className="bg-background/95 border-t mt-auto">
-          <div className="container mx-auto px-4 py-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              <Link href="/privacy-policy" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-privacy">
+        <footer className="bg-white dark:bg-gray-900 border-t mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <Link href="/privacy-policy" className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" data-testid="link-footer-privacy">
                 <Shield className="h-4 w-4" />
                 Privacy Policy
               </Link>
-              <Link href="/terms-of-service" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-terms">
+              <Link href="/terms-of-service" className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" data-testid="link-footer-terms">
                 <Scale className="h-4 w-4" />
                 Terms of Service
               </Link>
-              <Link href="/help" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-help">
+              <Link href="/help" className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" data-testid="link-footer-help">
                 <HelpCircle className="h-4 w-4" />
                 Help Center
               </Link>
-              <Link href="/contact" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-contact">
+              <Link href="/contact" className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" data-testid="link-footer-contact">
                 <Mail className="h-4 w-4" />
                 Contact Us
               </Link>
-              <Link href="/accessibility-settings" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-accessibility">
+              <Link href="/accessibility-settings" className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" data-testid="link-footer-accessibility">
                 <Globe className="h-4 w-4" />
                 Accessibility
               </Link>
-              <Link href="/admin/account-settings" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-account">
+              <Link href="/admin/account-settings" className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" data-testid="link-footer-account">
                 <FileText className="h-4 w-4" />
                 Account Settings
               </Link>
             </div>
-            <div className="mt-4 pt-4 border-t text-center text-xs text-muted-foreground">
+            <div className="mt-4 pt-4 border-t text-center text-xs text-gray-500 dark:text-gray-400">
               <p>© {new Date().getFullYear()} ProficiencyAI. All rights reserved. Educational use only.</p>
               <p className="mt-1">FERPA, GDPR, and CCPA compliant</p>
             </div>

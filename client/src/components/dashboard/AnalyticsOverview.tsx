@@ -140,62 +140,59 @@ export function AnalyticsOverview() {
   }
 
   return (
-    <Card className="shadow-sm rounded-lg" data-testid="card-analytics-overview">
+    <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm" data-testid="card-analytics-overview">
       <CardHeader className="p-6">
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-              Performance Analytics
-            </CardTitle>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+            Performance Analytics
+          </CardTitle>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
+              <SelectTrigger className="w-32" data-testid="select-time-range">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7days">Last 7 days</SelectItem>
+                <SelectItem value="30days">Last 30 days</SelectItem>
+                <SelectItem value="90days">Last 90 days</SelectItem>
+              </SelectContent>
+            </Select>
             
-            <div className="flex flex-wrap items-center gap-2">
-              <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
-                <SelectTrigger className="w-32" data-testid="select-time-range">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7days">Last 7 days</SelectItem>
-                  <SelectItem value="30days">Last 30 days</SelectItem>
-                  <SelectItem value="90days">Last 90 days</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => exportData('csv')}
-                data-testid="button-export-analytics"
-                className="h-10"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => exportData('csv')}
+              data-testid="button-export-analytics"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
           </div>
         </div>
       </CardHeader>
       
       <CardContent className="p-6">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm" data-testid="tab-overview">
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+            <TabsTrigger value="overview" className="text-sm" data-testid="tab-overview">
               Overview
             </TabsTrigger>
-            <TabsTrigger value="performance" className="text-xs sm:text-sm" data-testid="tab-performance">
+            <TabsTrigger value="performance" className="text-sm" data-testid="tab-performance">
               Performance
             </TabsTrigger>
-            <TabsTrigger value="questions" className="text-xs sm:text-sm" data-testid="tab-questions">
+            <TabsTrigger value="questions" className="text-sm" data-testid="tab-questions">
               Questions
             </TabsTrigger>
-            <TabsTrigger value="students" className="text-xs sm:text-sm" data-testid="tab-students">
+            <TabsTrigger value="students" className="text-sm" data-testid="tab-students">
               Students
             </TabsTrigger>
-            <TabsTrigger value="trends" className="text-xs sm:text-sm" data-testid="tab-trends">
+            <TabsTrigger value="trends" className="text-sm" data-testid="tab-trends">
               Trends
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="shadow-sm" data-testid="stat-total-attempts">
                 <CardContent className="p-6">

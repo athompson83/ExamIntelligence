@@ -39,29 +39,36 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <section className="space-y-6" aria-label="Dashboard content">
-          <QuickStats />
-          
-          {/* Enhanced Main Dashboard - Mobile Responsive */}
-          <div className="space-y-6 md:space-y-8 overflow-hidden">
-            {/* Mobile: Stack vertically, Desktop: Side by side */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-              <div className="lg:col-span-2 order-2 lg:order-1 min-w-0" data-testid="section-live-exam-monitoring">
-                <LiveExamMonitoring />
-              </div>
-              <div className="order-1 lg:order-2 min-w-0" data-testid="section-recent-activity">
-                <RecentActivity />
-              </div>
-            </div>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Welcome back! Here's your overview.</p>
+        </div>
 
-            <div data-testid="section-analytics-overview">
-              <AnalyticsOverview />
+        {/* Stat Cards - Compact Grid */}
+        <QuickStats />
+        
+        {/* Main Dashboard Content */}
+        <div className="space-y-6">
+          {/* Mobile: Stack vertically, Desktop: Side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2" data-testid="section-live-exam-monitoring">
+              <LiveExamMonitoring />
             </div>
+            <div data-testid="section-recent-activity">
+              <RecentActivity />
+            </div>
+          </div>
 
-            {/* Enhanced Quick Actions - Apple UI Guidelines */}
-            <section className="space-y-4 md:space-y-6" aria-labelledby="quick-actions-heading">
-              <h2 id="quick-actions-heading" className="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-200">Quick Actions</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+          <div data-testid="section-analytics-overview">
+            <AnalyticsOverview />
+          </div>
+
+          {/* Quick Actions */}
+          <section className="space-y-4" aria-labelledby="quick-actions-heading">
+            <h2 id="quick-actions-heading" className="text-xl font-semibold text-gray-800 dark:text-gray-200">Quick Actions</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button 
                   className="w-full bg-primary text-white h-auto hover:bg-primary/90 btn-modern min-h-[140px] md:min-h-[160px] px-4 py-6 md:px-6 md:py-8 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   onClick={() => setLocation('/item-banks')}
@@ -116,7 +123,7 @@ export default function Dashboard() {
               </div>
             </section>
           </div>
-      </section>
+        </div>
     </Layout>
   );
 }
