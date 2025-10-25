@@ -30,17 +30,16 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   
-  /* Modern shadow system */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
-  --shadow-md: 0 2px 8px -2px rgb(0 0 0 / 0.08);
-  --shadow-lg: 0 4px 16px -4px rgb(0 0 0 / 0.12);
-  --shadow-xl: 0 8px 32px -8px rgb(0 0 0 / 0.16);
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  /* Material Design shadows - minimal and clean */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 4px 8px -2px rgb(0 0 0 / 0.12);
+  --shadow-xl: 0 8px 16px -4px rgb(0 0 0 / 0.16);
   
-  /* Smooth transitions */
+  /* Clean transitions - Material Design */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark {
@@ -115,24 +114,14 @@
     scroll-padding-top: 80px; /* Account for sticky header */
   }
 
-  /* Header positioning classes */
-  .header-sticky {
-    position: sticky;
-    top: 0;
-  }
-
+  /* Simple fixed header - no complex animations */
   .header-fixed {
     position: fixed;
-    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  @keyframes slideDown {
-    from {
-      transform: translateY(-100%);
-    }
-    to {
-      transform: translateY(0);
-    }
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    transition: box-shadow var(--transition-normal);
   }
 
   /* GPU acceleration for transforms and animations */

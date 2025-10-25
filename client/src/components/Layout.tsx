@@ -1,73 +1,45 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+import Breadcrumbs from "./Breadcrumbs";
 import { Link } from "wouter";
 import { Shield, Scale, FileText, HelpCircle, Mail, Globe } from "lucide-react";
-import { useScrollHeader } from "@/hooks/useScrollHeader";
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const { isFixed, isScrollingUp, isAtTop, headerHeight, headerOutOfView } = useScrollHeader({
-    headerHeight: 64,
-    scrollSensitivity: 5
-  });
-
-  useEffect(() => {
-    // Enhanced loading animation with preload optimization
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-
-    // Preload critical resources
-    requestAnimationFrame(() => {
-      document.documentElement.style.setProperty('--page-loaded', '1');
-    });
-
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-background via-background to-background/95 transition-all duration-500 safe-area-inset">
+    <div className="min-h-screen flex bg-background transition-all duration-200">
       {/* Skip to content link for screen readers */}
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10003] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      <a
+        href="#main-content"
+        className="skip-to-content"
         tabIndex={0}
+        data-testid="skip-to-content"
       >
         Skip to main content
       </a>
-      
+
       <Sidebar />
-      
-      <div className="flex-1 lg:ml-64 transition-all duration-300 ease-out w-full min-w-0 flex flex-col min-h-screen">
-        {/* Header with sticky by default, fixed when scrolling up after header is out of view */}
-        <div 
-          className={`
-            header-wrapper
-            ${isFixed ? 'header-fixed' : 'header-sticky'}
-            top-0 left-0 right-0 lg:left-64 z-[100] 
-            bg-background shadow-md
-          `}
-        >
+
+      <div className="flex-1 lg:ml-64 transition-all duration-200 w-full min-w-0 flex flex-col min-h-screen">
+        {/* Fixed Header */}
+        <div className="fixed top-0 left-0 right-0 lg:left-64 z-50">
           <TopBar />
+          <Breadcrumbs />
         </div>
-        
-        <main 
+
+        {/* Main Content - offset by header height (h-16) + breadcrumb */}
+        <main
           id="main-content"
           role="main"
           aria-label="Main content"
-          className={`flex-1 p-4 lg:p-6 pb-32 lg:pb-6 overflow-auto ${
-            isLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
+          className="flex-1 pt-28 lg:pt-32 p-4 lg:p-6 pb-32 lg:pb-6"
           tabIndex={-1}
         >
-          <div className="animate-in fade-in-0 duration-700">
-            {children}
-          </div>
+          {children}
         </main>
 
         {/* Footer with legal and compliance links */}
