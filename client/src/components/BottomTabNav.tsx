@@ -136,6 +136,42 @@ export function BottomTabNav() {
     ];
   };
 
-  // Bottom nav disabled - navigation consolidated to TopBar
-  return null;
+  const tabs = getContextualTabs();
+
+  return (
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden"
+      role="navigation"
+      aria-label="Bottom navigation"
+      data-testid="bottom-tab-nav"
+    >
+      <div className="h-16 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl rounded-t-3xl border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-around h-full px-2">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = location === tab.href || (tab.href !== "/" && location.startsWith(tab.href));
+            
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`
+                  flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-[60px] min-h-[48px]
+                  ${active 
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg scale-105' 
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105'
+                  }
+                `}
+                data-testid={`bottom-nav-${tab.label.toLowerCase().replace(/\s+/g, '-')}`}
+                aria-current={active ? 'page' : undefined}
+              >
+                <Icon className={`h-5 w-5 mb-0.5 ${active ? '' : ''}`} />
+                <span className="text-[10px] font-semibold leading-tight">{tab.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </nav>
+  );
 }

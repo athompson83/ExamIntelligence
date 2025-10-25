@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import Breadcrumbs from "./Breadcrumbs";
+import { BottomTabNav } from "./BottomTabNav";
 import { Link } from "wouter";
 import { Shield, Scale, FileText, HelpCircle, Mail, Globe } from "lucide-react";
 
@@ -23,20 +24,21 @@ export default function Layout({ children }: LayoutProps) {
       </a>
 
       <Sidebar />
+      <BottomTabNav />
 
-      <div className="flex-1 lg:ml-64 transition-all duration-200 w-full min-w-0 flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-72 transition-all duration-200 w-full min-w-0 flex flex-col min-h-screen">
         {/* Fixed Header */}
         <TopBar />
 
         {/* Fixed Breadcrumbs */}
         <Breadcrumbs />
 
-        {/* Main Content - with padding to offset fixed header and breadcrumbs */}
+        {/* Main Content - with padding to offset fixed header and breadcrumbs, plus bottom nav on mobile */}
         <main
           id="main-content"
           role="main"
           aria-label="Main content"
-          className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-32 pb-8"
+          className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-32 pb-20 lg:pb-8"
           tabIndex={-1}
         >
           {children}

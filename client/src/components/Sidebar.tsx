@@ -1,6 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState, useMemo } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { 
   ClipboardCheck, 
   BookOpen, 
@@ -40,7 +42,8 @@ import {
   Building,
   Crown,
   Activity,
-  Database
+  Database,
+  User
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -268,7 +271,7 @@ export default function Sidebar() {
       <nav 
         className={`
         sidebar bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 flex flex-col
-        w-64 min-w-64 max-w-64 fixed left-0 ${isMobileMenuOpen ? 'z-[10001]' : 'z-[9991]'}
+        w-72 min-w-72 max-w-72 fixed left-0 ${isMobileMenuOpen ? 'z-[10001]' : 'z-[9991]'}
         lg:translate-x-0 lg:inset-y-0
         lg:block
         max-w-[85vw] transform transition-all duration-300 ease-out
@@ -280,10 +283,10 @@ export default function Sidebar() {
         data-testid="sidebar-navigation"
       >
         {/* Enhanced Logo - Hidden for mobile since we have title in mobile nav bar */}
-        <div className="hidden lg:flex items-center justify-center h-16 bg-primary px-4 flex-shrink-0">
+        <div className="hidden lg:flex items-center justify-center h-16 bg-gradient-to-r from-blue-600 to-blue-500 px-6 flex-shrink-0">
           <div className="flex items-center">
-            <div className="bg-white rounded-xl p-2">
-              <ClipboardCheck className="h-6 w-6 text-primary" />
+            <div className="bg-white rounded-xl p-2 shadow-lg">
+              <ClipboardCheck className="h-6 w-6 text-blue-600" />
             </div>
           </div>
         </div>
@@ -360,14 +363,23 @@ export default function Sidebar() {
                         key={item.href}
                         href={item.href}
                         ref={active ? activeItemRef : undefined}
-                        className={`nav-item ${active ? 'active' : ''} ${group.id !== "main" ? "text-sm" : "text-base"} btn-modern min-h-[48px] lg:min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none`}
+                        className={`
+                          flex items-center py-3 px-6 rounded-xl mx-3 transition-all duration-300 
+                          ${group.id !== "main" ? "text-sm" : "text-base"} 
+                          min-h-[48px] lg:min-h-[44px] 
+                          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none
+                          ${active 
+                            ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg' 
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          }
+                        `}
                         data-tour={item.tourId}
                         data-testid={`nav-link-${item.tourId || item.label.toLowerCase().replace(/\s+/g, '-')}`}
                         aria-current={active ? 'page' : undefined}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Icon className="h-4 w-4 mr-3 flex-shrink-0 lg:h-4 lg:w-4 lg:mr-3" />
-                        <span className="font-medium flex-1 text-[#6b7280]">{item.label}</span>
+                        <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                        <span className="font-medium flex-1">{item.label}</span>
                       </Link>
                     );
                   })}
@@ -394,6 +406,27 @@ export default function Sidebar() {
           </button>
         </div>
       )}
+      
+      {/* User Profile Section */}
+      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+        <Link href="/settings" className="flex items-center py-4 px-6 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300" data-testid="user-profile-link">
+          <Avatar className="h-10 w-10 border-2 border-white shadow-md">
+            <AvatarImage src={(user as any)?.avatarUrl} alt={(user as any)?.name || (user as any)?.email} />
+            <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold">
+              {(user as any)?.name?.charAt(0)?.toUpperCase() || (user as any)?.email?.charAt(0)?.toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="ml-3 flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {(user as any)?.name || (user as any)?.email || 'User'}
+            </p>
+            <Badge variant="secondary" className="mt-1 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+              {((user as any)?.role || 'user').charAt(0).toUpperCase() + ((user as any)?.role || 'user').slice(1)}
+            </Badge>
+          </div>
+          <Settings className="h-4 w-4 text-gray-400" />
+        </Link>
+      </div>
     </nav>
       {/* Mobile Content Spacer - for mobile header only */}
       <div className="lg:hidden block h-12" />

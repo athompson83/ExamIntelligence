@@ -18,12 +18,12 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Plus, Settings, Clock, Users, Shield, Zap, Eye, Edit, Trash2, Play, Calendar, Lock, Shuffle, Timer, Camera, AlertTriangle, Search, BookOpen, Target, BarChart3, Home } from "lucide-react";
 import { format } from "date-fns";
-import type { Quiz, Question, QuestionGroup } from "@shared/schema";
+import type { Quiz as QuizType, Question, QuestionGroup } from "@shared/schema";
 
 interface Quiz {
   id: string;
@@ -132,7 +132,10 @@ export default function QuizBuilder() {
 
   const createQuizMutation = useMutation({
     mutationFn: async (data: QuizFormData) => {
-      await apiRequest("POST", "/api/quizzes", data);
+      await apiRequest("/api/quizzes", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
@@ -165,7 +168,10 @@ export default function QuizBuilder() {
 
   const updateQuizMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<QuizFormData> }) => {
-      await apiRequest("PUT", `/api/quizzes/${id}`, data);
+      await apiRequest(`/api/quizzes/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
@@ -199,7 +205,9 @@ export default function QuizBuilder() {
 
   const deleteQuizMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/quizzes/${id}`);
+      await apiRequest(`/api/quizzes/${id}`, {
+        method: "DELETE",
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
@@ -230,7 +238,9 @@ export default function QuizBuilder() {
 
   const publishQuizMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("POST", `/api/quizzes/${id}/publish`);
+      await apiRequest(`/api/quizzes/${id}/publish`, {
+        method: "POST",
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quizzes'] });
@@ -327,7 +337,7 @@ export default function QuizBuilder() {
     }
   };
 
-  const filteredQuizzes = quizzes?.filter((quiz: Quiz) =>
+  const filteredQuizzes = (quizzes as Quiz[] | undefined)?.filter((quiz: Quiz) =>
     quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     quiz.description.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];

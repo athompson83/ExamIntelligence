@@ -33,6 +33,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import type { User } from "@/types";
 
 const userSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -116,7 +117,7 @@ export default function UserManagement() {
       return;
     }
 
-    if (!authLoading && user?.role !== 'admin') {
+    if (!authLoading && (user as User)?.role !== 'admin') {
       toast({
         title: "Access Denied",
         description: "Administrator privileges required",
@@ -128,25 +129,28 @@ export default function UserManagement() {
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["/api/users", roleFilter],
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && (user as User)?.role === 'admin',
     retry: false,
   });
 
   const { data: teacherStats } = useQuery({
     queryKey: ["/api/users", "teacher"],
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && (user as User)?.role === 'admin',
     retry: false,
   });
 
   const { data: studentStats } = useQuery({
     queryKey: ["/api/users", "student"],
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && (user as User)?.role === 'admin',
     retry: false,
   });
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: UserFormData) => {
-      await apiRequest("POST", "/api/users", userData);
+      await apiRequest("/api/users", {
+        method: "POST",
+        body: JSON.stringify(userData),
+      });
     },
     onSuccess: () => {
       toast({
@@ -177,7 +181,7 @@ export default function UserManagement() {
     },
   });
 
-  const filteredUsers = users?.filter((u: any) => {
+  const filteredUsers = (users as UserAccount[] | undefined)?.filter((u: any) => {
     if (searchQuery && !(
       u.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -230,7 +234,7 @@ export default function UserManagement() {
     );
   }
 
-  if (user?.role !== 'admin') {
+  if ((user as User)?.role !== 'admin') {
     return (
       <Layout>
         <div className="min-h-96 flex items-center justify-center">
@@ -461,7 +465,7 @@ export default function UserManagement() {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Users</p>
                   <p className="text-3xl font-bold text-primary mt-1">
-                    {(teacherStats?.length || 0) + (studentStats?.length || 0)}
+                    {((teacherStats as UserAccount[] | undefined)?.length || 0) + ((studentStats as UserAccount[] | undefined)?.length || 0)}
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -476,7 +480,7 @@ export default function UserManagement() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Teachers</p>
-                  <p className="text-3xl font-bold text-blue-600 mt-1">{teacherStats?.length || 0}</p>
+                  <p className="text-3xl font-bold text-blue-600 mt-1">{(teacherStats as UserAccount[] | undefined)?.length || 0}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                   <GraduationCap className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -490,7 +494,7 @@ export default function UserManagement() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Students</p>
-                  <p className="text-3xl font-bold text-green-600 mt-1">{studentStats?.length || 0}</p>
+                  <p className="text-3xl font-bold text-green-600 mt-1">{(studentStats as UserAccount[] | undefined)?.length || 0}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
                   <BookOpen className="h-6 w-6 text-green-600 dark:text-green-400" />
