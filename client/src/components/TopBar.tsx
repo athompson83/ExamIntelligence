@@ -32,6 +32,7 @@ import {
   BookOpen,
   Brain,
   Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,8 @@ export default function TopBar() {
   const { user } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: notifications } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
@@ -95,23 +98,26 @@ export default function TopBar() {
   const navItems = getNavigationItems();
 
   return (
+    <>
     <header
-      className="fixed top-0 left-0 lg:left-64 right-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm"
+      className="sticky top-0 left-0 lg:left-64 right-0 z-50 w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md border-b border-gray-200/50 dark:border-gray-800/50 transition-all duration-300"
       role="banner"
       aria-label="Main navigation"
       data-testid="top-bar"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo - Left */}
+          {/* Logo - Left with gradient accent */}
           <div className="flex items-center gap-4">
             <Link
               href="/"
-              className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white hover:text-primary transition-colors"
+              className="flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent hover:from-blue-700 hover:to-blue-600 transition-all duration-300 group"
               aria-label="ProficiencyAI - Go to dashboard"
               data-testid="logo-link"
             >
-              <GraduationCap className="h-6 w-6 text-primary" aria-hidden="true" />
+              <div className="p-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
+                <GraduationCap className="h-6 w-6 text-white" aria-hidden="true" />
+              </div>
               <span className="hidden sm:inline">ProficiencyAI</span>
             </Link>
           </div>
@@ -133,10 +139,10 @@ export default function TopBar() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300",
                     isActive
-                      ? "bg-primary text-white"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105"
                   )}
                   aria-current={isActive ? "page" : undefined}
                   data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
@@ -150,20 +156,44 @@ export default function TopBar() {
 
           {/* User Actions - Right */}
           <div className="flex items-center gap-3">
+            {/* Search - Desktop */}
+            <div className="hidden md:flex relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 w-64 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 transition-all duration-300 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                data-testid="search-input"
+              />
+            </div>
+
+            {/* Search - Mobile (Sheet trigger) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105 transition-all duration-300"
+              onClick={() => setSearchOpen(true)}
+              data-testid="button-search-mobile"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+
             {/* Notifications */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="relative"
+                  className="relative rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105 transition-all duration-300"
                   aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                   data-testid="button-notifications"
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
                     <Badge
-                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full"
                       variant="destructive"
                     >
                       {unreadCount}
@@ -171,75 +201,73 @@ export default function TopBar() {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-80 rounded-2xl shadow-2xl p-2">
+                <DropdownMenuLabel className="text-base font-semibold">Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {notifications && notifications.length > 0 ? (
                   <div className="max-h-80 overflow-y-auto">
                     {notifications.slice(0, 5).map((notification: any) => (
                       <DropdownMenuItem
                         key={notification.id}
-                        className="flex flex-col items-start p-3"
+                        className="rounded-xl p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
                       >
-                        <div className="font-medium text-sm">{notification.title}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {notification.message}
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{notification.title}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{notification.message}</p>
                         </div>
                       </DropdownMenuItem>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 text-center text-sm text-gray-500">
-                    No notifications
+                  <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    No new notifications
                   </div>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* User Menu */}
+            {/* User Profile */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center gap-2 h-auto py-1 px-2"
-                  data-testid="button-user-menu"
+                  className="flex items-center gap-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105 transition-all duration-300 px-3 py-2"
+                  data-testid="button-profile"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 border-2 border-blue-500 shadow-md">
                     <AvatarImage src={(user as any)?.avatar} alt="User avatar" />
-                    <AvatarFallback className="bg-primary text-white text-sm">
+                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-500 text-white text-sm font-semibold">
                       {getUserInitials((user as any)?.firstName, (user as any)?.lastName)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden md:flex flex-col items-start">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {(user as any)?.firstName || "User"}
-                    </span>
-                    <Badge variant={getRoleBadgeVariant((user as any)?.role)} className="text-xs h-4 px-1">
-                      {(user as any)?.role || "student"}
+                  <div className="hidden xl:flex flex-col items-start">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      {(user as any)?.firstName} {(user as any)?.lastName}
+                    </div>
+                    <Badge variant={getRoleBadgeVariant((user as any)?.role)} className="text-xs capitalize">
+                      {(user as any)?.role}
                     </Badge>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div>
-                    <div className="font-medium">
-                      {(user as any)?.firstName} {(user as any)?.lastName}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {(user as any)?.email}
-                    </div>
-                  </div>
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl shadow-2xl p-2" data-testid="dropdown-profile">
+                <DropdownMenuLabel className="flex flex-col gap-1">
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {(user as any)?.firstName} {(user as any)?.lastName}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {(user as any)?.email}
+                  </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                  <Link href="/profile" className="flex items-center gap-2 cursor-pointer rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200">
                     <User className="h-4 w-4" />
                     Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
+                  <Link href="/settings" className="flex items-center gap-2 cursor-pointer rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200">
                     <Settings className="h-4 w-4" />
                     Settings
                   </Link>
@@ -247,7 +275,8 @@ export default function TopBar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-red-600 dark:text-red-400 cursor-pointer"
+                  className="rounded-xl cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+                  data-testid="menu-logout"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
@@ -323,5 +352,32 @@ export default function TopBar() {
         </div>
       </div>
     </header>
+
+    {/* Mobile Search Drawer */}
+    <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
+      <SheetContent side="top" className="p-6 rounded-b-3xl shadow-2xl">
+        <div className="flex items-center gap-4">
+          <Search className="h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 py-3 px-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 transition-all duration-300 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            autoFocus
+            data-testid="search-input-mobile"
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSearchOpen(false)}
+            className="rounded-xl"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }

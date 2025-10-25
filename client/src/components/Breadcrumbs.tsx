@@ -51,21 +51,21 @@ export default function Breadcrumbs({ items, className }: BreadcrumbsProps) {
     <nav
       aria-label="Breadcrumb"
       className={cn(
-        "fixed top-16 left-0 lg:left-64 right-0 z-40 flex items-center space-x-2 px-4 md:px-6 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800",
+        "sticky top-16 left-0 lg:left-64 right-0 z-40 flex items-center px-4 md:px-6 py-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50",
         className
       )}
       data-testid="breadcrumbs"
     >
-      <ol className="flex items-center space-x-2">
+      <ol className="flex items-center gap-1.5 flex-wrap">
         {/* Home link */}
         <li>
           <Link
             href="/"
-            className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center px-3 py-1.5 rounded-full text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-300"
             aria-label="Dashboard"
             data-testid="breadcrumb-home"
           >
-            <Home className="h-4 w-4" aria-hidden="true" />
+            <Home className="h-3.5 w-3.5" aria-hidden="true" />
             <span className="sr-only">Dashboard</span>
           </Link>
         </li>
@@ -74,14 +74,14 @@ export default function Breadcrumbs({ items, className }: BreadcrumbsProps) {
           const isLast = index === breadcrumbItems.length - 1;
 
           return (
-            <li key={index} className="flex items-center space-x-2">
+            <li key={index} className="flex items-center gap-1.5">
               <ChevronRight
-                className="h-4 w-4 text-muted-foreground"
+                className="h-3.5 w-3.5 text-gray-400 dark:text-gray-600"
                 aria-hidden="true"
               />
               {isLast || !item.href ? (
                 <span
-                  className="font-medium text-foreground"
+                  className="px-3 py-1.5 text-xs font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 rounded-full"
                   aria-current="page"
                   data-testid={`breadcrumb-current`}
                 >
@@ -90,7 +90,7 @@ export default function Breadcrumbs({ items, className }: BreadcrumbsProps) {
               ) : (
                 <Link
                   href={item.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-full transition-all duration-300"
                   data-testid={`breadcrumb-link-${index}`}
                 >
                   {item.label}

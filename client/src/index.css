@@ -2,66 +2,211 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Enhanced CSS Variables for Beautiful Design System */
+/* Instagram/Facebook-Inspired Vibrant Design System */
 :root {
-  /* Enhanced color system with WCAG AA compliant contrast */
+  /* Vibrant Color Palette - Instagram/Facebook Inspired */
   --background: 0 0% 100%;
-  --foreground: 222.2 84% 10%; /* Improved contrast for better readability */
+  --foreground: 222.2 84% 10%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 10%;
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 10%;
-  --primary: 207 90% 46%; /* Slightly darker for better contrast */
-  --primary-foreground: 210 40% 98%;
-  --secondary: 142 70% 38%; /* Darker for better contrast */
-  --secondary-foreground: 210 40% 98%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 34.9%; /* Darker for WCAG compliance */
-  --accent: 36 100% 42%; /* Adjusted for better contrast */
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 84.2% 50%; /* Darker for better contrast */
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 85%;
-  --input: 214.3 31.8% 85%;
-  --ring: 207 90% 46%;
-  --radius: 0.5rem;
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
   
-  /* Material Design shadows - minimal and clean */
+  /* Primary Blue: #2563eb to #3b82f6 */
+  --primary: 217.2 91.2% 59.8%; /* #3b82f6 */
+  --primary-dark: 221.2 83.2% 53.3%; /* #2563eb */
+  --primary-foreground: 0 0% 100%;
+  
+  /* Success Green: #10b981 */
+  --success: 160 84.0% 39.4%; /* #10b981 */
+  --success-foreground: 0 0% 100%;
+  
+  /* Warning Amber: #f59e0b */
+  --warning: 38 92% 50%; /* #f59e0b */
+  --warning-foreground: 0 0% 0%;
+  
+  /* Error Red: #ef4444 */
+  --error: 0 84.2% 60.2%; /* #ef4444 */
+  --error-foreground: 0 0% 100%;
+  
+  /* Secondary & Accent */
+  --secondary: 160 84.0% 39.4%; /* Using success green */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 38 92% 50%; /* Using warning amber */
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 84.2% 60.2%; /* Using error red */
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Neutral Scale */
+  --muted: 220 14.3% 95.9%;
+  --muted-foreground: 220 8.9% 46.1%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 217.2 91.2% 59.8%;
+  
+  /* Border Radius */
+  --radius: 1rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  
+  /* Enhanced Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.08);
-  --shadow-lg: 0 4px 8px -2px rgb(0 0 0 / 0.12);
-  --shadow-xl: 0 8px 16px -4px rgb(0 0 0 / 0.16);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   
-  /* Clean transitions - Material Design */
+  /* Smooth Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark {
+  /* Vibrant Dark Mode Colors */
   --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 95%; /* Slightly dimmed for comfortable reading */
+  --foreground: 210 40% 98%;
   --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 95%;
+  --card-foreground: 210 40% 98%;
   --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 95%;
-  --primary: 217.2 91.2% 65%; /* Brighter for better contrast in dark mode */
+  --popover-foreground: 210 40% 98%;
+  
+  /* Vibrant Primary Blue in Dark Mode */
+  --primary: 217.2 91.2% 69.8%; /* Brighter #60a5fa */
+  --primary-dark: 217.2 91.2% 59.8%; /* #3b82f6 */
   --primary-foreground: 222.2 84% 4.9%;
-  --secondary: 217.2 32.6% 25%; /* Lighter for better visibility */
-  --secondary-foreground: 210 40% 95%;
+  
+  /* Vibrant Success Green */
+  --success: 160 84.0% 49.4%; /* Brighter #14b8a6 */
+  --success-foreground: 222.2 84% 4.9%;
+  
+  /* Vibrant Warning Amber */
+  --warning: 38 92% 60%; /* Brighter */
+  --warning-foreground: 222.2 84% 4.9%;
+  
+  /* Vibrant Error Red */
+  --error: 0 84.2% 70.2%; /* Brighter */
+  --error-foreground: 222.2 84% 4.9%;
+  
+  --secondary: 160 84.0% 49.4%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --accent: 38 92% 60%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 70.2%;
+  --destructive-foreground: 222.2 84% 4.9%;
+  
   --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 70%; /* Brighter for WCAG compliance */
-  --accent: 217.2 32.6% 25%;
-  --accent-foreground: 210 40% 95%;
-  --destructive: 0 62.8% 55%; /* Brighter for better visibility */
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 20%;
-  --input: 217.2 32.6% 20%;
-  --ring: 224.3 76.3% 94.0%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 217.2 91.2% 69.8%;
+}
+
+/* Gradient Utility Classes */
+@layer utilities {
+  .gradient-blue {
+    background: linear-gradient(135deg, hsl(var(--primary-dark)), hsl(var(--primary)));
+  }
+  
+  .gradient-green {
+    background: linear-gradient(135deg, #059669, hsl(var(--success)));
+  }
+  
+  .gradient-amber {
+    background: linear-gradient(135deg, #d97706, hsl(var(--warning)));
+  }
+  
+  .gradient-red {
+    background: linear-gradient(135deg, #dc2626, hsl(var(--error)));
+  }
+  
+  .gradient-purple {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  }
+  
+  .gradient-hero {
+    background: linear-gradient(to right, #2563eb, #3b82f6);
+  }
+}
+
+/* Animation Keyframes */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation Classes */
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    background-size: 200% 100%;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out;
+  }
 }
 
 /* Desktop-First Responsive Design */

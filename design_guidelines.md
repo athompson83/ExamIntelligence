@@ -1,207 +1,280 @@
-# ProficiencyAI Design Guidelines
+# ProficiencyAI Design Guidelines - Instagram/Facebook Inspired
 
 ## Design Approach
 
-**Selected Framework:** Material Design with enterprise education platform inspiration (Canvas, Google Classroom, Moodle modernized)
+**Selected Framework:** Instagram/Facebook/Canvas LMS Fusion - Social Media Aesthetic for Educational Platform
 
-**Rationale:** As an information-dense, multi-role educational platform requiring stability and trust, Material Design's structured component system provides the clarity needed for complex dashboards and assessment interfaces while maintaining accessibility standards.
+**Rationale:** Modern educational platforms need the approachable, engaging feel of social media while maintaining the organizational structure of LMS systems. This hybrid approach creates a fresh, delightful experience that feels native on mobile yet professional for education.
 
 **Core Principles:**
-- Clarity over decoration: Every element serves a functional purpose
-- Hierarchy through structure: Use elevation, spacing, and typography—not color—to establish importance
-- Predictable interactions: Consistent patterns across all user roles
-- Trust through restraint: Professional, composed layouts that inspire confidence
+- Delightful interactions: Every click, hover, scroll feels polished
+- Card-centric design: Instagram-style content cards with depth
+- Vibrant yet professional: Gradients and colors that energize without overwhelming
+- Mobile-native feel: Smooth, app-like experience across devices
 
 ---
 
-## Typography System
+## Color System
 
-**Font Families:**
-- Primary: Inter (via Google Fonts) - headings and UI elements
-- Secondary: IBM Plex Sans - body text and data displays
-- Monospace: JetBrains Mono - code snippets, IDs, technical data
+**Primary Palette:**
+- Primary Blue: #2563eb to #3b82f6 (use as gradients: bg-gradient-to-r from-blue-600 to-blue-500)
+- Success Green: #10b981 (completion, correct answers, positive actions)
+- Warning Amber: #f59e0b (alerts, incomplete states)
+- Error Red: #ef4444 (validation errors, failures)
 
-**Type Scale (Desktop):**
-- Hero/Display: 3.5rem (56px), font-weight: 700
-- H1: 2.5rem (40px), font-weight: 600
-- H2: 2rem (32px), font-weight: 600
-- H3: 1.5rem (24px), font-weight: 600
-- H4: 1.25rem (20px), font-weight: 600
-- Body Large: 1.125rem (18px), font-weight: 400
-- Body: 1rem (16px), font-weight: 400
-- Body Small: 0.875rem (14px), font-weight: 400
-- Caption: 0.75rem (12px), font-weight: 500
+**Neutral Scale:**
+- Background: #ffffff (primary), #f9fafb (secondary), #f3f4f6 (tertiary)
+- Text: #111827 (primary), #6b7280 (secondary), #9ca3af (tertiary)
+- Borders: #e5e7eb (subtle), #d1d5db (standard)
 
-**Mobile Adjustments:** Scale down hero/display by 30%, H1-H3 by 20%
+**Gradient Applications:**
+- Hero overlays: Linear gradients from primary to darker shade
+- Card headers: Subtle gradients for section emphasis
+- Button accents: Hover states with gradient shifts
+- Dashboard stats: Background gradients in stat cards
 
-**Line Heights:** 1.6 for body text, 1.3 for headings
+---
+
+## Typography
+
+**Font Stack:** Inter (Google Fonts) for all text
+
+**Scale & Weights:**
+- Hero: 3.5rem/56px, weight 700
+- H1: 2.5rem/40px, weight 700
+- H2: 2rem/32px, weight 600
+- H3: 1.5rem/24px, weight 600
+- H4: 1.25rem/20px, weight 600
+- Body Large: 1.125rem/18px, weight 500
+- Body: 1rem/16px, weight 400
+- Caption: 0.875rem/14px, weight 400
+- Label: 0.75rem/12px, weight 600 (uppercase, tracking-wide)
+
+**Mobile Scale:** Reduce hero by 30%, H1-H3 by 25%, maintain body sizes
+**Line Heights:** 1.6 body, 1.2 headings
 
 ---
 
 ## Layout System
 
-**Spacing Units (Tailwind):** Consistently use 1, 2, 3, 4, 6, 8, 12, 16, 20, 24 for all spacing
+**Spacing (Tailwind):** 2, 3, 4, 6, 8, 12, 16, 20, 24, 32
 
-**Common Patterns:**
-- Card padding: p-6 (desktop), p-4 (mobile)
-- Section padding: py-16 md:py-24 (desktop), py-12 (mobile)
-- Element gaps: gap-4 for related items, gap-8 for sections
-- Container max-width: max-w-7xl with px-4 md:px-6 lg:px-8
+**Container Strategy:**
+- Max widths: max-w-7xl (dashboards), max-w-4xl (content), max-w-2xl (forms)
+- Padding: px-4 md:px-6 lg:px-8
+- Section spacing: py-12 md:py-16 lg:py-24
 
-**Grid Systems:**
-- Dashboard widgets: grid-cols-1 md:grid-cols-2 lg:grid-cols-3
-- Data tables: Full-width with horizontal scroll on mobile
-- Forms: max-w-2xl for optimal readability
+**Card Grids:**
+- Dashboard: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
+- Content feed: grid-cols-1 gap-4 (mobile stacking)
+- Stat cards: grid-cols-2 md:grid-cols-4 gap-4
 
-**Responsive Breakpoints:** Follow Tailwind defaults (sm: 640px, md: 768px, lg: 1024px, xl: 1280px)
+**Responsive Approach:** Mobile-first with smooth breakpoint transitions
 
 ---
 
 ## Component Library
 
 ### Navigation
-**Main Header:** Fixed top navigation (h-16), logo left, role-based menu center, user profile/notifications right. Include role indicator badge next to username.
 
-**Sidebar (Dashboard Views):** 
-- Width: w-64 on desktop, collapsible to w-16 with icons only
-- Mobile: Slide-over drawer
-- Structure: Logo top, navigation groups with icons, user profile bottom
-- Active state: Subtle left border (4px) and background treatment
+**Desktop Sidebar:**
+- Width: w-72, bg-white, shadow-lg, fixed left
+- Logo section: py-6 px-6, gradient background
+- Nav items: py-3 px-6, rounded-xl mx-3, icon + label, active state with gradient background
+- User profile: bottom pinned, py-4 px-6, avatar + name + role badge
 
-**Breadcrumbs:** Always present in dashboard views below header, separated by chevron icons
+**Mobile Bottom Tab:**
+- Fixed bottom, h-16, bg-white, shadow-2xl, rounded-t-3xl
+- 4-5 icons with labels, active state with gradient text and icon fill
+- Floating action button centered above tabs
+
+**Top Header:**
+- h-16, sticky top-0, bg-white/95 backdrop-blur-md, shadow-md
+- Breadcrumbs left, search center, notifications + profile right
+- Slide-in search drawer on mobile
 
 ### Cards & Containers
-**Standard Card:** Rounded corners (rounded-lg), subtle shadow (shadow-sm), hover lift (shadow-md transition)
-**Dashboard Widget:** Header with icon and title, content area, optional footer with actions
-**Stat Cards:** Large number display, label, trend indicator (arrow + percentage)
-**Question Card:** Question text, media preview, metadata footer (type, difficulty, tags)
+
+**Primary Card:**
+- rounded-2xl, shadow-lg, bg-white, hover:shadow-xl transition-all duration-300
+- Header: p-6, gradient background (subtle), bold title + icon
+- Content: p-6, well-spaced elements
+- Footer: px-6 py-4, border-t, actions right-aligned
+
+**Stat Card:**
+- rounded-2xl, p-6, gradient background, shadow-lg
+- Large number: 3rem, weight 700, text-white
+- Label: text-sm, weight 600, text-white/80
+- Icon: absolute top-right, w-12 h-12, opacity-20
+- Trend indicator: small arrow + percentage, text-white/90
+
+**Feed Card (Question/Assignment):**
+- rounded-2xl, bg-white, shadow-md, hover:shadow-xl
+- User avatar + metadata header
+- Content preview with image (16:9 ratio if visual)
+- Interaction footer: like, comment, share icons with counts
+- Tags: rounded-full pills with gradient backgrounds
 
 ### Forms & Inputs
-**Text Inputs:** 
-- Height: h-12, rounded-md, border with focus ring
-- Label above input (font-weight: 500)
-- Helper text below (text-sm)
-- Error state: Red border, error icon, error message
 
-**Select/Dropdowns:** Match input height, chevron icon right-aligned
+**Text Input:**
+- Floating label: absolute positioning, moves up on focus/filled
+- h-14, rounded-xl, border-2, border-gray-200
+- Focus: border-blue-500, ring-4 ring-blue-100
+- Error: border-red-500, ring-red-100, error icon right
+- Success: border-green-500, ring-green-100, checkmark icon
 
-**Checkboxes/Radio:** Larger touch targets (w-5 h-5), clear labels
+**Select/Dropdown:**
+- Same styling as input, chevron icon right
+- Dropdown menu: rounded-2xl, shadow-2xl, p-2, max-h-60 overflow-y-auto
+- Options: rounded-xl px-4 py-3, hover:bg-blue-50
 
-**File Upload:** Drag-and-drop zone with dashed border, upload icon, file size limits shown
+**Checkbox/Radio:**
+- w-6 h-6, rounded-md (checkbox) / rounded-full (radio)
+- Checked: gradient background, white checkmark, scale-105 animation
+- Label: font-medium, ml-3
 
-**Rich Text Editor:** Toolbar with formatting options, clean editing area, character count
+**Toggle Switch:**
+- w-12 h-6, rounded-full, smooth slide transition
+- Active: gradient background
 
 ### Buttons
-**Primary:** High contrast, h-12, px-6, rounded-md, font-weight: 600
-**Secondary:** Outlined variant of primary
-**Tertiary/Ghost:** Text-only with subtle hover background
-**Icon Buttons:** Square (w-10 h-10), centered icon
-**Button Groups:** Connected buttons with shared borders
 
-**Blurred Background (Hero/Image Overlays):** backdrop-blur-sm with semi-transparent background
+**Primary:**
+- h-12 px-8, rounded-xl, bg-gradient-to-r from-blue-600 to-blue-500
+- text-white font-semibold, shadow-lg, hover:shadow-xl hover:scale-105
+- Active: scale-95
+- Disabled: opacity-50, cursor-not-allowed
+
+**Secondary:**
+- Same dimensions, border-2 border-blue-500, text-blue-600
+- Hover: bg-blue-50
+
+**Floating Action Button (FAB):**
+- w-14 h-14, rounded-full, gradient background, shadow-2xl
+- Icon centered, fixed position
+- Hover: scale-110, shadow-3xl
+- Ripple animation on click
+
+**Buttons on Images:** backdrop-blur-md bg-white/20 border border-white/30 text-white
 
 ### Data Display
-**Tables:**
-- Zebra striping for rows
-- Sticky header on scroll
-- Sortable columns with icon indicator
-- Row actions dropdown (3-dot menu)
-- Pagination controls at bottom
-- Empty state with illustration and CTA
 
-**Charts:** Use Chart.js or Recharts
-- Line charts: Trends over time
-- Bar charts: Comparisons
-- Pie/Donut: Distributions
-- Consistent chart colors aligned with role theming
+**Tables:**
+- rounded-2xl overflow, shadow-lg
+- Header: gradient background, sticky top, font-semibold, py-4
+- Rows: hover:bg-blue-50, transition, py-4 px-6
+- Actions: 3-dot menu, slide-in action panel
+- Empty state: py-16, illustration + gradient text CTA
+
+**Charts:**
+- Container: rounded-2xl, bg-white, shadow-lg, p-6
+- Use gradient fills for areas, vibrant line colors
+- Interactive tooltips with rounded-xl styling
+- Legend: rounded-full pills
 
 **Progress Indicators:**
-- Linear: Full-width bars for quiz completion, upload status
-- Circular: Percentage completion for assessments
-- Stepped: Multi-stage processes (exam setup, grading workflow)
+- Linear: h-3, rounded-full, gradient fill, animated stripe pattern
+- Circular: gradient stroke, percentage centered, smooth animation
+- Ring: w-20 h-20, gradient stroke, label below
 
 ### Modals & Overlays
-**Modal:** Center screen, max-w-2xl, backdrop blur, close button top-right
-**Drawer:** Slide from right, w-96 or w-1/3, for detailed views/forms
-**Toast Notifications:** Top-right corner, auto-dismiss, icon + message + close
-**Tooltips:** Appear on hover, small arrow pointer, brief explanations
+
+**Modal:**
+- max-w-2xl, rounded-3xl, shadow-2xl, bg-white
+- Header: gradient background, p-6, close button (hover:scale-110)
+- Content: p-6, max-h-[70vh] overflow-y-auto
+- Footer: p-6, border-t, buttons right-aligned
+- Backdrop: bg-black/50 backdrop-blur-sm
+
+**Toast Notifications:**
+- Top-right, rounded-2xl, shadow-2xl, p-4, slide-in animation
+- Icon + message + close, auto-dismiss 4s
+- Success: gradient green, Warning: gradient amber, Error: gradient red
+
+**Bottom Sheet (Mobile):**
+- Slide up from bottom, rounded-t-3xl, shadow-2xl
+- Drag handle: w-12 h-1.5 bg-gray-300 rounded-full, centered top
 
 ### Specialized Components
+
 **Live Proctoring Panel:**
-- Webcam feed (small, corner positioned)
-- Screen capture indicator
-- Violation alerts with timestamp
-- Recording status indicator
+- Fixed corner position, rounded-2xl, shadow-2xl
+- Webcam: 240x180, rounded-xl
+- Status indicators: pulsing dot + label
+- Expandable to full view with smooth animation
 
 **Question Bank Browser:**
-- Left: Filter sidebar (subject, difficulty, type, tags)
-- Center: Question grid with preview cards
-- Right: Selected question detail panel
+- 3-column layout: Filters (w-64) | Grid | Details (w-96)
+- Filter cards: rounded-xl, checkboxes with gradients
+- Question cards: hover lift, preview image top, meta footer
+- Detail panel: slide-in from right, full question view
 
 **CAT Exam Interface:**
-- Clean, distraction-free layout
-- Single question centered
-- Progress bar (questions, not time)
-- Navigation controls bottom-right
-- Timer top-right (if timed)
+- Minimal distraction: single centered card max-w-4xl
+- Question number badges: gradient circular pills
+- Navigation: floating bottom bar with rounded-full buttons
+- Timer: top-right, pulsing animation when < 5 min
 
-**Analytics Dashboard:**
-- KPI cards in grid at top (3-4 key metrics)
-- Charts section (2-column layout for comparisons)
-- Data table for detailed breakdowns
-- Export/filter controls in header
-
----
-
-## Loading & Feedback States
-
-**Skeleton Screens:** For initial page loads, match layout structure with pulsing placeholders
-**Spinners:** Small inline for button actions, large centered for page loads
-**Success States:** Green checkmark with brief success message
-**Error States:** Red alert icon with clear error message and action steps
-**Empty States:** Illustration + helpful message + primary action button
+**Dashboard Hero:**
+- h-80 md:h-96, gradient background (brand colors)
+- Welcome message: text-4xl font-bold text-white
+- Quick stats: 3-4 cards overlapping hero bottom edge (absolute positioning)
+- Decorative elements: floating shapes with subtle animations
 
 ---
 
-## Accessibility Implementation
+## Animations & Interactions
 
-**Focus Indicators:** 2px solid ring with 2px offset, high contrast
-**Keyboard Navigation:** All interactive elements accessible via Tab, Enter, Space
-**Screen Reader:** Semantic HTML, ARIA labels for icons, live regions for dynamic content
-**Contrast Ratios:** Minimum 4.5:1 for body text, 3:1 for large text and UI components
-**Touch Targets:** Minimum 44x44px for all interactive elements
+**Page Transitions:** 300ms fade + slide-up
+**Card Hover:** transform scale-105, shadow-lg to shadow-2xl, 200ms
+**Button Press:** scale-95, 100ms
+**Skeleton Loaders:** Shimmer animation, gradient sweep left-to-right
+**Scroll Reveals:** fade-in + slide-up on viewport entry
+**Input Focus:** ring grows, label floats, 150ms ease-out
+**Ripple Effect:** Click position origin, expanding circle, 600ms
+**Micro-interactions:** Icon bounces, checkmarks draw in, success confetti
+
+**Scroll Behavior:** smooth, no abrupt jumps
 
 ---
 
 ## Images
 
-**Hero Section (Marketing/Landing):**
-- Full-width, 60vh height
-- Image: Modern classroom setting with diverse students using tablets/laptops, professional photography style
-- Overlay: Dark gradient from bottom (30% opacity) for text legibility
-- Positioned: Students engaged with devices in foreground, bright learning environment background
+**Hero Section (Landing/Marketing):**
+- Full-width, h-[500px] md:h-[600px]
+- Image: Diverse students collaborating with laptops and tablets in modern bright classroom, natural lighting, professional photography
+- Overlay: bg-gradient-to-r from-blue-900/80 to-blue-600/60
+- Content: Centered, text-white, CTA buttons with backdrop-blur
 
-**Dashboard Illustrations:**
-- Empty state graphics: Friendly, minimalist line illustrations
-- 404/Error pages: Professional but approachable illustration
-- Onboarding: Step-by-step visual guides
+**Dashboard Imagery:**
+- Empty states: Colorful line illustrations (undraw.co style), max-w-xs centered
+- Profile avatars: rounded-full, border-4 border-white shadow-lg
+- Achievement badges: gradient circular badges with icons
+- Background patterns: Subtle geometric shapes, low opacity
 
-**User Avatars:** Circular, consistent sizes (w-8, w-10, w-12), placeholder initials when no photo
-
-**Role-Based Imagery:**
-- Student views: Encouraging, achievement-focused imagery
-- Teacher dashboards: Instructional, organized workspace themes
-- Admin panels: Data visualization, system management graphics
+**Content Cards:**
+- Assignment thumbnails: 16:9 ratio, rounded-t-2xl
+- User-generated: rounded-xl within cards
+- Placeholder: gradient backgrounds with centered icons
 
 ---
 
-## Animations (Minimal)
+## Accessibility
 
-Use only for functional feedback:
-- Page transitions: 200ms fade
-- Card hover: 150ms transform and shadow
-- Button press: 100ms scale (0.98)
-- Drawer/modal: 250ms slide/fade
-- Loading spinners: Smooth rotation
+**Focus States:** ring-4 with brand color, 3px offset, always visible
+**Touch Targets:** min 48x48px all interactive elements
+**Contrast:** 4.5:1 minimum body, ensure gradients maintain readability
+**Screen Readers:** ARIA labels for icons, live regions for dynamic updates
+**Keyboard:** Tab navigation through all elements, Enter/Space activation, Escape closes modals
+**Reduced Motion:** Respect prefers-reduced-motion, disable animations
 
-**No decorative animations** - every motion serves a purpose.
+---
+
+## Loading & Feedback States
+
+**Skeleton:** Match layout exactly, shimmer gradient animation
+**Spinners:** Gradient circular spinner for page loads, small inline for buttons
+**Success:** Green gradient card with checkmark animation, 2s auto-dismiss
+**Error:** Red gradient alert, icon + message + retry button
+**Empty:** Illustration + heading + description + gradient CTA button

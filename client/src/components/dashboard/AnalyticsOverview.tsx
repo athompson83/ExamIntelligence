@@ -114,7 +114,7 @@ export function AnalyticsOverview() {
 
   if (isLoading) {
     return (
-      <Card className="shadow-sm rounded-lg" data-testid="card-analytics-overview">
+      <Card className="rounded-2xl shadow-lg animate-shimmer" data-testid="card-analytics-overview">
         <CardHeader className="p-6">
           <div className="flex items-center justify-between">
             <Skeleton className="h-6 w-48" />
@@ -127,7 +127,7 @@ export function AnalyticsOverview() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-muted rounded-lg p-4">
+              <div key={i} className="bg-muted rounded-2xl p-4">
                 <Skeleton className="h-6 w-32 mb-3" />
                 <Skeleton className="h-32 w-full mb-2" />
                 <Skeleton className="h-3 w-24" />
@@ -140,19 +140,19 @@ export function AnalyticsOverview() {
   }
 
   return (
-    <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm" data-testid="card-analytics-overview">
-      <CardHeader className="p-6">
+    <Card className="bg-white dark:bg-gray-800 border-0 rounded-2xl shadow-lg animate-fade-in" data-testid="card-analytics-overview">
+      <CardHeader className="p-6 border-b border-gray-100 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
             Performance Analytics
           </CardTitle>
           
           <div className="flex flex-wrap items-center gap-2">
             <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
-              <SelectTrigger className="w-32" data-testid="select-time-range">
+              <SelectTrigger className="w-32 rounded-xl border-2 focus:ring-4 focus:ring-blue-100" data-testid="select-time-range">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="7days">Last 7 days</SelectItem>
                 <SelectItem value="30days">Last 30 days</SelectItem>
                 <SelectItem value="90days">Last 90 days</SelectItem>
@@ -163,6 +163,7 @@ export function AnalyticsOverview() {
               variant="outline" 
               size="sm"
               onClick={() => exportData('csv')}
+              className="rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-300"
               data-testid="button-export-analytics"
             >
               <Download className="h-4 w-4 mr-2" />
@@ -173,28 +174,48 @@ export function AnalyticsOverview() {
       </CardHeader>
       
       <CardContent className="p-6">
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-            <TabsTrigger value="overview" className="text-sm" data-testid="tab-overview">
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="inline-flex h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-full gap-1">
+            <TabsTrigger 
+              value="overview" 
+              className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300" 
+              data-testid="tab-overview"
+            >
               Overview
             </TabsTrigger>
-            <TabsTrigger value="performance" className="text-sm" data-testid="tab-performance">
+            <TabsTrigger 
+              value="performance" 
+              className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300" 
+              data-testid="tab-performance"
+            >
               Performance
             </TabsTrigger>
-            <TabsTrigger value="questions" className="text-sm" data-testid="tab-questions">
+            <TabsTrigger 
+              value="questions" 
+              className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300" 
+              data-testid="tab-questions"
+            >
               Questions
             </TabsTrigger>
-            <TabsTrigger value="students" className="text-sm" data-testid="tab-students">
+            <TabsTrigger 
+              value="students" 
+              className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300" 
+              data-testid="tab-students"
+            >
               Students
             </TabsTrigger>
-            <TabsTrigger value="trends" className="text-sm" data-testid="tab-trends">
+            <TabsTrigger 
+              value="trends" 
+              className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300" 
+              data-testid="tab-trends"
+            >
               Trends
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-4">
+          <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="shadow-sm" data-testid="stat-total-attempts">
+              <Card className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border-0" data-testid="stat-total-attempts">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -214,7 +235,7 @@ export function AnalyticsOverview() {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-sm" data-testid="stat-average-score">
+              <Card className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border-0" data-testid="stat-average-score">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -234,7 +255,7 @@ export function AnalyticsOverview() {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-sm" data-testid="stat-completion-rate">
+              <Card className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border-0" data-testid="stat-completion-rate">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
@@ -254,7 +275,7 @@ export function AnalyticsOverview() {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-sm" data-testid="stat-avg-time">
+              <Card className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border-0" data-testid="stat-avg-time">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
@@ -276,9 +297,9 @@ export function AnalyticsOverview() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="shadow-sm">
+              <Card className="rounded-xl shadow-md border-0">
                 <CardHeader className="p-6">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">Exam Performance Trends</h4>
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-white">Exam Performance Trends</h4>
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
                   <div className="h-48">
@@ -298,9 +319,9 @@ export function AnalyticsOverview() {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-sm">
+              <Card className="rounded-xl shadow-md border-0">
                 <CardHeader className="p-6">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">Question Difficulty Distribution</h4>
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-white">Question Difficulty Distribution</h4>
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
                   <div className="space-y-4">
