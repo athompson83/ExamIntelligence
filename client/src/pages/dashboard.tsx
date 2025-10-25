@@ -9,6 +9,7 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { AnalyticsOverview } from "@/components/dashboard/AnalyticsOverview";
 import { Button } from "@/components/ui/button";
 import { Plus, Puzzle, Bot, Eye } from "lucide-react";
+import type { User } from "@/types";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -40,8 +41,8 @@ export default function Dashboard() {
   return (
     <Layout>
       {/* Hero Section with Gradient Background */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-32 md:mb-40">
-        <div className="h-80 md:h-96 bg-gradient-to-r from-blue-600 to-blue-500 relative overflow-hidden">
+      <div className="relative mb-40 md:mb-48">
+        <div className="h-80 md:h-96 bg-gradient-to-r from-blue-600 to-blue-500 relative overflow-hidden rounded-2xl">
           {/* Decorative elements */}
           <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
           <div className="absolute top-10 right-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse-slow"></div>
@@ -51,7 +52,7 @@ export default function Dashboard() {
           <div className="relative h-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 flex flex-col justify-center">
             <div className="animate-fade-in">
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                Welcome back, {user?.firstName || "User"}! 👋
+                Welcome back, {(user as User)?.firstName || "User"}! 👋
               </h1>
               <p className="text-lg md:text-xl text-white/90 max-w-2xl">
                 Here's what's happening with your courses and assessments today.

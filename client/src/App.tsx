@@ -12,7 +12,6 @@ import ConditionalBugReporter from "@/components/ConditionalBugReporter";
 import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense } from "react";
 import CATExamBuilder from "@/pages/CATExamBuilder";
-import { BottomTabNav } from "@/components/BottomTabNav";
 import { InstagramStyleNav } from "@/components/InstagramStyleNav";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -23,7 +22,7 @@ import { useEffect } from "react";
 import './styles/performance.css';
 
 // Core pages that are always needed
-import Landing from "@/pages/landing";
+import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 
@@ -164,7 +163,7 @@ function Router() {
             {() => <Suspense fallback={<SmoothLoadingFallback />}><QuestionManager /></Suspense>}
           </Route>
           <Route path="/testbanks/:id/questions">
-            {(params) => <Suspense fallback={<LoadingSpinner />}><QuestionManager testbankId={params?.id || ''} /></Suspense>}
+            {(params: { id: string } | undefined) => <Suspense fallback={<LoadingSpinner />}><QuestionManager testbankId={params?.id || ''} /></Suspense>}
           </Route>
           <Route path="/quiz-manager">
             {() => <Suspense fallback={<LoadingSpinner />}><QuizManager /></Suspense>}
@@ -317,7 +316,7 @@ function Router() {
             {() => <Suspense fallback={<LoadingSpinner />}><BackendPromptTestPage /></Suspense>}
           </Route>
           <Route path="/exam/:id">
-            {(params) => <Suspense fallback={<LoadingSpinner />}><ExamInterface examId={params?.id || ''} /></Suspense>}
+            {(params: { id: string } | undefined) => <Suspense fallback={<LoadingSpinner />}><ExamInterface examId={params?.id || ''} /></Suspense>}
           </Route>
           <Route path="/student">
             {() => <Suspense fallback={<LoadingSpinner />}><StudentDashboard /></Suspense>}
@@ -449,7 +448,6 @@ function App() {
                 <OnboardingTour />
                 <ConditionalBugReporter />
                 <InstagramStyleNav />
-                <BottomTabNav />
               </OnboardingTourProvider>
             </AITooltipProvider>
           </CustomTooltipProvider>
