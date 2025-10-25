@@ -31,7 +31,6 @@ import NotFound from "@/pages/not-found";
 const ItemBanks = lazy(() => import("@/pages/item-banks"));
 const QuestionManager = lazy(() => import("@/pages/question-manager"));
 const LiveExams = lazy(() => import("@/pages/live-exams"));
-const Analytics = lazy(() => import("@/pages/analytics"));
 const AnalyticsDashboard = lazy(() => import("@/pages/analytics-dashboard"));
 const SpeedGrader = lazy(() => import("@/pages/speed-grader"));
 const UserManagement = lazy(() => import("@/pages/user-management"));
@@ -201,7 +200,7 @@ function Router() {
             {() => <Suspense fallback={<SmoothLoadingFallback />}><LiveExams /></Suspense>}
           </Route>
           <Route path="/analytics">
-            {() => <Suspense fallback={<LoadingSpinner />}><Analytics /></Suspense>}
+            {() => <Dashboard />}
           </Route>
           <Route path="/analytics-dashboard">
             {() => <Suspense fallback={<LoadingSpinner />}><AnalyticsDashboard /></Suspense>}
