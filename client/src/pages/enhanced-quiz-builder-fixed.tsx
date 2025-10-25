@@ -69,6 +69,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { Droppable } from "@hello-pangea/dnd";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import type { Question, QuestionGroup } from "@shared/schema";
 
 // Simple enhanced quiz builder with fixed JSX structure
 export default function EnhancedQuizBuilder() {
@@ -118,7 +119,7 @@ export default function EnhancedQuizBuilder() {
     enabled: !viewingQuizQuestions,
   });
 
-  const { data: availableQuestions = [], isLoading: questionsLoading } = useQuery({
+  const { data: availableQuestions = [], isLoading: questionsLoading } = useQuery<Question[]>({
     queryKey: ['/api/questions'],
     enabled: !viewingQuizQuestions,
   });
@@ -249,7 +250,7 @@ export default function EnhancedQuizBuilder() {
         <div className="flex-1">
           <div className="font-medium">{question.questionText}</div>
           <div className="text-sm text-muted-foreground mt-1">
-            {question.questionType} • Difficulty: {question.difficulty}/10 • Blooms: {question.bloomsLevel}
+            {question.questionType} • Difficulty: {question.irtDifficulty ?? 'N/A'} • Blooms: {question.bloomsLevel}
           </div>
         </div>
         
@@ -269,17 +270,21 @@ export default function EnhancedQuizBuilder() {
     <div className="container mx-auto p-6 max-w-6xl">
       {/* Breadcrumb Navigation */}
       <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
+        <BreadcrumbList className="">
+          <BreadcrumbItem className="">
             <Home className="h-4 w-4 cursor-pointer" onClick={() => navigate('/')} />
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
+          <BreadcrumbSeparator className="">
+            <span>/</span>
+          </BreadcrumbSeparator>
+          <BreadcrumbItem className="">
             <span className="cursor-pointer" onClick={() => navigate('/quiz-manager')}>Quiz Manager</span>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Enhanced Quiz Builder</BreadcrumbPage>
+          <BreadcrumbSeparator className="">
+            <span>/</span>
+          </BreadcrumbSeparator>
+          <BreadcrumbItem className="">
+            <BreadcrumbPage className="">Enhanced Quiz Builder</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -667,7 +672,7 @@ export default function EnhancedQuizBuilder() {
                               <div className="flex-1">
                                 <div className="font-medium">{question.questionText}</div>
                                 <div className="text-sm text-muted-foreground mt-1">
-                                  {question.questionType} • Difficulty: {question.difficulty}/10 • Blooms: {question.bloomsLevel}
+                                  {question.questionType} • Difficulty: {question.irtDifficulty ?? 'N/A'} • Blooms: {question.bloomsLevel}
                                 </div>
                               </div>
                             </div>
