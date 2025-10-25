@@ -442,7 +442,10 @@
     
     /* Mobile page content - natural flow without overlapping headers */
     main {
-      padding: 1rem !important; /* Natural spacing for content */
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+      padding-top: 6.5rem !important; /* TopBar (4rem) + Breadcrumbs (2.5rem) */
+      padding-bottom: 7rem !important; /* Bottom nav clearance */
     }
     
     /* Remove mobile header overlap compensation - now using natural flow */

@@ -38,7 +38,8 @@ export function QuickStats() {
     color: 'white',
     position: 'relative' as const,
     overflow: 'hidden',
-    padding: '1.5rem',
+    padding: '1rem',
+    minHeight: '140px',
   };
 
   return (
