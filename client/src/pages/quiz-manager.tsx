@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Plus, 
@@ -22,13 +21,15 @@ import {
   ChevronRight,
   Search,
   UserPlus,
-  Play
+  Play,
+  Sparkles
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import Layout from "@/components/Layout";
+import { motion } from "framer-motion";
 
 interface Quiz {
   id: string;
@@ -53,8 +54,8 @@ export default function QuizManager() {
 
   const { data: quizzes, isLoading, isError } = useQuery({
     queryKey: ['/api/quizzes'],
-    staleTime: 30000, // 30 seconds
-    gcTime: 300000, // 5 minutes (renamed from cacheTime in v5)
+    staleTime: 30000,
+    gcTime: 300000,
   });
 
   const deleteQuizMutation = useMutation({
@@ -100,47 +101,6 @@ export default function QuizManager() {
     },
   });
 
-  const assignQuizMutation = useMutation({
-    mutationFn: async ({ quizId, studentIds, dueDate }: { quizId: string; studentIds: string[]; dueDate?: string }) => {
-      return await apiRequest(`/api/quizzes/${quizId}/assign`, { 
-        method: "POST", 
-        body: JSON.stringify({ studentIds, dueDate }) 
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Quiz assigned successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to assign quiz",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const startLiveExamMutation = useMutation({
-    mutationFn: async (quizId: string) => {
-      return await apiRequest(`/api/quizzes/${quizId}/start-live`, { method: "POST" });
-    },
-    onSuccess: (data: any) => {
-      toast({
-        title: "Success",
-        description: `Live exam started! Access code: ${data?.accessCode || 'N/A'}`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to start live exam",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleCreateNew = () => {
     setLocation('/enhanced-quiz-builder');
   };
@@ -171,73 +131,37 @@ export default function QuizManager() {
   };
 
   const handleAssign = (quiz: Quiz) => {
-    // Navigate to assignment page with pre-selected quiz
     setLocation(`/assignments?quizId=${quiz.id}&quizTitle=${encodeURIComponent(quiz.title)}`);
   };
 
   const handleStartLiveExam = (quiz: Quiz) => {
-    // Navigate to live exam setup page with pre-selected quiz
     setLocation(`/live-exams?quizId=${quiz.id}&quizTitle=${encodeURIComponent(quiz.title)}`);
   };
 
-  // Show skeleton loading only on initial load
   if (isLoading && !quizzes) {
     return (
-      <div className="p-6 space-y-6">
-        {/* Breadcrumb skeleton */}
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-48"></div>
-        </div>
-        
-        {/* Header skeleton */}
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-        </div>
-        
-        {/* Search and button skeleton */}
-        <div className="animate-pulse flex justify-between items-center">
-          <div className="h-10 bg-gray-200 rounded w-64"></div>
-          <div className="h-10 bg-gray-200 rounded w-32"></div>
-        </div>
-        
-        {/* Tabs skeleton */}
-        <div className="animate-pulse">
-          <div className="flex space-x-4">
-            <div className="h-10 bg-gray-200 rounded w-20"></div>
-            <div className="h-10 bg-gray-200 rounded w-24"></div>
+      <Layout>
+        <div className="p-6 space-y-6 animate-fadeIn">
+          <div className="animate-pulse space-y-6">
+            <div className="h-10 bg-gradient-to-r from-gray-200 to-gray-300 rounded-2xl w-1/3"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-32 bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl shimmer"></div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-72 bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl shimmer"></div>
+              ))}
+            </div>
           </div>
         </div>
-        
-        {/* Cards skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-white rounded-lg shadow-sm border h-64 p-4 space-y-3">
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                <div className="flex space-x-2 mt-4">
-                  <div className="h-6 bg-gray-200 rounded w-16"></div>
-                  <div className="h-6 bg-gray-200 rounded w-20"></div>
-                </div>
-                <div className="flex space-x-2 mt-4">
-                  <div className="h-8 bg-gray-200 rounded w-16"></div>
-                  <div className="h-8 bg-gray-200 rounded w-16"></div>
-                  <div className="h-8 bg-gray-200 rounded w-16"></div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      </Layout>
     );
   }
 
-  // Ensure quizzes is an array
   const quizzesArray = Array.isArray(quizzes) ? quizzes : [];
   
-  // Filter quizzes based on search term
   const filteredQuizzes = quizzesArray.filter((quiz: Quiz) =>
     quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (quiz.description && quiz.description.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -248,429 +172,578 @@ export default function QuizManager() {
 
   return (
     <Layout>
-      <div className="space-y-6">
-      {/* Breadcrumb Navigation */}
-      <div className="flex items-center space-x-1 text-sm text-muted-foreground mb-6">
-        <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard')}>
-          <Home className="h-4 w-4" />
-        </Button>
-        <ChevronRight className="h-4 w-4" />
-        <span className="text-foreground">Quiz Manager</span>
-      </div>
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Quiz Manager</h1>
-          <p className="text-muted-foreground">Create, edit, and manage your quizzes</p>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-6"
+      >
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center space-x-1 text-sm text-muted-foreground mb-6">
+          <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard')} data-testid="button-home">
+            <Home className="h-4 w-4" />
+          </Button>
+          <ChevronRight className="h-4 w-4" />
+          <span className="text-foreground font-medium">Quiz Manager</span>
         </div>
-        <Button onClick={handleCreateNew} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Create New Quiz
-        </Button>
-      </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        {/* Header with Gradient */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 p-8 shadow-lg">
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold text-white mb-2">Quiz Manager</h1>
+            <p className="text-blue-100 text-lg">Create, organize, and manage your quizzes with ease</p>
+          </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mb-24"></div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative max-w-2xl">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <Input
-            placeholder="Search quizzes..."
+            placeholder="Search quizzes by title or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-12 h-14 rounded-xl border-2 focus:border-blue-500 transition-all duration-300"
+            data-testid="input-search-quiz"
           />
         </div>
-      </div>
 
-      {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="text-2xl font-bold">{quizzesArray.length}</p>
-                <p className="text-sm text-muted-foreground">Total Quizzes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Edit className="h-8 w-8 text-orange-600" />
-              <div>
-                <p className="text-2xl font-bold">{draftQuizzes.length}</p>
-                <p className="text-sm text-muted-foreground">Drafts</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-8 w-8 text-green-600" />
-              <div>
-                <p className="text-2xl font-bold">{publishedQuizzes.length}</p>
-                <p className="text-sm text-muted-foreground">Published</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-8 w-8 text-purple-600" />
-              <div>
-                <p className="text-2xl font-bold">
-                  {quizzesArray.reduce((sum, quiz) => sum + (quiz.questionCount || 0), 0)}
-                </p>
-                <p className="text-sm text-muted-foreground">Total Questions</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quiz Lists */}
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">All Quizzes ({filteredQuizzes.length})</TabsTrigger>
-          <TabsTrigger value="drafts">Drafts ({draftQuizzes.length})</TabsTrigger>
-          <TabsTrigger value="published">Published ({publishedQuizzes.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all" className="space-y-4">
-          {filteredQuizzes.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  {searchTerm ? "No quizzes match your search" : "No quizzes yet"}
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first quiz"}
-                </p>
-                {!searchTerm && (
-                  <Button onClick={handleCreateNew}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Quiz
-                  </Button>
-                )}
+        {/* Stats Grid with Gradient Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
+            <Card className="rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-blue-500 to-blue-600">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-100">Total Quizzes</p>
+                    <p className="text-4xl font-bold text-white mt-2">{quizzesArray.length}</p>
+                  </div>
+                  <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
+                    <FileText className="h-8 w-8 text-white" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Quiz Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Questions</TableHead>
-                    <TableHead>Time Limit</TableHead>
-                    <TableHead>Last Modified</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredQuizzes.map((quiz: Quiz) => (
-                    <TableRow key={quiz.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{quiz.title || "Untitled Quiz"}</div>
-                          {quiz.description && (
-                            <div className="text-sm text-muted-foreground">{quiz.description}</div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={quiz.publishedAt ? "default" : "outline"}>
-                          {quiz.publishedAt ? "Published" : "Draft"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-4 w-4" />
-                          <span>{quiz.questionCount || 0}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {quiz.timeLimit ? (
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{quiz.timeLimit} min</span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">No limit</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(quiz.updatedAt), { addSuffix: true })}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <TooltipProvider>
-                          <div className="flex items-center gap-1">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)} aria-label="Edit quiz">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Edit Quiz</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)} aria-label="Preview quiz">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Preview Quiz</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => handleAssign(quiz)} aria-label="Assign to students">
-                                  <UserPlus className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Assign to Students</TooltipContent>
-                            </Tooltip>
-                            {quiz.publishedAt && (
-                              <>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)} aria-label="View analytics">
-                                      <BarChart3 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>View Analytics</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="default" size="sm" onClick={() => handleStartLiveExam(quiz)} aria-label="Start live exam">
-                                      <Users className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Start Live Exam</TooltipContent>
-                                </Tooltip>
-                              </>
-                            )}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)} aria-label="Copy quiz">
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Copy Quiz</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700" aria-label="Delete quiz">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Delete Quiz</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </TooltipProvider>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="drafts" className="space-y-4">
-          {draftQuizzes.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <Edit className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  {searchTerm ? "No draft quizzes match your search" : "No draft quizzes"}
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  {searchTerm ? "Try adjusting your search terms" : "All your quizzes are published or you haven't created any yet"}
-                </p>
-                {!searchTerm && (
-                  <Button onClick={handleCreateNew}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create New Quiz
-                  </Button>
-                )}
+          </motion.div>
+          
+          <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
+            <Card className="rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-amber-500 to-amber-600">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-amber-100">Drafts</p>
+                    <p className="text-4xl font-bold text-white mt-2">{draftQuizzes.length}</p>
+                  </div>
+                  <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
+                    <Edit className="h-8 w-8 text-white" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Quiz Name</TableHead>
-                    <TableHead>Questions</TableHead>
-                    <TableHead>Time Limit</TableHead>
-                    <TableHead>Last Modified</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {draftQuizzes.map((quiz: Quiz) => (
-                    <TableRow key={quiz.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{quiz.title || "Untitled Quiz"}</div>
-                          {quiz.description && (
-                            <div className="text-sm text-muted-foreground">{quiz.description}</div>
+          </motion.div>
+          
+          <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
+            <Card className="rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-green-500 to-green-600">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-100">Published</p>
+                    <p className="text-4xl font-bold text-white mt-2">{publishedQuizzes.length}</p>
+                  </div>
+                  <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
+                    <Calendar className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+          
+          <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
+            <Card className="rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-purple-500 to-purple-600">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-purple-100">Total Questions</p>
+                    <p className="text-4xl font-bold text-white mt-2">
+                      {quizzesArray.reduce((sum, quiz) => sum + (quiz.questionCount || 0), 0)}
+                    </p>
+                  </div>
+                  <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
+                    <BarChart3 className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Quiz Lists with Tabs */}
+        <Tabs defaultValue="all" className="space-y-6">
+          <TabsList className="bg-white rounded-xl shadow-md p-1">
+            <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+              All Quizzes ({filteredQuizzes.length})
+            </TabsTrigger>
+            <TabsTrigger value="drafts" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white">
+              Drafts ({draftQuizzes.length})
+            </TabsTrigger>
+            <TabsTrigger value="published" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white">
+              Published ({publishedQuizzes.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="space-y-6 mt-6">
+            {filteredQuizzes.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="rounded-2xl shadow-lg border-0">
+                  <CardContent className="text-center py-16">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mx-auto mb-6 flex items-center justify-center">
+                      <FileText className="h-12 w-12 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">
+                      {searchTerm ? "No quizzes match your search" : "No quizzes yet"}
+                    </h3>
+                    <p className="text-muted-foreground mb-6 text-lg">
+                      {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first quiz"}
+                    </p>
+                    {!searchTerm && (
+                      <Button 
+                        onClick={handleCreateNew}
+                        className="h-12 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                        data-testid="button-create-first-quiz"
+                      >
+                        <Plus className="h-5 w-5 mr-2" />
+                        Create Your First Quiz
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredQuizzes.map((quiz: Quiz, index: number) => (
+                  <motion.div
+                    key={quiz.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    whileHover={{ scale: 1.05 }}
+                    data-testid={`card-quiz-${quiz.id}`}
+                  >
+                    <Card className="rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-0 overflow-hidden">
+                      <div className={`h-2 ${quiz.publishedAt ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-amber-500 to-amber-600'}`}></div>
+                      <CardHeader className="p-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <Badge className={`rounded-full px-3 py-1 ${quiz.publishedAt ? 'bg-gradient-to-r from-green-500 to-green-600 border-0 text-white' : 'bg-gradient-to-r from-amber-500 to-amber-600 border-0 text-white'}`}>
+                            {quiz.publishedAt ? "Published" : "Draft"}
+                          </Badge>
+                          <div className="flex gap-1">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleEdit(quiz.id)}
+                                    className="h-8 w-8 p-0 hover:bg-blue-50 rounded-lg"
+                                    data-testid={`button-edit-${quiz.id}`}
+                                  >
+                                    <Edit className="h-4 w-4 text-blue-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Edit Quiz</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleDelete(quiz.id)}
+                                    className="h-8 w-8 p-0 hover:bg-red-50 rounded-lg"
+                                    data-testid={`button-delete-${quiz.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Delete Quiz</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </div>
+                        <CardTitle className="text-xl font-bold mb-2 line-clamp-2">{quiz.title || "Untitled Quiz"}</CardTitle>
+                        {quiz.description && (
+                          <CardDescription className="line-clamp-2 text-base">{quiz.description}</CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className="p-6 pt-0 space-y-4">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <FileText className="h-4 w-4" />
+                            <span>{quiz.questionCount || 0} questions</span>
+                          </div>
+                          {quiz.timeLimit && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{quiz.timeLimit} min</span>
+                            </div>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-4 w-4" />
-                          <span>{quiz.questionCount || 0}</span>
+                        <div className="text-xs text-muted-foreground">
+                          Updated {formatDistanceToNow(new Date(quiz.updatedAt), { addSuffix: true })}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {quiz.timeLimit ? (
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{quiz.timeLimit} min</span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">No limit</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(quiz.updatedAt), { addSuffix: true })}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)}>
-                            <Edit className="h-4 w-4" />
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <Button 
+                            size="sm" 
+                            onClick={() => handlePreview(quiz.id)}
+                            className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-all duration-300"
+                            data-testid={`button-preview-${quiz.id}`}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Preview
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDuplicate(quiz)}
+                            className="rounded-xl hover:bg-blue-50 transition-all duration-300"
+                            data-testid={`button-duplicate-${quiz.id}`}
+                          >
                             <Copy className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </TabsContent>
+                        {quiz.publishedAt && (
+                          <div className="flex gap-2 pt-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleAssign(quiz)}
+                              className="flex-1 rounded-xl hover:bg-green-50 border-green-200 transition-all duration-300"
+                              data-testid={`button-assign-${quiz.id}`}
+                            >
+                              <UserPlus className="h-4 w-4 mr-1" />
+                              Assign
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleAnalytics(quiz.id)}
+                              className="flex-1 rounded-xl hover:bg-purple-50 border-purple-200 transition-all duration-300"
+                              data-testid={`button-analytics-${quiz.id}`}
+                            >
+                              <BarChart3 className="h-4 w-4 mr-1" />
+                              Analytics
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-        <TabsContent value="published" className="space-y-4">
-          {publishedQuizzes.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  {searchTerm ? "No published quizzes match your search" : "No published quizzes"}
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  {searchTerm ? "Try adjusting your search terms" : "Publish your first quiz to make it available to students"}
-                </p>
-                {!searchTerm && (
-                  <Button onClick={handleCreateNew}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create New Quiz
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Quiz Name</TableHead>
-                    <TableHead>Questions</TableHead>
-                    <TableHead>Time Limit</TableHead>
-                    <TableHead>Published</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {publishedQuizzes.map((quiz: Quiz) => (
-                    <TableRow key={quiz.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{quiz.title || "Untitled Quiz"}</div>
-                          {quiz.description && (
-                            <div className="text-sm text-muted-foreground">{quiz.description}</div>
+          <TabsContent value="drafts" className="space-y-6 mt-6">
+            {draftQuizzes.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="rounded-2xl shadow-lg border-0">
+                  <CardContent className="text-center py-16">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 mx-auto mb-6 flex items-center justify-center">
+                      <Edit className="h-12 w-12 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">
+                      {searchTerm ? "No draft quizzes match your search" : "No draft quizzes"}
+                    </h3>
+                    <p className="text-muted-foreground mb-6 text-lg">
+                      {searchTerm ? "Try adjusting your search terms" : "All your quizzes are published or you haven't created any yet"}
+                    </p>
+                    {!searchTerm && (
+                      <Button 
+                        onClick={handleCreateNew}
+                        className="h-12 px-8 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                        data-testid="button-create-new-quiz"
+                      >
+                        <Plus className="h-5 w-5 mr-2" />
+                        Create New Quiz
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {draftQuizzes.map((quiz: Quiz, index: number) => (
+                  <motion.div
+                    key={quiz.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    whileHover={{ scale: 1.05 }}
+                    data-testid={`card-draft-quiz-${quiz.id}`}
+                  >
+                    <Card className="rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-0 overflow-hidden">
+                      <div className="h-2 bg-gradient-to-r from-amber-500 to-amber-600"></div>
+                      <CardHeader className="p-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <Badge className="rounded-full px-3 py-1 bg-gradient-to-r from-amber-500 to-amber-600 border-0 text-white">
+                            Draft
+                          </Badge>
+                          <div className="flex gap-1">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleEdit(quiz.id)}
+                                    className="h-8 w-8 p-0 hover:bg-blue-50 rounded-lg"
+                                    data-testid={`button-edit-draft-${quiz.id}`}
+                                  >
+                                    <Edit className="h-4 w-4 text-blue-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Edit Quiz</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleDelete(quiz.id)}
+                                    className="h-8 w-8 p-0 hover:bg-red-50 rounded-lg"
+                                    data-testid={`button-delete-draft-${quiz.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Delete Quiz</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </div>
+                        <CardTitle className="text-xl font-bold mb-2 line-clamp-2">{quiz.title || "Untitled Quiz"}</CardTitle>
+                        {quiz.description && (
+                          <CardDescription className="line-clamp-2 text-base">{quiz.description}</CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className="p-6 pt-0 space-y-4">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <FileText className="h-4 w-4" />
+                            <span>{quiz.questionCount || 0} questions</span>
+                          </div>
+                          {quiz.timeLimit && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{quiz.timeLimit} min</span>
+                            </div>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-4 w-4" />
-                          <span>{quiz.questionCount || 0}</span>
+                        <div className="text-xs text-muted-foreground">
+                          Updated {formatDistanceToNow(new Date(quiz.updatedAt), { addSuffix: true })}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {quiz.timeLimit ? (
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{quiz.timeLimit} min</span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">No limit</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(quiz.publishedAt!), { addSuffix: true })}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(quiz.id)}>
-                            <Edit className="h-4 w-4" />
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleEdit(quiz.id)}
+                            className="flex-1 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 transition-all duration-300"
+                            data-testid={`button-continue-editing-${quiz.id}`}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Continue Editing
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handlePreview(quiz.id)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleAssign(quiz)}>
-                            <UserPlus className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleAnalytics(quiz.id)}>
-                            <BarChart3 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="default" size="sm" onClick={() => handleStartLiveExam(quiz)}>
-                            <Users className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDuplicate(quiz)}>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDuplicate(quiz)}
+                            className="rounded-xl hover:bg-blue-50 transition-all duration-300"
+                            data-testid={`button-duplicate-draft-${quiz.id}`}
+                          >
                             <Copy className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(quiz.id)} className="text-red-600 hover:text-red-700">
-                            <Trash2 className="h-4 w-4" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="published" className="space-y-6 mt-6">
+            {publishedQuizzes.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="rounded-2xl shadow-lg border-0">
+                  <CardContent className="text-center py-16">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 mx-auto mb-6 flex items-center justify-center">
+                      <Calendar className="h-12 w-12 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">
+                      {searchTerm ? "No published quizzes match your search" : "No published quizzes"}
+                    </h3>
+                    <p className="text-muted-foreground mb-6 text-lg">
+                      {searchTerm ? "Try adjusting your search terms" : "Publish a quiz to make it available to students"}
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {publishedQuizzes.map((quiz: Quiz, index: number) => (
+                  <motion.div
+                    key={quiz.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    whileHover={{ scale: 1.05 }}
+                    data-testid={`card-published-quiz-${quiz.id}`}
+                  >
+                    <Card className="rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-0 overflow-hidden">
+                      <div className="h-2 bg-gradient-to-r from-green-500 to-green-600"></div>
+                      <CardHeader className="p-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <Badge className="rounded-full px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 border-0 text-white">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Published
+                          </Badge>
+                          <div className="flex gap-1">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleEdit(quiz.id)}
+                                    className="h-8 w-8 p-0 hover:bg-blue-50 rounded-lg"
+                                    data-testid={`button-edit-published-${quiz.id}`}
+                                  >
+                                    <Edit className="h-4 w-4 text-blue-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Edit Quiz</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleDelete(quiz.id)}
+                                    className="h-8 w-8 p-0 hover:bg-red-50 rounded-lg"
+                                    data-testid={`button-delete-published-${quiz.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Delete Quiz</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </div>
+                        <CardTitle className="text-xl font-bold mb-2 line-clamp-2">{quiz.title || "Untitled Quiz"}</CardTitle>
+                        {quiz.description && (
+                          <CardDescription className="line-clamp-2 text-base">{quiz.description}</CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className="p-6 pt-0 space-y-4">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <FileText className="h-4 w-4" />
+                            <span>{quiz.questionCount || 0} questions</span>
+                          </div>
+                          {quiz.timeLimit && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{quiz.timeLimit} min</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Updated {formatDistanceToNow(new Date(quiz.updatedAt), { addSuffix: true })}
+                        </div>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <Button 
+                            size="sm" 
+                            onClick={() => handlePreview(quiz.id)}
+                            className="flex-1 rounded-xl bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 transition-all duration-300"
+                            data-testid={`button-preview-published-${quiz.id}`}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Preview
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDuplicate(quiz)}
+                            className="rounded-xl hover:bg-blue-50 transition-all duration-300"
+                            data-testid={`button-duplicate-published-${quiz.id}`}
+                          >
+                            <Copy className="h-4 w-4" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-      </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleAssign(quiz)}
+                            className="flex-1 rounded-xl hover:bg-green-50 border-green-200 transition-all duration-300"
+                            data-testid={`button-assign-published-${quiz.id}`}
+                          >
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            Assign
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleAnalytics(quiz.id)}
+                            className="flex-1 rounded-xl hover:bg-purple-50 border-purple-200 transition-all duration-300"
+                            data-testid={`button-analytics-published-${quiz.id}`}
+                          >
+                            <BarChart3 className="h-4 w-4 mr-1" />
+                            Analytics
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* Floating Action Button */}
+        <motion.div
+          className="fixed bottom-24 right-8 z-50"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <Button
+            onClick={handleCreateNew}
+            className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-2xl hover:shadow-3xl transition-all duration-300"
+            data-testid="button-fab-create-quiz"
+          >
+            <Plus className="h-8 w-8" />
+          </Button>
+        </motion.div>
+      </motion.div>
     </Layout>
   );
 }

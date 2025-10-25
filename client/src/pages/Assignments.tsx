@@ -43,7 +43,6 @@ import {
   Lock,
   Key,
   TrendingDown,
-  Separator as SeparatorIcon,
   FileText
 } from 'lucide-react';
 import { MultiSelect } from '@/components/ui/multi-select';
@@ -256,24 +255,33 @@ export default function Assignments() {
         timeLimit: editingAssignment.timeLimit || 60,
         maxAttempts: editingAssignment.maxAttempts || 1,
         allowLateSubmission: editingAssignment.allowLateSubmission || false,
-        percentLostPerDay: editingAssignment.lateGradingOptions?.percentLostPerDay || 10,
-        maxLateDays: editingAssignment.lateGradingOptions?.maxLateDays || 7,
+        percentLostPerDay: (editingAssignment as any).lateGradingOptions?.percentLostPerDay || 10,
+        maxLateDays: (editingAssignment as any).lateGradingOptions?.maxLateDays || 7,
         showCorrectAnswers: editingAssignment.showCorrectAnswers || false,
+        showCorrectAnswersAt: (editingAssignment as any).showCorrectAnswersAt || 'after_submission',
+        showQuestionsAfterAttempt: (editingAssignment as any).showQuestionsAfterAttempt || false,
+        enableQuestionFeedback: (editingAssignment as any).enableQuestionFeedback || false,
         requireProctoring: editingAssignment.requireProctoring || false,
         allowCalculator: editingAssignment.allowCalculator || false,
-        enableQuestionFeedback: editingAssignment.enableQuestionFeedback || false,
-        catEnabled: editingAssignment.catEnabled || false,
-        catMinQuestions: editingAssignment.catMinQuestions || 10,
-        catMaxQuestions: editingAssignment.catMaxQuestions || 50,
-        catDifficultyTarget: editingAssignment.catDifficultyTarget || 0.5
+        calculatorType: (editingAssignment as any).calculatorType || 'basic',
+        passwordProtected: (editingAssignment as any).passwordProtected || false,
+        accessCode: (editingAssignment as any).accessCode || '',
+        ipLocking: (editingAssignment as any).ipLocking || false,
+        allowedIPs: (editingAssignment as any).allowedIPs || '',
+        catEnabled: (editingAssignment as any).catEnabled || false,
+        catMinQuestions: (editingAssignment as any).catMinQuestions || 10,
+        catMaxQuestions: (editingAssignment as any).catMaxQuestions || 50,
+        catDifficultyTarget: (editingAssignment as any).catDifficultyTarget || 0.5,
+        catTerminationCriteria: (editingAssignment as any).catOptions?.terminationCriteria || 'standard_error',
+        catStandardError: (editingAssignment as any).catOptions?.standardError || 0.3
       });
       // Populate all input refs
       if (titleRef.current) titleRef.current.value = editingAssignment.title || '';
       if (descriptionRef.current) descriptionRef.current.value = editingAssignment.description || '';
       if (timeLimitRef.current) timeLimitRef.current.value = String(editingAssignment.timeLimit || 60);
       if (maxAttemptsRef.current) maxAttemptsRef.current.value = String(editingAssignment.maxAttempts || 1);
-      if (percentLostPerDayRef.current) percentLostPerDayRef.current.value = String(editingAssignment.lateGradingOptions?.percentLostPerDay || 10);
-      if (maxLateDaysRef.current) maxLateDaysRef.current.value = String(editingAssignment.lateGradingOptions?.maxLateDays || 7);
+      if (percentLostPerDayRef.current) percentLostPerDayRef.current.value = String((editingAssignment as any).lateGradingOptions?.percentLostPerDay || 10);
+      if (maxLateDaysRef.current) maxLateDaysRef.current.value = String((editingAssignment as any).lateGradingOptions?.maxLateDays || 7);
     }
   }, [editingAssignment]);
 
@@ -458,27 +466,31 @@ export default function Assignments() {
       timeLimit: assignment.timeLimit || 60,
       maxAttempts: assignment.maxAttempts || 1,
       allowLateSubmission: assignment.allowLateSubmission || false,
-      percentLostPerDay: assignment.lateGradingOptions?.percentLostPerDay || 10,
-      maxLateDays: assignment.lateGradingOptions?.maxLateDays || 7,
+      percentLostPerDay: (assignment as any).lateGradingOptions?.percentLostPerDay || 10,
+      maxLateDays: (assignment as any).lateGradingOptions?.maxLateDays || 7,
       showCorrectAnswers: assignment.showCorrectAnswers || false,
-      showCorrectAnswersAt: assignment.showCorrectAnswersAt || 'immediately',
-      showQuestionsAfterAttempt: assignment.showQuestionsAfterAttempt || false,
-      enableQuestionFeedback: assignment.enableQuestionFeedback || false,
+      showCorrectAnswersAt: (assignment as any).showCorrectAnswersAt || 'immediately',
+      showQuestionsAfterAttempt: (assignment as any).showQuestionsAfterAttempt || false,
+      enableQuestionFeedback: (assignment as any).enableQuestionFeedback || false,
       requireProctoring: assignment.requireProctoring || false,
       allowCalculator: assignment.allowCalculator || false,
-      calculatorType: assignment.calculatorType || 'basic',
-      catEnabled: assignment.catEnabled || false,
-      catMinQuestions: assignment.catOptions?.minQuestions || 5,
-      catMaxQuestions: assignment.catOptions?.maxQuestions || 20,
-      catDifficultyTarget: assignment.catOptions?.difficultyTarget || 0.5,
-      catStoppingCriteria: assignment.catOptions?.stoppingCriteria || 'standard_error',
-      catStandardError: assignment.catOptions?.standardError || 0.3,
+      calculatorType: (assignment as any).calculatorType || 'basic',
+      passwordProtected: false,
+      accessCode: '',
+      ipLocking: false,
+      allowedIPs: '',
+      catEnabled: (assignment as any).catEnabled || false,
+      catMinQuestions: (assignment as any).catOptions?.minQuestions || 5,
+      catMaxQuestions: (assignment as any).catOptions?.maxQuestions || 20,
+      catDifficultyTarget: (assignment as any).catOptions?.difficultyTarget || 0.5,
+      catTerminationCriteria: (assignment as any).catOptions?.stoppingCriteria || 'standard_error',
+      catStandardError: (assignment as any).catOptions?.standardError || 0.3,
     });
     
     // Set selected students and sections if available
     // Note: Individual assignments store assignedToUserId/assignedToSectionId
-    setSelectedStudents(assignment.assignedToUserId ? [assignment.assignedToUserId] : []);
-    setSelectedSections(assignment.assignedToSectionId ? [assignment.assignedToSectionId] : []);
+    setSelectedStudents((assignment as any).assignedToUserId ? [(assignment as any).assignedToUserId] : []);
+    setSelectedSections((assignment as any).assignedToSectionId ? [(assignment as any).assignedToSectionId] : []);
     
     setShowCreateModal(true);
   };
@@ -663,13 +675,22 @@ export default function Assignments() {
           percentLostPerDay: 10,
           maxLateDays: 7,
           showCorrectAnswers: false,
+          showCorrectAnswersAt: 'after_submission',
+          showQuestionsAfterAttempt: false,
           enableQuestionFeedback: false,
           requireProctoring: false,
           allowCalculator: false,
+          calculatorType: 'basic',
+          passwordProtected: false,
+          accessCode: '',
+          ipLocking: false,
+          allowedIPs: '',
           catEnabled: false,
           catMinQuestions: 10,
           catMaxQuestions: 50,
-          catDifficultyTarget: 0.5
+          catDifficultyTarget: 0.5,
+          catTerminationCriteria: 'standard_error',
+          catStandardError: 0.3
         });
         // Reset all input refs
         if (titleRef.current) titleRef.current.value = '';
