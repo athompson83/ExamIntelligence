@@ -1,7 +1,7 @@
-# ProficiencyAI - Replit.md
+# ProficiencyAI
 
 ## Overview
-ProficiencyAI is a comprehensive educational assessment platform designed to compete with Canvas LMS testing capabilities. It features AI-powered question validation, live proctoring, advanced analytics, comprehensive testbank management, and seamless LTI (Learning Tools Interoperability) integration for direct LMS connectivity. The platform aims to provide a robust solution for educational institutions requiring advanced assessment tools, supporting a vision for improved educational outcomes through intelligent, adaptable assessment with seamless LMS integration.
+ProficiencyAI is an AI-powered educational assessment platform designed to compete with Canvas LMS. It offers AI-driven question validation, live proctoring, advanced analytics, comprehensive testbank management, and seamless LTI integration for direct LMS connectivity. The platform aims to provide robust assessment solutions to improve educational outcomes through intelligent, adaptable assessments.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -14,167 +14,52 @@ Landing Page: Comprehensive marketing page with complete feature list, FAQ secti
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite
-- **UI Library**: Shadcn/ui components built on Radix UI primitives
+- **UI Library**: Shadcn/ui (on Radix UI primitives)
 - **Styling**: Tailwind CSS with CSS variables
-- **State Management**: TanStack Query for server state management
+- **State Management**: TanStack Query
 - **Routing**: Wouter
 - **Form Handling**: React Hook Form with Zod validation
-- **UI/UX Decisions**: Responsive web design, Material Design 3 theme system with light/dark mode, accessible UI components, breadcrumb navigation, collapsible sidebar, interactive onboarding tours, invisible scrollbars, and contextual bug reporting.
+- **UI/UX Decisions**: Responsive web design, Material Design 3 theme with light/dark mode, accessible UI, breadcrumb navigation, collapsible sidebar, interactive onboarding, invisible scrollbars, contextual bug reporting, Instagram/Facebook-inspired modern design with gradient palettes, rounded corners, elevated shadows, and smooth animations.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ESM modules
-- **Database**: PostgreSQL with Drizzle ORM
-- **Database Provider**: Neon serverless PostgreSQL
+- **Database**: PostgreSQL with Drizzle ORM (Neon serverless)
 - **Authentication**: Replit Auth with OpenID Connect
 - **Session Management**: PostgreSQL-based session store
-- **Real-time Communication**: WebSocket server for live proctoring and updates
+- **Real-time Communication**: WebSocket server
 - **AI Integration**: Multi-LLM provider support (OpenAI, Anthropic Claude, Google Gemini, XAI Grok, Deepseek, Meta LLM) with custom prompt management.
-- **Core Modules**: Testbank Management, Quiz Builder (unified), Reference Banks, Live Proctoring, AI Services, Analytics Dashboard, User Management (multi-role: Super Admin, Admin, Teacher, Student), Assignment System, LTI Integration (comprehensive LMS connectivity with Canvas, Moodle, Blackboard support).
+- **Core Modules**: Testbank Management, Quiz Builder, Reference Banks, Live Proctoring, AI Services, Analytics Dashboard, Multi-role User Management (Super Admin, Admin, Teacher, Student), Assignment System, LTI Integration.
 
 ### System Design Choices
-- **Role-Based Architecture**: Four-tier role system (Super Admin, Admin, Teacher, Student) with account-based multi-tenancy.
-- **Data Flow**: Defined flows for authentication, assessment creation, live proctoring, and AI integration.
-- **AI-Powered Analytics**: ML-based performance predictions, anomaly detection, question difficulty clustering, personalized learning paths, and concept mastery analysis.
-- **AI Question Generation**: Enhanced generation with research-based quality standards (e.g., CRESST, Kansas Curriculum Center), comprehensive validation, and intelligent prompt engineering.
-- **Mobile Strategy**: Current responsive web design with a plan for future React Native apps for iOS and Android, leveraging existing APIs and real-time features.
-- **Data Safety**: Archiving system for questions, quizzes, and testbanks instead of permanent deletion, with full audit trails.
-- **Core Functionality Protection**: Stable core systems (Item Bank, Question Creation, Quiz Creation, Assignment Creation, Exam Scheduling) with strict change control.
-- **Internationalization**: Full i18n support with 8 languages and dynamic switching.
-- **LTI Integration**: Comprehensive Learning Tools Interoperability 1.3 support for seamless LMS integration with Canvas, Moodle, Blackboard, and other LTI-compliant platforms. Features include automatic grade passback, content selection, deep linking, and complete setup documentation.
+- **Role-Based Architecture**: Four-tier role system with account-based multi-tenancy.
+- **AI-Powered Analytics**: ML-based performance predictions, anomaly detection, question difficulty clustering, personalized learning, concept mastery.
+- **AI Question Generation**: Enhanced generation with research-based quality standards and intelligent prompt engineering.
+- **Mobile Strategy**: Responsive web design with future React Native apps planned.
+- **Data Safety**: Archiving system for questions/quizzes/testbanks, full audit trails.
+- **Core Functionality Protection**: Stable core systems with strict change control.
+- **Internationalization**: Full i18n support for 8 languages.
+- **LTI Integration**: Comprehensive Learning Tools Interoperability 1.3 support for Canvas, Moodle, Blackboard, including grade passback, content selection, and deep linking.
+- **Security Hardening**: Authentication middleware, Helmet security headers, rate limiting, CORS, input validation.
+- **Performance Optimization**: WebSockets for real-time updates, caching, optimized React Query.
+- **Accessibility**: WCAG 2.1 AA compliance, ARIA labels, semantic HTML, keyboard navigation, touch targets.
 
 ## External Dependencies
 
 ### Core Dependencies
 - **@neondatabase/serverless**: PostgreSQL database connectivity
-- **drizzle-orm**: TypeScript ORM for database operations
-- **openai**: AI-powered content validation and generation (part of multi-provider system)
+- **drizzle-orm**: TypeScript ORM
+- **openai**: AI-powered content validation and generation
 - **@sendgrid/mail**: Email notification service
 - **express**: Web application framework
 - **@tanstack/react-query**: Server state management
-- **ltijs**: LTI provider library for LMS integration
+- **ltijs**: LTI provider library
 
 ### UI Dependencies
 - **@radix-ui/react-***: Accessible UI component primitives
 - **tailwindcss**: Utility-first CSS framework
-- **@dnd-kit**: Drag and drop functionality for question editors
+- **@dnd-kit**: Drag and drop functionality
 - **react-hook-form**: Form state management
 - **zod**: Schema validation
 - **react-joyride**: Interactive onboarding tours
 - **react-i18next**: Internationalization framework
-
-## Recent Changes (October 2025)
-
-### Complete UI/UX Redesign & Polish (October 25, 2025)
-- **Layout & Navigation Redesign**:
-  - Completely rebuilt TopBar with fixed positioning and clean Material Design styling
-  - Restored breadcrumbs with fixed positioning (always visible below header)
-  - Eliminated content overlap issues - proper pt-32 padding ensures no content hidden under header
-  - Consolidated navigation - removed redundant bottom navigation bar for single, clean navigation system
-  - Implemented responsive sidebar offset (lg:left-64) for desktop compatibility
-
-- **Spacing & Visual Hierarchy Improvements**:
-  - Standardized spacing throughout: gap-4 for grids, gap-6 for sections, p-6 for cards
-  - Eliminated excessive white space that caused unprofessional appearance
-  - Implemented consistent typography: text-3xl (page titles), text-xl (section headings)
-  - Clean card design: bg-white dark:bg-gray-800 with subtle borders and shadow-sm
-
-- **Dashboard Redesign**:
-  - Compact stat card layout with gap-4 grid spacing
-  - Clear page headers with welcome messages
-  - Improved QuickStats component with tighter design
-  - Enhanced AnalyticsOverview with 5-tab interface (Overview, Performance, Questions, Students, Trends)
-  - Professional appearance suitable for educational platform
-
-- **Form Component Standardization**:
-  - Settings.tsx: All 4 forms with zod validation, loading states, comprehensive data-testid attributes
-  - UserManagement.tsx: Fixed duplicate forms, added validation, improved accessibility
-  - Consistent h-12 input heights (48px) for touch-friendly mobile experience
-  - FormMessage on all fields with descriptive error messages
-  - Loader2 spinning icons and "Saving..." button states
-
-- **Accessibility Enhancements (WCAG 2.1 AA)**:
-  - Added aria-live="polite" and aria-atomic="true" to Alert components
-  - Added role="dialog", aria-modal="true" to Dialog components
-  - Added aria-labels to all icon-only buttons
-  - Verified semantic HTML structure (header, main, nav, footer)
-  - Skip-to-content link for keyboard navigation
-  - Documented WCAG AA contrast ratios (4.5:1 text, 3:1 UI)
-
-- **Dashboard Consolidation**:
-  - Merged Analytics.tsx into main Dashboard AnalyticsOverview component
-  - Removed duplicate analytics page and /analytics route
-  - Unified analytics interface with comprehensive 5-tab system
-  - Standardized all specialized dashboards (MLAnalytics, CATExamManager, proctoring-security)
-
-- **TypeScript Improvements**:
-  - Fixed 62 LSP errors in enhanced-quiz-builder.tsx
-  - Fixed 14 LSP errors in layout/TopBar.tsx  
-  - Added proper type annotations throughout
-  - Zero compilation errors achieved
-
-- **Design System Documentation**:
-  - Created comprehensive design_guidelines.md with Material Design principles
-  - Documented typography, spacing, colors, component standards
-  - Established consistent patterns for cards, buttons, forms, navigation
-  - WCAG 2.1 AA accessibility requirements documented
-
-### Major Optimization & Security Update (September 2025)
-- **Security Hardening**: 
-  - Enabled authentication middleware and protected all admin/billing routes
-  - Added Helmet security headers with strict CSP (no unsafe-inline/eval in production)
-  - Implemented comprehensive rate limiting (auth: 5/min, API: 100/min, sensitive: 10/5min)
-  - Configured CORS with proper origin allowlist for production
-  - Added input validation with Zod schemas across all endpoints
-
-- **TypeScript & Type Safety**:
-  - Fixed 204+ TypeScript errors to achieve zero compilation errors
-  - Implemented proper typing with shared schema types throughout
-  - Added missing storage interface methods for complete type coverage
-  - Fixed API client signatures for proper type checking
-
-- **Performance Optimization (80% Network Traffic Reduction)**:
-  - Eliminated aggressive polling (was every 2-3 seconds)
-  - Implemented WebSocket for real-time updates (proctoring, analytics)
-  - Added proper caching with 5-minute staleTime for static data
-  - Fixed empty state handling to prevent 404 errors
-  - Optimized React Query configuration for minimal refetching
-
-- **UI/UX & Accessibility (WCAG 2.1 AA Compliance)**:
-  - Implemented 44-48px minimum touch targets for mobile compliance
-  - Added comprehensive ARIA labels and semantic HTML structure
-  - Created consistent loading and error states with skeleton screens
-  - Added data-testid attributes to all interactive elements for testing
-  - Implemented focus states and keyboard navigation with skip links
-  - Enhanced dark mode with proper contrast ratios
-
-- **App Store & Play Store Compliance**:
-  - Added comprehensive Privacy Policy with GDPR/CCPA compliance
-  - Created Terms of Service with educational use policies
-  - Implemented data deletion flow with 30-day grace period
-  - Added consent management system for analytics/tracking
-  - Created PWA support with manifest.json and mobile meta tags
-  - Added footer with legal links and compliance notices
-
-- **Code Cleanup & Optimization**:
-  - Removed 50+ duplicate and broken components
-  - Deleted backup directories and unused mobile app folders
-  - Optimized bundle size to 957KB
-  - Fixed all import errors and removed unnecessary React imports
-  - Consolidated duplicate settings pages and utilities
-
-### Previous Changes (August 2025)
-- **AI Provider Integration**: Integrated environment API keys with super admin LLM settings, prioritizing DeepSeek as first choice provider
-- **Multi-Provider AI Enhancement**: Added support for DeepSeek, Groq, Meta/Llama, and xAI Grok providers with proper priority ordering
-- **Environment Variable Integration**: Updated multi-provider system to use environment variables as fallback for database-stored API keys
-- **Landing Page Enhancement**: Created comprehensive marketing landing page with complete feature list, FAQ section, technical specifications, and professional design
-- **CAT Exam Interface**: Fixed redirection issues for Computer Adaptive Testing practice sessions
-- **Mobile Optimization**: Implemented 24px button padding and mobile-first responsive design across all components
-- **Database Management System**: Built comprehensive super admin database management interface with full backend coverage including item banks, questions, assignments, CAT exams, AI generations, system settings, and more
-- **Enhanced Permissions System**: Established complete default roles (super admin, admin, teacher, student) with proper permission boundaries and database access controls
-
-### Development Dependencies
-- **typescript**: Static type checking
-- **vite**: Build tool and development server
-- **tsx**: TypeScript execution engine
-- **esbuild**: JavaScript bundler for production
