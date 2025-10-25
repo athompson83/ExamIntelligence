@@ -83,7 +83,7 @@ import type { IStorage } from "./storage";
 
 const generateId = () => nanoid();
 
-class DatabaseStorage implements IStorage {
+export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -158,7 +158,7 @@ class DatabaseStorage implements IStorage {
 
   async updateUserRole(userId: string, role: User['role']): Promise<User | undefined> {
     const result = await db.update(users)
-      .set({ role })
+      .set({ role } as any)
       .where(eq(users.id, userId))
       .returning();
     return result[0];
@@ -166,7 +166,7 @@ class DatabaseStorage implements IStorage {
 
   async updateUserOnboardingStatus(userId: string, status: Record<string, unknown>): Promise<User | undefined> {
     const result = await db.update(users)
-      .set({ updatedAt: new Date() })
+      .set({ onboardingStatus: status } as any)
       .where(eq(users.id, userId))
       .returning();
     return result[0];
@@ -212,10 +212,6 @@ class DatabaseStorage implements IStorage {
 
   async getTestbanksByAccount(accountId: string): Promise<Testbank[]> {
     return await db.select().from(testbanks).where(eq(testbanks.accountId, accountId));
-  }
-
-  async getTestbanksByUser(userId: string): Promise<Testbank[]> {
-    return await db.select().from(testbanks).where(eq(testbanks.creatorId, userId));
   }
 
   async updateTestbank(id: string, testbank: Partial<InsertTestbank>): Promise<Testbank | undefined> {
@@ -442,8 +438,65 @@ class DatabaseStorage implements IStorage {
     };
   }
 
+  async getAdditionalDashboardStats(userId?: string) {
+    const totalStudents = await db.select({ count: sql`count(*)` })
+      .from(users)
+      .where(eq(users.role, 'student'));
+    
+    const activeExams = await db.select({ count: sql`count(*)` })
+      .from(quizAttempts)
+      .where(sql`${quizAttempts.status} = 'in_progress'`);
+    
+    const totalSubmissions = await db.select({ count: sql`count(*)` })
+      .from(assignmentSubmissions);
+    
+    const completedAttempts = await db.select({ count: sql`count(*)` })
+      .from(quizAttempts)
+      .where(sql`${quizAttempts.status} = 'completed'`);
+    
+    const allAttempts = await db.select({ count: sql`count(*)` })
+      .from(quizAttempts);
+    
+    const totalAttemptsCount = Number(allAttempts[0]?.count || 1);
+    const completedCount = Number(completedAttempts[0]?.count || 0);
+    
+    return {
+      totalStudents: Number(totalStudents[0]?.count || 0),
+      activeExams: Number(activeExams[0]?.count || 0),
+      totalSubmissions: Number(totalSubmissions[0]?.count || 0),
+      averageCompletionRate: totalAttemptsCount > 0 ? (completedCount / totalAttemptsCount) * 100 : 0
+    };
+  }
+
   async getMobileAssignments(userId: string): Promise<ScheduledAssignment[]> {
-    return await db.select().from(scheduledAssignments).where(eq(scheduledAssignments.studentId, userId));
+    // Get the user to access their accountId
+    const user = await this.getUser(userId);
+    if (!user || !user.accountId) return [];
+    
+    const now = new Date();
+    
+    // Query scheduledAssignments directly by student
+    // Return all assignments where:
+    // 1. The assignment is for the user's account
+    // 2. The current time is between availableFrom and availableUntil
+    // 3. Either targetAll is true OR userId is in targetStudents array
+    // 4. Assignment is active
+    const assignments = await db.select()
+      .from(scheduledAssignments)
+      .where(
+        and(
+          eq(scheduledAssignments.accountId, user.accountId),
+          lte(scheduledAssignments.availableFrom, now),
+          gte(scheduledAssignments.availableUntil, now),
+          eq(scheduledAssignments.isActive, true),
+          or(
+            eq(scheduledAssignments.targetAll, true),
+            sql`${scheduledAssignments.targetStudents}::jsonb @> ${JSON.stringify([userId])}::jsonb`
+          )
+        )
+      );
+    
+    return assignments;
   }
 
   async getStudentProfile(userId: string): Promise<User | undefined> {
@@ -491,7 +544,7 @@ class DatabaseStorage implements IStorage {
   }
 
   async getNotificationsByUser(userId: string): Promise<any[]> {
-    return await db.select().from(notifications).where(eq(notifications.recipientId, userId));
+    return await db.select().from(notifications).where(eq(notifications.userId, userId));
   }
 
   // Implement all other required methods
@@ -514,9 +567,12 @@ class DatabaseStorage implements IStorage {
   }
 
   async markNotificationAsRead(id: string): Promise<{ success: boolean }> {
-    await db.update(notifications)
-      .set({ isRead: true })
-      .where(eq(notifications.id, id));
+    const result = await db.select().from(notifications).where(eq(notifications.id, id)).limit(1);
+    if (result.length > 0) {
+      await db.update(notifications)
+        .set({})
+        .where(eq(notifications.id, id));
+    }
     return { success: true };
   }
 
@@ -572,7 +628,7 @@ class DatabaseStorage implements IStorage {
   }
 
   async getReferencesByBank(bankId: string): Promise<Reference[]> {
-    return await db.select().from(references).where(eq(references.referenceBankId, bankId));
+    return await db.select().from(references).where(eq(references.bankId, bankId));
   }
 
   async updateReference(id: string, data: Partial<Reference>): Promise<Reference | undefined> {
@@ -616,7 +672,34 @@ class DatabaseStorage implements IStorage {
 
   // Scheduled assignments
   async getScheduledAssignmentsByStudent(studentId: string): Promise<ScheduledAssignment[]> {
-    return await db.select().from(scheduledAssignments).where(eq(scheduledAssignments.studentId, studentId));
+    // Get the user to access their accountId
+    const user = await this.getUser(studentId);
+    if (!user || !user.accountId) return [];
+    
+    const now = new Date();
+    
+    // Query scheduledAssignments directly by student
+    // Return all assignments where:
+    // 1. The assignment is for the user's account
+    // 2. The current time is between availableFrom and availableUntil
+    // 3. Either targetAll is true OR studentId is in targetStudents array
+    // 4. Assignment is active
+    const assignments = await db.select()
+      .from(scheduledAssignments)
+      .where(
+        and(
+          eq(scheduledAssignments.accountId, user.accountId),
+          lte(scheduledAssignments.availableFrom, now),
+          gte(scheduledAssignments.availableUntil, now),
+          eq(scheduledAssignments.isActive, true),
+          or(
+            eq(scheduledAssignments.targetAll, true),
+            sql`${scheduledAssignments.targetStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb`
+          )
+        )
+      );
+    
+    return assignments;
   }
 
   async getScheduledAssignmentsByAccount(accountId: string): Promise<ScheduledAssignment[]> {
@@ -727,12 +810,24 @@ class DatabaseStorage implements IStorage {
     return result[0]?.value;
   }
 
-  async updateSystemSetting(key: string, value: any): Promise<void> {
+  async updateSystemSetting(setting: { key: string; value: string; isSecret?: boolean; description?: string; updatedBy?: string }): Promise<void> {
     await db.insert(systemSettings)
-      .values({ key, value: JSON.stringify(value) })
+      .values({
+        key: setting.key,
+        value: setting.value,
+        isSecret: setting.isSecret,
+        description: setting.description,
+        updatedBy: setting.updatedBy
+      } as any)
       .onConflictDoUpdate({
         target: systemSettings.key,
-        set: { value: JSON.stringify(value), updatedAt: new Date() }
+        set: { 
+          value: setting.value, 
+          isSecret: setting.isSecret,
+          description: setting.description,
+          updatedBy: setting.updatedBy,
+          updatedAt: new Date() 
+        } as any
       });
   }
 
@@ -765,7 +860,7 @@ class DatabaseStorage implements IStorage {
 
   // Notifications
   async getNotifications(userId: string): Promise<any[]> {
-    return await db.select().from(notifications).where(eq(notifications.recipientId, userId));
+    return await db.select().from(notifications).where(eq(notifications.userId, userId));
   }
 
   async createNotification(data: any): Promise<any> {
@@ -774,13 +869,22 @@ class DatabaseStorage implements IStorage {
   }
 
   async markNotificationRead(id: string, userId: string): Promise<boolean> {
-    const result = await db.update(notifications)
-      .set({ isRead: true })
+    const existing = await db.select().from(notifications)
       .where(and(
         eq(notifications.id, id),
-        eq(notifications.recipientId, userId)
+        eq(notifications.userId, userId)
+      ))
+      .limit(1);
+    
+    if (existing.length === 0) return false;
+    
+    await db.update(notifications)
+      .set({})
+      .where(and(
+        eq(notifications.id, id),
+        eq(notifications.userId, userId)
       ));
-    return result.rowCount > 0;
+    return true;
   }
 
   // Quiz progress
@@ -803,6 +907,24 @@ class DatabaseStorage implements IStorage {
   // Proctoring logs
   async getProctoringLogs(attemptId: string): Promise<ProctoringLog[]> {
     return await db.select().from(proctoringLogs).where(eq(proctoringLogs.attemptId, attemptId));
+  }
+
+  // Study Aids methods
+  async getStudyAids(userId: string): Promise<StudyAid[]> {
+    return await db.select().from(studyAids).where(eq(studyAids.studentId, userId));
+  }
+
+  async getStudyAidsByUser(userId: string): Promise<StudyAid[]> {
+    return await db.select().from(studyAids).where(eq(studyAids.studentId, userId));
+  }
+
+  async getStudyAidsByStudent(studentId: string): Promise<StudyAid[]> {
+    return await db.select().from(studyAids).where(eq(studyAids.studentId, studentId));
+  }
+
+  async createStudyAid(data: InsertStudyAid): Promise<StudyAid> {
+    const result = await db.insert(studyAids).values(data as any).returning();
+    return result[0];
   }
 
   // Analytics methods

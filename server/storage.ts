@@ -186,6 +186,12 @@ export interface IStorage {
     averageScore: number;
     upcomingDeadlines: number;
   }>;
+  getAdditionalDashboardStats(userId?: string): Promise<{
+    totalStudents: number;
+    activeExams: number;
+    totalSubmissions: number;
+    averageCompletionRate: number;
+  }>;
   getMobileAssignments(userId: string): Promise<ScheduledAssignment[]>;
   getStudentProfile(userId: string): Promise<User | undefined>;
   getAssignmentQuestions(assignmentId: string): Promise<Question[]>;
@@ -257,6 +263,7 @@ export interface IStorage {
   getSystemDefaultPromptTemplates(): Promise<PromptTemplate[]>;
   
   // LLM Provider Methods
+  getAllLlmProviders(): Promise<LlmProvider[]>;
   getLlmProvider(id: string): Promise<LlmProvider | undefined>;
   getLlmProvidersByAccount(accountId: string): Promise<LlmProvider[]>;
   getActiveLlmProviders(): Promise<LlmProvider[]>;
@@ -300,6 +307,7 @@ export interface IStorage {
   // Study Aid Methods
   getStudyAids(userId: string): Promise<StudyAid[]>;
   getStudyAidsByUser(userId: string): Promise<StudyAid[]>;
+  getStudyAidsByStudent(studentId: string): Promise<StudyAid[]>;
   createStudyAid(data: InsertStudyAid): Promise<StudyAid>;
   
   // Billing & Subscription Methods

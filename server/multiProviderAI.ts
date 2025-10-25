@@ -47,47 +47,50 @@ class MultiProviderAI {
       const { DatabaseStorage } = await import('./storage-simple');
       const storage = new DatabaseStorage();
       
-      const dbProviders = await storage.getAllLLMProviders();
+      const dbProviders = await storage.getAllLlmProviders();
       console.log('🔍 Available providers from super admin settings:', dbProviders.map(p => ({ 
         id: p.id, 
         priority: p.priority || 999,
         hasApiKey: !!p.apiKey, 
         keyLength: p.apiKey ? p.apiKey.length : 0,
-        isEnabled: p.isEnabled 
+        isActive: p.isActive 
       })));
 
       // Sort providers by priority (lower number = higher priority)
       const sortedProviders = dbProviders
-        .filter(p => p.isEnabled !== false)
+        .filter(p => p.isActive !== false)
         .sort((a, b) => (a.priority || 999) - (b.priority || 999));
 
       let providersFromDB = 0;
       
       for (const provider of sortedProviders) {
+        // Normalize provider ID to match internal provider map keys
+        const normalizedId = this.normalizeProviderId(provider.provider);
+        
         // Prioritize environment variables over database keys
-        const envKey = this.getEnvironmentKey(provider.id);
+        const envKey = this.getEnvironmentKey(normalizedId);
         const apiKey = envKey || provider.apiKey;
         
         if (!apiKey) {
-          console.log(`⏭️ Skipping ${provider.id}: no API key in environment or DB`);
+          console.log(`⏭️ Skipping ${provider.name || normalizedId} (DB ID: ${provider.id}, provider: ${provider.provider}, normalized: ${normalizedId}): no API key in environment or DB`);
           continue;
         }
         
         if (envKey && envKey.length > 20) {
-          console.log(`🌍 Using environment API key for ${provider.id} (length: ${envKey.length})`);
+          console.log(`🌍 Using environment API key for ${provider.name || normalizedId} (DB ID: ${provider.id}, provider: ${provider.provider}, normalized: ${normalizedId}, length: ${envKey.length})`);
         } else if (provider.apiKey && provider.apiKey.length > 20) {
-          console.log(`💾 Using database API key for ${provider.id} (length: ${provider.apiKey.length})`);
+          console.log(`💾 Using database API key for ${provider.name || normalizedId} (DB ID: ${provider.id}, provider: ${provider.provider}, normalized: ${normalizedId}, length: ${provider.apiKey.length})`);
         } else {
-          console.log(`⚠️ Skipping ${provider.id}: API key too short (likely invalid)`);
+          console.log(`⚠️ Skipping ${provider.name || normalizedId} (DB ID: ${provider.id}, provider: ${provider.provider}, normalized: ${normalizedId}): API key too short (likely invalid)`);
           continue;
         }
         
-        console.log(`✅ Initializing ${provider.id} provider (priority: ${provider.priority || 999})`);
+        console.log(`✅ Initializing ${provider.name || normalizedId} (DB ID: ${provider.id}, provider: ${provider.provider}, normalized: ${normalizedId}, priority: ${provider.priority || 999})`);
         
         try {
-          switch (provider.id) {
+          switch (normalizedId) {
             case 'openai':
-              this.providers.set('openai', new OpenAI({ apiKey }));
+              this.providers.set(normalizedId, new OpenAI({ apiKey }));
               break;
               
             case 'google':
@@ -96,12 +99,12 @@ class MultiProviderAI {
               break;
               
             case 'anthropic':
-              this.providers.set('anthropic', new Anthropic({ apiKey }));
+              this.providers.set(normalizedId, new Anthropic({ apiKey }));
               break;
               
             case 'deepseek':
               // DeepSeek uses OpenAI-compatible API
-              this.providers.set('deepseek', new OpenAI({ 
+              this.providers.set(normalizedId, new OpenAI({ 
                 apiKey, 
                 baseURL: 'https://api.deepseek.com/v1' 
               }));
@@ -109,7 +112,7 @@ class MultiProviderAI {
               
             case 'groq':
               // Groq uses OpenAI-compatible API  
-              this.providers.set('groq', new OpenAI({ 
+              this.providers.set(normalizedId, new OpenAI({ 
                 apiKey, 
                 baseURL: 'https://api.groq.com/openai/v1' 
               }));
@@ -117,7 +120,7 @@ class MultiProviderAI {
               
             case 'meta':
               // Meta/Llama via compatible API
-              this.providers.set('meta', new OpenAI({ 
+              this.providers.set(normalizedId, new OpenAI({ 
                 apiKey, 
                 baseURL: 'https://api.meta.ai/v1' 
               }));
@@ -125,19 +128,19 @@ class MultiProviderAI {
               
             case 'xai':
               // xAI Grok uses OpenAI-compatible API
-              this.providers.set('xai', new OpenAI({ 
+              this.providers.set(normalizedId, new OpenAI({ 
                 apiKey, 
                 baseURL: 'https://api.x.ai/v1' 
               }));
               break;
               
             default:
-              console.log(`⚠️ Unknown provider: ${provider.id}`);
+              console.log(`⚠️ Unknown provider: ${provider.name || normalizedId} (DB ID: ${provider.id}, provider: ${provider.provider}, normalized: ${normalizedId})`);
           }
           
           providersFromDB++;
         } catch (providerError) {
-          console.error(`Failed to initialize ${provider.id}:`, providerError.message);
+          console.error(`Failed to initialize ${provider.name || normalizedId} (DB ID: ${provider.id}, provider: ${provider.provider}, normalized: ${normalizedId}):`, providerError.message);
         }
       }
       
@@ -172,20 +175,31 @@ class MultiProviderAI {
     }
   }
 
+  private normalizeProviderId(providerId: string): string {
+    // Normalize database provider IDs to match internal provider map keys
+    if (providerId === 'google') {
+      return 'gemini';
+    }
+    return providerId;
+  }
+
   private updateProviderConfigsFromDB(dbProviders: any[]) {
     // Update the priority order based on database configuration
     this.providerConfigs = dbProviders
-      .filter(p => p.isEnabled !== false)
+      .filter(p => p.isActive !== false)
       .map(p => ({
-        name: p.id,
+        name: this.normalizeProviderId(p.provider),
         priority: p.priority || 999,
         available: true,
-        costPerToken: this.getCostPerToken(p.id)
+        costPerToken: this.getCostPerToken(this.normalizeProviderId(p.provider))
       }))
       .sort((a, b) => a.priority - b.priority);
   }
 
   private getCostPerToken(providerId: string): number {
+    // Normalize provider ID first
+    const normalizedId = this.normalizeProviderId(providerId);
+    
     const costs: Record<string, number> = {
       'deepseek': 0.00000014,
       'groq': 0.00000027,
@@ -195,7 +209,7 @@ class MultiProviderAI {
       'openai': 0.000015,
       'anthropic': 0.000015
     };
-    return costs[providerId] || 0.000015;
+    return costs[normalizedId] || 0.000015;
   }
 
   private async initializeFromEnvironment() {
@@ -249,18 +263,18 @@ class MultiProviderAI {
     const storage = new DatabaseStorage();
     
     try {
-      const providers = await storage.getAllLLMProviders();
+      const providers = await storage.getAllLlmProviders();
       console.log('🔍 Available providers from database:', providers.map(p => ({ 
         id: p.id, 
         hasApiKey: !!p.apiKey, 
         keyLength: p.apiKey ? p.apiKey.length : 0,
-        isEnabled: p.isEnabled 
+        isActive: p.isActive 
       })));
       
       for (const provider of providers) {
         // Skip if no API key or explicitly disabled
-        if (!provider.apiKey || provider.isEnabled === false) {
-          console.log(`⏭️ Skipping ${provider.id}: apiKey=${!!provider.apiKey}, isEnabled=${provider.isEnabled}`);
+        if (!provider.apiKey || provider.isActive === false) {
+          console.log(`⏭️ Skipping ${provider.id}: apiKey=${!!provider.apiKey}, isActive=${provider.isActive}`);
           continue;
         }
         
