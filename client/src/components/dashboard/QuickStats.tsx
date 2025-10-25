@@ -39,7 +39,7 @@ export function QuickStats() {
   const stats = [
     {
       name: "Active Exams",
-      value: activeQuizzesLoading ? "..." : (activeQuizzes?.length || 0),
+      value: activeQuizzesLoading ? "..." : ((activeQuizzes as any[])?.length || 0),
       icon: Play,
       gradient: "gradient-blue",
       change: "+2",
@@ -66,7 +66,7 @@ export function QuickStats() {
     },
     {
       name: "AI Validations",
-      value: alertsLoading ? "..." : (proctoringAlerts?.length || 0),
+      value: alertsLoading ? "..." : ((proctoringAlerts as any[])?.length || 0),
       icon: Brain,
       gradient: "gradient-purple",
       change: "24",

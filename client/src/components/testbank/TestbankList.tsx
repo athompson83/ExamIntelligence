@@ -76,31 +76,27 @@ export function TestbankList({ onCreateNew, onEdit, onView }: TestbankListProps)
     return new Date(date).toLocaleDateString();
   };
 
+  const gradients = ['gradient-blue', 'gradient-green', 'gradient-amber', 'gradient-purple'];
+  const getGradient = (index: number) => gradients[index % gradients.length];
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-64" />
         </div>
-        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-12 w-full rounded-2xl" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent>
+            <Card key={i} className="rounded-2xl shadow-lg overflow-hidden">
+              <div className="h-24 gradient-blue animate-pulse" />
+              <CardContent className="p-6">
+                <Skeleton className="h-6 w-3/4 mb-2" />
                 <Skeleton className="h-4 w-full mb-2" />
                 <Skeleton className="h-4 w-2/3 mb-4" />
                 <div className="flex justify-between items-center">
-                  <Skeleton className="h-6 w-20" />
-                  <div className="flex space-x-2">
-                    <Skeleton className="h-8 w-8" />
-                    <Skeleton className="h-8 w-8" />
-                    <Skeleton className="h-8 w-8" />
-                  </div>
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-8 w-24" />
                 </div>
               </CardContent>
             </Card>
@@ -111,45 +107,46 @@ export function TestbankList({ onCreateNew, onEdit, onView }: TestbankListProps)
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in relative pb-20">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Item Banks</h2>
-        <Button onClick={onCreateNew} className="bg-primary hover:bg-primary/90">
-          <Plus className="mr-2 h-4 w-4" />
-          Create New Testbank
-        </Button>
+        <h2 className="text-3xl font-bold text-foreground">Item Banks</h2>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
         <Input
           type="text"
           placeholder="Search testbanks by title, description, or tags..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-12 h-14 rounded-2xl shadow-md border-2 focus:border-primary transition-all"
         />
       </div>
 
       {/* Testbank Grid */}
       {filteredTestbanks.length === 0 ? (
-        <Card className="p-12">
-          <div className="text-center">
-            <FolderOpen className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
+        <Card className="p-12 rounded-2xl shadow-lg text-center">
+          <div className="max-w-md mx-auto">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full gradient-blue flex items-center justify-center">
+              <FolderOpen className="h-12 w-12 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-foreground mb-3">
               {searchQuery ? "No testbanks found" : "No testbanks yet"}
             </h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-6 text-lg">
               {searchQuery 
                 ? "Try adjusting your search terms or create a new testbank."
                 : "Create your first testbank to start building your question library."
               }
             </p>
             {!searchQuery && (
-              <Button onClick={onCreateNew} className="bg-primary hover:bg-primary/90">
-                <Plus className="mr-2 h-4 w-4" />
+              <Button 
+                onClick={onCreateNew} 
+                className="gradient-blue text-white hover:shadow-xl hover:scale-105 transition-all duration-300 h-12 px-8 rounded-xl"
+              >
+                <Plus className="mr-2 h-5 w-5" />
                 Create New Testbank
               </Button>
             )}
@@ -157,89 +154,83 @@ export function TestbankList({ onCreateNew, onEdit, onView }: TestbankListProps)
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTestbanks.map((testbank) => (
-            <Card key={testbank.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg font-semibold text-foreground line-clamp-2">
-                      {testbank.title}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Created {formatDate(testbank.createdAt)}
-                    </p>
-                  </div>
-                  {testbank.isPublic && (
-                    <Badge variant="secondary" className="ml-2">
-                      Public
-                    </Badge>
-                  )}
+          {filteredTestbanks.map((testbank, index) => (
+            <Card 
+              key={testbank.id} 
+              className="rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden border-0 animate-scale-in"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              {/* Gradient Header */}
+              <div className={`${getGradient(index)} p-6 relative`}>
+                <FolderOpen className="absolute top-4 right-4 h-16 w-16 text-white opacity-20" />
+                <div className="relative z-10">
+                  <h3 className="text-xl font-bold text-white mb-1 line-clamp-2">
+                    {testbank.title}
+                  </h3>
+                  <p className="text-sm text-white/80">
+                    {testbank.learningObjectives.length} Learning Objectives
+                  </p>
                 </div>
-              </CardHeader>
+              </div>
               
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+              <CardContent className="p-6">
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-[60px]">
                   {testbank.description || "No description provided"}
                 </p>
                 
                 {/* Tags */}
                 {testbank.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {testbank.tags.slice(0, 3).map((tag, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {testbank.tags.slice(0, 3).map((tag, tagIndex) => (
+                      <Badge key={tagIndex} className="rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-0">
                         {tag}
                       </Badge>
                     ))}
                     {testbank.tags.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{testbank.tags.length - 3} more
+                      <Badge className="rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-0">
+                        +{testbank.tags.length - 3}
                       </Badge>
                     )}
                   </div>
                 )}
                 
-                {/* Stats */}
-                <div className="text-sm text-muted-foreground mb-4">
-                  <p>Learning Objectives: {testbank.learningObjectives.length}</p>
-                  <p>Last Revalidated: {formatDate(testbank.lastRevalidatedAt)}</p>
+                {/* Footer Metadata */}
+                <div className="border-t pt-4 mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${testbank.isPublic ? 'bg-green-500' : 'bg-gray-400'}`} />
+                    <span>{testbank.isPublic ? 'Public' : 'Private'}</span>
+                  </div>
+                  <span>Updated {formatDate(testbank.lastRevalidatedAt)}</span>
                 </div>
                 
                 {/* Actions */}
-                <div className="flex items-center justify-between">
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onView(testbank)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(testbank)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteTestbankMutation.mutate(testbank.id)}
-                      disabled={deleteTestbankMutation.isPending}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
+                <div className="flex gap-2 mt-4">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => revalidateTestbankMutation.mutate(testbank.id)}
-                    disabled={revalidateTestbankMutation.isPending}
-                    className="text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => onView(testbank)}
+                    className="flex-1 rounded-xl hover:bg-primary hover:text-white hover:border-primary transition-all"
                   >
-                    <RefreshCw className={`h-4 w-4 mr-1 ${revalidateTestbankMutation.isPending ? 'animate-spin' : ''}`} />
-                    Revalidate
+                    <Eye className="h-4 w-4 mr-1" />
+                    View
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(testbank)}
+                    className="flex-1 rounded-xl hover:bg-primary hover:text-white hover:border-primary transition-all"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => deleteTestbankMutation.mutate(testbank.id)}
+                    disabled={deleteTestbankMutation.isPending}
+                    className="rounded-xl hover:bg-destructive hover:text-white hover:border-destructive transition-all"
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -247,6 +238,15 @@ export function TestbankList({ onCreateNew, onEdit, onView }: TestbankListProps)
           ))}
         </div>
       )}
+
+      {/* Floating Action Button (FAB) */}
+      <Button
+        onClick={onCreateNew}
+        className="fixed bottom-8 right-8 w-16 h-16 rounded-full gradient-blue shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 z-50"
+        data-testid="button-create-testbank-fab"
+      >
+        <Plus className="h-8 w-8 text-white" />
+      </Button>
     </div>
   );
 }

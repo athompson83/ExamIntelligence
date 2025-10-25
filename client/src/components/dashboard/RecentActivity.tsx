@@ -12,15 +12,15 @@ export function RecentActivity() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
+      <Card className="rounded-2xl shadow-lg border-0">
+        <CardHeader className="p-6">
+          <Skeleton className="h-7 w-40" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 pt-0">
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-start space-x-3">
-                <Skeleton className="h-8 w-8 rounded-full" />
+              <div key={i} className="flex items-start space-x-3 p-3 rounded-xl animate-pulse">
+                <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-48" />
                   <Skeleton className="h-3 w-32" />
@@ -52,15 +52,15 @@ export function RecentActivity() {
   const getActivityColor = (type: string) => {
     switch (type) {
       case "validation":
-        return "bg-primary/10 text-primary";
+        return "gradient-blue";
       case "user_registration":
-        return "bg-secondary/10 text-secondary";
+        return "gradient-green";
       case "proctoring_alert":
-        return "bg-accent/10 text-accent";
+        return "gradient-amber";
       case "ai_content":
-        return "bg-purple-100 text-purple-600";
+        return "gradient-purple";
       default:
-        return "bg-primary/10 text-primary";
+        return "gradient-blue";
     }
   };
 
@@ -85,40 +85,46 @@ export function RecentActivity() {
   const recentNotifications = notifications?.slice(0, 5) || [];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
+    <Card className="rounded-2xl shadow-lg border-0">
+      <CardHeader className="p-6">
+        <CardTitle className="text-xl font-bold text-foreground">Recent Activity</CardTitle>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="p-6 pt-0">
         {recentNotifications.length === 0 ? (
-          <div className="text-center py-8">
-            <CheckCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No Recent Activity</h3>
-            <p className="text-muted-foreground">
+          <div className="text-center py-12">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full gradient-blue flex items-center justify-center">
+              <CheckCircle className="h-10 w-10 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">No Recent Activity</h3>
+            <p className="text-muted-foreground text-base">
               Activity and notifications will appear here as they occur.
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {recentNotifications.map((notification) => {
               const Icon = getActivityIcon(notification.type);
-              const colorClass = getActivityColor(notification.type);
+              const gradientClass = getActivityColor(notification.type);
               
               return (
-                <div key={notification.id} className="flex items-start space-x-3">
-                  <div className={`p-2 rounded-full flex-shrink-0 ${colorClass}`}>
-                    <Icon className="h-4 w-4" />
+                <div 
+                  key={notification.id} 
+                  className="flex items-start space-x-4 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 cursor-pointer"
+                >
+                  <div className={`p-2.5 rounded-full flex-shrink-0 ${gradientClass} shadow-md`}>
+                    <Icon className="h-5 w-5 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{notification.title}</p>
-                    <p className="text-xs text-muted-foreground">{notification.message}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <p className="text-xs text-muted-foreground">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground mb-1">{notification.title}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                         {formatTimeAgo(notification.createdAt)}
-                      </p>
+                      </span>
                       {notification.priority === 'high' && (
-                        <Badge variant="destructive" className="text-xs">
+                        <Badge className="gradient-red text-white border-0 text-xs rounded-full">
                           High Priority
                         </Badge>
                       )}
