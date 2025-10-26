@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Accessibility: Skip to content link - hidden until focused */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: hsl(var(--primary));
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  z-index: 100000;
+  font-weight: 500;
+  transition: top 0.2s ease;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
 /* Instagram/Facebook-Inspired Vibrant Design System */
 :root {
   /* Vibrant Color Palette - Instagram/Facebook Inspired */
