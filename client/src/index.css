@@ -440,11 +440,11 @@
       z-index: 10003 !important;
     }
     
-    /* Mobile page content - natural flow without overlapping headers */
+    /* Mobile page content - sticky headers take up flow space naturally */
     main {
       padding-left: 1rem !important;
       padding-right: 1rem !important;
-      padding-top: 1rem !important; /* Minimal top padding - headers handle their own spacing */
+      padding-top: 1.5rem !important; /* Minimal padding - sticky elements (TopBar + Breadcrumbs) occupy flow space */
       padding-bottom: 5rem !important; /* Bottom nav clearance */
     }
     
