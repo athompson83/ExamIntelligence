@@ -236,8 +236,8 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Enhanced Mobile Navigation Bar (shown on small screens) */}
-      <div className={`lg:hidden fixed top-0 left-0 right-0 bg-primary px-4 py-2 shadow-lg backdrop-blur-md bg-primary/95 ${isMobileMenuOpen ? 'z-[9998]' : 'z-[9999]'}`}>
+      {/* Enhanced Mobile Navigation Bar (shown on small screens) - HIDDEN, using TopBar instead */}
+      <div className={`hidden lg:hidden fixed top-0 left-0 right-0 bg-primary px-4 py-2 shadow-lg backdrop-blur-md bg-primary/95 ${isMobileMenuOpen ? 'z-[9998]' : 'z-[9999]'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="bg-white rounded-lg p-1.5">
@@ -429,7 +429,7 @@ export default function Sidebar() {
       </div>
     </nav>
       {/* Mobile Content Spacer - for mobile header only */}
-      <div className="lg:hidden block h-12" />
+      {/* Removed spacer - no longer needed */}
     </>
   );
 }
