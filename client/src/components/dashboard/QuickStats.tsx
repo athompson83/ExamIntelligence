@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Play, Users, FolderOpen, Brain, TrendingUp } from "lucide-react";
 import { SystemAnalytics } from "@/types";
+import { useLocation } from "wouter";
 
 export function QuickStats() {
+  const [, setLocation] = useLocation();
+  
   const { data: analytics, isLoading } = useQuery<SystemAnalytics>({
     queryKey: ["/api/analytics/system"],
   });
@@ -47,6 +50,10 @@ export function QuickStats() {
       {/* Active Exams - Blue Gradient */}
       <div 
         data-testid="stat-card-active-exams"
+        role="button"
+        tabIndex={0}
+        onClick={() => setLocation('/live-exams')}
+        onKeyDown={(e) => e.key === 'Enter' && setLocation('/live-exams')}
         style={{ 
           ...cardStyle,
           backgroundImage: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
@@ -82,6 +89,10 @@ export function QuickStats() {
       {/* Total Students - Green Gradient */}
       <div 
         data-testid="stat-card-total-students"
+        role="button"
+        tabIndex={0}
+        onClick={() => setLocation('/user-management')}
+        onKeyDown={(e) => e.key === 'Enter' && setLocation('/user-management')}
         style={{ 
           ...cardStyle,
           backgroundImage: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
@@ -117,6 +128,10 @@ export function QuickStats() {
       {/* Item Banks - Orange/Amber Gradient */}
       <div 
         data-testid="stat-card-item-banks"
+        role="button"
+        tabIndex={0}
+        onClick={() => setLocation('/item-banks')}
+        onKeyDown={(e) => e.key === 'Enter' && setLocation('/item-banks')}
         style={{ 
           ...cardStyle,
           backgroundImage: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
@@ -152,6 +167,10 @@ export function QuickStats() {
       {/* AI Validations - Purple Gradient */}
       <div 
         data-testid="stat-card-ai-validations"
+        role="button"
+        tabIndex={0}
+        onClick={() => setLocation('/analytics')}
+        onKeyDown={(e) => e.key === 'Enter' && setLocation('/analytics')}
         style={{ 
           ...cardStyle,
           backgroundImage: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
