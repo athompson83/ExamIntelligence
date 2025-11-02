@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: Constants.expoConfig?.extra?.apiUrl || 'https://your-domain.replit.app',
+  BASE_URL: Constants.expoConfig?.extra?.apiUrl || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000'),
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000,
@@ -72,7 +72,7 @@ export const API_ENDPOINTS = {
 
 // WebSocket Configuration
 export const WS_CONFIG = {
-  BASE_URL: Constants.expoConfig?.extra?.wsUrl || 'wss://your-domain.replit.app/ws',
+  BASE_URL: Constants.expoConfig?.extra?.wsUrl || (typeof window !== 'undefined' ? `wss://${window.location.host}/ws` : 'ws://localhost:5000/ws'),
   RECONNECT_INTERVAL: 5000,
   MAX_RECONNECT_ATTEMPTS: 5,
   PING_INTERVAL: 30000,

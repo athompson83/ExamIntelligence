@@ -14,6 +14,7 @@ interface ExamState {
   error: string | null;
   flaggedEvents: string[];
   autoSaveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  upcomingExams: any[];
 }
 
 const initialState: ExamState = {
@@ -29,9 +30,30 @@ const initialState: ExamState = {
   error: null,
   flaggedEvents: [],
   autoSaveStatus: 'idle',
+  upcomingExams: [],
 };
 
 // Async thunks for exam operations
+export const fetchUpcomingExams = createAsyncThunk(
+  'exam/fetchUpcoming',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch('/api/quizzes/active', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch upcoming exams');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Fetch exams failed');
+    }
+  }
+);
+
 export const startExam = createAsyncThunk(
   'exam/start',
   async (quizId: string, { rejectWithValue }) => {
@@ -204,6 +226,20 @@ const examSlice = createSlice({
   
   extraReducers: (builder) => {
     builder
+      // Fetch Upcoming Exams
+      .addCase(fetchUpcomingExams.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchUpcomingExams.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.upcomingExams = action.payload;
+      })
+      .addCase(fetchUpcomingExams.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      
       // Start Exam
       .addCase(startExam.pending, (state) => {
         state.isLoading = true;
