@@ -49,76 +49,7 @@ import {
   MessageSquare
 } from "lucide-react";
 import { format } from "date-fns";
-
-interface QuizAnalytics {
-  id: string;
-  title: string;
-  totalAttempts: number;
-  averageScore: number;
-  passRate: number;
-  averageTime: number;
-  difficultyAnalysis: {
-    easy: number;
-    medium: number;
-    hard: number;
-  };
-  questionAnalysis: Array<{
-    questionId: string;
-    questionText: string;
-    correctRate: number;
-    averageTime: number;
-    discriminationIndex: number;
-    responses: Array<{
-      option: string;
-      count: number;
-      percentage: number;
-    }>;
-  }>;
-  timeAnalysis: Array<{
-    date: string;
-    attempts: number;
-    averageScore: number;
-  }>;
-  studentPerformance: Array<{
-    studentId: string;
-    studentName: string;
-    score: number;
-    timeSpent: number;
-    attempts: number;
-    submittedAt: string;
-  }>;
-}
-
-interface CourseAnalytics {
-  totalStudents: number;
-  activeStudents: number;
-  totalQuizzes: number;
-  completionRate: number;
-  averageGrade: number;
-  engagementScore: number;
-  timeSpentDistribution: Array<{
-    range: string;
-    count: number;
-  }>;
-  gradeDistribution: Array<{
-    grade: string;
-    count: number;
-    percentage: number;
-  }>;
-  weeklyActivity: Array<{
-    week: string;
-    submissions: number;
-    logins: number;
-    timeSpent: number;
-  }>;
-  studentRiskAnalysis: Array<{
-    studentId: string;
-    studentName: string;
-    riskLevel: 'low' | 'medium' | 'high';
-    factors: string[];
-    lastActivity: string;
-  }>;
-}
+import type { QuizAnalytics, CourseAnalytics, Quiz } from "@/types";
 
 export default function AnalyticsDashboard() {
   const { isAuthenticated } = useAuth();
@@ -127,7 +58,7 @@ export default function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
 
   // Fetch course analytics
-  const { data: courseAnalytics, isLoading: courseLoading } = useQuery({
+  const { data: courseAnalytics, isLoading: courseLoading } = useQuery<CourseAnalytics>({
     queryKey: ['/api/analytics/course', timeRange],
     staleTime: 60000,
     gcTime: 120000,
@@ -135,7 +66,7 @@ export default function AnalyticsDashboard() {
   });
 
   // Fetch quiz list
-  const { data: quizzes } = useQuery({
+  const { data: quizzes } = useQuery<Quiz[]>({
     queryKey: ['/api/quizzes'],
     staleTime: 60000,
     gcTime: 120000,
@@ -143,7 +74,7 @@ export default function AnalyticsDashboard() {
   });
 
   // Fetch quiz analytics
-  const { data: quizAnalytics, isLoading: quizLoading } = useQuery({
+  const { data: quizAnalytics, isLoading: quizLoading } = useQuery<QuizAnalytics>({
     queryKey: ['/api/analytics/quiz', selectedQuiz, timeRange],
     staleTime: 60000,
     gcTime: 120000,

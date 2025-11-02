@@ -181,3 +181,73 @@ export interface ProctoringSession {
     byType: Record<string, number>;
   };
 }
+
+export interface QuizAnalytics {
+  id: string;
+  title: string;
+  totalAttempts: number;
+  averageScore: number;
+  passRate: number;
+  averageTime: number;
+  difficultyAnalysis: {
+    easy: number;
+    medium: number;
+    hard: number;
+  };
+  questionAnalysis: Array<{
+    questionId: string;
+    questionText: string;
+    correctRate: number;
+    averageTime: number;
+    discriminationIndex: number;
+    responses: Array<{
+      option: string;
+      count: number;
+      percentage: number;
+    }>;
+  }>;
+  timeAnalysis: Array<{
+    date: string;
+    attempts: number;
+    averageScore: number;
+  }>;
+  studentPerformance: Array<{
+    studentId: string;
+    studentName: string;
+    score: number;
+    timeSpent: number;
+    attempts: number;
+    submittedAt: string;
+  }>;
+}
+
+export interface CourseAnalytics {
+  totalStudents: number;
+  activeStudents: number;
+  totalQuizzes: number;
+  completionRate: number;
+  averageGrade: number;
+  engagementScore: number;
+  timeSpentDistribution: Array<{
+    range: string;
+    count: number;
+  }>;
+  gradeDistribution: Array<{
+    grade: string;
+    count: number;
+    percentage: number;
+  }>;
+  weeklyActivity: Array<{
+    week: string;
+    submissions: number;
+    logins: number;
+    timeSpent: number;
+  }>;
+  studentRiskAnalysis: Array<{
+    studentId: string;
+    studentName: string;
+    riskLevel: 'low' | 'medium' | 'high';
+    factors: string[];
+    lastActivity: string;
+  }>;
+}
