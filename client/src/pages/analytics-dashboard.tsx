@@ -129,18 +129,24 @@ export default function AnalyticsDashboard() {
   // Fetch course analytics
   const { data: courseAnalytics, isLoading: courseLoading } = useQuery({
     queryKey: ['/api/analytics/course', timeRange],
+    staleTime: 60000,
+    gcTime: 120000,
     enabled: isAuthenticated,
   });
 
   // Fetch quiz list
   const { data: quizzes } = useQuery({
     queryKey: ['/api/quizzes'],
+    staleTime: 60000,
+    gcTime: 120000,
     enabled: isAuthenticated,
   });
 
   // Fetch quiz analytics
   const { data: quizAnalytics, isLoading: quizLoading } = useQuery({
     queryKey: ['/api/analytics/quiz', selectedQuiz, timeRange],
+    staleTime: 60000,
+    gcTime: 120000,
     enabled: isAuthenticated && !!selectedQuiz,
   });
 

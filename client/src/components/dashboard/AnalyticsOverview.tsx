@@ -68,19 +68,23 @@ export function AnalyticsOverview() {
 
   const { data: systemAnalytics, isLoading } = useQuery({
     queryKey: ["/api/analytics/system"],
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 60000,
+    gcTime: 120000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
 
   const { data: quizzes } = useQuery({
     queryKey: ["/api/quizzes"],
+    staleTime: 60000,
+    gcTime: 120000,
     retry: false,
   });
 
   const { data: overallStats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/analytics/overview", selectedTimeRange],
+    staleTime: 60000,
+    gcTime: 120000,
     retry: false,
   });
 

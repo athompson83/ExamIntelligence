@@ -48,6 +48,8 @@ export default function ItemBanks() {
 
   const { data: testbanks, isLoading: testbanksLoading } = useQuery({
     queryKey: ['/api/testbanks'],
+    staleTime: 60000,
+    gcTime: 120000,
     enabled: isAuthenticated,
   });
 

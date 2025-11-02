@@ -8,6 +8,8 @@ import { Notification } from "@/types";
 export function RecentActivity() {
   const { data: notifications, isLoading } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
+    staleTime: 5000,
+    gcTime: 30000,
   });
 
   if (isLoading) {
