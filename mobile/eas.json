@@ -1,0 +1,135 @@
+{
+  "cli": {
+    "version": ">= 5.9.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "APP_ENV": "development",
+        "API_URL": "http://localhost:5000",
+        "WEBSOCKET_URL": "ws://localhost:5000"
+      },
+      "ios": {
+        "simulator": true,
+        "bundleIdentifier": "com.proficiencyai.mobile.dev",
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug",
+        "withoutCredentials": true,
+        "resourceClass": "medium"
+      },
+      "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "APP_ENV": "staging",
+        "API_URL": "https://staging-api.proficiencyai.com",
+        "WEBSOCKET_URL": "wss://staging-api.proficiencyai.com"
+      },
+      "ios": {
+        "simulator": false,
+        "bundleIdentifier": "com.proficiencyai.mobile.preview",
+        "buildConfiguration": "Release",
+        "autoIncrement": "buildNumber",
+        "enterpriseProvisioning": "adhoc",
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "autoIncrement": "versionCode",
+        "resourceClass": "medium"
+      },
+      "channel": "preview"
+    },
+    "preview-internal": {
+      "extends": "preview",
+      "distribution": "internal",
+      "ios": {
+        "simulator": false,
+        "bundleIdentifier": "com.proficiencyai.mobile.preview"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "env": {
+        "APP_ENV": "production",
+        "API_URL": "https://api.proficiencyai.com",
+        "WEBSOCKET_URL": "wss://api.proficiencyai.com"
+      },
+      "ios": {
+        "bundleIdentifier": "com.proficiencyai.mobile",
+        "buildConfiguration": "Release",
+        "autoIncrement": "buildNumber",
+        "resourceClass": "m-medium",
+        "config": {
+          "usesNonExemptEncryption": false
+        },
+        "submitProfile": "production"
+      },
+      "android": {
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease",
+        "autoIncrement": "versionCode",
+        "resourceClass": "medium",
+        "submitProfile": "production"
+      },
+      "channel": "production"
+    },
+    "production-simulator": {
+      "extends": "production",
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "bundleIdentifier": "com.proficiencyai.mobile"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "support@proficiencyai.com",
+        "ascAppId": "123456789",
+        "appleTeamId": "XXXXXXXXXX",
+        "language": "en-US",
+        "companyName": "ProficiencyAI",
+        "appName": "ProficiencyAI",
+        "copyright": "© 2025 ProficiencyAI. All rights reserved.",
+        "sku": "proficiencyai-mobile-ios",
+        "metadataPath": "./app-store-metadata"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "production",
+        "releaseStatus": "completed",
+        "rollout": 1.0,
+        "changesNotSentForReview": false
+      }
+    },
+    "preview": {
+      "ios": {
+        "appleId": "support@proficiencyai.com",
+        "ascAppId": "123456789",
+        "appleTeamId": "XXXXXXXXXX"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "completed"
+      }
+    }
+  },
+  "updates": {
+    "url": "https://u.expo.dev/your-project-id"
+  }
+}

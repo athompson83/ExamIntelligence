@@ -1,32 +1,245 @@
 {
   "expo": {
-    "name": "ProficiencyAI Mobile",
-    "slug": "proficiencyai-mobile-demo",
+    "name": "ProficiencyAI",
+    "slug": "proficiencyai-mobile",
+    "description": "Create, deliver, and grade adaptive assessments with AI-powered question generation, real-time proctoring, and comprehensive analytics. Perfect for educators, trainers, and institutions.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.svg",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "scheme": "proficiencyai",
+    "primaryColor": "#2563eb",
     "splash": {
       "image": "./assets/splash.svg",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#2563eb"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
+    "platforms": ["ios", "android"],
+    "privacy": "public",
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#2563eb",
+      "iosDisplayInForeground": true,
+      "androidMode": "default",
+      "androidCollapsedTitle": "New notification from ProficiencyAI"
+    },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.proficiencyai.mobile"
+      "bundleIdentifier": "com.proficiencyai.mobile",
+      "buildNumber": "1",
+      "appStoreUrl": "https://apps.apple.com/app/proficiencyai/id123456789",
+      "associatedDomains": ["applinks:proficiencyai.com"],
+      "usesAppleSignIn": false,
+      "usesIcloudStorage": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "ProficiencyAI needs camera access to enable identity verification and live proctoring during secure exams. This ensures academic integrity and prevents cheating.",
+        "NSMicrophoneUsageDescription": "ProficiencyAI needs microphone access to record audio during proctored exams for security purposes and to detect unauthorized assistance.",
+        "NSPhotoLibraryUsageDescription": "ProficiencyAI needs access to your photo library to allow you to upload images for exam questions, assignments, or profile pictures.",
+        "NSPhotoLibraryAddUsageDescription": "ProficiencyAI needs permission to save images to your photo library, such as exam certificates or study materials.",
+        "NSFaceIDUsageDescription": "ProficiencyAI uses Face ID for secure authentication and identity verification during proctored exams.",
+        "NSLocationWhenInUseUsageDescription": "ProficiencyAI may use your location to verify exam participation at approved locations (only when required by your institution).",
+        "NSUserTrackingUsageDescription": "ProficiencyAI respects your privacy. We use tracking to provide personalized learning recommendations and improve app performance. You can opt out at any time.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["remote-notification", "fetch"],
+        "UIRequiresFullScreen": false,
+        "UIStatusBarStyle": "UIStatusBarStyleDefault",
+        "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown"
+        ],
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+          }
+        ],
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyCollectedDataTypes": [
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeEmailAddress",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeName",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhotos",
+            "NSPrivacyCollectedDataTypeLinked": false,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          }
+        ]
+      },
+      "isTabletOnly": false,
+      "requireFullScreen": false,
+      "deploymentTarget": "13.0"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.svg",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#2563eb"
       },
-      "package": "com.proficiencyai.mobile"
+      "package": "com.proficiencyai.mobile",
+      "versionCode": 1,
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.proficiencyai.mobile",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "proficiencyai.com"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "WAKE_LOCK",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "READ_PHONE_STATE",
+        "READ_SMS",
+        "SEND_SMS"
+      ],
+      "softwareKeyboardLayoutMode": "pan",
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      },
+      "googleServicesFile": "./google-services.json",
+      "useNextNotificationsApi": true,
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "minSdkVersion": 23,
+      "allowBackup": true,
+      "enableProguardInReleaseBuilds": true,
+      "enableHermes": true
+    },
+    "androidNavigationBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#ffffff"
+    },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#ffffff",
+      "translucent": false
     },
     "web": {
-      "favicon": "./assets/favicon.svg"
-    }
+      "favicon": "./assets/favicon.svg",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "ProficiencyAI needs camera access to enable identity verification and live proctoring during secure exams.",
+          "microphonePermission": "ProficiencyAI needs microphone access to record audio during proctored exams for security purposes.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "ProficiencyAI needs access to your photo library to upload images for exams or save certificates.",
+          "savePhotosPermission": "ProficiencyAI needs permission to save exam certificates and study materials to your device.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#2563eb",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "ProficiencyAI may use your location to verify exam participation at approved locations (only when required by your institution).",
+          "locationAlwaysPermission": "ProficiencyAI may use your location to verify exam participation at approved locations.",
+          "locationWhenInUsePermission": "ProficiencyAI may use your location to verify exam participation at approved locations.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "ProficiencyAI uses Face ID or fingerprint for secure authentication and identity verification during proctored exams."
+        }
+      ],
+      "expo-secure-store",
+      "expo-font",
+      "expo-splash-screen"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      },
+      "apiUrl": "https://api.proficiencyai.com",
+      "websocketUrl": "wss://api.proficiencyai.com",
+      "supportEmail": "support@proficiencyai.com",
+      "privacyPolicyUrl": "https://proficiencyai.com/privacy",
+      "termsOfServiceUrl": "https://proficiencyai.com/terms",
+      "helpCenterUrl": "https://help.proficiencyai.com"
+    },
+    "hooks": {
+      "postPublish": []
+    },
+    "owner": "proficiencyai",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "jsEngine": "hermes"
   }
 }
