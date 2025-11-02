@@ -2,12 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Maximize2, Users, Clock, AlertTriangle, Video } from "lucide-react";
 import { Quiz } from "@/types";
+import { AsyncState } from "@/components/ui/async-state";
 
 export function LiveExamMonitoring() {
-  const { data: activeQuizzes, isLoading } = useQuery<Quiz[]>({
+  const { data: activeQuizzes, isLoading, isError, error, refetch } = useQuery<Quiz[]>({
     queryKey: ["/api/quizzes/active"],
     // Reasonable refresh for active quizzes
     staleTime: 30 * 1000, // 30 seconds - active quizzes don't change often
@@ -26,46 +26,44 @@ export function LiveExamMonitoring() {
     refetchInterval: false, // Disabled - using WebSocket for real-time alerts
   });
 
-  if (isLoading) {
-    return (
-      <Card className="lg:col-span-2 rounded-2xl shadow-lg border-0">
-        <CardHeader className="gradient-blue p-6">
-          <div className="flex items-center justify-between">
-            <div className="relative overflow-hidden rounded-lg h-6 w-48">
-              <div className="h-full w-full bg-white/20 animate-pulse" />
-              <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-            </div>
-            <div className="relative overflow-hidden rounded-xl h-10 w-24">
-              <div className="h-full w-full bg-white/20 animate-pulse" />
-              <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-            </div>
+  const customLoadingState = (
+    <Card className="lg:col-span-2 rounded-2xl shadow-lg border-0">
+      <CardHeader className="gradient-blue p-6">
+        <div className="flex items-center justify-between">
+          <div className="relative overflow-hidden rounded-lg h-6 w-48">
+            <div className="h-full w-full bg-white/20 animate-pulse" />
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
           </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="border rounded-xl p-5 relative overflow-hidden">
-                <div className="space-y-4">
-                  <div className="relative overflow-hidden rounded-lg h-6 w-32">
-                    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[1, 2, 3].map((j) => (
-                      <div key={j} className="relative overflow-hidden rounded-lg aspect-square">
-                        <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
-                      </div>
-                    ))}
-                  </div>
+          <div className="relative overflow-hidden rounded-xl h-10 w-24">
+            <div className="h-full w-full bg-white/20 animate-pulse" />
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="border rounded-xl p-5 relative overflow-hidden">
+              <div className="space-y-4">
+                <div className="relative overflow-hidden rounded-lg h-6 w-32">
+                  <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[1, 2, 3].map((j) => (
+                    <div key={j} className="relative overflow-hidden rounded-lg aspect-square">
+                      <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   const formatTimeRemaining = (endTime: Date | null): string => {
     if (!endTime) return "No time limit";
@@ -86,36 +84,34 @@ export function LiveExamMonitoring() {
   };
 
   return (
-    <Card className="lg:col-span-2 rounded-2xl shadow-lg border-0 bg-white dark:bg-gray-900 overflow-hidden">
-      <CardHeader className="gradient-blue p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <Video className="h-5 w-5 text-white" />
+    <AsyncState
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      isEmpty={!isLoading && (!activeQuizzes || activeQuizzes.length === 0)}
+      emptyMessage="There are no exams currently in progress. Check back later or create a new exam."
+      onRetry={refetch}
+      loadingComponent={customLoadingState}
+    >
+      <Card className="lg:col-span-2 rounded-2xl shadow-lg border-0 bg-white dark:bg-gray-900 overflow-hidden">
+        <CardHeader className="gradient-blue p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Video className="h-5 w-5 text-white" />
+              </div>
+              <CardTitle className="text-xl font-bold text-white">Live Exam Monitoring</CardTitle>
             </div>
-            <CardTitle className="text-xl font-bold text-white">Live Exam Monitoring</CardTitle>
+            <Button className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm rounded-xl">
+              <Maximize2 className="mr-2 h-4 w-4" />
+              Full View
+            </Button>
           </div>
-          <Button className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm rounded-xl">
-            <Maximize2 className="mr-2 h-4 w-4" />
-            Full View
-          </Button>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="p-6">
-        {!activeQuizzes || activeQuizzes.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full gradient-blue flex items-center justify-center">
-              <Video className="h-10 w-10 text-white" />
-            </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">No Active Exams</h3>
-            <p className="text-muted-foreground text-base">
-              There are no exams currently in progress. Check back later or create a new exam.
-            </p>
-          </div>
-        ) : (
+        </CardHeader>
+        
+        <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeQuizzes.map((quiz) => {
+            {activeQuizzes?.map((quiz) => {
               const alertCount = (proctoringAlerts as any[])?.filter((alert: any) => alert.quizId === quiz.id)?.length || 0;
               
               return (
@@ -199,8 +195,8 @@ export function LiveExamMonitoring() {
               );
             })}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </AsyncState>
   );
 }

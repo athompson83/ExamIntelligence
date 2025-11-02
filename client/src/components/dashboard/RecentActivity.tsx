@@ -1,55 +1,53 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle, UserPlus, AlertTriangle, Brain } from "lucide-react";
 import { Notification } from "@/types";
+import { AsyncState } from "@/components/ui/async-state";
 
 export function RecentActivity() {
-  const { data: notifications, isLoading } = useQuery<Notification[]>({
+  const { data: notifications, isLoading, isError, error, refetch } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
     staleTime: 5000,
     gcTime: 30000,
   });
 
-  if (isLoading) {
-    return (
-      <Card className="rounded-2xl shadow-lg border-0">
-        <CardHeader className="p-6">
-          <div className="relative overflow-hidden rounded-lg h-7 w-40">
-            <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
-            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
-          </div>
-        </CardHeader>
-        <CardContent className="p-6 pt-0">
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-start space-x-3 p-3 rounded-xl">
-                <div className="relative overflow-hidden rounded-full h-10 w-10 flex-shrink-0">
+  const customLoadingState = (
+    <Card className="rounded-2xl shadow-lg border-0">
+      <CardHeader className="p-6">
+        <div className="relative overflow-hidden rounded-lg h-7 w-40">
+          <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+        </div>
+      </CardHeader>
+      <CardContent className="p-6 pt-0">
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-start space-x-3 p-3 rounded-xl">
+              <div className="relative overflow-hidden rounded-full h-10 w-10 flex-shrink-0">
+                <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+              </div>
+              <div className="flex-1 space-y-2">
+                <div className="relative overflow-hidden rounded-lg h-4 w-48">
                   <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
                   <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
                 </div>
-                <div className="flex-1 space-y-2">
-                  <div className="relative overflow-hidden rounded-lg h-4 w-48">
-                    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
-                  </div>
-                  <div className="relative overflow-hidden rounded-lg h-3 w-32">
-                    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
-                  </div>
-                  <div className="relative overflow-hidden rounded-lg h-3 w-24">
-                    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
-                  </div>
+                <div className="relative overflow-hidden rounded-lg h-3 w-32">
+                  <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
+                </div>
+                <div className="relative overflow-hidden rounded-lg h-3 w-24">
+                  <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" />
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -102,23 +100,21 @@ export function RecentActivity() {
   const recentNotifications = notifications?.slice(0, 5) || [];
 
   return (
-    <Card className="rounded-2xl shadow-lg border-0">
-      <CardHeader className="p-6">
-        <CardTitle className="text-xl font-bold text-foreground">Recent Activity</CardTitle>
-      </CardHeader>
-      
-      <CardContent className="p-6 pt-0">
-        {recentNotifications.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full gradient-blue flex items-center justify-center">
-              <CheckCircle className="h-10 w-10 text-white" />
-            </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">No Recent Activity</h3>
-            <p className="text-muted-foreground text-base">
-              Activity and notifications will appear here as they occur.
-            </p>
-          </div>
-        ) : (
+    <AsyncState
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      isEmpty={!isLoading && recentNotifications.length === 0}
+      emptyMessage="Activity and notifications will appear here as they occur."
+      onRetry={refetch}
+      loadingComponent={customLoadingState}
+    >
+      <Card className="rounded-2xl shadow-lg border-0">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl font-bold text-foreground">Recent Activity</CardTitle>
+        </CardHeader>
+        
+        <CardContent className="p-6 pt-0">
           <div className="space-y-3">
             {recentNotifications.map((notification) => {
               const Icon = getActivityIcon(notification.type);
@@ -151,8 +147,8 @@ export function RecentActivity() {
               );
             })}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </AsyncState>
   );
 }
