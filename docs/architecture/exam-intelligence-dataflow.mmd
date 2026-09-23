@@ -1,0 +1,12 @@
+flowchart LR
+  Browser[React and Vite client] -->|credentialed HTTP| Express[Express server]
+  Browser <-->|WebSocket| ServerWS[Server WebSocket modules]
+  Express --> Routes[Route registration]
+  Routes --> Auth[Authentication and permissions]
+  Routes --> Services[Assessment, AI, analytics, LTI, billing, proctoring services]
+  Services --> Storage[Storage adapter]
+  Storage --> Drizzle[Drizzle ORM and Neon driver]
+  Drizzle --> Postgres[(PostgreSQL-compatible database)]
+  Schema[Shared schema and validation] --> Routes
+  Schema --> Storage
+  Mobile[Separate Expo and React Native workspace] -. app workspace .-> Shared[Shared contracts]
