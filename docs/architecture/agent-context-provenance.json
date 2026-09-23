@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": "ExamIntelligence",
+  "sourceBranch": "main",
+  "sourceCommitSha": "c005c9d06fb7180d6e06ed9c0d3e84fc655d3a92",
+  "tool": "Understand-Anything",
+  "toolRevision": "6df3065f1d8ddc2ce3615314d1d493f36d6b1c80",
+  "inventory": {
+    "fileCount": 363,
+    "filteredByIgnore": 0,
+    "categoryCounts": {
+      "code": 323,
+      "docs": 15,
+      "config": 21,
+      "markup": 4
+    },
+    "languageCounts": {
+      "unknown": 1,
+      "markdown": 14,
+      "docx": 2,
+      "webp": 3,
+      "json": 21,
+      "tmp": 1,
+      "html": 1,
+      "typescript": 314,
+      "css": 3,
+      "javascript": 2,
+      "txt": 1
+    },
+    "languages": [
+      "CSS",
+      "HTML",
+      "JavaScript",
+      "JSON",
+      "Markdown",
+      "TypeScript"
+    ],
+    "frameworks": [
+      "React",
+      "Vite",
+      "Express",
+      "Drizzle",
+      "Expo",
+      "React Native",
+      "Tailwind CSS"
+    ],
+    "excludedBuildAndDependencyPaths": []
+  },
+  "parser": {
+    "filesParsed": 351,
+    "filesSkipped": [
+      "proficiencyai_features.txt",
+      ".replit",
+      "attached_assets/AI_Driven_Exam_Generator_App_Development_Plan_1751632501041.docx",
+      "attached_assets/AI_Driven_Exam_Generator_App_Features_1751632501041.docx",
+      "attached_assets/IMG_0523_1754140267101.webp",
+      "attached_assets/IMG_0523_1754161563006.webp",
+      "attached_assets/IMG_0523_1754244733124.webp",
+      "attached_assets/f4a07194-fb59-4f13-82a1-18ec7b3f2511_1751640514822.tmp",
+      "client/index.html",
+      "client/src/index.css",
+      "client/src/styles/landing-animations.css",
+      "client/src/styles/performance.css"
+    ],
+    "unreadable": [],
+    "analysisOutcomes": {
+      "structure": {
+        "succeeded": 351,
+        "failed": 0
+      },
+      "callGraph": {
+        "succeeded": 316,
+        "failed": 0,
+        "skipped": 35
+      }
+    },
+    "limitations": [
+      "Parser skips are inventory-only nodes. This includes free-form historical notes, PDFs/images/docx, selected style/markup/config files, and a temporary attached asset.",
+      "No external provider, payment, database, or deployment capability is claimed by this source graph."
+    ]
+  },
+  "batching": {
+    "totalBatches": 16,
+    "warnings": [
+      "Three communities exceeded the 35-file target and were split alphabetically; modularity may decrease.",
+      "Several shared UI/query files exceeded the soft neighborMap degree cap, so lower-ranked cross-batch context entries were dropped."
+    ]
+  },
+  "graph": {
+    "nodeCount": 830,
+    "edgeCount": 2209,
+    "importEdges": 1636,
+    "callMentionFiles": 258,
+    "directCallEdges": 121,
+    "layerCount": 8,
+    "tourStepCount": 8
+  },
+  "validation": {
+    "allInventoryPathsRepresented": true,
+    "allNodePathsInInventory": true,
+    "allEdgeEndpointsExist": true,
+    "everyNodeAssignedExactlyOnce": true,
+    "tourValid": true,
+    "dependencyBuildOutputExcluded": true
+  }
+}

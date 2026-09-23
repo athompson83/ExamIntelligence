@@ -1,0 +1,8 @@
+flowchart TB
+  README[README marks this as legacy reference] --> Web[React and Vite client]
+  README --> Server[Express and TypeScript server]
+  README --> Shared[Shared schema and contracts]
+  README --> Mobile[Expo workspace]
+  Server --> DB[(Drizzle and Neon database adapter)]
+  Active[Current ProficiencyAI authority] -. explicitly identified by README .-> Current[separate proficiencyai repository]
+  Legacy[ExamIntelligence prototype] -. historical reference only .-> Active
